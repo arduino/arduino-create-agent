@@ -8,7 +8,7 @@ your local serial device such as an Arduino, CNC controller, or any device that
 communicates over the serial port.
 
 The app is written in Go. It has an embedded web server and websocket server.
-The server runs on the standard port of localhost:8999. You can connect to
+The server runs on the standard port of localhost:8989. You can connect to
 it locally with your browser to interact.
 
 The app is one executable with everything you need and is available ready-to-go
