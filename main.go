@@ -29,6 +29,10 @@ func homeHandler(c http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+
+	// setup logging
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
 	//getList()
 	flag.Parse()
 	f := flag.Lookup("addr")

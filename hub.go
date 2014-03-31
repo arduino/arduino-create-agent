@@ -41,7 +41,7 @@ func (h *hub) run() {
 			close(c.send)
 		case m := <-h.broadcast:
 			log.Print("Got a broadcast")
-			log.Print(m)
+			log.Print(string(m))
 			//log.Print(h.broadcast)
 			checkCmd(m)
 			log.Print("-----")
@@ -60,7 +60,7 @@ func (h *hub) run() {
 			}
 		case m := <-h.broadcastSys:
 			log.Print("Got a system broadcast")
-			log.Print(m)
+			log.Print(string(m))
 			log.Print("-----")
 
 			for c := range h.connections {
@@ -80,9 +80,9 @@ func (h *hub) run() {
 }
 
 func checkCmd(m []byte) {
-	log.Print("Inside checkCmd")
+	//log.Print("Inside checkCmd")
 	s := string(m[:])
-	log.Print(s)
+	//log.Print(s)
 
 	sl := strings.ToLower(s)
 
@@ -119,5 +119,5 @@ func checkCmd(m []byte) {
 		//go getListViaWmiPnpEntity()
 	}
 
-	log.Print("Done with checkCmd")
+	//log.Print("Done with checkCmd")
 }
