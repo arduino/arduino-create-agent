@@ -1,3 +1,5 @@
+// Supports Windows, Linux, Mac, and Raspberr Pi
+
 package main
 
 import (
