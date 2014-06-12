@@ -1,11 +1,11 @@
 serial-port-json-server
 =======================
 
-A serial port JSON websocket &amp; web server that runs in your system tray on 
-Windows, Mac, Linux, or Raspberry Pi that lets you communicate with your serial port from a 
-web application. This enables web apps to be written that can communicate with 
-your local serial device such as an Arduino, CNC controller, or any device that 
-communicates over the serial port.
+A serial port JSON websocket &amp; web server that runs from the command line on 
+Windows, Mac, Linux, or Raspberry Pi that lets you communicate with your serial 
+port from a web application. This enables web apps to be written that can 
+communicate with your local serial device such as an Arduino, CNC controller, or 
+any device that communicates over the serial port.
 
 The app is written in Go. It has an embedded web server and websocket server.
 The server runs on the standard port of localhost:8989. You can connect to
