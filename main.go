@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	VERSION   = "0.1"
 	addr      = flag.String("addr", ":8989", "http service address")
 	assets    = flag.String("assets", defaultAssetPath(), "path to assets")
 	homeTempl *template.Template
