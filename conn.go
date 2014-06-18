@@ -1,4 +1,4 @@
-// Supports Windows, Linux, Mac, and Raspberr Pi
+// Supports Windows, Linux, Mac, and Raspberry Pi
 
 package main
 

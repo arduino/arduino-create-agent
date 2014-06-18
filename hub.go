@@ -36,26 +36,32 @@ func (h *hub) run() {
 		select {
 		case c := <-h.register:
 			h.connections[c] = true
+			// send supported commands
+			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud]\", \"send [portName] [cmd]\", \"close [portName]\"]} ")
 		case c := <-h.unregister:
 			delete(h.connections, c)
 			close(c.send)
 		case m := <-h.broadcast:
 			log.Print("Got a broadcast")
-			log.Print(string(m))
-			//log.Print(h.broadcast)
-			checkCmd(m)
-			log.Print("-----")
+			//log.Print(m)
+			//log.Print(len(m))
+			if len(m) > 0 {
+				//log.Print(string(m))
+				//log.Print(h.broadcast)
+				checkCmd(m)
+				log.Print("-----")
 
-			for c := range h.connections {
-				select {
-				case c.send <- m:
-					log.Print("did broadcast to ")
-					log.Print(c.ws.RemoteAddr())
-					//c.send <- []byte("hello world")
-				default:
-					delete(h.connections, c)
-					close(c.send)
-					go c.ws.Close()
+				for c := range h.connections {
+					select {
+					case c.send <- m:
+						log.Print("did broadcast to ")
+						log.Print(c.ws.RemoteAddr())
+						//c.send <- []byte("hello world")
+					default:
+						delete(h.connections, c)
+						close(c.send)
+						go c.ws.Close()
+					}
 				}
 			}
 		case m := <-h.broadcastSys:
@@ -82,7 +88,7 @@ func (h *hub) run() {
 func checkCmd(m []byte) {
 	//log.Print("Inside checkCmd")
 	s := string(m[:])
-	//log.Print(s)
+	log.Print(s)
 
 	sl := strings.ToLower(s)
 
@@ -97,7 +103,9 @@ func checkCmd(m []byte) {
 			go spErr("You did not specify a serial port")
 			return
 		}
-		baud, err := strconv.Atoi(args[2])
+
+		baudStr := strings.Replace(args[2], "\n", "", -1)
+		baud, err := strconv.Atoi(baudStr)
 		if err != nil {
 			go spErr("Problem converting baud rate " + args[2])
 			return
@@ -107,16 +115,22 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "close") {
 
 		args := strings.Split(s, " ")
-		go spClose(args[1])
+		if len(args) > 1 {
+			go spClose(args[1])
+		} else {
+			go spErr("You did not specify a port to close")
+		}
 
-	} else if strings.HasPrefix(sl, "send ") {
+	} else if strings.HasPrefix(sl, "send") {
 
 		//args := strings.Split(s, "send ")
 		go spWrite(s)
 
-	} else if s == "list" {
+	} else if strings.HasPrefix(sl, "list") {
 		go spList()
 		//go getListViaWmiPnpEntity()
+	} else {
+		go spErr("Could not understand command.")
 	}
 
 	//log.Print("Done with checkCmd")
