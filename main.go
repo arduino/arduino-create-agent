@@ -40,6 +40,7 @@ func main() {
 	//getList()
 	flag.Parse()
 	f := flag.Lookup("addr")
+	log.Println("Version:" + VERSION)
 	log.Print("Started server and websocket on localhost" + f.Value.String())
 	//homeTempl = template.Must(template.ParseFiles(filepath.Join(*assets, "home.html")))
 
@@ -53,7 +54,7 @@ func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/ws", wsHandler)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
-		log.Fatal("ListenAndServe:", err)
+		log.Fatal("Error ListenAndServe:", err)
 	}
 }
 
