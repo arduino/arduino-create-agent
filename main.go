@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	VERSION = "1.2"
+	version = "1.2"
 	addr    = flag.String("addr", ":8989", "http service address")
 	assets  = flag.String("assets", defaultAssetPath(), "path to assets")
 	//homeTempl *template.Template
@@ -40,7 +40,7 @@ func main() {
 	//getList()
 	flag.Parse()
 	f := flag.Lookup("addr")
-	log.Println("Version:" + VERSION)
+	log.Println("Version:" + version)
 	log.Print("Started server and websocket on localhost" + f.Value.String())
 	//homeTempl = template.Must(template.ParseFiles(filepath.Join(*assets, "home.html")))
 
