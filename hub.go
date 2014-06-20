@@ -37,7 +37,7 @@ func (h *hub) run() {
 		case c := <-h.register:
 			h.connections[c] = true
 			// send supported commands
-			c.send <- []byte("{\"Version\" : \"" + VERSION + "\"} ")
+			c.send <- []byte("{\"Version\" : \"" + version + "\"} ")
 			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud]\", \"send [portName] [cmd]\", \"close [portName]\"]} ")
 		case c := <-h.unregister:
 			delete(h.connections, c)
