@@ -43,20 +43,20 @@ func (h *hub) run() {
 			delete(h.connections, c)
 			close(c.send)
 		case m := <-h.broadcast:
-			log.Print("Got a broadcast")
+			//log.Print("Got a broadcast")
 			//log.Print(m)
 			//log.Print(len(m))
 			if len(m) > 0 {
 				//log.Print(string(m))
 				//log.Print(h.broadcast)
 				checkCmd(m)
-				log.Print("-----")
+				//log.Print("-----")
 
 				for c := range h.connections {
 					select {
 					case c.send <- m:
-						log.Print("did broadcast to ")
-						log.Print(c.ws.RemoteAddr())
+						//log.Print("did broadcast to ")
+						//log.Print(c.ws.RemoteAddr())
 						//c.send <- []byte("hello world")
 					default:
 						delete(h.connections, c)
@@ -66,15 +66,15 @@ func (h *hub) run() {
 				}
 			}
 		case m := <-h.broadcastSys:
-			log.Print("Got a system broadcast")
-			log.Print(string(m))
-			log.Print("-----")
+			//log.Print("Got a system broadcast")
+			//log.Print(string(m))
+			//log.Print("-----")
 
 			for c := range h.connections {
 				select {
 				case c.send <- m:
-					log.Print("did broadcast to ")
-					log.Print(c.ws.RemoteAddr())
+					//log.Print("did broadcast to ")
+					//log.Print(c.ws.RemoteAddr())
 					//c.send <- []byte("hello world")
 				default:
 					delete(h.connections, c)
@@ -111,7 +111,15 @@ func checkCmd(m []byte) {
 			go spErr("Problem converting baud rate " + args[2])
 			return
 		}
-		go spHandlerOpen(args[1], baud)
+		// pass in buffer type now as string. if user does not
+		// ask for a buffer type pass in empty string
+		bufferAlgorithm := ""
+		if len(args) > 3 {
+			// cool. we got a buffer type request
+			buftype := strings.Replace(args[3], "\n", "", -1)
+			bufferAlgorithm = buftype
+		}
+		go spHandlerOpen(args[1], baud, bufferAlgorithm)
 
 	} else if strings.HasPrefix(sl, "close") {
 
