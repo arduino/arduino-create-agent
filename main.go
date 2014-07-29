@@ -1,4 +1,4 @@
-// Version 1.3
+// Version 1.3.1
 // Supports Windows, Linux, Mac, and Raspberry Pi, Beagle Bone Black
 
 package main
@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	version = "1.3"
+	version = "1.3.1"
 	addr    = flag.String("addr", ":8989", "http service address")
 	assets  = flag.String("assets", defaultAssetPath(), "path to assets")
 	//homeTempl *template.Template
