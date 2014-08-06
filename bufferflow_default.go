@@ -8,6 +8,8 @@ import (
 )
 
 type BufferflowDefault struct {
+	Name string
+	Port string
 }
 
 var ()
