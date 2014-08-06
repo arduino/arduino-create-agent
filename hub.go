@@ -38,7 +38,7 @@ func (h *hub) run() {
 			h.connections[c] = true
 			// send supported commands
 			c.send <- []byte("{\"Version\" : \"" + version + "\"} ")
-			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud]\", \"send [portName] [cmd]\", \"close [portName]\"]} ")
+			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud] [bufferAlgorithm (optional)]\", \"send [portName] [cmd]\", \"sendnobuf [portName] [cmd]\", \"close [portName]\", \"bufferalgorithms\", \"baudrates\"]} ")
 		case c := <-h.unregister:
 			delete(h.connections, c)
 			close(c.send)
@@ -131,6 +131,7 @@ func checkCmd(m []byte) {
 		}
 
 	} else if strings.HasPrefix(sl, "send") {
+		// will catch send and sendnobuf
 
 		//args := strings.Split(s, "send ")
 		go spWrite(s)
@@ -138,6 +139,10 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "list") {
 		go spList()
 		//go getListViaWmiPnpEntity()
+	} else if strings.HasPrefix(sl, "bufferalgorithm") {
+		go spBufferAlgorithms()
+	} else if strings.HasPrefix(sl, "baudrate") {
+		go spBaudRates()
 	} else {
 		go spErr("Could not understand command.")
 	}
