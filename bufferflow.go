@@ -5,6 +5,8 @@ import (
 //"time"
 )
 
+var availableBufferAlgorithms = []string{"default", "tinyg", "dummypause"}
+
 type BufferMsg struct {
 	Cmd                string
 	Port               string
