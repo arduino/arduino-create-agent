@@ -66,8 +66,8 @@ func (h *hub) run() {
 				}
 			}
 		case m := <-h.broadcastSys:
-			log.Print("Got a system broadcast")
-			log.Print(string(m))
+			log.Printf("Got a system broadcast: %v\n", string(m))
+			//log.Print(string(m))
 			//log.Print("-----")
 
 			for c := range h.connections {

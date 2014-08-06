@@ -15,7 +15,7 @@ type BufferflowDummypause struct {
 func (b *BufferflowDummypause) Init() {
 }
 
-func (b *BufferflowDummypause) BlockUntilReady() {
+func (b *BufferflowDummypause) BlockUntilReady() bool {
 	log.Printf("BlockUntilReady() start. numLines:%v\n", b.NumLines)
 	log.Printf("buffer:%v\n", b)
 	//for b.Paused {
@@ -23,6 +23,7 @@ func (b *BufferflowDummypause) BlockUntilReady() {
 	time.Sleep(3000 * time.Millisecond)
 	//}
 	log.Printf("BlockUntilReady() end\n")
+	return true
 }
 
 func (b *BufferflowDummypause) OnIncomingData(data string) {
@@ -30,4 +31,12 @@ func (b *BufferflowDummypause) OnIncomingData(data string) {
 	b.NumLines++
 	//time.Sleep(3000 * time.Millisecond)
 	log.Printf("OnIncomingData() end. numLines:%v\n", b.NumLines)
+}
+
+func (b *BufferflowDummypause) SeeIfSpecificCommandsShouldSkipBuffer(cmd string) bool {
+	return false
+}
+
+func (b *BufferflowDummypause) SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bool {
+	return false
 }
