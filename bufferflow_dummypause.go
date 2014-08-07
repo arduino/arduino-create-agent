@@ -33,6 +33,10 @@ func (b *BufferflowDummypause) OnIncomingData(data string) {
 	log.Printf("OnIncomingData() end. numLines:%v\n", b.NumLines)
 }
 
+func (b *BufferflowDummypause) BreakApartCommands(cmd string) []string {
+	return []string{cmd}
+}
+
 func (b *BufferflowDummypause) Pause() {
 	return
 }
