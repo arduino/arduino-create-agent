@@ -27,6 +27,10 @@ func (b *BufferflowDefault) OnIncomingData(data string) {
 	//log.Printf("OnIncomingData() start. data:%v\n", data)
 }
 
+func (b *BufferflowDefault) BreakApartCommands(cmd string) []string {
+	return []string{cmd}
+}
+
 func (b *BufferflowDefault) Pause() {
 	return
 }
