@@ -23,9 +23,9 @@ func getListViaTtyList() ([]OsSerialPort, os.SyscallError) {
 
 	log.Println("getting serial list on darwin")
 
-	// make buffer of 100 max serial ports
+	// make buffer of 1000 max serial ports
 	// return a slice
-	list := make([]OsSerialPort, 100)
+	list := make([]OsSerialPort, 1000)
 
 	files, _ := ioutil.ReadDir("/dev/")
 	ctr := 0
@@ -37,10 +37,10 @@ func getListViaTtyList() ([]OsSerialPort, os.SyscallError) {
 			log.Println("Added serial port to list: ", list[ctr])
 			ctr++
 		}
-		// stop-gap in case going beyond 100 (which should never happen)
-		// i mean, really, who has more than 100 serial ports?
-		if ctr > 99 {
-			ctr = 99
+		// stop-gap in case going beyond 1000 (which should never happen)
+		// i mean, really, who has more than 1000 serial ports?
+		if ctr > 999 {
+			ctr = 999
 		}
 		//fmt.Println(f.Name())
 		//fmt.Println(f.)
