@@ -63,3 +63,7 @@ func (b *BufferflowDummypause) SeeIfSpecificCommandsShouldWipeBuffer(cmd string)
 
 func (b *BufferflowDummypause) ReleaseLock() {
 }
+
+func (b *BufferflowDummypause) IsBufferGloballySendingBackIncomingData() bool {
+	return false
+}

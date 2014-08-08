@@ -57,3 +57,7 @@ func (b *BufferflowDefault) SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bo
 
 func (b *BufferflowDefault) ReleaseLock() {
 }
+
+func (b *BufferflowDefault) IsBufferGloballySendingBackIncomingData() bool {
+	return false
+}
