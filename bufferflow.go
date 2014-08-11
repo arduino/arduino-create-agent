@@ -16,7 +16,7 @@ type BufferMsg struct {
 }
 
 type Bufferflow interface {
-	BlockUntilReady() bool                                    // implement this method
+	BlockUntilReady(cmd string) bool                          // implement this method
 	OnIncomingData(data string)                               // implement this method
 	BreakApartCommands(cmd string) []string                   // implement this method
 	Pause()                                                   // implement this method

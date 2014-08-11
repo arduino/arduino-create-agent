@@ -15,7 +15,7 @@ type BufferflowDummypause struct {
 func (b *BufferflowDummypause) Init() {
 }
 
-func (b *BufferflowDummypause) BlockUntilReady() bool {
+func (b *BufferflowDummypause) BlockUntilReady(cmd string) bool {
 	log.Printf("BlockUntilReady() start. numLines:%v\n", b.NumLines)
 	log.Printf("buffer:%v\n", b)
 	//for b.Paused {
