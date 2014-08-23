@@ -5,7 +5,7 @@ import (
 //"time"
 )
 
-var availableBufferAlgorithms = []string{"default", "tinyg", "dummypause"}
+var availableBufferAlgorithms = []string{"default", "tinyg", "dummypause", "grbl"}
 
 type BufferMsg struct {
 	Cmd                string
@@ -27,4 +27,5 @@ type Bufferflow interface {
 	SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bool    // implement this method
 	ReleaseLock()                                             // implement this method
 	IsBufferGloballySendingBackIncomingData() bool            // implement this method
+	Close()													  // implement this method
 }
