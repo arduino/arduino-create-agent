@@ -67,3 +67,6 @@ func (b *BufferflowDummypause) ReleaseLock() {
 func (b *BufferflowDummypause) IsBufferGloballySendingBackIncomingData() bool {
 	return false
 }
+
+func (b *BufferflowDummypause) Close() {
+}
