@@ -61,3 +61,6 @@ func (b *BufferflowDefault) ReleaseLock() {
 func (b *BufferflowDefault) IsBufferGloballySendingBackIncomingData() bool {
 	return false
 }
+
+func (b *BufferflowDefault) Close() {
+}
