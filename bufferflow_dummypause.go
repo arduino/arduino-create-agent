@@ -15,7 +15,7 @@ type BufferflowDummypause struct {
 func (b *BufferflowDummypause) Init() {
 }
 
-func (b *BufferflowDummypause) BlockUntilReady(cmd string) bool {
+func (b *BufferflowDummypause) BlockUntilReady(cmd string, id string) bool {
 	log.Printf("BlockUntilReady() start. numLines:%v\n", b.NumLines)
 	log.Printf("buffer:%v\n", b)
 	//for b.Paused {
@@ -31,6 +31,10 @@ func (b *BufferflowDummypause) OnIncomingData(data string) {
 	b.NumLines++
 	//time.Sleep(3000 * time.Millisecond)
 	log.Printf("OnIncomingData() end. numLines:%v\n", b.NumLines)
+}
+
+// Clean out b.sem so it can truly block
+func (b *BufferflowDummypause) ClearOutSemaphore() {
 }
 
 func (b *BufferflowDummypause) BreakApartCommands(cmd string) []string {
@@ -58,6 +62,19 @@ func (b *BufferflowDummypause) SeeIfSpecificCommandsShouldUnpauseBuffer(cmd stri
 }
 
 func (b *BufferflowDummypause) SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bool {
+	return false
+}
+
+func (b *BufferflowDummypause) SeeIfSpecificCommandsReturnNoResponse(cmd string) bool {
+	/*
+		// remove comments
+		cmd = b.reComment.ReplaceAllString(cmd, "")
+		cmd = b.reComment2.ReplaceAllString(cmd, "")
+		if match := b.reNoResponse.MatchString(cmd); match {
+			log.Printf("Found cmd that does not get a response from TinyG. cmd:%v\n", cmd)
+			return true
+		}
+	*/
 	return false
 }
 
