@@ -16,8 +16,10 @@ type BufferMsg struct {
 }
 
 type Bufferflow interface {
-	BlockUntilReady(cmd string) bool                          // implement this method
+	BlockUntilReady(cmd string, id string) bool // implement this method
+	//JustQueue(cmd string, id string) bool                     // implement this method
 	OnIncomingData(data string)                               // implement this method
+	ClearOutSemaphore()                                       // implement this method
 	BreakApartCommands(cmd string) []string                   // implement this method
 	Pause()                                                   // implement this method
 	Unpause()                                                 // implement this method
@@ -25,7 +27,8 @@ type Bufferflow interface {
 	SeeIfSpecificCommandsShouldPauseBuffer(cmd string) bool   // implement this method
 	SeeIfSpecificCommandsShouldUnpauseBuffer(cmd string) bool // implement this method
 	SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bool    // implement this method
+	SeeIfSpecificCommandsReturnNoResponse(cmd string) bool    // implement this method
 	ReleaseLock()                                             // implement this method
 	IsBufferGloballySendingBackIncomingData() bool            // implement this method
-	Close()													  // implement this method
+	Close()                                                   // implement this method
 }
