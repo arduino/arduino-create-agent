@@ -18,9 +18,9 @@ func (b *BufferflowDefault) Init() {
 	log.Println("Initting default buffer flow (which means no buffering)")
 }
 
-func (b *BufferflowDefault) BlockUntilReady(cmd string, id string) bool {
+func (b *BufferflowDefault) BlockUntilReady(cmd string, id string) (bool, bool) {
 	//log.Printf("BlockUntilReady() start\n")
-	return true
+	return true, false
 }
 
 func (b *BufferflowDefault) OnIncomingData(data string) {
