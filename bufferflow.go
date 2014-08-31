@@ -16,7 +16,7 @@ type BufferMsg struct {
 }
 
 type Bufferflow interface {
-	BlockUntilReady(cmd string, id string) bool // implement this method
+	BlockUntilReady(cmd string, id string) (bool, bool) // implement this method
 	//JustQueue(cmd string, id string) bool                     // implement this method
 	OnIncomingData(data string)                               // implement this method
 	ClearOutSemaphore()                                       // implement this method
