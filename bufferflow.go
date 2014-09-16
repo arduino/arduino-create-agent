@@ -32,3 +32,17 @@ type Bufferflow interface {
 	IsBufferGloballySendingBackIncomingData() bool            // implement this method
 	Close()                                                   // implement this method
 }
+
+/*data packets returned to client*/
+type DataCmdComplete struct {
+	Cmd     string
+	Id      string
+	P       string
+	BufSize int
+	D       string
+}
+
+type DataPerLine struct {
+	P string
+	D string
+}
