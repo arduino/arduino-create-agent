@@ -22,5 +22,3 @@ snapshot/serial-port-json-server_windows_amd64.zip
 src/github.com/gorilla/websocket/
 
 src/github.com/johnlauer/goserial/
-
-serial-port-json-server-osx.zip
