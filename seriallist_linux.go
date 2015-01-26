@@ -3,7 +3,7 @@ package main
 import (
 	//"fmt"
 	//"github.com/tarm/goserial"
-	"log"
+	//"log"
 	"os"
 	"strings"
 	//"encoding/binary"
