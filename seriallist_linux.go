@@ -21,7 +21,7 @@ func getList() ([]OsSerialPort, os.SyscallError) {
 func getListViaTtyList() ([]OsSerialPort, os.SyscallError) {
 	var err os.SyscallError
 
-	log.Println("getting serial list on darwin")
+	//log.Println("getting serial list on darwin")
 
 	// make buffer of 1000 max serial ports
 	// return a slice
@@ -34,7 +34,7 @@ func getListViaTtyList() ([]OsSerialPort, os.SyscallError) {
 			// it is a legitimate serial port
 			list[ctr].Name = "/dev/" + f.Name()
 			list[ctr].FriendlyName = f.Name()
-			log.Println("Added serial port to list: ", list[ctr])
+			//log.Println("Added serial port to list: ", list[ctr])
 			ctr++
 		}
 		// stop-gap in case going beyond 1000 (which should never happen)
