@@ -38,8 +38,8 @@ type DataCmdComplete struct {
 	Cmd     string
 	Id      string
 	P       string
-	BufSize int
-	D       string
+	BufSize int    `json:"-"`
+	D       string `json:"-"`
 }
 
 type DataPerLine struct {
