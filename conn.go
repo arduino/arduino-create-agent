@@ -47,7 +47,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		return
 	}
-	c := &connection{send: make(chan []byte, 256), ws: ws}
+	//c := &connection{send: make(chan []byte, 256), ws: ws}
+	c := &connection{send: make(chan []byte, 256*10), ws: ws}
 	h.register <- c
 	defer func() { h.unregister <- c }()
 	go c.writer()
