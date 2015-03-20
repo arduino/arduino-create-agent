@@ -14,6 +14,10 @@ type OsSerialPort struct {
 	RelatedNames []string // for some devices there are 2 or more ports, i.e. TinyG v9 has 2 serial ports
 	SerialNumber string
 	DeviceClass  string
+	Manufacturer string
+	Product      string
+	IdProduct    string
+	IdVendor     string
 }
 
 func GetList() ([]OsSerialPort, os.SyscallError) {
