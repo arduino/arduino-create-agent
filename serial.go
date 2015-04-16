@@ -9,7 +9,8 @@ import (
 	"path/filepath"
 	//"github.com/kballard/go-shellquote"
 	//"github.com/johnlauer/goserial"
-	"github.com/mikepb/go-serial"
+	//"github.com/mikepb/go-serial"
+	"go.bug.st/serial"
 	"log"
 	"os"
 	"regexp"
@@ -95,8 +96,6 @@ type SpPortItem struct {
 	IsPrimary                 bool
 	RelatedNames              []string
 	Baud                      int
-	RtsOn                     bool
-	DtrOn                     bool
 	BufferAlgorithm           string
 	AvailableBufferAlgorithms []string
 	Ver                       float32
@@ -473,8 +472,6 @@ func spList() {
 			IsPrimary:                 false,
 			RelatedNames:              item.RelatedNames,
 			Baud:                      0,
-			RtsOn:                     false,
-			DtrOn:                     false,
 			BufferAlgorithm:           "",
 			AvailableBufferAlgorithms: availableBufferAlgorithms,
 			Ver: versionFloat,
@@ -488,8 +485,6 @@ func spList() {
 			// we found our port
 			spl.SerialPorts[ctr].IsOpen = true
 			spl.SerialPorts[ctr].Baud = myport.portConf.Baud
-			spl.SerialPorts[ctr].RtsOn = myport.portConf.RtsOn
-			spl.SerialPorts[ctr].DtrOn = myport.portConf.DtrOn
 			spl.SerialPorts[ctr].BufferAlgorithm = myport.BufferType
 			spl.SerialPorts[ctr].IsPrimary = myport.IsPrimary
 		}
@@ -547,8 +542,6 @@ func spClose(portname string) {
 func spProgram(portname string, boardname string, filePath string) {
 
 	isFound, flasher, mycmd := assembleCompilerCommand(boardname, portname, filePath)
-
-	log.Printf("is Found: %v", isFound)
 
 	if isFound {
 		spHandlerProgram(flasher, mycmd)
@@ -659,7 +652,6 @@ func spWrite(arg string) {
 func formatCmdline(cmdline string, boardOptions map[string]string) (string, bool) {
 
 	list := strings.Split(cmdline, "{")
-	fmt.Println("%v", list)
 	if len(list) == 1 {
 		return cmdline, false
 	}
@@ -773,18 +765,20 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 
 	if boardOptions["upload.use_1200bps_touch"] == "true" {
 		// triggers bootloader mode
+		// the portname could change in this occasion, so fail gently
 		log.Println("Restarting in bootloader mode")
 
-		options := serial.RawOptions
-		options.BitRate = 1200
-		options.FlowControl = serial.FLOWCONTROL_RTSCTS
-		p, err := options.Open(portname)
+		mode := &serial.Mode{
+			BaudRate: 1200,
+		}
+		port, err := serial.OpenPort(portname, mode)
 		if err != nil {
-			log.Panic(err)
+			log.Println(err)
+			return false, "", ""
 		}
 		time.Sleep(time.Second / 2)
-		p.Close()
-		time.Sleep(time.Second)
+		port.Close()
+		time.Sleep(time.Second * 2)
 	}
 
 	return (tool != ""), tool, cmdline

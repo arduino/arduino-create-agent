@@ -3,8 +3,9 @@
 package main
 
 import (
+	"go.bug.st/serial"
 	"log"
-	"os"
+	//"os"
 	"regexp"
 )
 
@@ -20,11 +21,16 @@ type OsSerialPort struct {
 	IdVendor     string
 }
 
-func GetList() ([]OsSerialPort, os.SyscallError) {
+func GetList() ([]OsSerialPort, error) {
 
 	//log.Println("Doing GetList()")
 
-	arrPorts, err := getList()
+	ports, err := serial.GetPortsList()
+
+	arrPorts := []OsSerialPort{}
+	for _, element := range ports {
+		arrPorts = append(arrPorts, OsSerialPort{Name: element, FriendlyName: element})
+	}
 
 	// see if we should filter the list
 	if len(*regExpFilter) > 0 {

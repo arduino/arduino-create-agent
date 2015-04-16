@@ -3,7 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/johnlauer/goserial"
+	//"github.com/johnlauer/goserial"
+	"go.bug.st/serial"
 	"io"
 	"log"
 	"os/exec"
@@ -11,9 +12,27 @@ import (
 	"strings"
 )
 
+type SerialConfig struct {
+	Name string
+	Baud int
+
+	// Size     int // 0 get translated to 8
+	// Parity   SomeNewTypeToGetCorrectDefaultOf_None
+	// StopBits SomeNewTypeToGetCorrectDefaultOf_1
+
+	// RTSFlowControl bool
+	// DTRFlowControl bool
+	// XONFlowControl bool
+
+	// CRLFTranslate bool
+	// TimeoutStuff int
+	RtsOn bool
+	DtrOn bool
+}
+
 type serport struct {
 	// The serial port connection.
-	portConf *serial.Config
+	portConf *SerialConfig
 	portIo   io.ReadWriteCloser
 
 	done chan bool // signals the end of this request
@@ -286,11 +305,14 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	if isSecondary {
 		isPrimary = false
 	}
-	conf := &serial.Config{Name: portname, Baud: baud, RtsOn: true}
-	log.Print("Created config for port")
-	log.Print(conf)
 
-	sp, err := serial.OpenPort(conf)
+	conf := &SerialConfig{Name: portname, Baud: baud, RtsOn: true}
+
+	mode := &serial.Mode{
+		BaudRate: baud,
+	}
+
+	sp, err := serial.OpenPort(portname, mode)
 	log.Print("Just tried to open port")
 	if err != nil {
 		//log.Fatal(err)
@@ -353,6 +375,7 @@ func spHandlerCloseExperimental(p *serport) {
 	//close the port
 
 	p.bufferwatcher.Close()
+	p.portIo.Close()
 	h.broadcastSys <- []byte("Bufferwatcher closed")
 	p.portIo.Close()
 	//elicit response from hardware to close out p.reader()
