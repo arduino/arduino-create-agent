@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -413,31 +414,29 @@ func spHandlerClose(p *serport) {
 	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
 }
 
-func spHandlerProgram(flasher string, cmdString string) {
+func spHandlerProgram(flasher string, cmdString []string) {
 
-	s := strings.Split(cmdString, " ")
-	oscmd := exec.Command(flasher, s...)
+	var oscmd *exec.Cmd
+	if runtime.GOOS == "darwin" {
+		sh, _ := exec.LookPath("sh")
+		oscmd = exec.Command(sh+" "+flasher, cmdString...)
+	} else {
+		oscmd = exec.Command(flasher, cmdString...)
+	}
 
 	// Stdout buffer
-	var cmdOutput bytes.Buffer
-	// Attach buffer to command
-	oscmd.Stdout = &cmdOutput
+	//var cmdOutput []byte
 
-	h.broadcastSys <- []byte("Start flashing with command " + cmdString)
+	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
+	log.Printf("Flashing with command:" + strings.Join(cmdString, " "))
 
-	err := oscmd.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Waiting for command to finish... %v", oscmd)
-
-	err = oscmd.Wait()
+	cmdOutput, err := oscmd.CombinedOutput()
 
 	if err != nil {
-		log.Printf("Command finished with error: %v", err)
-		h.broadcastSys <- []byte("Could not program the board: " + cmdOutput.String())
+		log.Printf("Command finished with error: %v "+string(cmdOutput), err)
+		h.broadcastSys <- []byte("Could not program the board")
 	} else {
-		log.Printf("Finished without error. Good stuff. stdout:%v", cmdOutput.String())
+		log.Printf("Finished without error. Good stuff. stdout: " + string(cmdOutput))
 		h.broadcastSys <- []byte("Flash OK!")
 		// analyze stdin
 

@@ -10,6 +10,7 @@ import (
 	//"github.com/kballard/go-shellquote"
 	//"github.com/johnlauer/goserial"
 	//"github.com/mikepb/go-serial"
+	"github.com/kardianos/osext"
 	"go.bug.st/serial"
 	"log"
 	"os"
@@ -673,22 +674,24 @@ func formatCmdline(cmdline string, boardOptions map[string]string) (string, bool
 	return cmdline, true
 }
 
-func assembleCompilerCommand(boardname string, portname string, filePath string) (bool, string, string) {
+func assembleCompilerCommand(boardname string, portname string, filePath string) (bool, string, []string) {
 	// walk across the local filesystem, find boards.txt files, search for the board in it
+
+	execPath, _ := osext.Executable()
 
 	boardFields := strings.Split(boardname, ":")
 	if len(boardFields) != 3 {
 		h.broadcastSys <- []byte("Board need to be specified in core:architecture:name format")
-		return false, "", ""
+		return false, "", nil
 	}
-	file, err := os.Open(boardFields[0] + "/hardware/" + boardFields[1] + "/boards.txt")
+	tempPath := (filepath.Dir(execPath) + "/" + boardFields[0] + "/hardware/" + boardFields[1] + "/boards.txt")
+	file, err := os.Open(tempPath)
 	if err != nil {
 		h.broadcastSys <- []byte("Could not find board: " + boardname)
 		fmt.Println("Error:", err)
-		return false, "", ""
+		return false, "", nil
 	}
 	scanner := bufio.NewScanner(file)
-	cmdline := ""
 	//ide_tools_dir := "./" + boardFields[0] + "/tools"
 
 	boardOptions := make(map[string]string)
@@ -704,16 +707,20 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	}
 
 	boardOptions["serial.port"] = portname
-	boardOptions["build.project_name"] = strings.Trim(filePath, "\n")
+
+	filePath = strings.Trim(filePath, "\n")
+	boardOptions["build.path"] = filepath.Dir(filePath)
+	boardOptions["build.project_name"] = filepath.Base(filePath)
 
 	//fmt.Printf("boardOptions %v %T", boardOptions, boardOptions)
 
 	file.Close()
-	file, err = os.Open(boardFields[0] + "/hardware/" + boardFields[1] + "/platform.txt")
+	tempPath = (filepath.Dir(execPath) + "/" + boardFields[0] + "/hardware/" + boardFields[1] + "/platform.txt")
+	file, err = os.Open(tempPath)
 	if err != nil {
 		h.broadcastSys <- []byte("Could not find board: " + boardname)
 		fmt.Println("Error:", err)
-		return false, "", ""
+		return false, "", nil
 	}
 	scanner = bufio.NewScanner(file)
 
@@ -732,11 +739,11 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	file.Close()
 
 	version := uploadOptions["runtime.tools."+tool+".version"]
-	path, err := filepath.Abs(boardFields[0] + "/tools/" + tool + "/" + version)
+	path := (filepath.Dir(execPath) + "/" + boardFields[0] + "/tools/" + tool + "/" + version)
 	if err != nil {
 		h.broadcastSys <- []byte("Could not find board: " + boardname)
 		fmt.Println("Error:", err)
-		return false, "", ""
+		return false, "", nil
 	}
 
 	boardOptions["runtime.tools.avrdude.path"] = path
@@ -744,15 +751,18 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	//boardOptions["config.path"] = uploadOptions["tools."+tool+".config.path"]
 	//boardOptions["path"] = uploadOptions["tools."+tool+".path"]
 
-	var winded = true
-
-	cmdline = uploadOptions["tools."+tool+".upload.pattern"]
+	cmdline := uploadOptions["tools."+tool+".upload.pattern"]
 	// remove cmd.path as it is handles differently
 	cmdline = strings.Replace(cmdline, "\"{cmd.path}\"", " ", 1)
 	cmdline = strings.Replace(cmdline, "\"", "", -1)
 
-	for winded != false {
-		cmdline, winded = formatCmdline(cmdline, boardOptions)
+	cmdlineSlice := strings.Split(cmdline, " ")
+	var winded = true
+	for index, _ := range cmdlineSlice {
+		winded = true
+		for winded != false {
+			cmdlineSlice[index], winded = formatCmdline(cmdlineSlice[index], boardOptions)
+		}
 	}
 
 	// cmdline := "-C" + ide_tools_dir + "etc/avrdude.conf" +
@@ -774,14 +784,22 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		port, err := serial.OpenPort(portname, mode)
 		if err != nil {
 			log.Println(err)
-			return false, "", ""
+			return false, "", nil
 		}
 		time.Sleep(time.Second / 2)
 		port.Close()
 		time.Sleep(time.Second * 2)
 	}
 
-	return (tool != ""), tool, cmdline
+	tool = (filepath.Dir(execPath) + "/" + boardFields[0] + "/tools/" + tool + "/bin/" + tool)
+	// the file doesn't exist, we are on windows
+	if _, err := os.Stat(tool); err != nil {
+		tool = tool + ".exe"
+		// convert all "/" to "\"
+		tool = strings.Replace(tool, "/", "\\", -1)
+	}
+
+	return (tool != ""), tool, cmdlineSlice
 }
 
 func findPortByName(portname string) (*serport, bool) {
