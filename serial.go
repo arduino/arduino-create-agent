@@ -675,8 +675,8 @@ func formatCmdline(cmdline string, boardOptions map[string]string) (string, bool
 }
 
 func assembleCompilerCommand(boardname string, portname string, filePath string) (bool, string, []string) {
-	// walk across the local filesystem, find boards.txt files, search for the board in it
 
+	// get executable (self)path and use it as base for all other paths
 	execPath, _ := osext.Executable()
 
 	boardFields := strings.Split(boardname, ":")
@@ -692,7 +692,6 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		return false, "", nil
 	}
 	scanner := bufio.NewScanner(file)
-	//ide_tools_dir := "./" + boardFields[0] + "/tools"
 
 	boardOptions := make(map[string]string)
 	uploadOptions := make(map[string]string)
@@ -708,13 +707,15 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 
 	boardOptions["serial.port"] = portname
 
+	// filepath need special care; the project_name var is the filename minus its extension (hex or bin)
+	// if we are going to modify standard IDE files we also could pass ALL filename
 	filePath = strings.Trim(filePath, "\n")
 	boardOptions["build.path"] = filepath.Dir(filePath)
 	boardOptions["build.project_name"] = filepath.Base(filePath)
 
-	//fmt.Printf("boardOptions %v %T", boardOptions, boardOptions)
-
 	file.Close()
+
+	// get infos about the programmer
 	tempPath = (filepath.Dir(execPath) + "/" + boardFields[0] + "/hardware/" + boardFields[1] + "/platform.txt")
 	file, err = os.Open(tempPath)
 	if err != nil {
@@ -727,7 +728,6 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	tool := boardOptions["upload.tool"]
 
 	for scanner.Scan() {
-		//fmt.Println(scanner.Text());
 		// map everything matching with upload
 		if strings.Contains(scanner.Text(), tool) {
 			arr := strings.Split(scanner.Text(), "=")
@@ -738,6 +738,7 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	}
 	file.Close()
 
+	// multiple verisons of the same programmer can be handled if "version" is specified
 	version := uploadOptions["runtime.tools."+tool+".version"]
 	path := (filepath.Dir(execPath) + "/" + boardFields[0] + "/tools/" + tool + "/" + version)
 	if err != nil {
@@ -748,14 +749,12 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 
 	boardOptions["runtime.tools.avrdude.path"] = path
 
-	//boardOptions["config.path"] = uploadOptions["tools."+tool+".config.path"]
-	//boardOptions["path"] = uploadOptions["tools."+tool+".path"]
-
 	cmdline := uploadOptions["tools."+tool+".upload.pattern"]
-	// remove cmd.path as it is handles differently
+	// remove cmd.path as it is handled differently
 	cmdline = strings.Replace(cmdline, "\"{cmd.path}\"", " ", 1)
 	cmdline = strings.Replace(cmdline, "\"", "", -1)
 
+	// split the commandline in substrings and recursively replace mapped strings
 	cmdlineSlice := strings.Split(cmdline, " ")
 	var winded = true
 	for index, _ := range cmdlineSlice {
@@ -765,14 +764,7 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		}
 	}
 
-	// cmdline := "-C" + ide_tools_dir + "etc/avrdude.conf" +
-	// 	" -c" + protocol +
-	// 	" -b" + speed +
-	// 	" -p" + mcu +
-	// 	" -P" + portname +
-	// 	" -D" +
-	// 	" -Uflash:w:" + filePath + ":i "
-
+	// some boards (eg. Leonardo, Yun) need a special procedure to enter bootloader
 	if boardOptions["upload.use_1200bps_touch"] == "true" {
 		// triggers bootloader mode
 		// the portname could change in this occasion, so fail gently
