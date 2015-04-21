@@ -165,6 +165,12 @@ And SPJS would regurgitate the command to all connected sockets like:
 And if the ChiliPeppr workspace were listening for all incoming {"Cmd":"Broadcast","Msg":...} signals and specifically the "get-settings" command then it could respond with something like:
 `broadcast settings x:1, y:10, z:4`
 
+Interesting Branches of SPJS
+-----------
+https://github.com/benjamind/gpio-json-server/
+
+This is a very interesting branch on this project where Ben took the basic code layout, websocket, and command structure and created a GPIO server version of this app. It's such an interesting and awesome project, it makes me want to combine his code into SPJS to make a full-blown version of serving up hardware ports via JSON and websockets--whether they're serial ports or GPIO ports. Something about that just feels right. The only downside is that no Windows or Mac machines have GPIO, so it would be a very Raspberry Pi specific feature.
+
 FAQ
 -------
 - Q: There are several Node.js serial port servers. Why not write this in Node.js instead of Go?
