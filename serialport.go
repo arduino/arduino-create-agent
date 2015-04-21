@@ -8,7 +8,7 @@ import (
 	"io"
 	"log"
 	"os/exec"
-	"runtime"
+	//"runtime"
 	"strconv"
 	"strings"
 )
@@ -419,12 +419,14 @@ func spHandlerClose(p *serport) {
 func spHandlerProgram(flasher string, cmdString []string) {
 
 	var oscmd *exec.Cmd
-	if runtime.GOOS == "darwin" {
-		sh, _ := exec.LookPath("sh")
-		oscmd = exec.Command(sh+" "+flasher, cmdString...)
-	} else {
-		oscmd = exec.Command(flasher, cmdString...)
-	}
+	// if runtime.GOOS == "darwin" {
+	// 	sh, _ := exec.LookPath("sh")
+	// 	// prepend the flasher to run it via sh
+	// 	cmdString = append([]string{flasher}, cmdString...)
+	// 	oscmd = exec.Command(sh, cmdString...)
+	// } else {
+	oscmd = exec.Command(flasher, cmdString...)
+	// }
 
 	// Stdout buffer
 	//var cmdOutput []byte
