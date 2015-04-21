@@ -311,6 +311,8 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 
 	mode := &serial.Mode{
 		BaudRate: baud,
+		Vmin:     0,
+		Vtimeout: 10,
 	}
 
 	sp, err := serial.OpenPort(portname, mode)
