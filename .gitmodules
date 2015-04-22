@@ -1,0 +1,3 @@
+[submodule "arduino"]
+	path = arduino
+	url = https://github.com/facchinm/arduino-flash-tools
