@@ -3,7 +3,7 @@
 package main
 
 import (
-	"go.bug.st/serial"
+	"github.com/facchinm/go-serial"
 	"log"
 	//"os"
 	"regexp"

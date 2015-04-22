@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	//"github.com/johnlauer/goserial"
-	"go.bug.st/serial"
+	"github.com/facchinm/go-serial"
 	"io"
 	"log"
 	"os/exec"
