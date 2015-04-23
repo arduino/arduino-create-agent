@@ -1,8 +1,8 @@
 serial-port-json-server
 =======================
-Version 1.81
+Version 1.82
 
-A serial port JSON websocket &amp; web server that runs from the command line on Windows, Mac, Linux, Raspberry Pi, or Beagle Bone that lets you communicate with your serial port from a web application. This enables web apps to be written that can communicate with your local serial device such as an Arduino, CNC controller, or any device that communicates over the serial port.
+A serial port JSON websocket &amp; web server that runs from the command line on Windows, Mac, Linux, Raspberry Pi, or Beagle Bone that lets you communicate with your serial port from a web application. This enables web apps to be written that can communicate with your local serial device such as an Arduino, CNC controller, or any device that communicates over the serial port. Since version 1.82 you can now also program your Arduino by uploading a hex file.
 
 The app is written in Go. It has an embedded web server and websocket server. The server runs on the standard port of localhost:8989. You can connect to it locally with your browser to interact by visiting http://localhost:8989. The websocket is technically running at ws://localhost/ws. You can of course connect to your websocket from any other computer to bind in remotely. For example, just connect to ws://192.168.1.10/ws if you are on a remote host where 192.168.1.10 is your devices actual IP address.
 
@@ -143,6 +143,7 @@ memstats | | Send back data on the memory usage and garbage collection performan
 broadcast string | broadcast my data | Send in this command and you will get a message reflected back to all connected endpoints. This is useful for communicating with all connected clients, i.e. in a CNC scenario is a pendant wants to ask the main workspace if there are any settings it should know about. For example send in "broadcast this is my custom cmd" and get this reflected back to all connected sockets {"Cmd":"Broadcast","Msg":"this is my custom cmd\n"}
 version | | Get the software version of SPJS that is running
 hostname | | Get the hostname of the current SPJS instance 
+program port board:name $path/to/filename/without/extension | | Send a hex file to your Arduino board to program it.
 
 Garbage collection
 -------
@@ -248,6 +249,12 @@ sudo service serial-port-json-server start
 
 Revisions
 -------
+Changes in 1.82
+- Thanks go to https://github.com/facchinm from Arduino.cc for the changes in 1.82. 
+- You can now program your Arduino by using the program command in SPJS.
+- Avrdude and Bossac are now included in the binary distributions for each platform.
+- The serial library has been replaced with one from https://github.com/cmaglie to solve some long-standing bugs including a connection handshake and ports not closing correctly on all platforms.
+
 Changes in 1.81
 - On Linux, SPJS now tries to grab the Manufacturer and Name of the serial port to give you pretty names for your connected devices. Arduinos and TinyGs show up with nicely descriptive names now instead of just ttyUSB0 or ttyACM0.
 
