@@ -715,7 +715,7 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	}
 
 	boardOptions["serial.port"] = portname
-	boardOptions["serial.port.file"] = portname
+	boardOptions["serial.port.file"] = filepath.Base(portname)
 
 	// filepath need special care; the project_name var is the filename minus its extension (hex or bin)
 	// if we are going to modify standard IDE files we also could pass ALL filename
@@ -797,7 +797,7 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		}
 		port.SetDTR(false)
 		port.Close()
-		time.Sleep(time.Second / 4 * 10)
+		time.Sleep(time.Second / 2)
 		// time.Sleep(time.Second / 4)
 		// wait for port to reappear
 		if boardOptions["upload.wait_for_upload_port"] == "true" {
