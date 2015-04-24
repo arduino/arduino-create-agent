@@ -53,7 +53,7 @@ func (h *hub) run() {
 			h.connections[c] = true
 			// send supported commands
 			c.send <- []byte("{\"Version\" : \"" + version + "\"} ")
-			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud] [bufferAlgorithm (optional)]\", \"send [portName] [cmd]\", \"sendnobuf [portName] [cmd]\", \"close [portName]\", \"bufferalgorithms\", \"baudrates\", \"restart\", \"exit\", \"program [portName] [board:name] [$path/to/filename/without/extension]\"]} ")
+			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud] [bufferAlgorithm (optional)]\", \"send [portName] [cmd]\", \"sendnobuf [portName] [cmd]\", \"close [portName]\", \"bufferalgorithms\", \"baudrates\", \"restart\", \"exit\", \"program [portName] [board:name] [$path/to/filename/without/extension]\", \"programfromurl [portName] [board:name] [urlToHexFile]\"]} ")
 			c.send <- []byte("{\"Hostname\" : \"" + *hostname + "\"} ")
 		case c := <-h.unregister:
 			delete(h.connections, c)
@@ -169,6 +169,15 @@ func checkCmd(m []byte) {
 			go spErr("You did not specify a port to close")
 		}
 
+	} else if strings.HasPrefix(sl, "programfromurl") {
+
+		args := strings.Split(s, " ")
+		if len(args) == 4 {
+			go spProgramFromUrl(args[1], args[2], args[3])
+		} else {
+			go spErr("You did not specify a port, a board to program and/or a URL")
+		}
+
 	} else if strings.HasPrefix(sl, "program") {
 
 		args := strings.Split(s, " ")
@@ -176,7 +185,7 @@ func checkCmd(m []byte) {
 			var slice []string = args[3:len(args)]
 			go spProgram(args[1], args[2], strings.Join(slice, " "))
 		} else {
-			go spErr("You did not specify a port, a board to program and a filename")
+			go spErr("You did not specify a port, a board to program and/or a filename")
 		}
 
 	} else if strings.HasPrefix(sl, "sendjson") {

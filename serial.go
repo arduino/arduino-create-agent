@@ -540,6 +540,16 @@ func spClose(portname string) {
 	}
 }
 
+// Download the file from URL first, store in tmp folder, then pass to spProgram
+func spProgramFromUrl(portname string, boardname string, url string) {
+	filename, err := downloadFromUrl(url)
+	if err != nil {
+		spErr(err.Error())
+	} else {
+		spProgram(portname, boardname, filename)
+	}
+}
+
 func spProgram(portname string, boardname string, filePath string) {
 
 	isFound, flasher, mycmd := assembleCompilerCommand(boardname, portname, filePath)
