@@ -805,7 +805,7 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 			log.Println(err)
 			return false, "", nil
 		}
-		port.SetDTR(false)
+		//port.SetDTR(false)
 		port.Close()
 		time.Sleep(time.Second / 2)
 		// time.Sleep(time.Second / 4)
