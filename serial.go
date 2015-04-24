@@ -721,7 +721,7 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	// if we are going to modify standard IDE files we also could pass ALL filename
 	filePath = strings.Trim(filePath, "\n")
 	boardOptions["build.path"] = filepath.Dir(filePath)
-	boardOptions["build.project_name"] = filepath.Base(filePath)
+	boardOptions["build.project_name"] = strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath)))
 
 	file.Close()
 
