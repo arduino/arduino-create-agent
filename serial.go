@@ -684,6 +684,15 @@ func formatCmdline(cmdline string, boardOptions map[string]string) (string, bool
 	return cmdline, true
 }
 
+func containsStr(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func assembleCompilerCommand(boardname string, portname string, filePath string) (bool, string, []string) {
 
 	// get executable (self)path and use it as base for all other paths
@@ -716,12 +725,13 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	}
 
 	boardOptions["serial.port"] = portname
+	boardOptions["serial.port.file"] = filepath.Base(portname)
 
 	// filepath need special care; the project_name var is the filename minus its extension (hex or bin)
 	// if we are going to modify standard IDE files we also could pass ALL filename
 	filePath = strings.Trim(filePath, "\n")
 	boardOptions["build.path"] = filepath.Dir(filePath)
-	boardOptions["build.project_name"] = filepath.Base(filePath)
+	boardOptions["build.project_name"] = strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath)))
 
 	file.Close()
 
@@ -744,6 +754,10 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 			uploadOptions[arr[0]] = arr[1]
 			arr[0] = strings.Replace(arr[0], "tools."+tool+".", "", 1)
 			boardOptions[arr[0]] = arr[1]
+			// we have a "=" in command line
+			if len(arr) > 2 {
+				boardOptions[arr[0]] = arr[1] + "=" + arr[2]
+			}
 		}
 	}
 	file.Close()
@@ -757,11 +771,12 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		return false, "", nil
 	}
 
-	boardOptions["runtime.tools.avrdude.path"] = path
+	boardOptions["runtime.tools."+tool+".path"] = path
 
-	cmdline := uploadOptions["tools."+tool+".upload.pattern"]
+	cmdline := boardOptions["upload.pattern"]
 	// remove cmd.path as it is handled differently
 	cmdline = strings.Replace(cmdline, "\"{cmd.path}\"", " ", 1)
+	cmdline = strings.Replace(cmdline, "\"{path}/{cmd}\"", " ", 1)
 	cmdline = strings.Replace(cmdline, "\"", "", -1)
 
 	// split the commandline in substrings and recursively replace mapped strings
@@ -782,15 +797,25 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 
 		mode := &serial.Mode{
 			BaudRate: 1200,
+			Vmin:     1,
+			Vtimeout: 0,
 		}
 		port, err := serial.OpenPort(portname, mode)
 		if err != nil {
 			log.Println(err)
 			return false, "", nil
 		}
-		time.Sleep(time.Second / 2)
+		//port.SetDTR(false)
 		port.Close()
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second / 2)
+		// time.Sleep(time.Second / 4)
+		// wait for port to reappear
+		if boardOptions["upload.wait_for_upload_port"] == "true" {
+			ports, _ := serial.GetPortsList()
+			for !(containsStr(ports, portname)) {
+				ports, _ = serial.GetPortsList()
+			}
+		}
 	}
 
 	tool = (filepath.Dir(execPath) + "/" + boardFields[0] + "/tools/" + tool + "/bin/" + tool)
@@ -801,7 +826,15 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		tool = strings.Replace(tool, "/", "\\", -1)
 	}
 
-	return (tool != ""), tool, cmdlineSlice
+	// remove blanks from cmdlineSlice
+	var cmdlineSliceOut []string
+	for _, element := range cmdlineSlice {
+		if element != "" {
+			cmdlineSliceOut = append(cmdlineSliceOut, element)
+		}
+	}
+
+	return (tool != ""), tool, cmdlineSliceOut
 }
 
 func findPortByName(portname string) (*serport, bool) {

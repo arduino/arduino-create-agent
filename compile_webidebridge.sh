@@ -9,6 +9,10 @@ cp -r arduino/tools_linux_32  arduino/tools
 goxc -os="linux" -arch="386" --include="arduino/hardware,arduino/tools" -n="Arduino_WebIDE_Bridge" -d=.
 rm -rf arduino/tools
 
+cp -r arduino/tools_linux_arm  arduino/tools
+goxc -os="linux" -arch="arm" --include="arduino/hardware,arduino/tools" -n="Arduino_WebIDE_Bridge" -d=.
+rm -rf arduino/tools
+
 cp -r arduino/tools_windows  arduino/tools
 goxc -os="windows" --include="arduino/hardware,arduino/tools" -n="Arduino_WebIDE_Bridge" -d=.
 rm -rf arduino/tools
