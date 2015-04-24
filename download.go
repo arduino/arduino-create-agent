@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -25,13 +26,8 @@ func downloadFromUrl(url string) (filename string, err error) {
 	tokens := strings.Split(url, "/")
 	filePrefix := tokens[len(tokens)-1]
 	fmt.Println("The filePrefix is", filePrefix)
-	tmpfile, err := ioutil.TempFile(tmpdir, filePrefix)
-	if err != nil {
-		fmt.Println("Error creating tempfile. ", err)
-		return "", errors.New(err.Error() + " Could not create temp file to store downloaded file. Do you have permissions? Are you out of storage space?")
-	}
 
-	fileName := tmpfile.Name()
+	fileName, _ := filepath.Abs(tmpdir + "/" + filePrefix)
 	fmt.Println("Downloading", url, "to", fileName)
 
 	// TODO: check file existence first with io.IsExist
