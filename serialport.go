@@ -7,10 +7,7 @@ import (
 	"github.com/facchinm/go-serial"
 	"io"
 	"log"
-	"os/exec"
-	//"runtime"
 	"strconv"
-	"strings"
 )
 
 type SerialConfig struct {
@@ -414,35 +411,4 @@ func spHandlerClose(p *serport) {
 	// we opened. the only thing holding up that thread is the p.reader()
 	// so if we close the reader we should get an exit
 	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
-}
-
-func spHandlerProgram(flasher string, cmdString []string) {
-
-	var oscmd *exec.Cmd
-	// if runtime.GOOS == "darwin" {
-	// 	sh, _ := exec.LookPath("sh")
-	// 	// prepend the flasher to run it via sh
-	// 	cmdString = append([]string{flasher}, cmdString...)
-	// 	oscmd = exec.Command(sh, cmdString...)
-	// } else {
-	oscmd = exec.Command(flasher, cmdString...)
-	// }
-
-	// Stdout buffer
-	//var cmdOutput []byte
-
-	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
-	log.Printf("Flashing with command:" + strings.Join(cmdString, " "))
-
-	cmdOutput, err := oscmd.CombinedOutput()
-
-	if err != nil {
-		log.Printf("Command finished with error: %v "+string(cmdOutput), err)
-		h.broadcastSys <- []byte("Could not program the board")
-	} else {
-		log.Printf("Finished without error. Good stuff. stdout: " + string(cmdOutput))
-		h.broadcastSys <- []byte("Flash OK!")
-		// analyze stdin
-
-	}
 }

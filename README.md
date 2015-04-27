@@ -143,7 +143,8 @@ memstats | | Send back data on the memory usage and garbage collection performan
 broadcast string | broadcast my data | Send in this command and you will get a message reflected back to all connected endpoints. This is useful for communicating with all connected clients, i.e. in a CNC scenario is a pendant wants to ask the main workspace if there are any settings it should know about. For example send in "broadcast this is my custom cmd" and get this reflected back to all connected sockets {"Cmd":"Broadcast","Msg":"this is my custom cmd\n"}
 version | | Get the software version of SPJS that is running
 hostname | | Get the hostname of the current SPJS instance 
-program port board:name $path/to/filename/without/extension | | Send a hex file to your Arduino board to program it.
+program port core:architecture:name $path/to/filename/without/extension | programfromurl com3 arduino:avr:uno c:\myfiles\grbl_v0_9i_atmega328p_16mhz_115200.hex | Send a hex file to your Arduino board to program it.
+programfromurl port core:architecture:name url | programfromurl com3 arduino:avr:uno https://raw.githubusercontent.com/grbl/grbl-builds/master/builds/grbl_v0_9i_atmega328p_16mhz_115200.hex | Download a hex file from a URL and then send it to your Arduino board to program it.
 
 Garbage collection
 -------
