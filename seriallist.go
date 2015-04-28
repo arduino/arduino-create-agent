@@ -19,12 +19,14 @@ type OsSerialPort struct {
 	Product      string
 	IdProduct    string
 	IdVendor     string
+	NetworkPort  bool
 }
 
 func GetList() ([]OsSerialPort, error) {
 
 	//log.Println("Doing GetList()")
 
+	// will timeout in 2 seconds
 	ports, err := serial.GetPortsList()
 
 	arrPorts := []OsSerialPort{}
@@ -51,6 +53,9 @@ func GetList() ([]OsSerialPort, error) {
 		}
 		arrPorts = newarrPorts
 	}
+
+	netportList, _ := GetNetworkList()
+	arrPorts = append(arrPorts, netportList...)
 
 	//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 

@@ -14,7 +14,7 @@ goxc -os="linux" -arch="arm" --include="arduino/hardware,arduino/tools" -n="Ardu
 rm -rf arduino/tools
 
 cp -r arduino/tools_windows  arduino/tools
-goxc -os="windows" --include="arduino/hardware,arduino/tools" -n="Arduino_WebIDE_Bridge" -d=.
+goxc -os="windows" --include="arduino/hardware,arduino/tools" -n="Arduino_WebIDE_Bridge" -d=. -build-ldflags="-H=windowsgui"
 rm -rf arduino/tools
 
 cp -r arduino/tools_darwin  arduino/tools

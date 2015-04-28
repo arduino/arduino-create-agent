@@ -651,6 +651,17 @@ func findPortByName(portname string) (*serport, bool) {
 	return nil, false
 }
 
+func findPortByNameRerun(portname string) (OsSerialPort, bool) {
+	portnamel := strings.ToLower(portname)
+	list, _ := GetList()
+	for _, item := range list {
+		if strings.ToLower(item.Name) == portnamel {
+			return item, true
+		}
+	}
+	return OsSerialPort{}, false
+}
+
 func spBufferAlgorithms() {
 	//arr := []string{"default", "tinyg", "dummypause"}
 	arr := availableBufferAlgorithms

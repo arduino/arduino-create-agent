@@ -2,11 +2,15 @@ package main
 
 import (
 	"bufio"
-	//"fmt"
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/facchinm/go-serial"
 	"github.com/kardianos/osext"
+	"io"
 	"log"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -33,8 +37,63 @@ func spProgramFromUrl(portname string, boardname string, url string) {
 
 }
 
-func spProgram(portname string, boardname string, filePath string) {
+func colonToUnderscore(input string) string {
+	output := strings.Replace(input, ":", "_", -1)
+	return output
+}
 
+func spProgramNetwork(portname string, boardname string, filePath string) {
+
+	// Prepare a form that you will submit to that URL.
+	_url := "http://root:arduino@" + portname + "/data/upload_sketch_silent"
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	// Add your image file
+	f, err := os.Open(filePath)
+	if err != nil {
+		return
+	}
+	fw, err := w.CreateFormFile("sketch_hex", filePath)
+	if err != nil {
+		return
+	}
+	if _, err = io.Copy(fw, f); err != nil {
+		return
+	}
+	// Add the other fields
+	if fw, err = w.CreateFormField("board"); err != nil {
+		return
+	}
+	if _, err = fw.Write([]byte(colonToUnderscore(boardname))); err != nil {
+		return
+	}
+	// Don't forget to close the multipart writer.
+	// If you don't close it, your request will be missing the terminating boundary.
+	w.Close()
+
+	// Now that you have a form, you can submit it to your handler.
+	req, err := http.NewRequest("POST", _url, &b)
+	if err != nil {
+		return
+	}
+	// Don't forget to set the content type, this will contain the boundary.
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	// Submit the request
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return
+	}
+
+	// Check the response
+	if res.StatusCode != http.StatusOK {
+		err = fmt.Errorf("bad status: %s", res.Status)
+	}
+	return
+}
+
+func spProgramLocal(portname string, boardname string, filePath string) {
 	isFound, flasher, mycmd := assembleCompilerCommand(boardname, portname, filePath)
 	mapD := map[string]string{"ProgrammerStatus": "CommandReady", "IsFound": strconv.FormatBool(isFound), "Flasher": flasher, "Cmd": strings.Join(mycmd, " ")}
 	mapB, _ := json.Marshal(mapD)
@@ -43,8 +102,27 @@ func spProgram(portname string, boardname string, filePath string) {
 	if isFound {
 		spHandlerProgram(flasher, mycmd)
 	} else {
-		spErr("We could not find the serial port " + portname + " or the board " + boardname + "  that you were trying to program.")
+		spErr("We could not find the board " + boardname + "  that you were trying to program.")
 	}
+}
+
+func spProgram(portname string, boardname string, filePath string) {
+
+	// check if the port is phisical or network
+	var networkPort bool
+	myport, exist := findPortByNameRerun(portname)
+	if !exist {
+		spErr("We could not find the port " + portname + "  that you were trying to open.")
+	} else {
+		networkPort = myport.NetworkPort
+	}
+
+	if networkPort {
+		spProgramNetwork(portname, boardname, filePath)
+	} else {
+		spProgramLocal(portname, boardname, filePath)
+	}
+
 }
 
 func spHandlerProgram(flasher string, cmdString []string) {
