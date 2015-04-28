@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"strconv"
+	"time"
 )
 
 type SerialConfig struct {
@@ -92,6 +93,8 @@ func (p *serport) reader() {
 
 	//var buf bytes.Buffer
 	ch := make([]byte, 1024)
+	timeCheckOpen := time.Now()
+
 	for {
 
 		n, err := p.portIo.Read(ch)
@@ -156,7 +159,7 @@ func (p *serport) reader() {
 		// close and the OS doesn't clear out that buffer on a new
 		// connect. This means we'll only catch EOF's when there are
 		// other characters with it, but that seems to work ok
-		if len(ch) == 0 {
+		if n <= 0 {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				// hit end of file
 				log.Println("Hit end of file on serial port")
@@ -170,6 +173,17 @@ func (p *serport) reader() {
 					err.Error() + " Closing port.")
 				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
 				break
+			}
+
+			// Keep track of time difference between two consecutive read with n == 0 and err == nil
+			// we get here if the port has been disconnected while open (cpu usage will jump to 100%)
+			// let's close the port only if the events are extremely fast (<1ms)
+			if err == nil {
+				diff := time.Since(timeCheckOpen)
+				if diff.Nanoseconds() < 1000000 {
+					p.isClosing = true
+				}
+				timeCheckOpen = time.Now()
 			}
 		}
 	}
