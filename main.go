@@ -15,6 +15,9 @@ import (
 	"os"
 	//"net/http/pprof"
 	//"runtime"
+	"github.com/getlantern/systray"
+	"github.com/getlantern/systray/example/icon"
+	"github.com/skratchdot/open-golang/open"
 	"runtime/debug"
 	"text/template"
 	"time"
@@ -82,6 +85,8 @@ func main() {
 	if *isLaunchSelf {
 		launchSelfLater()
 	}
+
+	//systray.Run(setupSysTray)
 
 	//getList()
 	f := flag.Lookup("addr")
@@ -156,6 +161,28 @@ func main() {
 		log.Fatal("Error ListenAndServe:", err)
 	}
 
+}
+
+func setupSysTray() {
+	systray.SetIcon(icon.Data)
+	systray.SetTitle("Arduino WebIDE Bridge")
+
+	// We can manipulate the systray in other goroutines
+	go func() {
+		systray.SetIcon(icon.Data)
+		mUrl := systray.AddMenuItem("Open webide.arduino.cc", "WebIDE Home")
+		mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
+		for {
+			select {
+			case <-mUrl.ClickedCh:
+				open.Run("http://webide.arduino.cc:8080")
+			case <-mQuit.ClickedCh:
+				systray.Quit()
+				fmt.Println("Quit now...")
+				exit()
+			}
+		}
+	}()
 }
 
 func externalIP() (string, error) {
