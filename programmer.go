@@ -29,6 +29,7 @@ func spProgramFromUrl(portname string, boardname string, url string) {
 
 	if err != nil {
 		spErr(err.Error())
+		return
 	} else {
 		spProgram(portname, boardname, filename)
 	}
@@ -44,27 +45,35 @@ func colonToUnderscore(input string) string {
 
 func spProgramNetwork(portname string, boardname string, filePath string) {
 
+	log.Println("Starting network upload")
+
 	// Prepare a form that you will submit to that URL.
 	_url := "http://root:arduino@" + portname + "/data/upload_sketch_silent"
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	// Add your image file
+	filePath = strings.Trim(filePath, "\n")
 	f, err := os.Open(filePath)
 	if err != nil {
+		log.Println("Error opening file" + filePath + " err: " + err.Error())
 		return
 	}
 	fw, err := w.CreateFormFile("sketch_hex", filePath)
 	if err != nil {
+		log.Println("Error creating form file")
 		return
 	}
 	if _, err = io.Copy(fw, f); err != nil {
+		log.Println("Error copying form file")
 		return
 	}
 	// Add the other fields
 	if fw, err = w.CreateFormField("board"); err != nil {
+		log.Println("Error creating form field")
 		return
 	}
 	if _, err = fw.Write([]byte(colonToUnderscore(boardname))); err != nil {
+		log.Println("Error writing form field")
 		return
 	}
 	// Don't forget to close the multipart writer.
@@ -74,15 +83,23 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 	// Now that you have a form, you can submit it to your handler.
 	req, err := http.NewRequest("POST", _url, &b)
 	if err != nil {
+		log.Println("Error creating post request")
 		return
 	}
 	// Don't forget to set the content type, this will contain the boundary.
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
+	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
+	log.Printf("Network flashing on " + portname)
+	mapD := map[string]string{"ProgrammerStatus": "Starting", "Cmd": "POST"}
+	mapB, _ := json.Marshal(mapD)
+	h.broadcastSys <- mapB
+
 	// Submit the request
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
+		log.Println("Error during post request")
 		return
 	}
 
@@ -90,7 +107,22 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 	if res.StatusCode != http.StatusOK {
 		err = fmt.Errorf("bad status: %s", res.Status)
 	}
-	return
+
+	if err != nil {
+		log.Printf("Command finished with error: %v ", err)
+		h.broadcastSys <- []byte("Could not program the board")
+		mapD := map[string]string{"ProgrammerStatus": "Error " + res.Status, "Msg": "Could not program the board", "Output": ""}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+	} else {
+		log.Printf("Finished without error. Good stuff.")
+		h.broadcastSys <- []byte("Flash OK!")
+		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok", "Output": ""}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+		// analyze stdin
+
+	}
 }
 
 func spProgramLocal(portname string, boardname string, filePath string) {
@@ -102,17 +134,19 @@ func spProgramLocal(portname string, boardname string, filePath string) {
 	if isFound {
 		spHandlerProgram(flasher, mycmd)
 	} else {
-		spErr("We could not find the board " + boardname + "  that you were trying to program.")
+		spErr("Could not find the board " + boardname + "  that you were trying to program.")
+		return
 	}
 }
 
 func spProgram(portname string, boardname string, filePath string) {
 
-	// check if the port is phisical or network
+	// check if the port is physical or network
 	var networkPort bool
 	myport, exist := findPortByNameRerun(portname)
 	if !exist {
-		spErr("We could not find the port " + portname + "  that you were trying to open.")
+		spErr("Could not find the port " + portname + "  that you were trying to open.")
+		return
 	} else {
 		networkPort = myport.NetworkPort
 	}
@@ -322,8 +356,11 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		// wait for port to reappear
 		if boardOptions["upload.wait_for_upload_port"] == "true" {
 			ports, _ := serial.GetPortsList()
+			log.Println(ports)
 			for !(containsStr(ports, portname)) {
 				ports, _ = serial.GetPortsList()
+				log.Println(ports)
+				time.Sleep(time.Millisecond * 200)
 			}
 		}
 	}
