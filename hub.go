@@ -120,7 +120,7 @@ func checkCmd(m []byte) {
 	s := string(m[:])
 	log.Print(s)
 
-	sl := strings.ToLower(s)
+	sl := strings.ToLower(strings.Trim(s, "\n"))
 
 	if strings.HasPrefix(sl, "open") {
 
