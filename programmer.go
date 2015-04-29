@@ -229,6 +229,11 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		}
 	}
 
+	if len(boardOptions) == 0 {
+		h.broadcastSys <- []byte("Board " + boardFields[2] + " is not part of " + boardFields[0] + ":" + boardFields[1])
+		return false, "", nil
+	}
+
 	boardOptions["serial.port"] = portname
 	boardOptions["serial.port.file"] = filepath.Base(portname)
 
