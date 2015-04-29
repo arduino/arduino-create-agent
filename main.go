@@ -16,7 +16,6 @@ import (
 	//"net/http/pprof"
 	//"runtime"
 	"github.com/getlantern/systray"
-	"github.com/getlantern/systray/example/icon"
 	"github.com/skratchdot/open-golang/open"
 	"runtime/debug"
 	"text/template"
@@ -38,7 +37,7 @@ var (
 	// up their list with a regexp so it's cleaner inside their end-user interface
 	// such as ChiliPeppr, this can make the massive list that Linux gives back
 	// to you be a bit more manageable
-	regExpFilter = flag.String("regex", "", "Regular expression to filter serial port list")
+	regExpFilter = flag.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
 
 	// allow garbageCollection()
 	//isGC = flag.Bool("gc", false, "Is garbage collection on? Off by default.")
@@ -86,7 +85,7 @@ func main() {
 		launchSelfLater()
 	}
 
-	//systray.Run(setupSysTray)
+	go systray.Run(setupSysTray)
 
 	//getList()
 	f := flag.Lookup("addr")
@@ -164,12 +163,12 @@ func main() {
 }
 
 func setupSysTray() {
-	systray.SetIcon(icon.Data)
+	systray.SetIcon(IconData)
 	systray.SetTitle("Arduino WebIDE Bridge")
 
 	// We can manipulate the systray in other goroutines
 	go func() {
-		systray.SetIcon(icon.Data)
+		systray.SetIcon(IconData)
 		mUrl := systray.AddMenuItem("Open webide.arduino.cc", "WebIDE Home")
 		mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
 		for {
