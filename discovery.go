@@ -43,7 +43,7 @@ func GetNetworkList() ([]OsSerialPort, error) {
 
 	timeout := make(chan bool, 1)
 	go func(exitCh chan<- bool) {
-		time.Sleep(1.5 * time.Second)
+		time.Sleep(2 * time.Second)
 		timeout <- true
 		exitCh <- true
 	}(resolver.Exit)
