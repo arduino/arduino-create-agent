@@ -48,7 +48,7 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 	log.Println("Starting network upload")
 
 	// Prepare a form that you will submit to that URL.
-	_url := "http://root:arduino@" + portname + "/data/upload_sketch_silent"
+	_url := "http://" + portname + "/data/upload_sketch_silent"
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	// Add your image file
@@ -88,6 +88,7 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 	}
 	// Don't forget to set the content type, this will contain the boundary.
 	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.SetBasicAuth("root", "arduino")
 
 	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
 	log.Printf("Network flashing on " + portname)
