@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	//"net/http/pprof"
-	//"runtime"
 	"github.com/shurcooL/trayhost"
 	"github.com/skratchdot/open-golang/open"
 	"io/ioutil"
@@ -90,9 +89,6 @@ func main() {
 		launchSelfLater()
 	}
 
-	runtime.LockOSThread()
-	go setupSysTray()
-
 	//getList()
 	f := flag.Lookup("addr")
 	log.Println("Version:" + version)
@@ -159,13 +155,17 @@ func main() {
 	// launch our dummy data routine
 	//go d.run()
 
-	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/ws", wsHandler)
-	if err := http.ListenAndServe(*addr, nil); err != nil {
-		fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
-		log.Fatal("Error ListenAndServe:", err)
-	}
+	go func() {
+		http.HandleFunc("/", homeHandler)
+		http.HandleFunc("/ws", wsHandler)
+		if err := http.ListenAndServe(*addr, nil); err != nil {
+			fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+			log.Fatal("Error ListenAndServe:", err)
+		}
+	}()
 
+	runtime.LockOSThread()
+	setupSysTray()
 }
 
 func setupSysTray() {
