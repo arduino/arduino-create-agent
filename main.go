@@ -7,18 +7,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/kardianos/osext"
 	"go/build"
 	"log"
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	//"net/http/pprof"
-	"github.com/shurcooL/trayhost"
-	"github.com/skratchdot/open-golang/open"
-	"io/ioutil"
-	"runtime"
 	"runtime/debug"
 	"text/template"
 	"time"
@@ -75,8 +69,6 @@ func launchSelfLater() {
 	time.Sleep(2 * 1000 * time.Millisecond)
 	log.Println("Done waiting 5 secs. Now launching...")
 }
-
-var notificationThumbnail trayhost.Image
 
 func main() {
 
@@ -164,57 +156,7 @@ func main() {
 		}
 	}()
 
-	runtime.LockOSThread()
 	setupSysTray()
-}
-
-func setupSysTray() {
-
-	menuItems := []trayhost.MenuItem{
-		trayhost.MenuItem{
-			Title: "Launch webide.arduino.cc",
-			Handler: func() {
-				open.Run("http://webide.arduino.cc:8080")
-			},
-		},
-		trayhost.SeparatorMenuItem(),
-		trayhost.MenuItem{
-			Title: "Quit",
-			Handler: func() {
-				trayhost.Exit()
-				exit()
-			},
-		},
-	}
-
-	execPath, _ := osext.Executable()
-	b, err := ioutil.ReadFile(filepath.Dir(execPath) + "/arduino/resources/icons/icon.png")
-	if err != nil {
-		panic(err)
-	}
-
-	trayhost.Initialize("WebIDEBridge", b, menuItems)
-	trayhost.EnterLoop()
-
-	// systray.SetIcon(IconData)
-	// systray.SetTitle("Arduino WebIDE Bridge")
-
-	// // We can manipulate the systray in other goroutines
-	// go func() {
-	// 	systray.SetIcon(IconData)
-	// 	mUrl := systray.AddMenuItem("Open webide.arduino.cc", "WebIDE Home")
-	// 	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
-	// 	for {
-	// 		select {
-	// 		case <-mUrl.ClickedCh:
-	// 			open.Run("http://webide.arduino.cc:8080")
-	// 		case <-mQuit.ClickedCh:
-	// 			systray.Quit()
-	// 			fmt.Println("Quit now...")
-	// 			exit()
-	// 		}
-	// 	}
-	// }()
 }
 
 func externalIP() (string, error) {
