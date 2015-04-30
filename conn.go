@@ -38,6 +38,28 @@ func (c *connection) writer() {
 	c.ws.Close()
 }
 
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	log.Print("Received a upload")
+	port := r.FormValue("port")
+	if port == "" {
+		http.Error(w, "port is required", http.StatusBadRequest)
+		return
+	}
+	board := r.FormValue("board")
+	if board == "" {
+		http.Error(w, "board is required", http.StatusBadRequest)
+		return
+	}
+	sketch, header, err := r.FormFile("sketch_hex")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	path, err := saveFileonTempDir(header.Filename, sketch)
+
+	go spProgram(port, board, path)
+}
+
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Started a new websocket handler")
 	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)

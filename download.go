@@ -12,6 +12,34 @@ import (
 	"strings"
 )
 
+func saveFileonTempDir(filename string, sketch io.Reader) (path string, err error) {
+	// create tmp dir
+	tmpdir, err := ioutil.TempDir("", "serial-port-json-server")
+	if err != nil {
+		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
+	}
+
+	filename, _ = filepath.Abs(tmpdir + "/" + filename)
+
+	output, err := os.Create(filename)
+	if err != nil {
+		log.Println("Error while creating", filename, "-", err)
+		return filename, err
+	}
+	defer output.Close()
+
+	n, err := io.Copy(output, sketch)
+	if err != nil {
+		log.Println("Error while copying", err)
+		return filename, err
+	}
+
+	log.Println(n, "bytes saved")
+
+	return filename, nil
+
+}
+
 func downloadFromUrl(url string) (filename string, err error) {
 
 	// clean up url
