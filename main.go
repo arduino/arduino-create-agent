@@ -4,19 +4,22 @@
 package main
 
 import (
+	"errors"
 	"flag"
+	"fmt"
+	"github.com/kardianos/osext"
 	"go/build"
 	"log"
-	"net/http"
-	//"path/filepath"
-	"errors"
-	"fmt"
 	"net"
+	"net/http"
 	"os"
+	"path/filepath"
 	//"net/http/pprof"
 	//"runtime"
-	"github.com/getlantern/systray"
+	"github.com/shurcooL/trayhost"
 	"github.com/skratchdot/open-golang/open"
+	"io/ioutil"
+	"runtime"
 	"runtime/debug"
 	"text/template"
 	"time"
@@ -74,6 +77,8 @@ func launchSelfLater() {
 	log.Println("Done waiting 5 secs. Now launching...")
 }
 
+var notificationThumbnail trayhost.Image
+
 func main() {
 
 	flag.Parse()
@@ -85,7 +90,8 @@ func main() {
 		launchSelfLater()
 	}
 
-	go systray.Run(setupSysTray)
+	runtime.LockOSThread()
+	go setupSysTray()
 
 	//getList()
 	f := flag.Lookup("addr")
@@ -163,25 +169,52 @@ func main() {
 }
 
 func setupSysTray() {
-	systray.SetIcon(IconData)
-	systray.SetTitle("Arduino WebIDE Bridge")
 
-	// We can manipulate the systray in other goroutines
-	go func() {
-		systray.SetIcon(IconData)
-		mUrl := systray.AddMenuItem("Open webide.arduino.cc", "WebIDE Home")
-		mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
-		for {
-			select {
-			case <-mUrl.ClickedCh:
+	menuItems := []trayhost.MenuItem{
+		trayhost.MenuItem{
+			Title: "Launch webide.arduino.cc",
+			Handler: func() {
 				open.Run("http://webide.arduino.cc:8080")
-			case <-mQuit.ClickedCh:
-				systray.Quit()
-				fmt.Println("Quit now...")
+			},
+		},
+		trayhost.SeparatorMenuItem(),
+		trayhost.MenuItem{
+			Title: "Quit",
+			Handler: func() {
+				trayhost.Exit()
 				exit()
-			}
-		}
-	}()
+			},
+		},
+	}
+
+	execPath, _ := osext.Executable()
+	b, err := ioutil.ReadFile(filepath.Dir(execPath) + "/arduino/resources/icons/icon.png")
+	if err != nil {
+		panic(err)
+	}
+
+	trayhost.Initialize("WebIDEBridge", b, menuItems)
+	trayhost.EnterLoop()
+
+	// systray.SetIcon(IconData)
+	// systray.SetTitle("Arduino WebIDE Bridge")
+
+	// // We can manipulate the systray in other goroutines
+	// go func() {
+	// 	systray.SetIcon(IconData)
+	// 	mUrl := systray.AddMenuItem("Open webide.arduino.cc", "WebIDE Home")
+	// 	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
+	// 	for {
+	// 		select {
+	// 		case <-mUrl.ClickedCh:
+	// 			open.Run("http://webide.arduino.cc:8080")
+	// 		case <-mQuit.ClickedCh:
+	// 			systray.Quit()
+	// 			fmt.Println("Quit now...")
+	// 			exit()
+	// 		}
+	// 	}
+	// }()
 }
 
 func externalIP() (string, error) {

@@ -1,8 +1,8 @@
 //
-//  queue.go
+//  discovery.go
 //
-//  Created by Hicham Bouabdallah
-//  Copyright (c) 2012 SimpleRocket LLC
+//  Created by Martino Facchin
+//  Copyright (c) 2015 Arduino LLC
 //
 //  Permission is hereby granted, free of charge, to any person
 //  obtaining a copy of this software and associated documentation
