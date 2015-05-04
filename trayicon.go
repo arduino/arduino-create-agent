@@ -31,8 +31,8 @@
 package main
 
 import (
+	"github.com/facchinm/trayhost"
 	"github.com/kardianos/osext"
-	"github.com/shurcooL/trayhost"
 	"github.com/skratchdot/open-golang/open"
 	"io/ioutil"
 	"path/filepath"
