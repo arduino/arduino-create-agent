@@ -233,6 +233,25 @@ func containsStr(s []string, e string) bool {
 	return false
 }
 
+func findNewPortName(slice1 []string, slice2 []string) string {
+	m := map[string]int{}
+
+	for _, s1Val := range slice1 {
+		m[s1Val] = 1
+	}
+	for _, s2Val := range slice2 {
+		m[s2Val] = m[s2Val] + 1
+	}
+
+	for mKey, mVal := range m {
+		if mVal == 1 {
+			return mKey
+		}
+	}
+
+	return ""
+}
+
 func assembleCompilerCommand(boardname string, portname string, filePath string) (bool, string, []string) {
 
 	// get executable (self)path and use it as base for all other paths
@@ -268,9 +287,6 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		h.broadcastSys <- []byte("Board " + boardFields[2] + " is not part of " + boardFields[0] + ":" + boardFields[1])
 		return false, "", nil
 	}
-
-	boardOptions["serial.port"] = portname
-	boardOptions["serial.port.file"] = filepath.Base(portname)
 
 	// filepath need special care; the project_name var is the filename minus its extension (hex or bin)
 	// if we are going to modify standard IDE files we also could pass ALL filename
@@ -324,20 +340,11 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	cmdline = strings.Replace(cmdline, "\"{path}/{cmd}\"", " ", 1)
 	cmdline = strings.Replace(cmdline, "\"", "", -1)
 
-	// split the commandline in substrings and recursively replace mapped strings
-	cmdlineSlice := strings.Split(cmdline, " ")
-	var winded = true
-	for index, _ := range cmdlineSlice {
-		winded = true
-		for winded != false {
-			cmdlineSlice[index], winded = formatCmdline(cmdlineSlice[index], boardOptions)
-		}
-	}
-
 	// some boards (eg. Leonardo, Yun) need a special procedure to enter bootloader
 	if boardOptions["upload.use_1200bps_touch"] == "true" {
 		// triggers bootloader mode
-		// the portname could change in this occasion, so fail gently
+		// the portname could change in this occasion (expecially on Windows) so change portname
+		// with the port which will reappear
 		log.Println("Restarting in bootloader mode")
 
 		mode := &serial.Mode{
@@ -356,13 +363,31 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		// time.Sleep(time.Second / 4)
 		// wait for port to reappear
 		if boardOptions["upload.wait_for_upload_port"] == "true" {
-			ports, _ := serial.GetPortsList()
-			log.Println(ports)
-			for !(containsStr(ports, portname)) {
+			after_reset_ports, _ := serial.GetPortsList()
+			log.Println(after_reset_ports)
+			var ports []string
+			for {
 				ports, _ = serial.GetPortsList()
 				log.Println(ports)
 				time.Sleep(time.Millisecond * 200)
+				portname = findNewPortName(ports, after_reset_ports)
+				if portname != "" {
+					break
+				}
 			}
+		}
+	}
+
+	boardOptions["serial.port"] = portname
+	boardOptions["serial.port.file"] = filepath.Base(portname)
+
+	// split the commandline in substrings and recursively replace mapped strings
+	cmdlineSlice := strings.Split(cmdline, " ")
+	var winded = true
+	for index, _ := range cmdlineSlice {
+		winded = true
+		for winded != false {
+			cmdlineSlice[index], winded = formatCmdline(cmdlineSlice[index], boardOptions)
 		}
 	}
 
