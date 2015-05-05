@@ -54,6 +54,8 @@ func GetList() ([]OsSerialPort, error) {
 		arrPorts = newarrPorts
 	}
 
+	arrPorts = removeNonArduinoBoards(arrPorts)
+
 	netportList, _ := GetNetworkList()
 	arrPorts = append(arrPorts, netportList...)
 

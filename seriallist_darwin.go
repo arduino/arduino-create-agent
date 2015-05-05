@@ -3,6 +3,7 @@ package main
 import (
 	//"fmt"
 	//"github.com/tarm/goserial"
+	"github.com/kardianos/osext"
 	"log"
 	"os"
 	"strings"
@@ -10,8 +11,89 @@ import (
 	//"strconv"
 	//"syscall"
 	//"fmt"
+	//"bufio"
 	"io/ioutil"
+	"os/exec"
+	"path/filepath"
 )
+
+func pipe_commands(commands ...*exec.Cmd) ([]byte, error) {
+	for i, command := range commands[:len(commands)-1] {
+		out, err := command.StdoutPipe()
+		if err != nil {
+			return nil, err
+		}
+		command.Start()
+		commands[i+1].Stdin = out
+	}
+	final, err := commands[len(commands)-1].Output()
+	if err != nil {
+		return nil, err
+	}
+	return final, nil
+}
+
+// execute system_profiler SPUSBDataType | grep "Vendor ID: 0x2341" -A5 -B2
+// maybe -B2 is not necessary
+// trim whitespace and eol
+// map everything with :
+// get [map][Location ID] first 5 chars
+// search all board.txt files for map[Product ID]
+// assign it to name
+
+func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
+	usbcmd := exec.Command("system_profiler", "SPUSBDataType")
+	grepcmd := exec.Command("grep", "0x2341", "-A5", "-B1")
+
+	cmdOutput, _ := pipe_commands(usbcmd, grepcmd)
+
+	//log.Println(string(cmdOutput))
+	cmdOutSlice := strings.Split(string(cmdOutput), "\n")
+
+	var arduino_ports []OsSerialPort
+
+	// how many lines is the output? boards attached = lines/8
+	for i := 0; i < len(cmdOutSlice)/8; i++ {
+
+		cmdOutSliceN := cmdOutSlice[i*8 : (i+1)*8]
+
+		cmdOutMap := make(map[string]string)
+
+		for _, element := range cmdOutSliceN {
+			if strings.Contains(element, "ID") {
+				element = strings.TrimSpace(element)
+				arr := strings.Split(element, ": ")
+				cmdOutMap[arr[0]] = arr[1]
+			}
+		}
+
+		execPath, _ := osext.Executable()
+		findcmd := exec.Command("grep", "-r", cmdOutMap["Product ID"], filepath.Dir(execPath)+"/arduino/hardware/")
+		findOut, _ := findcmd.Output()
+
+		boardName := strings.Split(string(findOut), "\n")[0]
+		boardName = strings.Split(boardName, ":")[1]
+		boardName = strings.Split(boardName, ".")[0]
+
+		log.Println(cmdOutMap)
+
+		// remove initial 0x and final zeros
+		ttyHeader := strings.Trim((cmdOutMap["Location ID"]), "0x")
+		ttyHeader = strings.Split(ttyHeader, " ")[0]
+		ttyHeader = strings.Trim(ttyHeader, "0")
+		log.Println(ttyHeader)
+
+		for _, port := range ports {
+			if strings.Contains(port.Name, ttyHeader) && !strings.Contains(port.Name, "/cu.") {
+				port.FriendlyName = strings.Title(boardName)
+				arduino_ports = append(arduino_ports, port)
+			}
+		}
+	}
+
+	log.Println(arduino_ports)
+	return arduino_ports
+}
 
 func getList() ([]OsSerialPort, os.SyscallError) {
 	//return getListViaWmiPnpEntity()
