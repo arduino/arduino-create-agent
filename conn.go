@@ -55,9 +55,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	path, err := saveFileonTempDir(header.Filename, sketch)
+	if header != nil {
+		path, err := saveFileonTempDir(header.Filename, sketch)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+		}
 
-	go spProgram(port, board, path)
+		go spProgram(port, board, path)
+	}
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
