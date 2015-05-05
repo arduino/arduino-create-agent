@@ -35,28 +35,30 @@ import (
 	"github.com/facchinm/systray"
 	"github.com/facchinm/systray/example/icon"
 	"github.com/skratchdot/open-golang/open"
+	"runtime"
 )
 
 func setupSysTray() {
+	runtime.LockOSThread()
 	systray.Run(setupSysTrayReal)
 }
 
 func setupSysTrayReal() {
 
+	systray.SetIcon(icon.Data)
+	mUrl := systray.AddMenuItem("Open webide.arduino.cc", "Arduino Create Home")
+	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
+
+	go func() {
+		<-mQuit.ClickedCh
+		systray.Quit()
+		fmt.Println("Quit now...")
+		exit()
+	}()
+
 	// We can manipulate the systray in other goroutines
 	go func() {
-		systray.SetIcon(icon.Data)
-		mUrl := systray.AddMenuItem("Open webide.arduino.cc", "Arduino Create Home")
-		mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
-		for {
-			select {
-			case <-mUrl.ClickedCh:
-				open.Run("http://webide.arduino.cc:8080")
-			case <-mQuit.ClickedCh:
-				systray.Quit()
-				fmt.Println("Quit now...")
-				exit()
-			}
-		}
+		<-mUrl.ClickedCh
+		open.Run("http://webide.arduino.cc:8080")
 	}()
 }

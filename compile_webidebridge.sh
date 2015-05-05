@@ -89,8 +89,9 @@ compilePlatformNoCGO()
 	ls -la snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip
 }
 
+rm -rf arduino/tools
 compilePlatform darwin amd64 o64-clang
-compilePlatformLinux linux 386 gcc
+#compilePlatformLinux linux 386 gcc
 compilePlatformLinux linux amd64 gcc
 compilePlatformNoCGO linux arm
 compilePlatform windows 386 i686-w64-mingw32-gcc

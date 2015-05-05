@@ -121,19 +121,19 @@ func main() {
 	}
 
 	// list serial ports
-	portList, _ := GetList()
-	/*if errSys != nil {
-		log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
-		log.Fatal("Exiting")
-	}*/
-	log.Println("Your serial ports:")
-	if len(portList) == 0 {
-		log.Println("\tThere are no serial ports to list.")
-	}
-	for _, element := range portList {
-		log.Printf("\t%v\n", element)
+	// portList, _ := GetList()
+	// /*if errSys != nil {
+	// 	log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
+	// 	log.Fatal("Exiting")
+	// }*/
+	// log.Println("Your serial ports:")
+	// if len(portList) == 0 {
+	// 	log.Println("\tThere are no serial ports to list.")
+	// }
+	// for _, element := range portList {
+	// 	log.Printf("\t%v\n", element)
 
-	}
+	// }
 
 	if !*verbose {
 		log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
