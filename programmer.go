@@ -340,6 +340,8 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	cmdline = strings.Replace(cmdline, "\"{path}/{cmd}\"", " ", 1)
 	cmdline = strings.Replace(cmdline, "\"", "", -1)
 
+	initialPortName := portname
+
 	// some boards (eg. Leonardo, Yun) need a special procedure to enter bootloader
 	if boardOptions["upload.use_1200bps_touch"] == "true" {
 		// triggers bootloader mode
@@ -386,6 +388,10 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 				}
 			}
 		}
+	}
+
+	if portname == "" {
+		portname = initialPortName
 	}
 
 	boardOptions["serial.port"] = portname
