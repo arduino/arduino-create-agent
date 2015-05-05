@@ -100,6 +100,7 @@ type SpPortItem struct {
 	BufferAlgorithm           string
 	AvailableBufferAlgorithms []string
 	Ver                       float32
+	NetworkPort               bool
 }
 
 var sh = serialhub{
@@ -476,6 +477,7 @@ func spList() {
 			BufferAlgorithm:           "",
 			AvailableBufferAlgorithms: availableBufferAlgorithms,
 			Ver: versionFloat,
+			NetworkPort: item.NetworkPort,
 		}
 
 		// figure out if port is open
