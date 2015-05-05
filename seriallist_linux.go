@@ -15,12 +15,65 @@ import (
 	"bytes"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 	"regexp"
 	"sort"
 )
 
 func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
-	return ports
+	usbcmd := exec.Command("lsusb", "-vvv")
+	grepcmd := exec.Command("grep", "0x2341", "-A1")
+	grep2cmd := exec.Command("grep", "idProduct")
+	//awkcmd := exec.Command("awk", "\'{print $2}\'")
+	//awkcmd := exec.Command("grep", "-E", "-o", "'0x[[:alnum:]]{4}'")
+
+	cmdOutput, _ := pipe_commands(usbcmd, grepcmd, grep2cmd)
+
+	cmdOutSliceT := strings.Split(string(cmdOutput), "\n")
+
+	re := regexp.MustCompile("0x[[:alnum:]]{4}")
+
+	var cmdOutSlice []string
+
+	for _, element := range cmdOutSliceT {
+		cmdOutSlice = append(cmdOutSlice, re.FindString(element))
+	}
+
+	log.Println(cmdOutSlice)
+
+	var arduino_ports []OsSerialPort
+
+	for _, element := range cmdOutSlice {
+
+		log.Println(element)
+
+		if element == "" {
+			break
+		}
+
+		arch, archBoardName, boardName, _ := getBoardName(element)
+
+		for _, port := range ports {
+
+			ueventcmd := exec.Command("cat", "/sys/class/tty/"+filepath.Base(port.Name)+"/device/uevent")
+			grep3cmd := exec.Command("grep", "PRODUCT=")
+			cutcmd := exec.Command("cut", "-f2", "-d/")
+
+			cmdOutput2, _ := pipe_commands(ueventcmd, grep3cmd, cutcmd)
+			cmdOutput2S := string(cmdOutput2)
+
+			if strings.Contains(element, strings.Trim(cmdOutput2S, "\n")) {
+				port.RelatedNames = append(port.RelatedNames, "arduino:"+arch+":"+archBoardName)
+				port.FriendlyName = strings.Trim(boardName, "\n")
+				arduino_ports = append(arduino_ports, port)
+			}
+
+			log.Println(arduino_ports)
+		}
+	}
+
+	log.Println(arduino_ports)
+	return arduino_ports
 }
 
 func getList() ([]OsSerialPort, os.SyscallError) {
