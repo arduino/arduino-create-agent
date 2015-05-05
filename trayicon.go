@@ -31,63 +31,32 @@
 package main
 
 import (
-	"github.com/facchinm/trayhost"
-	"github.com/kardianos/osext"
+	"fmt"
+	"github.com/facchinm/systray"
+	"github.com/facchinm/systray/example/icon"
 	"github.com/skratchdot/open-golang/open"
-	"io/ioutil"
-	"path/filepath"
-	"runtime"
 )
 
-var notificationThumbnail trayhost.Image
-
 func setupSysTray() {
+	systray.Run(setupSysTrayReal)
+}
 
-	menuItems := []trayhost.MenuItem{
-		trayhost.MenuItem{
-			Title: "Launch webide.arduino.cc",
-			Handler: func() {
+func setupSysTrayReal() {
+
+	// We can manipulate the systray in other goroutines
+	go func() {
+		systray.SetIcon(icon.Data)
+		mUrl := systray.AddMenuItem("Open webide.arduino.cc", "Arduino Create Home")
+		mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
+		for {
+			select {
+			case <-mUrl.ClickedCh:
 				open.Run("http://webide.arduino.cc:8080")
-			},
-		},
-		trayhost.SeparatorMenuItem(),
-		trayhost.MenuItem{
-			Title: "Quit",
-			Handler: func() {
-				trayhost.Exit()
+			case <-mQuit.ClickedCh:
+				systray.Quit()
+				fmt.Println("Quit now...")
 				exit()
-			},
-		},
-	}
-
-	runtime.LockOSThread()
-
-	execPath, _ := osext.Executable()
-	b, err := ioutil.ReadFile(filepath.Dir(execPath) + "/arduino/resources/icons/icon.png")
-	if err != nil {
-		panic(err)
-	}
-
-	trayhost.Initialize("WebIDEBridge", b, menuItems)
-	trayhost.EnterLoop()
-
-	// systray.SetIcon(IconData)
-	// systray.SetTitle("Arduino WebIDE Bridge")
-
-	// // We can manipulate the systray in other goroutines
-	// go func() {
-	// 	systray.SetIcon(IconData)
-	// 	mUrl := systray.AddMenuItem("Open webide.arduino.cc", "WebIDE Home")
-	// 	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
-	// 	for {
-	// 		select {
-	// 		case <-mUrl.ClickedCh:
-	// 			open.Run("http://webide.arduino.cc:8080")
-	// 		case <-mQuit.ClickedCh:
-	// 			systray.Quit()
-	// 			fmt.Println("Quit now...")
-	// 			exit()
-	// 		}
-	// 	}
-	// }()
+			}
+		}
+	}()
 }
