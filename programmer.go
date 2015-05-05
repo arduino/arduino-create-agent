@@ -359,7 +359,14 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		}
 		//port.SetDTR(false)
 		port.Close()
-		time.Sleep(time.Second / 2)
+		time.Sleep(time.Second / 2.0)
+
+		timeout := make(chan bool, 1)
+		go func() {
+			time.Sleep(2 * time.Second)
+			timeout <- true
+		}()
+
 		// time.Sleep(time.Second / 4)
 		// wait for port to reappear
 		if boardOptions["upload.wait_for_upload_port"] == "true" {
@@ -372,6 +379,9 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 				time.Sleep(time.Millisecond * 200)
 				portname = findNewPortName(ports, after_reset_ports)
 				if portname != "" {
+					break
+				}
+				if <-timeout {
 					break
 				}
 			}

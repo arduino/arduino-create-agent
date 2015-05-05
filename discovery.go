@@ -34,6 +34,8 @@ import (
 	"time"
 )
 
+const timeoutConst = 2
+
 func GetNetworkList() ([]OsSerialPort, error) {
 	resolver, err := bonjour.NewResolver(nil)
 	if err != nil {
@@ -43,7 +45,7 @@ func GetNetworkList() ([]OsSerialPort, error) {
 
 	timeout := make(chan bool, 1)
 	go func(exitCh chan<- bool) {
-		time.Sleep(2 * time.Second)
+		time.Sleep(timeoutConst * time.Second)
 		timeout <- true
 		exitCh <- true
 	}(resolver.Exit)
