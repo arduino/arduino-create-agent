@@ -363,10 +363,10 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 		port.Close()
 		time.Sleep(time.Second / 2.0)
 
-		timeout := make(chan bool, 1)
+		timeout := false
 		go func() {
 			time.Sleep(2 * time.Second)
-			timeout <- true
+			timeout = true
 		}()
 
 		// time.Sleep(time.Second / 4)
@@ -383,7 +383,7 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 				if portname != "" {
 					break
 				}
-				if <-timeout {
+				if timeout {
 					break
 				}
 			}
