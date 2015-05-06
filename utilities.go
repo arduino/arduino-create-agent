@@ -4,7 +4,6 @@ package main
 
 import (
 	"github.com/kardianos/osext"
-	"log"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -31,9 +30,6 @@ func getBoardName(pid string) (string, string, string, error) {
 	findcmd := exec.Command("grep", "-r", pid, filepath.Dir(execPath)+"/arduino/hardware/")
 	findOut, _ := findcmd.Output()
 
-	log.Println(findcmd)
-	log.Println(string(findOut))
-
 	boardName := strings.Split(string(findOut), "\n")[0]
 	// in this moment arch is the complete path of board.txt
 	arch := strings.Split(boardName, ":")[0]
@@ -50,8 +46,6 @@ func getBoardName(pid string) (string, string, string, error) {
 	arch = filepath.Dir(arch)
 	arch_arr := strings.Split(arch, "/")
 	arch = arch_arr[len(arch_arr)-1]
-
-	log.Println(arch, archBoardName, boardName)
 
 	return arch, archBoardName, boardName, nil
 }

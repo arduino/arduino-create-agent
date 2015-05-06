@@ -39,13 +39,9 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 		cmdOutSlice = append(cmdOutSlice, re.FindString(element))
 	}
 
-	log.Println(cmdOutSlice)
-
 	var arduino_ports []OsSerialPort
 
 	for _, element := range cmdOutSlice {
-
-		log.Println(element)
 
 		if element == "" {
 			break
@@ -67,12 +63,9 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 				port.FriendlyName = strings.Trim(boardName, "\n")
 				arduino_ports = append(arduino_ports, port)
 			}
-
-			log.Println(arduino_ports)
 		}
 	}
 
-	log.Println(arduino_ports)
 	return arduino_ports
 }
 

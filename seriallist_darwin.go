@@ -55,7 +55,6 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 		ttyHeader := strings.Trim((cmdOutMap["Location ID"]), "0x")
 		ttyHeader = strings.Split(ttyHeader, " ")[0]
 		ttyHeader = strings.Trim(ttyHeader, "0")
-		log.Println(ttyHeader)
 
 		for _, port := range ports {
 			if strings.Contains(port.Name, ttyHeader) && !strings.Contains(port.Name, "/cu.") {
@@ -66,7 +65,6 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 		}
 	}
 
-	log.Println(arduino_ports)
 	return arduino_ports
 }
 
