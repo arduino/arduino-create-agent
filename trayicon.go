@@ -27,7 +27,6 @@
 //
 
 // +build !arm
-// +build !darwin
 
 package main
 
@@ -47,7 +46,7 @@ func setupSysTray() {
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.Data)
-	mUrl := systray.AddMenuItem("Open webide.arduino.cc", "Arduino Create Home")
+	mUrl := systray.AddMenuItem("Go to create.arduino.cc", "Arduino Create")
 	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
 
 	go func() {
@@ -60,6 +59,6 @@ func setupSysTrayReal() {
 	// We can manipulate the systray in other goroutines
 	go func() {
 		<-mUrl.ClickedCh
-		open.Run("http://webide.arduino.cc:8080")
+		open.Run("http://create.arduino.cc")
 	}()
 }

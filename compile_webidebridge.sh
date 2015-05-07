@@ -19,22 +19,22 @@ compilePlatform()
 	CC=$3
 	cp -r arduino/tools_$GOOS  arduino/tools
 	echo "compiling for $GOOS, $GOARCH"
-	rm snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip
+	rm snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
 	if [ $GOOS == "windows" ]
 	then
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_WebIDE_Bridge.exe"
+	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_Create_Bridge.exe"
 	else
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_WebIDE_Bridge"
+	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_Create_Bridge"
 	fi
 	if [ $? != 0 ]
 	then
 	echo "Target $GOOS, $GOARCH failed"
 	exit 1
 	fi
-	zip -r snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_WebIDE_Bridge* > /dev/null
+	zip -r snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_Create_Bridge* > /dev/null
 	rm -rf arduino/tools
-	rm -rf Arduino_WebIDE_Bridge*
-	ls -la snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip
+	rm -rf Arduino_Create_Bridge*
+	ls -la snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
 }
 
 compilePlatformLinux()
@@ -52,17 +52,17 @@ compilePlatformLinux()
 	fi
 	cp -r arduino/tools_$GOOS\_$TOOLS_DIR  arduino/tools
 	echo "compiling for $GOOS, $GOARCH"
-	rm snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_WebIDE_Bridge"
+	rm snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
+	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_Create_Bridge"
 	if [ $? != 0 ]
 	then
 	echo "Target $GOOS, $GOARCH failed"
 	exit 1
 	fi
-	zip -r snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_WebIDE_Bridge > /dev/null
+	zip -r snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_Create_Bridge > /dev/null
 	rm -rf arduino/tools
-	rm -rf Arduino_WebIDE_Bridge*
-	ls -la snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip
+	rm -rf Arduino_Create_Bridge*
+	ls -la snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
 }
 
 compilePlatformNoCGO()
@@ -71,22 +71,22 @@ compilePlatformNoCGO()
 	GOARCH=$2
 	cp -r arduino/tools_$GOOS\_$GOARCH  arduino/tools
 	echo "compiling for $GOOS, $GOARCH"
-	rm snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip
+	rm snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
 	if [ $GOARCH == "arm" ]
 	then
-	env GOARM=6 GOOS=$GOOS GOARCH=$GOARCH go build -o="Arduino_WebIDE_Bridge"
+	env GOARM=6 GOOS=$GOOS GOARCH=$GOARCH go build -o="Arduino_Create_Bridge"
 	else
-	env GOOS=$GOOS GOARCH=$GOARCH go build -o="Arduino_WebIDE_Bridge"
+	env GOOS=$GOOS GOARCH=$GOARCH go build -o="Arduino_Create_Bridge"
 	fi
 	if [ $? != 0 ]
 	then
 	echo "Target $GOOS, $GOARCH failed"
 	exit 1
 	fi
-	zip -r snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_WebIDE_Bridge > /dev/null
+	zip -r snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_Create_Bridge > /dev/null
 	rm -rf arduino/tools
-	rm -rf Arduino_WebIDE_Bridge*
-	ls -la snapshot/Arduino_WebIDE_Bridge-$GOOS-$GOARCH.zip
+	rm -rf Arduino_Create_Bridge*
+	ls -la snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
 }
 
 rm -rf arduino/tools
