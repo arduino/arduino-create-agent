@@ -81,82 +81,83 @@ func main() {
 		launchSelfLater()
 	}
 
-	//getList()
-	f := flag.Lookup("addr")
-	log.Println("Version:" + version)
-
-	// hostname
-	hn, _ := os.Hostname()
-	if *hostname == "unknown-hostname" {
-		*hostname = hn
-	}
-	log.Println("Hostname:", *hostname)
-
-	// turn off garbage collection
-	// this is dangerous, as u could overflow memory
-	//if *isGC {
-	if *gcType == "std" {
-		log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
-	} else if *gcType == "max" {
-		log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
-	} else {
-		log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
-		debug.SetGCPercent(-1)
-	}
-
-	ip, err := externalIP()
-	if err != nil {
-		log.Println(err)
-	}
-
-	log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
-	//homeTempl = template.Must(template.ParseFiles(filepath.Join(*assets, "home.html")))
-
-	log.Println("The Serial Port JSON Server is now running.")
-	log.Println("If you are using ChiliPeppr, you may go back to it and connect to this server.")
-
-	// see if they provided a regex filter
-	if len(*regExpFilter) > 0 {
-		log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
-	}
-
-	// list serial ports
-	// portList, _ := GetList()
-	// /*if errSys != nil {
-	// 	log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
-	// 	log.Fatal("Exiting")
-	// }*/
-	// log.Println("Your serial ports:")
-	// if len(portList) == 0 {
-	// 	log.Println("\tThere are no serial ports to list.")
-	// }
-	// for _, element := range portList {
-	// 	log.Printf("\t%v\n", element)
-
-	// }
-
-	if !*verbose {
-		log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
-		log.SetOutput(new(NullWriter)) //route all logging to nullwriter
-	}
-
-	// launch the hub routine which is the singleton for the websocket server
-	go h.run()
-	// launch our serial port routine
-	go sh.run()
-	// launch our dummy data routine
-	//go d.run()
-
 	go func() {
-		http.HandleFunc("/", homeHandler)
-		http.HandleFunc("/ws", wsHandler)
-		http.HandleFunc("/upload", uploadHandler)
-		if err := http.ListenAndServe(*addr, nil); err != nil {
-			fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
-			log.Fatal("Error ListenAndServe:", err)
-		}
-	}()
+		//getList()
+		f := flag.Lookup("addr")
+		log.Println("Version:" + version)
 
+		// hostname
+		hn, _ := os.Hostname()
+		if *hostname == "unknown-hostname" {
+			*hostname = hn
+		}
+		log.Println("Hostname:", *hostname)
+
+		// turn off garbage collection
+		// this is dangerous, as u could overflow memory
+		//if *isGC {
+		if *gcType == "std" {
+			log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
+		} else if *gcType == "max" {
+			log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
+		} else {
+			log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
+			debug.SetGCPercent(-1)
+		}
+
+		ip, err := externalIP()
+		if err != nil {
+			log.Println(err)
+		}
+
+		log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
+		//homeTempl = template.Must(template.ParseFiles(filepath.Join(*assets, "home.html")))
+
+		log.Println("The Serial Port JSON Server is now running.")
+		log.Println("If you are using ChiliPeppr, you may go back to it and connect to this server.")
+
+		// see if they provided a regex filter
+		if len(*regExpFilter) > 0 {
+			log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
+		}
+
+		// list serial ports
+		// portList, _ := GetList()
+		// /*if errSys != nil {
+		// 	log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
+		// 	log.Fatal("Exiting")
+		// }*/
+		// log.Println("Your serial ports:")
+		// if len(portList) == 0 {
+		// 	log.Println("\tThere are no serial ports to list.")
+		// }
+		// for _, element := range portList {
+		// 	log.Printf("\t%v\n", element)
+
+		// }
+
+		if !*verbose {
+			log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
+			log.SetOutput(new(NullWriter)) //route all logging to nullwriter
+		}
+
+		// launch the hub routine which is the singleton for the websocket server
+		go h.run()
+		// launch our serial port routine
+		go sh.run()
+		// launch our dummy data routine
+		//go d.run()
+
+		go func() {
+			http.HandleFunc("/", homeHandler)
+			http.HandleFunc("/ws", wsHandler)
+			http.HandleFunc("/upload", uploadHandler)
+			if err := http.ListenAndServe(*addr, nil); err != nil {
+				fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+				log.Fatal("Error ListenAndServe:", err)
+			}
+		}()
+	}()
 	setupSysTray()
 }
 
