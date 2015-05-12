@@ -417,7 +417,7 @@ func writeToChannels(cmds []string, idArr []string, bufTypeArr []string) {
 func spList() {
 
 	// call our os specific implementation of getting the serial list
-	list, _ := GetList()
+	list, _ := GetList(true)
 
 	// do a quick loop to see if any of our open ports
 	// did not end up in the list port list. this can
@@ -476,7 +476,7 @@ func spList() {
 			Baud:                      0,
 			BufferAlgorithm:           "",
 			AvailableBufferAlgorithms: availableBufferAlgorithms,
-			Ver: versionFloat,
+			Ver:         versionFloat,
 			NetworkPort: item.NetworkPort,
 		}
 
@@ -653,9 +653,9 @@ func findPortByName(portname string) (*serport, bool) {
 	return nil, false
 }
 
-func findPortByNameRerun(portname string) (OsSerialPort, bool) {
+func findPortByNameRerun(portname string, network bool) (OsSerialPort, bool) {
 	portnamel := strings.ToLower(portname)
-	list, _ := GetList()
+	list, _ := GetList(network)
 	for _, item := range list {
 		if strings.ToLower(item.Name) == portnamel {
 			return item, true

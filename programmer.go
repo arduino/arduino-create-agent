@@ -150,10 +150,10 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 
 	// check if the port is physical or network
 	var networkPort bool
-	myport, exist := findPortByNameRerun(portname)
+	myport, exist := findPortByNameRerun(portname, false)
 	if !exist {
-		spErr("Could not find the port " + portname + "  that you were trying to open.")
-		return
+		// it could be a network port that has not been found at the second lap
+		networkPort = true
 	} else {
 		networkPort = myport.NetworkPort
 	}

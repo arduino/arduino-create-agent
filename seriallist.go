@@ -22,7 +22,7 @@ type OsSerialPort struct {
 	NetworkPort  bool
 }
 
-func GetList() ([]OsSerialPort, error) {
+func GetList(network bool) ([]OsSerialPort, error) {
 
 	//log.Println("Doing GetList()")
 
@@ -56,8 +56,10 @@ func GetList() ([]OsSerialPort, error) {
 
 	arrPorts = removeNonArduinoBoards(arrPorts)
 
-	netportList, _ := GetNetworkList()
-	arrPorts = append(arrPorts, netportList...)
+	if network {
+		netportList, _ := GetNetworkList()
+		arrPorts = append(arrPorts, netportList...)
+	}
 
 	//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 
