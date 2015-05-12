@@ -46,6 +46,7 @@ func colonToUnderscore(input string) string {
 func spProgramNetwork(portname string, boardname string, filePath string) {
 
 	log.Println("Starting network upload")
+	log.Println("Board Name: " + boardname)
 
 	// Prepare a form that you will submit to that URL.
 	_url := "http://" + portname + "/data/upload_sketch_silent"
@@ -142,6 +143,11 @@ func spProgramLocal(portname string, boardname string, filePath string) {
 
 func spProgram(portname string, boardname string, filePath string) {
 
+	spProgramRW(portname, boardname, "", filePath)
+}
+
+func spProgramRW(portname string, boardname string, boardname_rewrite string, filePath string) {
+
 	// check if the port is physical or network
 	var networkPort bool
 	myport, exist := findPortByNameRerun(portname)
@@ -153,7 +159,11 @@ func spProgram(portname string, boardname string, filePath string) {
 	}
 
 	if networkPort {
-		spProgramNetwork(portname, boardname, filePath)
+		if boardname_rewrite == "" {
+			spProgramNetwork(portname, boardname_rewrite, filePath)
+		} else {
+			spProgramNetwork(portname, boardname, filePath)
+		}
 	} else {
 		spProgramLocal(portname, boardname, filePath)
 	}

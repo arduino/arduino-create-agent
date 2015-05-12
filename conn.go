@@ -50,6 +50,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "board is required", http.StatusBadRequest)
 		return
 	}
+	board_rewrite := r.FormValue("board_rewrite")
 	sketch, header, err := r.FormFile("sketch_hex")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -61,7 +62,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadGateway)
 		}
 
-		go spProgram(port, board, path)
+		go spProgramRW(port, board, board_rewrite, path)
 	}
 }
 
