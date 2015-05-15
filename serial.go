@@ -415,9 +415,14 @@ func writeToChannels(cmds []string, idArr []string, bufTypeArr []string) {
 }
 
 func spList() {
+	go spListDual(true)
+	go spListDual(false)
+}
+
+func spListDual(network bool) {
 
 	// call our os specific implementation of getting the serial list
-	list, _ := GetList(true)
+	list, _ := GetList(network)
 
 	// do a quick loop to see if any of our open ports
 	// did not end up in the list port list. this can

@@ -26,42 +26,42 @@ func GetList(network bool) ([]OsSerialPort, error) {
 
 	//log.Println("Doing GetList()")
 
-	// will timeout in 2 seconds
-	ports, err := serial.GetPortsList()
-
-	arrPorts := []OsSerialPort{}
-	for _, element := range ports {
-		arrPorts = append(arrPorts, OsSerialPort{Name: element, FriendlyName: element})
-	}
-
-	// see if we should filter the list
-	if len(*regExpFilter) > 0 {
-		// yes, user asked for a filter
-		reFilter := regexp.MustCompile("(?i)" + *regExpFilter)
-
-		newarrPorts := []OsSerialPort{}
-		for _, element := range arrPorts {
-			// if matches regex, include
-			if reFilter.MatchString(element.Name) {
-				newarrPorts = append(newarrPorts, element)
-			} else if reFilter.MatchString(element.FriendlyName) {
-				newarrPorts = append(newarrPorts, element)
-			} else {
-				log.Printf("serial port did not match. port: %v\n", element)
-			}
-
-		}
-		arrPorts = newarrPorts
-	}
-
-	arrPorts = removeNonArduinoBoards(arrPorts)
-
 	if network {
-		netportList, _ := GetNetworkList()
-		arrPorts = append(arrPorts, netportList...)
+		netportList, err := GetNetworkList()
+		return netportList, err
+	} else {
+
+		// will timeout in 2 seconds
+		ports, err := serial.GetPortsList()
+
+		arrPorts := []OsSerialPort{}
+		for _, element := range ports {
+			arrPorts = append(arrPorts, OsSerialPort{Name: element, FriendlyName: element})
+		}
+
+		// see if we should filter the list
+		if len(*regExpFilter) > 0 {
+			// yes, user asked for a filter
+			reFilter := regexp.MustCompile("(?i)" + *regExpFilter)
+
+			newarrPorts := []OsSerialPort{}
+			for _, element := range arrPorts {
+				// if matches regex, include
+				if reFilter.MatchString(element.Name) {
+					newarrPorts = append(newarrPorts, element)
+				} else if reFilter.MatchString(element.FriendlyName) {
+					newarrPorts = append(newarrPorts, element)
+				} else {
+					log.Printf("serial port did not match. port: %v\n", element)
+				}
+
+			}
+			arrPorts = newarrPorts
+		}
+
+		arrPorts = removeNonArduinoBoards(arrPorts)
+		return arrPorts, err
+		//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 	}
 
-	//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
-
-	return arrPorts, err
 }

@@ -12,15 +12,20 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	//"net/http/pprof"
+	"github.com/kardianos/osext"
+	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
+	//"github.com/sanderhahn/gozip"
+	"github.com/vharitonsky/iniflags"
 	"runtime/debug"
 	"text/template"
 	"time"
 )
 
 var (
-	version      = "1.82"
-	versionFloat = float32(1.82)
+	version      = "1.83"
+	versionFloat = float32(1.83)
 	addr         = flag.String("addr", ":8989", "http service address")
 	//assets       = flag.String("assets", defaultAssetPath(), "path to assets")
 	verbose = flag.Bool("v", true, "show debug logging")
@@ -28,6 +33,7 @@ var (
 	//homeTempl *template.Template
 	isLaunchSelf = flag.Bool("ls", false, "launch self 5 seconds later")
 
+	configIni = flag.String("configFile", "config.ini", "config file path")
 	// regular expression to sort the serial port list
 	// typically this wouldn't be provided, but if the user wants to clean
 	// up their list with a regexp so it's cleaner inside their end-user interface
@@ -45,6 +51,9 @@ var (
 
 	// hostname. allow user to override, otherwise we look it up
 	hostname = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+
+	updateUrl = flag.String("updateUrl", "", "")
+	appName   = flag.String("appName", "", "")
 )
 
 type NullWriter int
@@ -72,16 +81,48 @@ func launchSelfLater() {
 
 func main() {
 
-	flag.Parse()
-	// setup logging
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-
-	// see if we are supposed to wait 5 seconds
-	if *isLaunchSelf {
-		launchSelfLater()
-	}
-
 	go func() {
+
+		// autoextract self
+		src, _ := osext.Executable()
+		dest := filepath.Dir(src)
+		err := Unzip(src, dest)
+		fmt.Println("Self extraction, err:", err)
+
+		if _, err := os.Stat(*configIni); os.IsNotExist(err) {
+			flag.Parse()
+			fmt.Println("No config.ini at", *configIni)
+		} else {
+			flag.Set("config", *configIni)
+			iniflags.Parse()
+		}
+
+		// setup logging
+		log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
+		// see if we are supposed to wait 5 seconds
+		if *isLaunchSelf {
+			launchSelfLater()
+		}
+
+		var updater = &Updater{
+			CurrentVersion: version,
+			ApiURL:         *updateUrl,
+			BinURL:         *updateUrl,
+			DiffURL:        "",
+			Dir:            "update/",
+			CmdName:        *appName,
+		}
+
+		if updater != nil {
+			go updater.BackgroundRun()
+		}
+
+		// data, err := Asset("arduino.zip")
+		// if err != nil {
+		// 	log.Println("arduino tools not found")
+		// }
+
 		//getList()
 		f := flag.Lookup("addr")
 		log.Println("Version:" + version)
@@ -122,19 +163,19 @@ func main() {
 		}
 
 		// list serial ports
-		// portList, _ := GetList()
-		// /*if errSys != nil {
-		// 	log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
-		// 	log.Fatal("Exiting")
-		// }*/
-		// log.Println("Your serial ports:")
-		// if len(portList) == 0 {
-		// 	log.Println("\tThere are no serial ports to list.")
-		// }
-		// for _, element := range portList {
-		// 	log.Printf("\t%v\n", element)
+		portList, _ := GetList(false)
+		/*if errSys != nil {
+			log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
+			log.Fatal("Exiting")
+		}*/
+		log.Println("Your serial ports:")
+		if len(portList) == 0 {
+			log.Println("\tThere are no serial ports to list.")
+		}
+		for _, element := range portList {
+			log.Printf("\t%v\n", element)
 
-		// }
+		}
 
 		if !*verbose {
 			log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")

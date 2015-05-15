@@ -1,6 +1,44 @@
 # git submodule init
 # git submodule update
 
+#dependencies
+#go install github.com/sanbornm/go-selfupdate
+
+VERSION=xxx
+APP_NAME=Arduino_Create_Bridge
+
+# OUTPUT-COLORING
+red='\e[0;31m'
+green='\e[0;32m'
+NC='\e[0m' # No Color
+
+extractVersionFromMain()
+{
+	VERSION=`grep versionFloat main.go | cut -d "(" -f2 | cut -d ")" -f1`
+}
+
+createZipEmbeddableFileArduino()
+{
+	GOOS=$1
+	GOARCH=$2
+
+	# start clean
+	rm arduino/arduino.zip
+	rm -r arduino/arduino
+	mkdir arduino/arduino
+	cp -r arduino/hardware arduino/tools\_$GOOS\_$GOARCH arduino/boards.json arduino/arduino
+	cp config.ini arduino
+	mv arduino/arduino/tools* arduino/arduino/tools
+	cd arduino
+	zip -r arduino.zip arduino/* config.ini > /dev/null
+	cd ..
+	cat arduino/arduino.zip >> $3
+	zip  --adjust-sfx $3
+	mkdir -p snapshot/$GOOS\_$GOARCH
+	cp $3 snapshot/$GOOS\_$GOARCH/$3
+	ls -la snapshot/$GOOS\_$GOARCH/$3
+}
+
 bootstrapPlatforms()
 {
 	#export PATH=$PATH:/home/martino/osxcross/target/bin
@@ -17,84 +55,30 @@ compilePlatform()
 	GOOS=$1
 	GOARCH=$2
 	CC=$3
-	cp -r arduino/tools_$GOOS  arduino/tools
-	echo "compiling for $GOOS, $GOARCH"
-	rm snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
+	CGO_ENABLED=$4
+	NAME=$APP_NAME
 	if [ $GOOS == "windows" ]
 	then
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_Create_Bridge.exe"
-	else
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_Create_Bridge"
+	NAME=$NAME".exe"
 	fi
+	echo -e "${green}=== Compiling for $GOOS, $GOARCH ===${NC}"
+	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=$CGO_ENABLED go build -o=$NAME
 	if [ $? != 0 ]
 	then
-	echo "Target $GOOS, $GOARCH failed"
+	echo -e "${red}Target $GOOS, $GOARCH failed${NC}"
 	exit 1
 	fi
-	zip -r snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_Create_Bridge* > /dev/null
-	rm -rf arduino/tools
-	rm -rf Arduino_Create_Bridge*
-	ls -la snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
+	createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
+	GOOS=$GOOS GOARCH=$GOARCH go-selfupdate $NAME $VERSION
+	rm -rf $NAME*
 }
 
-compilePlatformLinux()
-{
-	GOOS=$1
-	GOARCH=$2
-	CC=$3
-	if [ $GOARCH == "386" ]
-	then
-	TOOLS_DIR=32
-	fi
-	if [ $GOARCH == "amd64" ]
-	then
-	TOOLS_DIR=64
-	fi
-	cp -r arduino/tools_$GOOS\_$TOOLS_DIR  arduino/tools
-	echo "compiling for $GOOS, $GOARCH"
-	rm snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=1 go build -o="Arduino_Create_Bridge"
-	if [ $? != 0 ]
-	then
-	echo "Target $GOOS, $GOARCH failed"
-	exit 1
-	fi
-	zip -r snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_Create_Bridge > /dev/null
-	rm -rf arduino/tools
-	rm -rf Arduino_Create_Bridge*
-	ls -la snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
-}
-
-compilePlatformNoCGO()
-{
-	GOOS=$1
-	GOARCH=$2
-	cp -r arduino/tools_$GOOS\_$GOARCH  arduino/tools
-	echo "compiling for $GOOS, $GOARCH"
-	rm snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
-	if [ $GOARCH == "arm" ]
-	then
-	env GOARM=6 GOOS=$GOOS GOARCH=$GOARCH go build -o="Arduino_Create_Bridge"
-	else
-	env GOOS=$GOOS GOARCH=$GOARCH go build -o="Arduino_Create_Bridge"
-	fi
-	if [ $? != 0 ]
-	then
-	echo "Target $GOOS, $GOARCH failed"
-	exit 1
-	fi
-	zip -r snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip arduino/hardware arduino/tools arduino/resources Arduino_Create_Bridge > /dev/null
-	rm -rf arduino/tools
-	rm -rf Arduino_Create_Bridge*
-	ls -la snapshot/Arduino_Create_Bridge-$GOOS-$GOARCH.zip
-}
-
-rm -rf arduino/tools
-compilePlatform darwin amd64 o64-clang
+extractVersionFromMain
+compilePlatform darwin amd64 o64-clang 1
 #compilePlatformLinux linux 386 gcc
-compilePlatformLinux linux amd64 gcc
-compilePlatformNoCGO linux arm
-compilePlatform windows 386 i686-w64-mingw32-gcc
+compilePlatform linux amd64 gcc 1
+compilePlatform linux arm 0
+compilePlatform windows 386 i686-w64-mingw32-gcc 1
 
 
 exit 0
