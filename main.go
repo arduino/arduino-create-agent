@@ -56,6 +56,8 @@ var (
 	appName   = flag.String("appName", "", "")
 )
 
+var globalConfigMap map[string]interface{}
+
 type NullWriter int
 
 func (NullWriter) Write([]byte) (int, error) { return 0, nil }
@@ -122,6 +124,8 @@ func main() {
 		// if err != nil {
 		// 	log.Println("arduino tools not found")
 		// }
+
+		createGlobalConfigMap(&globalConfigMap)
 
 		//getList()
 		f := flag.Lookup("addr")

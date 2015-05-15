@@ -49,7 +49,7 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 			}
 		}
 
-		arch, archBoardName, boardName, _ := getBoardName(cmdOutMap["Product ID"])
+		archBoardName, boardName, _ := getBoardName(cmdOutMap["Product ID"])
 
 		// remove initial 0x and final zeros
 		ttyHeader := strings.Trim((cmdOutMap["Location ID"]), "0x")
@@ -58,7 +58,7 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 
 		for _, port := range ports {
 			if strings.Contains(port.Name, ttyHeader) && !strings.Contains(port.Name, "/cu.") {
-				port.RelatedNames = append(port.RelatedNames, "arduino:"+arch+":"+archBoardName)
+				port.RelatedNames = append(port.RelatedNames, archBoardName)
 				port.FriendlyName = strings.Trim(boardName, "\n")
 				arduino_ports = append(arduino_ports, port)
 			}
