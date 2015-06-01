@@ -88,8 +88,13 @@ func main() {
 		// autoextract self
 		src, _ := osext.Executable()
 		dest := filepath.Dir(src)
-		err := Unzip(src, dest)
-		fmt.Println("Self extraction, err:", err)
+
+		// save the config.ini (if it exists)
+		if _, err := os.Stat(*configIni); os.IsNotExist(err) {
+			fmt.Println("First run, unzipping self")
+			err := Unzip(src, dest)
+			fmt.Println("Self extraction, err:", err)
+		}
 
 		if _, err := os.Stat(*configIni); os.IsNotExist(err) {
 			flag.Parse()

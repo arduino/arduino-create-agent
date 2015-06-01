@@ -3,9 +3,11 @@
 package main
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"github.com/kardianos/osext"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -74,6 +76,22 @@ type Bootloader struct {
 type ConfigProperty struct {
 	value string
 	path  string
+}
+
+func computeMd5(filePath string) ([]byte, error) {
+	var result []byte
+	file, err := os.Open(filePath)
+	if err != nil {
+		return result, err
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return result, err
+	}
+
+	return hash.Sum(result), nil
 }
 
 func pipe_commands(commands ...*exec.Cmd) ([]byte, error) {
