@@ -6,7 +6,8 @@ import (
 	"github.com/mattn/go-ole"
 	"github.com/mattn/go-ole/oleutil"
 	//"github.com/tarm/goserial"
-	"github.com/johnlauer/goserial"
+	//"github.com/johnlauer/goserial"
+	"github.com/facchinm/go-serial"
 	"log"
 	"os"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"strconv"
 	"sync"
 	//"syscall"
+	"regexp"
 )
 
 var (
@@ -41,10 +43,12 @@ func getList() ([]OsSerialPort, os.SyscallError) {
 
 	// see if array has any data, if not fallback to the traditional
 	// com port list model
-	if len(arr) == 0 {
-		// assume it failed
-		arr, sysCallErr = getListViaOpen()
-	}
+	/*
+		if len(arr) == 0 {
+			// assume it failed
+			arr, sysCallErr = getListViaOpen()
+		}
+	*/
 
 	// see if array has any data, if not fallback to looking at
 	// the registry list
@@ -182,9 +186,25 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 		deviceIdStr, _ := oleutil.GetProperty(item, "DeviceID")
 		devIdItems := strings.Split(deviceIdStr.ToString(), "&")
 		log.Printf("DeviceId elements:%v", devIdItems)
-		list[i].SerialNumber = devIdItems[3]
-		list[i].IdProduct = strings.Replace(devIdItems[1], "PID_", "", 1)
-		list[i].IdVendor = strings.Replace(devIdItems[0], "USB\\VID_", "", 1)
+		if len(devIdItems) > 3 {
+			list[i].SerialNumber = devIdItems[3]
+			list[i].IdProduct = strings.Replace(devIdItems[1], "PID_", "", 1)
+			list[i].IdVendor = strings.Replace(devIdItems[0], "USB\\VID_", "", 1)
+		} else {
+			list[i].SerialNumber = deviceIdStr.ToString()
+			pidMatch := regexp.MustCompile("PID_(\\d+)").FindAllStringSubmatch(deviceIdStr.ToString(), -1)
+			if len(pidMatch) > 0 {
+				if len(pidMatch[0]) > 1 {
+					list[i].IdProduct = pidMatch[0][1]
+				}
+			}
+			vidMatch := regexp.MustCompile("VID_(\\d+)").FindAllStringSubmatch(deviceIdStr.ToString(), -1)
+			if len(vidMatch) > 0 {
+				if len(vidMatch[0]) > 1 {
+					list[i].IdVendor = vidMatch[0][1]
+				}
+			}
+		}
 
 		manufStr, _ := oleutil.GetProperty(item, "Manufacturer")
 		list[i].Manufacturer = manufStr.ToString()
@@ -222,8 +242,13 @@ func getListViaOpen() ([]OsSerialPort, os.SyscallError) {
 	var igood int = 0
 	for i := 0; i < 100; i++ {
 		prtname := "COM" + strconv.Itoa(i)
-		conf := &serial.Config{Name: prtname, Baud: 9600}
-		sp, err := serial.OpenPort(conf)
+		//conf := &serial.Config{Name: prtname, Baud: 1200}
+		mode := &serial.Mode{
+			BaudRate: 1200,
+			Vmin:     0,
+			Vtimeout: 10,
+		}
+		sp, err := serial.OpenPort(prtname, mode)
 		//log.Println("Just tried to open port", prtname)
 		if err == nil {
 			//log.Println("Able to open port", prtname)
