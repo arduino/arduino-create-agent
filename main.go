@@ -90,17 +90,17 @@ func main() {
 		dest := filepath.Dir(src)
 
 		// save the config.ini (if it exists)
-		if _, err := os.Stat(*configIni); os.IsNotExist(err) {
+		if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
 			fmt.Println("First run, unzipping self")
 			err := Unzip(src, dest)
 			fmt.Println("Self extraction, err:", err)
 		}
 
-		if _, err := os.Stat(*configIni); os.IsNotExist(err) {
+		if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
 			flag.Parse()
 			fmt.Println("No config.ini at", *configIni)
 		} else {
-			flag.Set("config", *configIni)
+			flag.Set("config", dest+"/"+*configIni)
 			iniflags.Parse()
 		}
 
