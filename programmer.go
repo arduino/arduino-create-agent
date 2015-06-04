@@ -43,7 +43,7 @@ func colonToUnderscore(input string) string {
 	return output
 }
 
-func spProgramNetwork(portname string, boardname string, filePath string) {
+func spProgramNetwork(portname string, boardname string, filePath string) error {
 
 	log.Println("Starting network upload")
 	log.Println("Board Name: " + boardname)
@@ -57,25 +57,25 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		log.Println("Error opening file" + filePath + " err: " + err.Error())
-		return
+		return err
 	}
 	fw, err := w.CreateFormFile("sketch_hex", filePath)
 	if err != nil {
 		log.Println("Error creating form file")
-		return
+		return err
 	}
 	if _, err = io.Copy(fw, f); err != nil {
 		log.Println("Error copying form file")
-		return
+		return err
 	}
 	// Add the other fields
 	if fw, err = w.CreateFormField("board"); err != nil {
 		log.Println("Error creating form field")
-		return
+		return err
 	}
 	if _, err = fw.Write([]byte(colonToUnderscore(boardname))); err != nil {
 		log.Println("Error writing form field")
-		return
+		return err
 	}
 	// Don't forget to close the multipart writer.
 	// If you don't close it, your request will be missing the terminating boundary.
@@ -85,7 +85,7 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 	req, err := http.NewRequest("POST", _url, &b)
 	if err != nil {
 		log.Println("Error creating post request")
-		return
+		return err
 	}
 	// Don't forget to set the content type, this will contain the boundary.
 	req.Header.Set("Content-Type", w.FormDataContentType())
@@ -102,7 +102,7 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 	res, err := client.Do(req)
 	if err != nil {
 		log.Println("Error during post request")
-		return
+		return err
 	}
 
 	// Check the response
@@ -123,8 +123,8 @@ func spProgramNetwork(portname string, boardname string, filePath string) {
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 		// analyze stdin
-
 	}
+	return err
 }
 
 func spProgramLocal(portname string, boardname string, filePath string) {
@@ -137,6 +137,9 @@ func spProgramLocal(portname string, boardname string, filePath string) {
 		spHandlerProgram(flasher, mycmd)
 	} else {
 		spErr("Could not find the board " + boardname + "  that you were trying to program.")
+		mapD := map[string]string{"ProgrammerStatus": "Failed", "IsFound": strconv.FormatBool(isFound), "Flasher": flasher, "Cmd": strings.Join(mycmd, " ")}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 		return
 	}
 }
@@ -158,11 +161,19 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 		networkPort = myport.NetworkPort
 	}
 
+	var err error
+
 	if networkPort {
 		if boardname_rewrite == "" {
 			spProgramNetwork(portname, boardname_rewrite, filePath)
 		} else {
 			spProgramNetwork(portname, boardname, filePath)
+		}
+		if err != nil {
+			h.broadcastSys <- []byte("Could not program the board")
+			mapD := map[string]string{"ProgrammerStatus": "Error " + err.Error(), "Msg": "Could not program the board", "Output": ""}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
 		}
 	} else {
 		spProgramLocal(portname, boardname, filePath)

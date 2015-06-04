@@ -40,6 +40,7 @@ func (c *connection) writer() {
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Received a upload")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	port := r.FormValue("port")
 	if port == "" {
 		http.Error(w, "port is required", http.StatusBadRequest)
@@ -67,6 +68,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Print("Started a new websocket handler")
 	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
 	if _, ok := err.(websocket.HandshakeError); ok {

@@ -72,9 +72,9 @@ func (h *hub) run() {
 				close(c.send)
 			}()
 		case m := <-h.broadcast:
-			//log.Print("Got a broadcast")
-			//log.Print(m)
-			//log.Print(len(m))
+			log.Print("Got a broadcast")
+			log.Print(m)
+			log.Print(len(m))
 			if len(m) > 0 {
 				//log.Print(string(m))
 				//log.Print(h.broadcast)
@@ -95,9 +95,9 @@ func (h *hub) run() {
 				}
 			}
 		case m := <-h.broadcastSys:
-			//log.Printf("Got a system broadcast: %v\n", string(m))
-			//log.Print(string(m))
-			//log.Print("-----")
+			log.Printf("Got a system broadcast: %v\n", string(m))
+			log.Print(string(m))
+			log.Print("-----")
 
 			for c := range h.connections {
 				select {
