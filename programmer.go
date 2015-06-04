@@ -165,9 +165,9 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 
 	if networkPort {
 		if boardname_rewrite == "" {
-			spProgramNetwork(portname, boardname_rewrite, filePath)
+			err = spProgramNetwork(portname, boardname_rewrite, filePath)
 		} else {
-			spProgramNetwork(portname, boardname, filePath)
+			err = spProgramNetwork(portname, boardname, filePath)
 		}
 		if err != nil {
 			h.broadcastSys <- []byte("Could not program the board")
