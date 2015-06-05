@@ -112,13 +112,11 @@ func spProgramNetwork(portname string, boardname string, filePath string) error 
 
 	if err != nil {
 		log.Printf("Command finished with error: %v ", err)
-		h.broadcastSys <- []byte("Could not program the board")
-		mapD := map[string]string{"ProgrammerStatus": "Error " + res.Status, "Msg": "Could not program the board", "Output": ""}
+		mapD := map[string]string{"ProgrammerStatus": "Error " + res.Status, "Msg": "Could not program the board", "Output": "", "Err": "Could not program the board"}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 	} else {
 		log.Printf("Finished without error. Good stuff.")
-		h.broadcastSys <- []byte("Flash OK!")
 		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok", "Output": ""}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
@@ -137,7 +135,7 @@ func spProgramLocal(portname string, boardname string, filePath string) {
 		spHandlerProgram(flasher, mycmd)
 	} else {
 		spErr("Could not find the board " + boardname + "  that you were trying to program.")
-		mapD := map[string]string{"ProgrammerStatus": "Failed", "IsFound": strconv.FormatBool(isFound), "Flasher": flasher, "Cmd": strings.Join(mycmd, " ")}
+		mapD := map[string]string{"ProgrammerStatus": "Failed", "IsFound": strconv.FormatBool(isFound), "Flasher": flasher, "Cmd": strings.Join(mycmd, " "), "Err": "Could not find the board " + boardname + "  that you were trying to program."}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 		return
@@ -170,8 +168,7 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 			err = spProgramNetwork(portname, boardname, filePath)
 		}
 		if err != nil {
-			h.broadcastSys <- []byte("Could not program the board")
-			mapD := map[string]string{"ProgrammerStatus": "Error " + err.Error(), "Msg": "Could not program the board", "Output": ""}
+			mapD := map[string]string{"ProgrammerStatus": "Error " + err.Error(), "Msg": "Could not program the board", "Output": "", "Err": err.Error()}
 			mapB, _ := json.Marshal(mapD)
 			h.broadcastSys <- mapB
 		}
@@ -206,13 +203,11 @@ func spHandlerProgram(flasher string, cmdString []string) {
 
 	if err != nil {
 		log.Printf("Command finished with error: %v "+string(cmdOutput), err)
-		h.broadcastSys <- []byte("Could not program the board")
-		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board", "Output": string(cmdOutput)}
+		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board", "Output": string(cmdOutput), "Err": string(cmdOutput)}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 	} else {
 		log.Printf("Finished without error. Good stuff. stdout: " + string(cmdOutput))
-		h.broadcastSys <- []byte("Flash OK!")
 		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok", "Output": string(cmdOutput)}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
@@ -280,13 +275,17 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 
 	boardFields := strings.Split(boardname, ":")
 	if len(boardFields) != 3 {
-		h.broadcastSys <- []byte("Board need to be specified in core:architecture:name format")
+		mapD := map[string]string{"Err": "Board need to be specified in core:architecture:name format"}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 		return false, "", nil
 	}
 	tempPath := (filepath.Dir(execPath) + "/" + boardFields[0] + "/hardware/" + boardFields[1] + "/boards.txt")
 	file, err := os.Open(tempPath)
 	if err != nil {
-		h.broadcastSys <- []byte("Could not find board: " + boardname)
+		mapD := map[string]string{"Err": "Could not find board: " + boardname}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 		log.Println("Error:", err)
 		return false, "", nil
 	}
@@ -305,7 +304,9 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	}
 
 	if len(boardOptions) == 0 {
-		h.broadcastSys <- []byte("Board " + boardFields[2] + " is not part of " + boardFields[0] + ":" + boardFields[1])
+		mapD := map[string]string{"Err": "Board " + boardFields[2] + " is not part of " + boardFields[0] + ":" + boardFields[1]}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 		return false, "", nil
 	}
 
@@ -321,7 +322,9 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	tempPath = (filepath.Dir(execPath) + "/" + boardFields[0] + "/hardware/" + boardFields[1] + "/platform.txt")
 	file, err = os.Open(tempPath)
 	if err != nil {
-		h.broadcastSys <- []byte("Could not find board: " + boardname)
+		mapD := map[string]string{"Err": "Could not find board: " + boardname}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 		log.Println("Error:", err)
 		return false, "", nil
 	}
@@ -348,7 +351,9 @@ func assembleCompilerCommand(boardname string, portname string, filePath string)
 	version := uploadOptions["runtime.tools."+tool+".version"]
 	path := (filepath.Dir(execPath) + "/" + boardFields[0] + "/tools/" + tool + "/" + version)
 	if err != nil {
-		h.broadcastSys <- []byte("Could not find board: " + boardname)
+		mapD := map[string]string{"Err": "Could not find board: " + boardname}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 		log.Println("Error:", err)
 		return false, "", nil
 	}
