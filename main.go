@@ -202,7 +202,7 @@ func main() {
 			http.HandleFunc("/", homeHandler)
 			http.HandleFunc("/ws", wsHandler)
 			http.HandleFunc("/upload", uploadHandler)
-			if err := http.ListenAndServeTLS(*addr, "cert.pem", "key.pem", nil); err != nil {
+			if err := http.ListenAndServe(*addr, nil); err != nil {
 				fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
 				log.Fatal("Error ListenAndServe:", err)
 			}
@@ -264,7 +264,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
 <html>
 <head>
 <title>Serial Port Example</title>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 <script type="text/javascript">
     $(function() {
 
@@ -294,7 +294,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
     });
 
     if (window["WebSocket"]) {
-        conn = new WebSocket("wss://{{$}}/ws");
+        conn = new WebSocket("ws://{{$}}/ws");
         conn.onclose = function(evt) {
             appendLog($("<div><b>Connection closed.</b></div>"))
         }
