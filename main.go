@@ -165,19 +165,19 @@ func main() {
 
 		log.Println("The Serial Port JSON Server is now running.")
 		log.Println("If you are using ChiliPeppr, you may go back to it and connect to this server.")
-	// launch the hub routine which is the singleton for the websocket server
-	go h.run()
-	// launch our serial port routine
-	go sh.run()
-	// launch our dummy data routine
-	//go d.run()
+		// launch the hub routine which is the singleton for the websocket server
+		go h.run()
+		// launch our serial port routine
+		go sh.run()
+		// launch our dummy data routine
+		//go d.run()
 
-	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/ws", wsHandler)
-	if err := http.ListenAndServe(*addr, nil); err != nil {
-		fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
-		log.Fatal("Error ListenAndServe:", err)
-	}
+		http.HandleFunc("/", homeHandler)
+		http.HandleFunc("/ws", wsHandler)
+		if err := http.ListenAndServe(*addr, nil); err != nil {
+			fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+			log.Fatal("Error ListenAndServe:", err)
+		}
 
 		// see if they provided a regex filter
 		if len(*regExpFilter) > 0 {
