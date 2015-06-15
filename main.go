@@ -27,6 +27,7 @@ var (
 	version      = "1.83"
 	versionFloat = float32(1.83)
 	addr         = flag.String("addr", ":8989", "http service address")
+	addrSSL      = flag.String("addrSSL", ":8990", "https service address")
 	//assets       = flag.String("assets", defaultAssetPath(), "path to assets")
 	verbose = flag.Bool("v", true, "show debug logging")
 	//verbose = flag.Bool("v", false, "show debug logging")
@@ -174,6 +175,14 @@ func main() {
 
 		http.HandleFunc("/", homeHandler)
 		http.HandleFunc("/ws", wsHandler)
+
+		go func() {
+			if err := http.ListenAndServeTLS(*addrSSL, "cert.pem", "key.pem", nil); err != nil {
+				fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+				log.Fatal("Error ListenAndServe:", err)
+			}
+		}()
+
 		if err := http.ListenAndServe(*addr, nil); err != nil {
 			fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
 			log.Fatal("Error ListenAndServe:", err)
