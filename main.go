@@ -316,7 +316,11 @@ const homeTemplateHtml = `<!DOCTYPE html>
     });
 
     if (window["WebSocket"]) {
-        conn = new WebSocket("ws://{{$}}/ws");
+    	if (window.location.protocol === 'https:') {
+    		conn = new WebSocket("wss://{{$}}/ws");
+    	} else {
+    		conn = new WebSocket("ws://{{$}}/ws");
+    	}
         conn.onclose = function(evt) {
             appendLog($("<div><b>Connection closed.</b></div>"))
         }

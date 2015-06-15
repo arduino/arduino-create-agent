@@ -19,6 +19,7 @@ extractVersionFromMain()
 
 createZipEmbeddableFileArduino()
 {
+    echo 'In createZipEmbeddableFileArduino'
 	GOOS=$1
 	GOARCH=$2
 
@@ -42,6 +43,7 @@ createZipEmbeddableFileArduino()
 
 bootstrapPlatforms()
 {
+    echo 'In bootstrapPlatforms'
 	#export PATH=$PATH:/home/martino/osxcross/target/bin
 	cd $GOROOT/src
 	env CC_FOR_TARGET=clang CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 ./make.bash --no-clean
@@ -51,8 +53,10 @@ bootstrapPlatforms()
 	env CC_FOR_TARGET=i686-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows GOARCH=386 ./make.bash --no-clean
 }
 
+set -x
 compilePlatform()
 {
+    echo 'In compilePlatform'
 	GOOS=$1
 	GOARCH=$2
 	CC=$3
@@ -62,13 +66,13 @@ compilePlatform()
 	then
 	NAME=$NAME".exe"
 	fi
-	echo -e "${green}=== Compiling for $GOOS, $GOARCH ===${NC}"
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CGO_ENABLED=$CGO_ENABLED go build -o=$NAME
+	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CXX=$CC CGO_ENABLED=$CGO_ENABLED go build -o=$NAME
 	if [ $? != 0 ]
 	then
 	echo -e "${red}Target $GOOS, $GOARCH failed${NC}"
 	exit 1
 	fi
+	echo createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
 	createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
 	GOOS=$GOOS GOARCH=$GOARCH go-selfupdate $NAME $VERSION
 	rm -rf $NAME*
