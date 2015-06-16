@@ -204,7 +204,7 @@ func main() {
 			http.HandleFunc("/ws", wsHandler)
 			http.HandleFunc("/upload", uploadHandler)
 
-			if err := http.ListenAndServeTLS(*addrSSL, "cert.pem", "key.pem", nil); err != nil {
+			if err := http.ListenAndServeTLS(*addrSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem"), nil); err != nil {
 				fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
 				log.Fatal("Error ListenAndServe:", err)
 			}
