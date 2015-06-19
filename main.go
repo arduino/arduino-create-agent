@@ -4,12 +4,10 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"go/build"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -156,11 +154,7 @@ func main() {
 			debug.SetGCPercent(-1)
 		}
 
-		ip, err := externalIP()
-		if err != nil {
-			log.Println(err)
-		}
-
+		ip := "0.0.0.0"
 		log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
 		//homeTempl = template.Must(template.ParseFiles(filepath.Join(*assets, "home.html")))
 
@@ -216,51 +210,6 @@ func main() {
 		}
 	}()
 	setupSysTray()
-}
-
-func externalIP() (string, error) {
-	//log.Println("Getting external IP")
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		log.Println("Got err getting external IP addr")
-		return "", err
-	}
-	for _, iface := range ifaces {
-		if iface.Flags&net.FlagUp == 0 {
-			//log.Println("Iface down")
-			continue // interface down
-		}
-		if iface.Flags&net.FlagLoopback != 0 {
-			//log.Println("Loopback")
-			continue // loopback interface
-		}
-		addrs, err := iface.Addrs()
-		if err != nil {
-			log.Println("Got err on iface.Addrs()")
-			return "", err
-		}
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			if ip == nil || ip.IsLoopback() {
-				//log.Println("Ip was nil or loopback")
-				continue
-			}
-			ip = ip.To4()
-			if ip == nil {
-				//log.Println("Was not ipv4 addr")
-				continue // not an ipv4 address
-			}
-			//log.Println("IP is ", ip.String())
-			return ip.String(), nil
-		}
-	}
-	return "", errors.New("are you connected to the network?")
 }
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
