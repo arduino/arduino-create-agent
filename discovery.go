@@ -74,6 +74,7 @@ func GetNetworkList() ([]OsSerialPort, error) {
 	// wait for some kind of timeout and return arrPorts
 	select {
 	case <-timeout:
+		close(results)
 		return arrPorts, nil
 	}
 }
