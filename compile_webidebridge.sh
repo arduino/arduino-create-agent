@@ -44,9 +44,9 @@ createZipEmbeddableFileArduino()
 bootstrapPlatforms()
 {
     echo 'In bootstrapPlatforms'
-	#export PATH=$PATH:/home/martino/osxcross/target/bin
+	#export PATH=$PATH:/opt/osxcross/target/bin
 	cd $GOROOT/src
-	env CC_FOR_TARGET=clang CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 ./make.bash --no-clean
+	env CC_FOR_TARGET=o64-clang CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 ./make.bash --no-clean
 	env CC_FOR_TARGET=gcc CGO_ENABLED=1 GOOS=linux GOARCH=amd64 ./make.bash --no-clean
 	env CC_FOR_TARGET=gcc CGO_ENABLED=1 GOOS=linux GOARCH=386 ./make.bash --no-clean
 	env CGO_ENABLED=0 GOOS=linux GOARCH=arm ./make.bash --no-clean
@@ -79,7 +79,7 @@ compilePlatform()
 }
 
 extractVersionFromMain
-compilePlatform darwin amd64 clang 1
+compilePlatform darwin amd64 o64-clang 1
 #compilePlatformLinux linux 386 gcc
 compilePlatform linux amd64 gcc 1
 compilePlatform linux arm 0
