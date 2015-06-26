@@ -15,10 +15,13 @@ import (
 	"github.com/kardianos/osext"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 	//"github.com/sanderhahn/gozip"
-	"github.com/vharitonsky/iniflags"
 	"runtime/debug"
 	"text/template"
 	"time"
+
+	"github.com/kardianos/service"
+
+	"github.com/vharitonsky/iniflags"
 )
 
 var (
@@ -80,8 +83,62 @@ func launchSelfLater() {
 	log.Println("Done waiting 5 secs. Now launching...")
 }
 
-func main() {
+var logger service.Logger
 
+type program struct{}
+
+func (p *program) Start(s service.Service) error {
+	// Start should not block. Do the actual work async.
+	go p.run()
+	return nil
+}
+func (p *program) run() {
+	startDaemon()
+}
+func (p *program) Stop(s service.Service) error {
+	// Stop should not block. Return with a few seconds.
+	<-time.After(time.Second * 13)
+	return nil
+}
+
+func main() {
+	svcConfig := &service.Config{
+		Name:        "ArduinoCreateBridge",
+		DisplayName: "Arduino Create Bridge",
+		Description: "A bridge that allows Arduino Create to operate on the boards connected to the computer",
+	}
+
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(os.Args) > 1 {
+		err = service.Control(s, os.Args[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	logger, err = s.Logger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = s.Install()
+	if err != nil {
+		logger.Error(err)
+	}
+
+	err = s.Run()
+	if err != nil {
+		logger.Error(err)
+	}
+}
+
+func startDaemon() {
+	// setupSysTray()
 	go func() {
 
 		// autoextract self
@@ -209,7 +266,7 @@ func main() {
 			log.Fatal("Error ListenAndServe:", err)
 		}
 	}()
-	setupSysTray()
+
 }
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
