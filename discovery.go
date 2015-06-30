@@ -37,7 +37,37 @@ import (
 
 const timeoutConst = 2
 
+// SavedNetworkPorts contains the ports which we know are already connected
+var SavedNetworkPorts []OsSerialPort
+
+// GetNetworkList returns a list of Network Ports
+// The research of network ports is articulated in two phases. First we add new ports coming from
+// the bonjour module, then we prune the boards who don't respond to a ping
 func GetNetworkList() ([]OsSerialPort, error) {
+	newPorts, err := getPorts()
+	if err != nil {
+		return nil, err
+	}
+
+	tmp := SavedNetworkPorts
+
+	for index, p1 := range tmp {
+		for _, p2 := range newPorts {
+			log.Printf("compare %d: %+v %+1v", index, p1, p2)
+			if p1.Name == p2.Name && p2.FriendlyName == p2.FriendlyName {
+				copy(SavedNetworkPorts[index:], SavedNetworkPorts[index+1:])
+				SavedNetworkPorts[len(SavedNetworkPorts)-1] = OsSerialPort{}
+				SavedNetworkPorts = SavedNetworkPorts[:len(SavedNetworkPorts)-1]
+			}
+		}
+	}
+
+	SavedNetworkPorts = append(SavedNetworkPorts, newPorts...)
+
+	return newPorts, nil
+}
+
+func getPorts() ([]OsSerialPort, error) {
 	resolver, err := bonjour.NewResolver(nil)
 	if err != nil {
 		log.Println("Failed to initialize resolver:", err.Error())
