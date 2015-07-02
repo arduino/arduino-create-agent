@@ -33,7 +33,7 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 	cmdOutSlice := strings.Split(string(cmdOutput), "\n")
 
 	var arduino_ports []OsSerialPort
-	other_ports := ports
+	other_ports := []OsSerialPort
 
 	// how many lines is the output? boards attached = lines/8
 	for i := 0; i < len(cmdOutSlice)/8; i++ {
@@ -59,11 +59,12 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 
 		for i, port := range ports {
 			if strings.Contains(port.Name, ttyHeader) {
-				other_ports = removePortFromSlice(other_ports, i)
 				if !strings.Contains(port.Name, "/cu") {
 					port.RelatedNames = append(port.RelatedNames, archBoardName)
 					port.FriendlyName = strings.Trim(boardName, "\n")
 					arduino_ports = append(arduino_ports, port)
+				} else {
+					other_ports = append(other_ports, port)
 				}
 			}
 		}
