@@ -26,6 +26,18 @@ func (c *connection) writer() {
 	}
 }
 
+// WsServer overrides socket.io server to set the CORS
+type WsServer struct {
+	Server *socketio.Server
+}
+
+func (s *WsServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	origin := r.Header.Get("Origin")
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	s.Server.ServeHTTP(w, r)
+}
+
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Received a upload")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -55,7 +67,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func wsHandler() *socketio.Server {
+func wsHandler() *WsServer {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)
@@ -76,5 +88,9 @@ func wsHandler() *socketio.Server {
 		log.Println("error:", err)
 	})
 
-	return server
+	wrapper := WsServer{
+		Server: server,
+	}
+
+	return &wrapper
 }
