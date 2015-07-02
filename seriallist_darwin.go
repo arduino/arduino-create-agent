@@ -57,7 +57,7 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 		ttyHeader = strings.Split(ttyHeader, " ")[0]
 		ttyHeader = strings.Trim(ttyHeader, "0")
 
-		for i, port := range ports {
+		for _, port := range ports {
 			if strings.Contains(port.Name, ttyHeader) {
 				if !strings.Contains(port.Name, "/cu") {
 					port.RelatedNames = append(port.RelatedNames, archBoardName)
