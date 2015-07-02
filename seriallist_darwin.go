@@ -33,7 +33,7 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 	cmdOutSlice := strings.Split(string(cmdOutput), "\n")
 
 	var arduino_ports []OsSerialPort
-	other_ports := []OsSerialPort
+	var other_ports []OsSerialPort
 
 	// how many lines is the output? boards attached = lines/8
 	for i := 0; i < len(cmdOutSlice)/8; i++ {
