@@ -74,7 +74,7 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 
 	// additional remove phase
 	arduino_ports = Filter(arduino_ports, func(port OsSerialPort) bool {
-		return !string.Contains(port.Name, "Blue") && !strings.Contains(port.Name, "/cu")
+		return !strings.Contains(port.Name, "Blue") && !strings.Contains(port.Name, "/cu")
 	})
 
 	return arduino_ports
