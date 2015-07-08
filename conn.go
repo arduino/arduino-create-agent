@@ -3,6 +3,7 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
 	"log"
 	"net/http"
@@ -31,36 +32,32 @@ type WsServer struct {
 	Server *socketio.Server
 }
 
-func (s *WsServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
-	origin := r.Header.Get("Origin")
-	w.Header().Set("Access-Control-Allow-Origin", origin)
-	s.Server.ServeHTTP(w, r)
+func (s *WsServer) ServeHTTP(c *gin.Context) {
+	s.Server.ServeHTTP(c.Writer, c.Request)
 }
 
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
+func uploadHandler(c *gin.Context) {
 	log.Print("Received a upload")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	port := r.FormValue("port")
+	port := c.PostForm("port")
 	if port == "" {
-		http.Error(w, "port is required", http.StatusBadRequest)
+		c.String(http.StatusBadRequest, "port is required")
 		return
 	}
-	board := r.FormValue("board")
+	board := c.PostForm("board")
 	if board == "" {
-		http.Error(w, "board is required", http.StatusBadRequest)
+		c.String(http.StatusBadRequest, "board is required")
 		return
 	}
-	board_rewrite := r.FormValue("board_rewrite")
-	sketch, header, err := r.FormFile("sketch_hex")
+	board_rewrite := c.PostForm("board_rewrite")
+	sketch, header, err := c.Request.FormFile("sketch_hex")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		c.String(http.StatusBadRequest, err.Error())
 	}
 
 	if header != nil {
 		path, err := saveFileonTempDir(header.Filename, sketch)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			c.String(http.StatusBadRequest, err.Error())
 		}
 
 		go spProgramRW(port, board, board_rewrite, path)
