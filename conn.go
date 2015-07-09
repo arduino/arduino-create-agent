@@ -3,84 +3,91 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
+	"github.com/gin-gonic/gin"
+	"github.com/googollee/go-socket.io"
 	"log"
 	"net/http"
 )
 
 type connection struct {
 	// The websocket connection.
-	ws *websocket.Conn
+	ws socketio.Socket
 
 	// Buffered channel of outbound messages.
-	send chan []byte
-}
-
-func (c *connection) reader() {
-	for {
-		_, message, err := c.ws.ReadMessage()
-		if err != nil {
-			break
-		}
-
-		h.broadcast <- message
-	}
-	c.ws.Close()
+	send     chan []byte
+	incoming chan []byte
 }
 
 func (c *connection) writer() {
 	for message := range c.send {
-		err := c.ws.WriteMessage(websocket.TextMessage, message)
+		err := c.ws.Emit("message", string(message))
 		if err != nil {
 			break
 		}
 	}
-	c.ws.Close()
 }
 
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
+// WsServer overrides socket.io server to set the CORS
+type WsServer struct {
+	Server *socketio.Server
+}
+
+func (s *WsServer) ServeHTTP(c *gin.Context) {
+	s.Server.ServeHTTP(c.Writer, c.Request)
+}
+
+func uploadHandler(c *gin.Context) {
 	log.Print("Received a upload")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	port := r.FormValue("port")
+	port := c.PostForm("port")
 	if port == "" {
-		http.Error(w, "port is required", http.StatusBadRequest)
+		c.String(http.StatusBadRequest, "port is required")
 		return
 	}
-	board := r.FormValue("board")
+	board := c.PostForm("board")
 	if board == "" {
-		http.Error(w, "board is required", http.StatusBadRequest)
+		c.String(http.StatusBadRequest, "board is required")
 		return
 	}
-	board_rewrite := r.FormValue("board_rewrite")
-	sketch, header, err := r.FormFile("sketch_hex")
+	board_rewrite := c.PostForm("board_rewrite")
+	sketch, header, err := c.Request.FormFile("sketch_hex")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		c.String(http.StatusBadRequest, err.Error())
 	}
 
 	if header != nil {
 		path, err := saveFileonTempDir(header.Filename, sketch)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadGateway)
+			c.String(http.StatusBadRequest, err.Error())
 		}
 
 		go spProgramRW(port, board, board_rewrite, path)
 	}
 }
 
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	log.Print("Started a new websocket handler")
-	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
-	if _, ok := err.(websocket.HandshakeError); ok {
-		http.Error(w, "Not a websocket handshake", 400)
-		return
-	} else if err != nil {
-		return
+func wsHandler() *WsServer {
+	server, err := socketio.NewServer(nil)
+	if err != nil {
+		log.Fatal(err)
 	}
-	//c := &connection{send: make(chan []byte, 256), ws: ws}
-	c := &connection{send: make(chan []byte, 256*10), ws: ws}
-	h.register <- c
-	defer func() { h.unregister <- c }()
-	go c.writer()
-	c.reader()
+
+	server.On("connection", func(so socketio.Socket) {
+		c := &connection{send: make(chan []byte, 256*10), ws: so}
+		h.register <- c
+		so.On("command", func(message string) {
+			h.broadcast <- []byte(message)
+		})
+		so.On("disconnection", func() {
+			h.unregister <- c
+		})
+		go c.writer()
+	})
+	server.On("error", func(so socketio.Socket, err error) {
+		log.Println("error:", err)
+	})
+
+	wrapper := WsServer{
+		Server: server,
+	}
+
+	return &wrapper
 }
