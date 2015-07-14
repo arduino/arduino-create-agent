@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+var compiling = false
+
 // Download the file from URL first, store in tmp folder, then pass to spProgram
 func spProgramFromUrl(portname string, boardname string, url string) {
 	mapB, _ := json.Marshal(map[string]string{"ProgrammerStatus": "DownloadStart", "Url": url})
@@ -148,6 +150,12 @@ func spProgram(portname string, boardname string, filePath string) {
 }
 
 func spProgramRW(portname string, boardname string, boardname_rewrite string, filePath string) {
+	compiling = true
+
+	defer func() {
+		time.Sleep(1500 * time.Millisecond)
+		compiling = false
+	}()
 
 	// check if the port is physical or network
 	var networkPort bool
@@ -175,7 +183,6 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 	} else {
 		spProgramLocal(portname, boardname, filePath)
 	}
-
 }
 
 func spHandlerProgram(flasher string, cmdString []string) {
