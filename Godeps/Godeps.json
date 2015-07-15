@@ -1,0 +1,110 @@
+{
+	"ImportPath": "github.com/arduino/arduino-create-agent",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/facchinm/go-serial",
+			"Rev": "b89db9f164e4ce33d2ddca93b5f8b1e29aff14a1"
+		},
+		{
+			"ImportPath": "github.com/facchinm/systray",
+			"Rev": "945b19e5c49a4296e35eed9db91e59367581895d"
+		},
+		{
+			"ImportPath": "github.com/getlantern/golog",
+			"Rev": "5245e761fd1c8e9ccba87de802a0f666ed55980f"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/gin",
+			"Comment": "v1.0rc1-128-gfc5e355",
+			"Rev": "fc5e3557242901e24016d4474168515434871dd5"
+		},
+		{
+			"ImportPath": "github.com/googollee/go-engine.io",
+			"Rev": "597faf3df88a01780a5881fafbcbccd9d5c3fab0"
+		},
+		{
+			"ImportPath": "github.com/googollee/go-socket.io",
+			"Comment": "0.9.x-33-g9c83c02",
+			"Rev": "9c83c02fa6172eaea8252b6428e3cef3576c9746"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "a3ec486e6a7a41858210b0fc5d7b5df593b3c4a3"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/go-update",
+			"Rev": "68f5725818189545231c1fd8694793d45f2fc529"
+		},
+		{
+			"ImportPath": "github.com/itsjamie/gin-cors",
+			"Rev": "bd9551838cd52133960a2f44ab990be71744b663"
+		},
+		{
+			"ImportPath": "github.com/kardianos/osext",
+			"Rev": "6e7f843663477789fac7c02def0d0909e969b4e5"
+		},
+		{
+			"ImportPath": "github.com/kardianos/service",
+			"Rev": "1ab12303aaf4cf68a53a5717a31b5acd72c57019"
+		},
+		{
+			"ImportPath": "github.com/kr/binarydist",
+			"Rev": "9955b0ab8708602d411341e55fffd7e0700f86bd"
+		},
+		{
+			"ImportPath": "github.com/manucorporat/sse",
+			"Rev": "c142f0f1baea5cef7f98a8a6c222f6134368c1f5"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-colorable",
+			"Rev": "40e4aedc8fabf8c23e040057540867186712faa5"
+		},
+		{
+			"ImportPath": "github.com/miekg/dns",
+			"Rev": "7864d445e5087e8d761dbefec43f29b92f7650eb"
+		},
+		{
+			"ImportPath": "github.com/oleksandr/bonjour",
+			"Rev": "415cafc6ab8894ea7b7bcbed933ce2d8c611683c"
+		},
+		{
+			"ImportPath": "github.com/sanderhahn/gozip/patchzip",
+			"Rev": "85893825032e0136f506cc9e3f36d42d56305ee9"
+		},
+		{
+			"ImportPath": "github.com/skratchdot/open-golang/open",
+			"Rev": "c8748311a7528d0ba7330d302adbc5a677ef9c9e"
+		},
+		{
+			"ImportPath": "github.com/termie/go-shutil",
+			"Rev": "bcacb06fecaeec8dc42af03c87c6949f4a05c74c"
+		},
+		{
+			"ImportPath": "github.com/vharitonsky/iniflags",
+			"Comment": "v.1.0-21-g14f4b95",
+			"Rev": "14f4b95d09b99e2475e82c37a2f943ef2469a890"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "d9558e5c97f85372afee28cf2b6059d7d3818919"
+		},
+		{
+			"ImportPath": "golang.org/x/net/internal/iana",
+			"Rev": "d9558e5c97f85372afee28cf2b6059d7d3818919"
+		},
+		{
+			"ImportPath": "golang.org/x/net/ipv4",
+			"Rev": "d9558e5c97f85372afee28cf2b6059d7d3818919"
+		},
+		{
+			"ImportPath": "golang.org/x/net/ipv6",
+			"Rev": "d9558e5c97f85372afee28cf2b6059d7d3818919"
+		},
+		{
+			"ImportPath": "gopkg.in/bluesuncorp/validator.v5",
+			"Comment": "v5.10",
+			"Rev": "d2748d5ae5e5af5ec3a85e3a59bf0db9d741c82d"
+		}
+	]
+}
