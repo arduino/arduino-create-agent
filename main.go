@@ -256,7 +256,7 @@ func startDaemon() {
 		socketHandler := wsHandler().ServeHTTP
 
 		r.Use(cors.Middleware(cors.Config{
-			Origins:         "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://webide.arduino.cc:8080",
+			Origins:         "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://webide.arduino.cc:8080, http://create-staging.arduino.cc, https://create-staging.arduino.cc, http://localhost:8989, https://localhost:8990",
 			Methods:         "GET, PUT, POST, DELETE",
 			RequestHeaders:  "Origin, Authorization, Content-Type",
 			ExposedHeaders:  "",
