@@ -23,10 +23,12 @@ import (
 )
 
 var (
-	version      = "1.83"
-	versionFloat = float32(1.83)
-	addr         = flag.String("addr", ":8989", "http service address")
-	addrSSL      = flag.String("addrSSL", ":8990", "https service address")
+	version              = "1.83"
+	versionFloat         = float32(1.83)
+	embedded_autoupdate  = false
+	embedded_autoextract = false
+	addr                 = flag.String("addr", ":8989", "http service address")
+	addrSSL              = flag.String("addrSSL", ":8990", "https service address")
 	//assets       = flag.String("assets", defaultAssetPath(), "path to assets")
 	verbose = flag.Bool("v", true, "show debug logging")
 	//verbose = flag.Bool("v", false, "show debug logging")
@@ -89,19 +91,21 @@ func main() {
 		src, _ := osext.Executable()
 		dest := filepath.Dir(src)
 
-		// save the config.ini (if it exists)
-		if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-			fmt.Println("First run, unzipping self")
-			err := Unzip(src, dest)
-			fmt.Println("Self extraction, err:", err)
-		}
+		if embedded_autoextract {
+			// save the config.ini (if it exists)
+			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
+				fmt.Println("First run, unzipping self")
+				err := Unzip(src, dest)
+				fmt.Println("Self extraction, err:", err)
+			}
 
-		if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-			flag.Parse()
-			fmt.Println("No config.ini at", *configIni)
-		} else {
-			flag.Set("config", dest+"/"+*configIni)
-			iniflags.Parse()
+			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
+				flag.Parse()
+				fmt.Println("No config.ini at", *configIni)
+			} else {
+				flag.Set("config", dest+"/"+*configIni)
+				iniflags.Parse()
+			}
 		}
 
 		// setup logging
@@ -112,23 +116,26 @@ func main() {
 			launchSelfLater()
 		}
 
-		var updater = &Updater{
-			CurrentVersion: version,
-			ApiURL:         *updateUrl,
-			BinURL:         *updateUrl,
-			DiffURL:        "",
-			Dir:            "update/",
-			CmdName:        *appName,
-		}
+		if embedded_autoupdate {
 
-		if updater != nil {
-			go updater.BackgroundRun()
-		}
+			var updater = &Updater{
+				CurrentVersion: version,
+				ApiURL:         *updateUrl,
+				BinURL:         *updateUrl,
+				DiffURL:        "",
+				Dir:            "update/",
+				CmdName:        *appName,
+			}
 
-		// data, err := Asset("arduino.zip")
-		// if err != nil {
-		// 	log.Println("arduino tools not found")
-		// }
+			if updater != nil {
+				go updater.BackgroundRun()
+			}
+
+			// data, err := Asset("arduino.zip")
+			// if err != nil {
+			// 	log.Println("arduino tools not found")
+			// }
+		}
 
 		createGlobalConfigMap(&globalConfigMap)
 

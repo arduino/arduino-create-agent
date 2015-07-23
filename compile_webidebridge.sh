@@ -34,10 +34,11 @@ createZipEmbeddableFileArduino()
 	cd arduino
 	zip -r arduino.zip arduino/* config.ini *.pem > /dev/null
 	cd ..
-	cat arduino/arduino.zip >> $3
-	zip  --adjust-sfx $3
+	#cat arduino/arduino.zip >> $3
+	#zip  --adjust-sfx $3
 	mkdir -p snapshot/$GOOS\_$GOARCH
 	cp $3 snapshot/$GOOS\_$GOARCH/$3
+	cp arduino/arduino.zip snapshot/$GOOS\_$GOARCH
 	ls -la snapshot/$GOOS\_$GOARCH/$3
 }
 
@@ -53,7 +54,6 @@ bootstrapPlatforms()
 	env CC_FOR_TARGET=i686-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows GOARCH=386 ./make.bash --no-clean
 }
 
-set -x
 compilePlatform()
 {
     echo 'In compilePlatform'
@@ -74,7 +74,7 @@ compilePlatform()
 	fi
 	echo createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
 	createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
-	GOOS=$GOOS GOARCH=$GOARCH go-selfupdate $NAME $VERSION
+	#GOOS=$GOOS GOARCH=$GOARCH go-selfupdate $NAME $VERSION
 	rm -rf $NAME*
 }
 
