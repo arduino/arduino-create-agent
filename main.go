@@ -137,7 +137,6 @@ func main() {
 }
 
 func startDaemon() {
-	// setupSysTray()
 	go func() {
 
 		// autoextract self
@@ -283,7 +282,7 @@ func startDaemon() {
 			log.Fatal("Error ListenAndServe:", err)
 		}
 	}()
-
+	setupSysTray()
 }
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
