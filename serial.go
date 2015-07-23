@@ -472,24 +472,26 @@ func spListDual(network bool) {
 	// happen on windows in a fallback scenario where an
 	// open port can't be identified because it is locked,
 	// so just solve that by manually inserting
-	for port := range sh.ports {
+	// if network {
+	// 	for port := range sh.ports {
 
-		isFound := false
-		for _, item := range list {
-			if strings.ToLower(port.portConf.Name) == strings.ToLower(item.Name) {
-				isFound = true
-			}
-		}
+	// 		isFound := false
+	// 		for _, item := range list {
+	// 			if strings.ToLower(port.portConf.Name) == strings.ToLower(item.Name) {
+	// 				isFound = true
+	// 			}
+	// 		}
 
-		if !isFound {
-			// artificially push to front of port list
-			log.Println(fmt.Sprintf("Did not find an open port in the serial port list. We are going to artificially push it onto the list. port:%v", port.portConf.Name))
-			var ossp OsSerialPort
-			ossp.Name = port.portConf.Name
-			ossp.FriendlyName = port.portConf.Name
-			list = append([]OsSerialPort{ossp}, list...)
-		}
-	}
+	// 		if !isFound {
+	// 			// artificially push to front of port list
+	// 			log.Println(fmt.Sprintf("Did not find an open port in the serial port list. We are going to artificially push it onto the list. port:%v", port.portConf.Name))
+	// 			var ossp OsSerialPort
+	// 			ossp.Name = port.portConf.Name
+	// 			ossp.FriendlyName = port.portConf.Name
+	// 			list = append([]OsSerialPort{ossp}, list...)
+	// 		}
+	// 	}
+	// }
 
 	// we have a full clean list of ports now. iterate thru them
 	// to append the open/close state, baud rates, etc to make
