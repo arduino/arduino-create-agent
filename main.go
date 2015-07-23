@@ -301,14 +301,18 @@ const homeTemplateHtml = `<!DOCTYPE html>
 
     var socket;
     var msg = $("#msg");
-    var log = $("#log");
+    var log = document.getElementById('log');
+    var messages = [];
 
     function appendLog(msg) {
-        var d = log[0]
-        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
-        msg.appendTo(log)
+    	messages.push(msg);
+    	if (messages.length > 100) {
+    		messages.shift();
+    	}
+    	var doScroll = log.scrollTop == log.scrollHeight - log.clientHeight;
+    	log.innerHTML = messages.join("<br>");
         if (doScroll) {
-            d.scrollTop = d.scrollHeight - d.clientHeight;
+            log.scrollTop = log.scrollHeight - log.clientHeight;
         }
     }
 
@@ -334,7 +338,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
             appendLog($("<div><b>Connection closed.</b></div>"))
         });
         socket.on("message", function(evt) {
-            appendLog($("<div/>").text(evt))
+            appendLog(evt);
         });
     } else {
         appendLog($("<div><b>Your browser does not support WebSockets.</b></div>"))
