@@ -2,6 +2,7 @@ serial-port-json-server
 =======================
 
 Get the latest version of the Bridge for all supported platforms:
+
 [Linux x64](http://downloads.arduino.cc/CreateBridge/ArduinoCreateAgent-1.0-linux-x64-installer.run)
 
 [MacOSX](http://downloads.arduino.cc/CreateBridge/ArduinoCreateAgent-1.0-osx-installer.dmg)
