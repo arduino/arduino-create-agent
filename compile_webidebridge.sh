@@ -65,8 +65,9 @@ compilePlatform()
 	if [ $GOOS == "windows" ]
 	then
 	NAME=$NAME".exe"
+	EXTRAFLAGS="-ldflags -Hwindowsgui"
 	fi
-	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CXX=$CC CGO_ENABLED=$CGO_ENABLED go build -o=$NAME
+	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CXX=$CC CGO_ENABLED=$CGO_ENABLED go build -o=$NAME $EXTRAFLASG
 	if [ $? != 0 ]
 	then
 	echo -e "${red}Target $GOOS, $GOARCH failed${NC}"
