@@ -23,6 +23,7 @@ var (
 )
 
 func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
+	ports, _ = getList()
 	return ports
 }
 
@@ -177,7 +178,6 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 		s = "COM" + s
 		s = strings.Split(s, ")")[0]
 		list[i].Name = s
-		list[i].FriendlyName = asString.ToString()
 		//}
 
 		// get the deviceid so we can figure out related ports
@@ -204,6 +204,14 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 					list[i].IdVendor = vidMatch[0][1]
 				}
 			}
+		}
+
+		if list[i].IdVendor != "2341" {
+			list[i].FriendlyName = asString.ToString()
+		} else {
+			archBoardName, boardName, _ := getBoardName("0x" + list[i].IdProduct)
+			list[i].RelatedNames = append(list[i].RelatedNames, archBoardName)
+			list[i].FriendlyName = strings.Trim(boardName, "\n")
 		}
 
 		manufStr, _ := oleutil.GetProperty(item, "Manufacturer")
