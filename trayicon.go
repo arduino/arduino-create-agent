@@ -47,7 +47,10 @@ func setupSysTrayReal() {
 
 	systray.SetIcon(icon.Data)
 	mUrl := systray.AddMenuItem("Go to create.arduino.cc", "Arduino Create")
+	menuVer := systray.AddMenuItem("Agent version "+version, "")
 	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
+
+	menuVer.Disable()
 
 	go func() {
 		<-mQuit.ClickedCh
@@ -59,6 +62,6 @@ func setupSysTrayReal() {
 	// We can manipulate the systray in other goroutines
 	go func() {
 		<-mUrl.ClickedCh
-		open.Run("http://create.arduino.cc")
+		open.Run("http://create-dev.arduino.cc")
 	}()
 }
