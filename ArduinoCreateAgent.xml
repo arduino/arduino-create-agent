@@ -14,6 +14,22 @@
             <canBeEdited>1</canBeEdited>
             <selected>1</selected>
             <show>1</show>
+            <desktopShortcutList>
+                <shortcut>
+                    <comment></comment>
+                    <exec>${installdir}/Arduino_Create_Bridge</exec>
+                    <icon>${installdir}/InstallerIcon.png</icon>
+                    <name>Arduino Create Agent</name>
+                    <path></path>
+                    <platforms>linux-x64</platforms>
+                    <runAsAdmin>0</runAsAdmin>
+                    <runInTerminal>0</runInTerminal>
+                    <windowsExec></windowsExec>
+                    <windowsExecArgs></windowsExecArgs>
+                    <windowsIcon></windowsIcon>
+                    <windowsPath></windowsPath>
+                </shortcut>
+            </desktopShortcutList>
             <folderList>
                 <folder>
                     <description>Program Files</description>
@@ -61,6 +77,9 @@
                         <distributionDirectory>
                             <origin>/tmp/linux/arduino/arduino</origin>
                         </distributionDirectory>
+                        <distributionFile>
+                            <origin>/home/jenkins/jenkins/jobs/Create_Bridge_test/workspace/installer_icons/InstallerIcon.png</origin>
+                        </distributionFile>
                     </distributionFileList>
                 </folder>
                 <folder>
@@ -94,6 +113,50 @@
                             <origin>/tmp/macosx/arduino/arduino</origin>
                         </distributionDirectory>
                     </distributionFileList>
+                </folder>
+                <folder>
+                    <description>Autostart</description>
+                    <destination>/etc/xdg/autostart</destination>
+                    <name>xdgautostart</name>
+                    <platforms>linux-x64</platforms>
+                    <shortcutList>
+                        <shortcut>
+                            <comment></comment>
+                            <exec>${installdir}/Arduino_Create_Bridge &amp;</exec>
+                            <icon>${installdir}/InstallerIcon.png</icon>
+                            <name>arduino-create-agent</name>
+                            <path></path>
+                            <platforms>linux-x64</platforms>
+                            <runAsAdmin>0</runAsAdmin>
+                            <runInTerminal>0</runInTerminal>
+                            <windowsExec></windowsExec>
+                            <windowsExecArgs></windowsExecArgs>
+                            <windowsIcon></windowsIcon>
+                            <windowsPath></windowsPath>
+                        </shortcut>
+                    </shortcutList>
+                </folder>
+                <folder>
+                    <description>Autostart</description>
+                    <destination>${windows_folder_common_startup}</destination>
+                    <name>winautostart</name>
+                    <platforms>windows</platforms>
+                    <shortcutList>
+                        <shortcut>
+                            <comment></comment>
+                            <exec></exec>
+                            <icon></icon>
+                            <name>Arduino Create Agent</name>
+                            <path></path>
+                            <platforms>windows</platforms>
+                            <runAsAdmin>0</runAsAdmin>
+                            <runInTerminal>0</runInTerminal>
+                            <windowsExec>${installdir}/Arduino_Create_Bridge.exe</windowsExec>
+                            <windowsExecArgs></windowsExecArgs>
+                            <windowsIcon></windowsIcon>
+                            <windowsPath></windowsPath>
+                        </shortcut>
+                    </shortcutList>
                 </folder>
             </folderList>
             <startMenuShortcutList>
@@ -158,43 +221,69 @@
     <postInstallationActionList>
         <createOSXService>
             <groupname></groupname>
-            <keepAlive>1</keepAlive>
+            <keepAlive>0</keepAlive>
             <program>${installdir}/Arduino_Create_Bridge</program>
             <programArguments></programArguments>
             <serviceName>${product_shortname}</serviceName>
             <username></username>
         </createOSXService>
-        <createWindowsService>
-            <description>Arduino Create Agent</description>
-            <displayName>ArduinoCreateAgent</displayName>
-            <program>${installdir}/Arduino_Create_Bridge.exe</program>
-            <programArguments></programArguments>
-            <serviceName>${product_shortname}</serviceName>
-            <startType>auto</startType>
-        </createWindowsService>
-        <startWindowsService>
-            <delay>15000</delay>
-            <displayName></displayName>
-            <serviceName>${product_shortname}</serviceName>
-        </startWindowsService>
         <runProgram>
             <program>${installdir}/Arduino_Create_Bridge</program>
             <programArguments>&amp;</programArguments>
             <ruleList>
                 <platformTest>
-                    <type>linux</type>
+                    <negate>1</negate>
+                    <type>windows</type>
                 </platformTest>
             </ruleList>
         </runProgram>
+        <runProgram>
+            <program>schtasks</program>
+            <programArguments>/create /sc onlogon /tn ArduinoCreateAgent /rl highest /tr "${installdir}/Arduino_Create_Bridge.exe"</programArguments>
+            <progressText>Creating startup task</progressText>
+            <ruleList>
+                <platformTest>
+                    <type>windows-2000</type>
+                </platformTest>
+            </ruleList>
+        </runProgram>
+        <runProgram>
+            <program>${installdir}/Arduino_Create_Bridge.exe</program>
+            <programArguments>&amp;</programArguments>
+            <progressText>Launching Agent</progressText>
+            <useMSDOSPath>0</useMSDOSPath>
+            <workingDirectory>${installdir}</workingDirectory>
+            <ruleList>
+                <platformTest>
+                    <type>windows</type>
+                </platformTest>
+            </ruleList>
+        </runProgram>
+        <registrySet>
+            <key>HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run</key>
+            <name>ArduinoCreateAgent</name>
+            <type>REG_SZ</type>
+            <value>"${installdir}/Arduino_Create_Bridge.exe"</value>
+            <ruleList>
+                <platformTest>
+                    <type>windows</type>
+                </platformTest>
+            </ruleList>
+        </registrySet>
     </postInstallationActionList>
     <preUninstallationActionList>
         <deleteOSXService>
             <serviceName>${product_shortname}</serviceName>
         </deleteOSXService>
-        <deleteWindowsService>
-            <displayName>${product_shortname}</displayName>
-            <serviceName>${product_shortname}</serviceName>
-        </deleteWindowsService>
+        <runProgram>
+            <program>schtasks</program>
+            <programArguments>/delete /tn ArduinoCreateAgent /f</programArguments>
+            <ruleList>
+                <platformTest>
+                    <type>windows-2000</type>
+                </platformTest>
+            </ruleList>
+        </runProgram>
     </preUninstallationActionList>
     <createOsxBundleDmg>1</createOsxBundleDmg>
     <enableRollback>1</enableRollback>
