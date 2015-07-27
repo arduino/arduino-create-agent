@@ -18,7 +18,6 @@ import (
 	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/service"
 	"github.com/vharitonsky/iniflags"
-	"runtime"
 	"runtime/debug"
 	"text/template"
 	"time"
@@ -126,13 +125,6 @@ func main() {
 	logger, err = s.Logger(nil)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if runtime.GOOS == "linux" {
-		err = s.Install()
-		if err != nil {
-			logger.Error(err)
-		}
 	}
 
 	err = s.Run()
