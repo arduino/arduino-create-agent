@@ -85,7 +85,7 @@ type qwReport struct {
 }
 
 type SpPortMessage struct {
-	P string // the port, i.e. com22
+	// P string // the port, i.e. com22
 	D string // the data, i.e. G0 X0 Y0
 }
 
@@ -132,7 +132,7 @@ func (p *serport) reader() {
 
 			if p.bufferwatcher.IsBufferGloballySendingBackIncomingData() == false {
 				//m := SpPortMessage{"Alice", "Hello"}
-				m := SpPortMessage{p.portConf.Name, data}
+				m := SpPortMessage{data}
 				//log.Print("The m obj struct is:")
 				//log.Print(m)
 
