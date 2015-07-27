@@ -6,7 +6,8 @@ import (
 	"github.com/mattn/go-ole"
 	"github.com/mattn/go-ole/oleutil"
 	//"github.com/tarm/goserial"
-	"github.com/johnlauer/goserial"
+	//"github.com/johnlauer/goserial"
+	"github.com/facchinm/go-serial"
 	"log"
 	"os"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"strconv"
 	"sync"
 	//"syscall"
+	"regexp"
 )
 
 var (
@@ -21,6 +23,7 @@ var (
 )
 
 func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
+	ports, _ = getList()
 	return ports
 }
 
@@ -41,10 +44,12 @@ func getList() ([]OsSerialPort, os.SyscallError) {
 
 	// see if array has any data, if not fallback to the traditional
 	// com port list model
-	if len(arr) == 0 {
-		// assume it failed
-		arr, sysCallErr = getListViaOpen()
-	}
+	/*
+		if len(arr) == 0 {
+			// assume it failed
+			arr, sysCallErr = getListViaOpen()
+		}
+	*/
 
 	// see if array has any data, if not fallback to looking at
 	// the registry list
@@ -116,6 +121,48 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 	list := make([]OsSerialPort, count)
 
 	for i := 0; i < count; i++ {
+
+		// items we're looping thru look like below and
+		// thus we can query for any of these names
+		/*
+					__GENUS                     : 2
+			__CLASS                     : Win32_PnPEntity
+			__SUPERCLASS                : CIM_LogicalDevice
+			__DYNASTY                   : CIM_ManagedSystemElement
+			__RELPATH                   : Win32_PnPEntity.DeviceID="USB\\VID_1D50&PID_606D&MI_02\\6&2F09EA14&0&0002"
+			__PROPERTY_COUNT            : 24
+			__DERIVATION                : {CIM_LogicalDevice, CIM_LogicalElement, CIM_ManagedSystemElement}
+			__SERVER                    : JOHN-ATIV
+			__NAMESPACE                 : root\cimv2
+			__PATH                      : \\JOHN-ATIV\root\cimv2:Win32_PnPEntity.DeviceID="USB\\VID_1D50&PID_606D&MI_02\\6&2F09EA14
+			                              &0&0002"
+			Availability                :
+			Caption                     : TinyG v2 (Data Channel) (COM12)
+			ClassGuid                   : {4d36e978-e325-11ce-bfc1-08002be10318}
+			CompatibleID                : {USB\Class_02&SubClass_02&Prot_01, USB\Class_02&SubClass_02, USB\Class_02}
+			ConfigManagerErrorCode      : 0
+			ConfigManagerUserConfig     : False
+			CreationClassName           : Win32_PnPEntity
+			Description                 : TinyG v2 (Data Channel)
+			DeviceID                    : USB\VID_1D50&PID_606D&MI_02\6&2F09EA14&0&0002
+			ErrorCleared                :
+			ErrorDescription            :
+			HardwareID                  : {USB\VID_1D50&PID_606D&REV_0097&MI_02, USB\VID_1D50&PID_606D&MI_02}
+			InstallDate                 :
+			LastErrorCode               :
+			Manufacturer                : Synthetos (www.synthetos.com)
+			Name                        : TinyG v2 (Data Channel) (COM12)
+			PNPDeviceID                 : USB\VID_1D50&PID_606D&MI_02\6&2F09EA14&0&0002
+			PowerManagementCapabilities :
+			PowerManagementSupported    :
+			Service                     : usbser
+			Status                      : OK
+			StatusInfo                  :
+			SystemCreationClassName     : Win32_ComputerSystem
+			SystemName                  : JOHN-ATIV
+			PSComputerName              : JOHN-ATIV
+		*/
+
 		// item is a SWbemObject, but really a Win32_Process
 		itemRaw, _ := oleutil.CallMethod(result, "ItemIndex", i)
 		item := itemRaw.ToIDispatch()
@@ -131,16 +178,66 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 		s = "COM" + s
 		s = strings.Split(s, ")")[0]
 		list[i].Name = s
-		list[i].FriendlyName = asString.ToString()
 		//}
+
+		// get the deviceid so we can figure out related ports
+		// it will look similar to
+		// USB\VID_1D50&PID_606D&MI_00\6&2F09EA14&0&0000
+		deviceIdStr, _ := oleutil.GetProperty(item, "DeviceID")
+		devIdItems := strings.Split(deviceIdStr.ToString(), "&")
+		log.Printf("DeviceId elements:%v", devIdItems)
+		if len(devIdItems) > 3 {
+			list[i].SerialNumber = devIdItems[3]
+			list[i].IdProduct = strings.Replace(devIdItems[1], "PID_", "", 1)
+			list[i].IdVendor = strings.Replace(devIdItems[0], "USB\\VID_", "", 1)
+		} else {
+			list[i].SerialNumber = deviceIdStr.ToString()
+			pidMatch := regexp.MustCompile("PID_(\\d+)").FindAllStringSubmatch(deviceIdStr.ToString(), -1)
+			if len(pidMatch) > 0 {
+				if len(pidMatch[0]) > 1 {
+					list[i].IdProduct = pidMatch[0][1]
+				}
+			}
+			vidMatch := regexp.MustCompile("VID_(\\d+)").FindAllStringSubmatch(deviceIdStr.ToString(), -1)
+			if len(vidMatch) > 0 {
+				if len(vidMatch[0]) > 1 {
+					list[i].IdVendor = vidMatch[0][1]
+				}
+			}
+		}
+
+		if list[i].IdVendor != "2341" {
+			list[i].FriendlyName = asString.ToString()
+		} else {
+			archBoardName, boardName, _ := getBoardName("0x" + list[i].IdProduct)
+			list[i].RelatedNames = append(list[i].RelatedNames, archBoardName)
+			list[i].FriendlyName = strings.Trim(boardName, "\n")
+		}
+
+		manufStr, _ := oleutil.GetProperty(item, "Manufacturer")
+		list[i].Manufacturer = manufStr.ToString()
+		descStr, _ := oleutil.GetProperty(item, "Description")
+		list[i].Product = descStr.ToString()
+		//classStr, _ := oleutil.GetProperty(item, "CreationClassName")
+		//list[i].DeviceClass = classStr.ToString()
+
 	}
 
-	/*
-		for index, element := range list {
-			log.Println("index ", index, " element ", element.Name+
-				" friendly ", element.FriendlyName)
+	for index, element := range list {
+
+		log.Printf("index:%v, name:%v, friendly:%v ", index, element.Name, element.FriendlyName)
+
+		for index2, element2 := range list {
+			if index == index2 {
+				continue
+			}
+			if element.SerialNumber == element2.SerialNumber {
+				log.Printf("Found related element1:%v, element2:%v", element, element2)
+				list[index].RelatedNames = append(list[index].RelatedNames, element2.Name)
+			}
 		}
-	*/
+
+	}
 
 	return list, err
 }
@@ -153,8 +250,13 @@ func getListViaOpen() ([]OsSerialPort, os.SyscallError) {
 	var igood int = 0
 	for i := 0; i < 100; i++ {
 		prtname := "COM" + strconv.Itoa(i)
-		conf := &serial.Config{Name: prtname, Baud: 9600}
-		sp, err := serial.OpenPort(conf)
+		//conf := &serial.Config{Name: prtname, Baud: 1200}
+		mode := &serial.Mode{
+			BaudRate: 1200,
+			Vmin:     0,
+			Vtimeout: 10,
+		}
+		sp, err := serial.OpenPort(prtname, mode)
 		//log.Println("Just tried to open port", prtname)
 		if err == nil {
 			//log.Println("Able to open port", prtname)

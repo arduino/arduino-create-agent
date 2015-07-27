@@ -129,7 +129,6 @@ func pipe_commands(commands ...*exec.Cmd) ([]byte, error) {
 	commands[i].Stderr = &errorBuffer
 
 	if err := call(commands, pipeStack); err != nil {
-		logger.Errorf(string(errorBuffer.Bytes()), err)
 		return nil, err
 	}
 
