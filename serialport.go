@@ -85,7 +85,7 @@ type qwReport struct {
 }
 
 type SpPortMessage struct {
-	P string // the port, i.e. com22
+	// P string // the port, i.e. com22
 	D string // the data, i.e. G0 X0 Y0
 }
 
@@ -95,95 +95,95 @@ func (p *serport) reader() {
 	ch := make([]byte, 1024)
 	timeCheckOpen := time.Now()
 
+mainLoop:
 	for {
-
-		n, err := p.portIo.Read(ch)
-
-		//if we detect that port is closing, break out o this for{} loop.
-		if p.isClosing {
+		select {
+		case <-p.done:
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
 			h.broadcastSys <- []byte(strmsg)
-			break
-		}
+			break mainLoop
+		default:
+			n, err := p.portIo.Read(ch)
 
-		// read can return legitimate bytes as well as an error
-		// so process the bytes if n > 0
-		if n > 0 {
-			//log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
-			data := string(ch[:n])
-			//log.Print("The data i will convert to json is:")
-			//log.Print(data)
+			// read can return legitimate bytes as well as an error
+			// so process the bytes if n > 0
+			if n > 0 {
+				//log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
+				data := string(ch[:n])
+				//log.Print("The data i will convert to json is:")
+				//log.Print(data)
 
-			// give the data to our bufferflow so it can do it's work
-			// to read/translate the data to see if it wants to block
-			// writes to the serialport. each bufferflow type will decide
-			// this on its own based on its logic, i.e. tinyg vs grbl vs others
-			//p.b.bufferwatcher..OnIncomingData(data)
-			p.bufferwatcher.OnIncomingData(data)
+				// give the data to our bufferflow so it can do it's work
+				// to read/translate the data to see if it wants to block
+				// writes to the serialport. each bufferflow type will decide
+				// this on its own based on its logic, i.e. tinyg vs grbl vs others
+				//p.b.bufferwatcher..OnIncomingData(data)
+				p.bufferwatcher.OnIncomingData(data)
 
-			// see if the OnIncomingData handled the broadcast back
-			// to the user. this option was added in case the OnIncomingData wanted
-			// to do something fancier or implementation specific, i.e. TinyG Buffer
-			// actually sends back data on a perline basis rather than our method
-			// where we just send the moment we get it. the reason for this is that
-			// the browser was sometimes getting back packets out of order which
-			// of course would screw things up when parsing
+				// see if the OnIncomingData handled the broadcast back
+				// to the user. this option was added in case the OnIncomingData wanted
+				// to do something fancier or implementation specific, i.e. TinyG Buffer
+				// actually sends back data on a perline basis rather than our method
+				// where we just send the moment we get it. the reason for this is that
+				// the browser was sometimes getting back packets out of order which
+				// of course would screw things up when parsing
 
-			if p.bufferwatcher.IsBufferGloballySendingBackIncomingData() == false {
-				//m := SpPortMessage{"Alice", "Hello"}
-				m := SpPortMessage{p.portConf.Name, data}
-				//log.Print("The m obj struct is:")
-				//log.Print(m)
+				if p.bufferwatcher.IsBufferGloballySendingBackIncomingData() == false {
+					//m := SpPortMessage{"Alice", "Hello"}
+					m := SpPortMessage{data}
+					//log.Print("The m obj struct is:")
+					//log.Print(m)
 
-				//b, err := json.MarshalIndent(m, "", "\t")
-				b, err := json.Marshal(m)
+					//b, err := json.MarshalIndent(m, "", "\t")
+					b, err := json.Marshal(m)
+					if err != nil {
+						log.Println(err)
+						h.broadcastSys <- []byte("Error creating json on " + p.portConf.Name + " " +
+							err.Error() + " The data we were trying to convert is: " + string(ch[:n]))
+						break
+					}
+					//log.Print("Printing out json byte data...")
+					//log.Print(string(b))
+					h.broadcastSys <- b
+					//h.broadcastSys <- []byte("{ \"p\" : \"" + p.portConf.Name + "\", \"d\": \"" + string(ch[:n]) + "\" }\n")
+				}
+			}
+
+			// double check that we got characters in the buffer
+			// before deciding if an EOF is legitimately a reason
+			// to close the port because we're seeing that on some
+			// os's like Linux/Ubuntu you get an EOF when you open
+			// the port. Perhaps the EOF was buffered from a previous
+			// close and the OS doesn't clear out that buffer on a new
+			// connect. This means we'll only catch EOF's when there are
+			// other characters with it, but that seems to work ok
+			if n <= 0 {
+				if err == io.EOF || err == io.ErrUnexpectedEOF {
+					// hit end of file
+					log.Println("Hit end of file on serial port")
+					h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
+
+				}
+
 				if err != nil {
 					log.Println(err)
-					h.broadcastSys <- []byte("Error creating json on " + p.portConf.Name + " " +
-						err.Error() + " The data we were trying to convert is: " + string(ch[:n]))
+					h.broadcastSys <- []byte("Error reading on " + p.portConf.Name + " " +
+						err.Error() + " Closing port.")
+					h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
 					break
 				}
-				//log.Print("Printing out json byte data...")
-				//log.Print(string(b))
-				h.broadcastSys <- b
-				//h.broadcastSys <- []byte("{ \"p\" : \"" + p.portConf.Name + "\", \"d\": \"" + string(ch[:n]) + "\" }\n")
-			}
-		}
 
-		// double check that we got characters in the buffer
-		// before deciding if an EOF is legitimately a reason
-		// to close the port because we're seeing that on some
-		// os's like Linux/Ubuntu you get an EOF when you open
-		// the port. Perhaps the EOF was buffered from a previous
-		// close and the OS doesn't clear out that buffer on a new
-		// connect. This means we'll only catch EOF's when there are
-		// other characters with it, but that seems to work ok
-		if n <= 0 {
-			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				// hit end of file
-				log.Println("Hit end of file on serial port")
-				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
-
-			}
-
-			if err != nil {
-				log.Println(err)
-				h.broadcastSys <- []byte("Error reading on " + p.portConf.Name + " " +
-					err.Error() + " Closing port.")
-				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
-				break
-			}
-
-			// Keep track of time difference between two consecutive read with n == 0 and err == nil
-			// we get here if the port has been disconnected while open (cpu usage will jump to 100%)
-			// let's close the port only if the events are extremely fast (<1ms)
-			if err == nil {
-				diff := time.Since(timeCheckOpen)
-				if diff.Nanoseconds() < 1000000 {
-					p.isClosing = true
+				// Keep track of time difference between two consecutive read with n == 0 and err == nil
+				// we get here if the port has been disconnected while open (cpu usage will jump to 100%)
+				// let's close the port only if the events are extremely fast (<1ms)
+				if err == nil {
+					diff := time.Since(timeCheckOpen)
+					if diff.Nanoseconds() < 1000000 {
+						p.isClosing = true
+					}
+					timeCheckOpen = time.Now()
 				}
-				timeCheckOpen = time.Now()
 			}
 		}
 	}
@@ -339,7 +339,7 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan Cmd, 256000), sendNoBuf: make(chan Cmd), portConf: conf, portIo: sp, BufferType: buftype, IsPrimary: isPrimary, IsSecondary: isSecondary}
+	p := &serport{sendBuffered: make(chan Cmd, 256000), done: make(chan bool), sendNoBuf: make(chan Cmd), portConf: conf, portIo: sp, BufferType: buftype, IsPrimary: isPrimary, IsSecondary: isSecondary}
 
 	// if user asked for a buffer watcher, i.e. tinyg/grbl then attach here
 	if buftype == "tinyg" {
@@ -413,7 +413,9 @@ func spHandlerCloseExperimental(p *serport) {
 }
 
 func spHandlerClose(p *serport) {
-	p.isClosing = true
+	// p.isClosing = true
+	p.done <- true
+
 	//close the port
 	//elicit response from hardware to close out p.reader()
 	_, _ = p.portIo.Write([]byte("?"))
