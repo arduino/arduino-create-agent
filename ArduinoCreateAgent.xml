@@ -116,13 +116,13 @@
                 </folder>
                 <folder>
                     <description>Autostart</description>
-                    <destination>/etc/xdg/autostart</destination>
+                    <destination>${user_home_directory}/.config/autostart/</destination>
                     <name>xdgautostart</name>
                     <platforms>linux-x64</platforms>
                     <shortcutList>
                         <shortcut>
                             <comment></comment>
-                            <exec>${installdir}/Arduino_Create_Bridge &amp;</exec>
+                            <exec>${installdir}/Arduino_Create_Bridge</exec>
                             <icon>${installdir}/InstallerIcon.png</icon>
                             <name>arduino-create-agent</name>
                             <path></path>
@@ -218,6 +218,15 @@
             <zipFile>/home/jenkins/jenkins/jobs/Create_Bridge_test/workspace/snapshot/windows_386/arduino.zip</zipFile>
         </unzip>
     </preBuildActionList>
+    <postBuildActionList>
+        <runProgram>
+            <abortOnError>0</abortOnError>
+            <program>tar</program>
+            <programArguments>czvf ${product_shortname}-${product_version}-${platform_name}-installer.tar.gz ${product_shortname}-${product_version}-${platform_name}-installer.run</programArguments>
+            <showMessageOnError>0</showMessageOnError>
+            <workingDirectory>${installbuilder_output_directory}</workingDirectory>
+        </runProgram>
+    </postBuildActionList>
     <postInstallationActionList>
         <createOSXService>
             <groupname></groupname>
@@ -230,6 +239,7 @@
         <runProgram>
             <program>${installdir}/Arduino_Create_Bridge</program>
             <programArguments>&amp;</programArguments>
+            <useMSDOSPath>0</useMSDOSPath>
             <ruleList>
                 <platformTest>
                     <negate>1</negate>
@@ -238,21 +248,10 @@
             </ruleList>
         </runProgram>
         <runProgram>
-            <program>schtasks</program>
-            <programArguments>/create /sc onlogon /tn ArduinoCreateAgent /rl highest /tr "${installdir}/Arduino_Create_Bridge.exe"</programArguments>
-            <progressText>Creating startup task</progressText>
-            <ruleList>
-                <platformTest>
-                    <type>windows-2000</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
-        <runProgram>
             <program>${installdir}/Arduino_Create_Bridge.exe</program>
             <programArguments>&amp;</programArguments>
             <progressText>Launching Agent</progressText>
             <useMSDOSPath>0</useMSDOSPath>
-            <workingDirectory>${installdir}</workingDirectory>
             <ruleList>
                 <platformTest>
                     <type>windows</type>
@@ -270,20 +269,33 @@
                 </platformTest>
             </ruleList>
         </registrySet>
+        <addScheduledTask>
+            <dayOfMonth>1</dayOfMonth>
+            <disallowStartIfOnBatteries>0</disallowStartIfOnBatteries>
+            <duration></duration>
+            <endDate></endDate>
+            <interval></interval>
+            <name>ArduinoCreateAgent</name>
+            <password></password>
+            <period>1</period>
+            <program>Arduino_Create_Bridge.exe</program>
+            <programArguments></programArguments>
+            <runAsAdmin>0</runAsAdmin>
+            <runOnlyIfLoggedOn>1</runOnlyIfLoggedOn>
+            <startDate></startDate>
+            <startTime></startTime>
+            <type>ONLOGON</type>
+            <weekDays>*</weekDays>
+            <workingDirectory>${installdir}</workingDirectory>
+        </addScheduledTask>
     </postInstallationActionList>
     <preUninstallationActionList>
         <deleteOSXService>
             <serviceName>${product_shortname}</serviceName>
         </deleteOSXService>
-        <runProgram>
-            <program>schtasks</program>
-            <programArguments>/delete /tn ArduinoCreateAgent /f</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>windows-2000</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
+        <deleteScheduledTask>
+            <name>ArduinoCreateAgent</name>
+        </deleteScheduledTask>
     </preUninstallationActionList>
     <createOsxBundleDmg>1</createOsxBundleDmg>
     <enableRollback>1</enableRollback>
@@ -306,5 +318,15 @@
             <width>30</width>
         </directoryParameter>
     </parameterList>
+    <platformOptionsList>
+        <platformOptions>
+            <platform>linux</platform>
+            <requireInstallationByRootUser>0</requireInstallationByRootUser>
+        </platformOptions>
+        <platformOptions>
+            <platform>linux-x64</platform>
+            <requireInstallationByRootUser>0</requireInstallationByRootUser>
+        </platformOptions>
+    </platformOptionsList>
 </project>
 
