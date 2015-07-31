@@ -605,12 +605,8 @@ func (b *BufferflowTinyg) BreakApartCommands(cmd string) []string {
 		// just put cmd back in with newline
 		if reSingle.MatchString(item) {
 			//log.Printf("len1. Added cmd back. Not re-adding newline cuz artificially added one earlier. item:'%v'\n", item)
-			finalCmds = append(finalCmds, item)
-		} else {
-			item = item + "\n"
-			//log.Printf("len1. Re-adding item to finalCmds with newline:'%v'\n", item)
-			finalCmds = append(finalCmds, item)
 		}
+		finalCmds = append(finalCmds, item)
 	} else {
 		for index, item := range cmds {
 			// since more than 1 cmd, loop thru
