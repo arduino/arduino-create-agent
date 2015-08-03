@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	version              = "x.x.x"
+	version              = "x.x.x-dev"
 	git_revision         = "xxxxxxxx"
 	embedded_autoupdate  = true
 	embedded_autoextract = false

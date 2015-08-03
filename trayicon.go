@@ -64,9 +64,9 @@ func setupSysTrayReal() {
 	systray.SetIcon(icon.Data)
 	mUrl := systray.AddMenuItem("Go to Arduino Create (staging)", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
-	menuVer := systray.AddMenuItem("Agent version "+version, "")
-	mPause := systray.AddMenuItem("Pause Plugin", "")
-	mQuit := systray.AddMenuItem("Quit Plugin", "")
+	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
+	mPause := systray.AddMenuItem("Quit Plugin", "")
+	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
 	menuVer.Disable()
 
@@ -81,11 +81,11 @@ func setupSysTrayReal() {
 		restart("")
 	}()
 
-	go func() {
-		<-mQuit.ClickedCh
-		systray.Quit()
-		exit()
-	}()
+	// go func() {
+	// 	<-mQuit.ClickedCh
+	// 	systray.Quit()
+	// 	exit()
+	// }()
 
 	go func() {
 		<-mDebug.ClickedCh
@@ -104,7 +104,7 @@ func setupSysTrayHibernate() {
 
 	systray.SetIcon(icon.DataHibernate)
 	mOpen := systray.AddMenuItem("Open Plugin", "")
-	mQuit := systray.AddMenuItem("Quit Plugin", "")
+	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
 	go func() {
 		<-mOpen.ClickedCh
@@ -112,10 +112,9 @@ func setupSysTrayHibernate() {
 		restart("")
 	}()
 
-	go func() {
-		<-mQuit.ClickedCh
-		systray.Quit()
-		exit()
-	}()
-
+	// go func() {
+	// 	<-mQuit.ClickedCh
+	// 	systray.Quit()
+	// 	exit()
+	// }()
 }
