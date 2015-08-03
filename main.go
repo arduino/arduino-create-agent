@@ -15,7 +15,6 @@ import (
 	//"github.com/sanderhahn/gozip"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
-	"github.com/kardianos/service"
 	"github.com/vharitonsky/iniflags"
 	"runtime/debug"
 	"text/template"
@@ -27,6 +26,7 @@ var (
 	git_revision         = "xxxxxxxx"
 	embedded_autoupdate  = true
 	embedded_autoextract = false
+	hibernate            = flag.Bool("hibernate", false, "start hibernated")
 	addr                 = flag.String("addr", ":8989", "http service address")
 	addrSSL              = flag.String("addrSSL", ":8990", "https service address")
 	//assets       = flag.String("assets", defaultAssetPath(), "path to assets")
@@ -94,56 +94,9 @@ func launchSelfLater() {
 	log.Println("Done waiting 5 secs. Now launching...")
 }
 
-var logger service.Logger
-
-type program struct{}
-
-func (p *program) Start(s service.Service) error {
-	// Start should not block. Do the actual work async.
-	go p.run()
-	return nil
-}
-func (p *program) run() {
-	startDaemon()
-}
-func (p *program) Stop(s service.Service) error {
-	// Stop should not block. Return with a few seconds.
-	<-time.After(time.Second * 13)
-	return nil
-}
-
 func main() {
-	svcConfig := &service.Config{
-		Name:        "ArduinoCreateAgent",
-		DisplayName: "Arduino Create Agent",
-		Description: "A bridge that allows Arduino Create to operate on the boards connected to the computer",
-	}
 
-	prg := &program{}
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if len(os.Args) > 1 {
-		err = service.Control(s, os.Args[1])
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	logger, err = s.Logger(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = s.Run()
-	if err != nil {
-		logger.Error(err)
-	}
-}
-
-func startDaemon() {
+	flag.Parse()
 	go func() {
 
 		// autoextract self
@@ -153,18 +106,22 @@ func startDaemon() {
 		if embedded_autoextract {
 			// save the config.ini (if it exists)
 			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-				fmt.Println("First run, unzipping self")
+				log.Println("First run, unzipping self")
 				err := Unzip(src, dest)
-				fmt.Println("Self extraction, err:", err)
+				log.Println("Self extraction, err:", err)
 			}
 
 			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
 				flag.Parse()
-				fmt.Println("No config.ini at", *configIni)
+				log.Println("No config.ini at", *configIni)
 			} else {
+				flag.Parse()
 				flag.Set("config", dest+"/"+*configIni)
 				iniflags.Parse()
 			}
+		} else {
+			flag.Set("config", dest+"/"+*configIni)
+			iniflags.Parse()
 		}
 
 		//log.SetFormatter(&log.JSONFormatter{})
@@ -316,18 +273,23 @@ const homeTemplateHtml = `<!DOCTYPE html>
     var socket;
     var msg = $("#msg");
     var log = document.getElementById('log');
+    var pause = document.getElementById('myCheck');
     var messages = [];
+    var only_log = true;
 
     function appendLog(msg) {
-    	messages.push(msg);
-    	if (messages.length > 100) {
-    		messages.shift();
-    	}
-    	var doScroll = log.scrollTop == log.scrollHeight - log.clientHeight;
-    	log.innerHTML = messages.join("<br>");
-        if (doScroll) {
-            log.scrollTop = log.scrollHeight - log.clientHeight;
-        }
+
+		if (!pause.checked && (only_log == false || (!(msg.indexOf("{") == 0) && only_log == true))) {
+			messages.push(msg);
+			if (messages.length > 100) {
+				messages.shift();
+			}
+			var doScroll = log.scrollTop == log.scrollHeight - log.clientHeight;
+			log.innerHTML = messages.join("<br>");
+			if (doScroll) {
+				log.scrollTop = log.scrollHeight - log.clientHeight;
+			}
+		}
     }
 
     $("#form").submit(function() {
@@ -338,6 +300,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
             return false;
         }
         socket.emit("command", msg.val());
+        if (msg.val().indexOf("log on") != -1) {only_log = true;}
+        if (msg.val().indexOf("log off") != -1) {only_log = false;}
         msg.val("");
         return false
     });

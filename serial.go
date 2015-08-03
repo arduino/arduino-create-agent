@@ -90,18 +90,17 @@ type SpPortList struct {
 }
 
 type SpPortItem struct {
-	Name                      string
-	Friendly                  string
-	SerialNumber              string
-	DeviceClass               string
-	IsOpen                    bool
-	IsPrimary                 bool
-	RelatedNames              []string
-	Baud                      int
-	BufferAlgorithm           string
-	AvailableBufferAlgorithms []string
-	Ver                       float32
-	NetworkPort               bool
+	Name            string
+	Friendly        string
+	SerialNumber    string
+	DeviceClass     string
+	IsOpen          bool
+	IsPrimary       bool
+	RelatedNames    []string
+	Baud            int
+	BufferAlgorithm string
+	Ver             string
+	NetworkPort     bool
 }
 
 // SerialPorts contains the ports attached to the machine
@@ -513,21 +512,20 @@ func spListDual(network bool) {
 			DtrOn                     bool
 			BufferAlgorithm           string
 			AvailableBufferAlgorithms []string
-			Ver                       float32
+			Ver                       string
 		*/
 		spl.Ports[ctr] = SpPortItem{
-			Name:                      item.Name,
-			Friendly:                  item.FriendlyName,
-			SerialNumber:              item.SerialNumber,
-			DeviceClass:               item.DeviceClass,
-			IsOpen:                    false,
-			IsPrimary:                 false,
-			RelatedNames:              item.RelatedNames,
-			Baud:                      0,
-			BufferAlgorithm:           "",
-			AvailableBufferAlgorithms: availableBufferAlgorithms,
-			Ver:         versionFloat,
-			NetworkPort: item.NetworkPort,
+			Name:            item.Name,
+			Friendly:        item.FriendlyName,
+			SerialNumber:    item.SerialNumber,
+			DeviceClass:     item.DeviceClass,
+			IsOpen:          false,
+			IsPrimary:       false,
+			RelatedNames:    item.RelatedNames,
+			Baud:            0,
+			BufferAlgorithm: "",
+			Ver:             version,
+			NetworkPort:     item.NetworkPort,
 		}
 
 		// figure out if port is open

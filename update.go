@@ -52,7 +52,7 @@ import (
 	"github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 	"github.com/kr/binarydist"
-	"github.com/termie/go-shutil"
+	//"github.com/termie/go-shutil"
 
 	patch "github.com/sanderhahn/gozip/patchzip"
 )
@@ -319,8 +319,11 @@ func (u *Updater) update() error {
 	}
 
 	// remove config.ini so at restart the package will extract again
-	shutil.CopyFile(*configIni, *configIni+".bak", false)
-	os.Remove(*configIni)
+	//shutil.CopyFile(*configIni, *configIni+".bak", false)
+	//os.Remove(*configIni)
+
+	restart(path)
+	//addRebootTrayElement()
 
 	// update done, we should decide if we need to restart ASAP (maybe a field in update json?)
 	// BIG issue: the file has been renamed in the meantime

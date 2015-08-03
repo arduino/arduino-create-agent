@@ -114,6 +114,11 @@ func checkCmd(m []byte) {
 
 	sl := strings.ToLower(strings.Trim(s, "\n"))
 
+	if *hibernate == true {
+		//do nothing
+		return
+	}
+
 	if strings.HasPrefix(sl, "open") {
 
 		// check if user wants to open this port as a secondary port
@@ -211,7 +216,7 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "broadcast") {
 		go broadcast(s)
 	} else if strings.HasPrefix(sl, "restart") {
-		restart()
+		restart("")
 	} else if strings.HasPrefix(sl, "exit") {
 		exit()
 	} else if strings.HasPrefix(sl, "memstats") {
@@ -292,7 +297,7 @@ func exit() {
 
 }
 
-func restart() {
+func restart(path string) {
 	// relaunch ourself and exit
 	// the relaunch works because we pass a cmdline in
 	// that has serial-port-json-server only initialize 5 seconds later
@@ -320,14 +325,19 @@ func restart() {
 	// using osext
 	exePath, err3 := osext.Executable()
 	if err3 != nil {
-		fmt.Printf("Error getting exe path using osext lib. err: %v\n", err3)
+		log.Printf("Error getting exe path using osext lib. err: %v\n", err3)
 	}
-	fmt.Printf("exePath using osext: %v\n", exePath)
 
+	if path == "" {
+		log.Printf("exePath using osext: %v\n", exePath)
+	} else {
+		exePath = path
+	}
 	// figure out garbageCollection flag
 	//isGcFlag := "false"
 
 	var cmd *exec.Cmd
+
 	/*if *isGC {
 		//isGcFlag = "true"
 		cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc")
@@ -335,7 +345,15 @@ func restart() {
 		cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter)
 
 	}*/
-	cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc", *gcType)
+
+	hiberString := ""
+	if *hibernate == true {
+		hiberString = "-hibernate"
+	}
+
+	cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc", *gcType, hiberString)
+
+	fmt.Println(cmd)
 
 	//cmd := exec.Command("./serial-port-json-server", "ls")
 	err := cmd.Start()

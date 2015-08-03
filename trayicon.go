@@ -41,23 +41,56 @@ import (
 
 func setupSysTray() {
 	runtime.LockOSThread()
-	systray.Run(setupSysTrayReal)
+	if *hibernate == true {
+		systray.Run(setupSysTrayHibernate)
+	} else {
+		systray.Run(setupSysTrayReal)
+	}
+}
+
+func addRebootTrayElement() {
+	reboot_tray := systray.AddMenuItem("Reboot to update", "")
+
+	go func() {
+		<-reboot_tray.ClickedCh
+		systray.Quit()
+		log.Println("Restarting now...")
+		restart("")
+	}()
 }
 
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.Data)
-	mUrl := systray.AddMenuItem("Go to Create (staging)", "Arduino Create")
+	mUrl := systray.AddMenuItem("Go to Arduino Create (staging)", "Arduino Create")
+	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
 	menuVer := systray.AddMenuItem("Agent version "+version, "")
-	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
+	mPause := systray.AddMenuItem("Pause Plugin", "")
+	mQuit := systray.AddMenuItem("Quit Plugin", "")
 
 	menuVer.Disable()
 
 	go func() {
+		<-mPause.ClickedCh
+		ports, _ := serial.GetPortsList()
+		for _, element := range ports {
+			spClose(element)
+		}
+		systray.Quit()
+		*hibernate = true
+		restart("")
+	}()
+
+	go func() {
 		<-mQuit.ClickedCh
 		systray.Quit()
-		fmt.Println("Quit now...")
 		exit()
+	}()
+
+	go func() {
+		<-mDebug.ClickedCh
+		open.Run("http://localhost:8989")
+		logAction("log on")
 	}()
 
 	// We can manipulate the systray in other goroutines
@@ -65,4 +98,24 @@ func setupSysTrayReal() {
 		<-mUrl.ClickedCh
 		open.Run("http://create-staging.arduino.cc")
 	}()
+}
+
+func setupSysTrayHibernate() {
+
+	systray.SetIcon(icon.DataHibernate)
+	mOpen := systray.AddMenuItem("Open Plugin", "")
+	mQuit := systray.AddMenuItem("Quit Plugin", "")
+
+	go func() {
+		<-mOpen.ClickedCh
+		*hibernate = false
+		restart("")
+	}()
+
+	go func() {
+		<-mQuit.ClickedCh
+		systray.Quit()
+		exit()
+	}()
+
 }

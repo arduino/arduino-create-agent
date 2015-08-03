@@ -32,3 +32,7 @@ func setupSysTray() {
 	//no systray support for arm yet
 	select {}
 }
+
+func addRebootTrayElement() {
+	select {}
+}
