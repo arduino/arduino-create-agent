@@ -24,9 +24,9 @@ import (
 )
 
 var (
-	version              = "1.83"
-	versionFloat         = float32(1.83)
-	embedded_autoupdate  = false
+	version              = "x.x.x"
+	git_revision         = "xxxxxxxx"
+	embedded_autoupdate  = true
 	embedded_autoextract = false
 	addr                 = flag.String("addr", ":8989", "http service address")
 	addrSSL              = flag.String("addrSSL", ":8990", "https service address")
