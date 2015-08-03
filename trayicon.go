@@ -31,7 +31,8 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/facchinm/go-serial"
 	"github.com/facchinm/systray"
 	"github.com/facchinm/systray/example/icon"
 	"github.com/skratchdot/open-golang/open"

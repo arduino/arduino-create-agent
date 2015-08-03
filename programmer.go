@@ -5,10 +5,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"github.com/kardianos/osext"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -109,6 +109,7 @@ func spProgramNetwork(portname string, boardname string, filePath string) error 
 
 	// Check the response
 	if res.StatusCode != http.StatusOK {
+		log.Errorf("bad status: %s", res.Status)
 		err = fmt.Errorf("bad status: %s", res.Status)
 	}
 

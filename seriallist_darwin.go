@@ -3,7 +3,7 @@ package main
 import (
 	//"fmt"
 	//"github.com/tarm/goserial"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"strings"
 	//"encoding/binary"

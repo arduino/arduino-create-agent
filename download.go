@@ -3,9 +3,9 @@ package main
 
 import (
 	"errors"
+	log "github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,7 +14,7 @@ import (
 
 func saveFileonTempDir(filename string, sketch io.Reader) (path string, err error) {
 	// create tmp dir
-	tmpdir, err := ioutil.TempDir("", "serial-port-json-server")
+	tmpdir, err := ioutil.TempDir("", "arduino-create-agent")
 	if err != nil {
 		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
 	}
@@ -47,7 +47,7 @@ func downloadFromUrl(url string) (filename string, err error) {
 	url = strings.TrimSpace(url)
 
 	// create tmp dir
-	tmpdir, err := ioutil.TempDir("", "serial-port-json-server")
+	tmpdir, err := ioutil.TempDir("", "arduino-create-agent")
 	if err != nil {
 		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
 	}

@@ -12,7 +12,7 @@ import (
 	//"github.com/mikepb/go-serial"
 	//"github.com/facchinm/go-serial"
 	//"github.com/kardianos/osext"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	//"os"
 	"regexp"
 	"runtime/debug"

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/kardianos/osext"
-	"log"
 	//"os"
 	"os/exec"
 	//"path"
@@ -11,6 +11,8 @@ import (
 	//"runtime"
 	//"debug"
 	"encoding/json"
+	"io"
+	"os"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -202,6 +204,8 @@ func checkCmd(m []byte) {
 		//go getListViaWmiPnpEntity()
 	} else if strings.HasPrefix(sl, "bufferalgorithm") {
 		go spBufferAlgorithms()
+	} else if strings.HasPrefix(sl, "log") {
+		go logAction(sl)
 	} else if strings.HasPrefix(sl, "baudrate") {
 		go spBaudRates()
 	} else if strings.HasPrefix(sl, "broadcast") {
@@ -225,6 +229,21 @@ func checkCmd(m []byte) {
 	}
 
 	//log.Print("Done with checkCmd")
+}
+
+var multi_writer = io.MultiWriter(&logger_ws, os.Stderr)
+
+func logAction(sl string) {
+	if strings.HasPrefix(sl, "log on") {
+		*logDump = "on"
+		log.SetOutput(multi_writer)
+	} else if strings.HasPrefix(sl, "log off") {
+		*logDump = "off"
+		log.SetOutput(os.Stderr)
+	} else if strings.HasPrefix(sl, "log show") {
+		// TODO: send all the saved log to websocket
+		//h.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
+	}
 }
 
 func bufflowdebug(sl string) {

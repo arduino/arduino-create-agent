@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/json"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/kardianos/osext"
 	"io"
 	"io/ioutil"
@@ -178,17 +178,17 @@ func recursivelyIterateConfig(m map[string]interface{}, fullpath string, match [
 		switch vv := v.(type) {
 		case string:
 			if matchStringWithSlice(fullpath+":"+k, match) {
-				//fmt.Println(k, "is string", vv, "path", fullpath)
+				//log.Println(k, "is string", vv, "path", fullpath)
 				if mapOut != nil {
 					*mapOut = append(*mapOut, ConfigProperty{path: fullpath, value: vv})
-					//fmt.Println(getElementFromMapWithList(globalConfigMap, strings.Split(fullpath, ":")))
+					//log.Println(getElementFromMapWithList(globalConfigMap, strings.Split(fullpath, ":")))
 				}
 			}
 		case map[string]interface{}:
-			//fmt.Println(k, "is a map:", fullpath)
+			//log.Println(k, "is a map:", fullpath)
 			recursivelyIterateConfig(m[k].(map[string]interface{}), fullpath+":"+k, match, mapOut)
 		default:
-			//fmt.Println(k, "is of a type I don't know how to handle ", vv)
+			//log.Println(k, "is of a type I don't know how to handle ", vv)
 		}
 	}
 }
@@ -209,14 +209,14 @@ func RemoveDuplicates(xs *[]string) {
 func findAllVIDs(m map[string]interface{}) []ConfigProperty {
 	var vidList []ConfigProperty
 	recursivelyIterateConfig(m, "", []string{"vid"}, &vidList)
-	//fmt.Println(vidList)
+	//log.Println(vidList)
 	return vidList
 }
 
 func findAllPIDs(m map[string]interface{}) []ConfigProperty {
 	var pidList []ConfigProperty
 	recursivelyIterateConfig(m, "", []string{"pid"}, &pidList)
-	//fmt.Println(pidList)
+	//log.Println(pidList)
 	return pidList
 }
 
@@ -224,7 +224,7 @@ func searchFor(m map[string]interface{}, args []string, element string) ([]Confi
 	var uList []ConfigProperty
 	var results []ConfigProperty
 	recursivelyIterateConfig(m, "", args, &uList)
-	//fmt.Println(uList)
+	//log.Println(uList)
 	for _, elm := range uList {
 		if elm.value == element {
 			results = append(results, elm)
@@ -255,7 +255,7 @@ func createGlobalConfigMap(m *map[string]interface{}) {
 	file, e := ioutil.ReadFile(filepath.Dir(execPath) + "/arduino/boards.json")
 
 	if e != nil {
-		fmt.Printf("File error: %v\n", e)
+		log.Printf("File error: %v\n", e)
 		os.Exit(1)
 	}
 

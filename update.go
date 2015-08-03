@@ -37,9 +37,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -241,7 +241,7 @@ func (u *Updater) BackgroundRun() error {
 	os.MkdirAll(u.getExecRelativeDir(u.Dir), 0777)
 	if u.wantUpdate() {
 		if err := up.CanUpdate(); err != nil {
-			// fail
+			log.Println(err)
 			return err
 		}
 		//self, err := osext.Executable()
@@ -278,6 +278,7 @@ func (u *Updater) update() error {
 
 	err = u.fetchInfo()
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	if u.Info.Version == u.CurrentVersion {
@@ -310,6 +311,7 @@ func (u *Updater) update() error {
 
 	err, errRecover := up.FromStream(bytes.NewBuffer(bin))
 	if errRecover != nil {
+		log.Errorf("update and recovery errors: %q %q", err, errRecover)
 		return fmt.Errorf("update and recovery errors: %q %q", err, errRecover)
 	}
 	if err != nil {
@@ -405,6 +407,7 @@ func fetch(url string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
+		log.Errorf("bad http status from %s: %v", url, resp.Status)
 		return nil, fmt.Errorf("bad http status from %s: %v", url, resp.Status)
 	}
 	return resp.Body, nil

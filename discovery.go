@@ -29,8 +29,8 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/oleksandr/bonjour"
-	"log"
 	"net"
 	"strings"
 	"time"

@@ -3,8 +3,8 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
-	"log"
 	//"os"
 	"regexp"
 )
@@ -52,7 +52,7 @@ func GetList(network bool) ([]OsSerialPort, error) {
 				} else if reFilter.MatchString(element.FriendlyName) {
 					newarrPorts = append(newarrPorts, element)
 				} else {
-					log.Printf("serial port did not match. port: %v\n", element)
+					log.Debug("serial port did not match. port: %v\n", element)
 				}
 
 			}

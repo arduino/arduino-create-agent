@@ -5,9 +5,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"go/build"
-	"log"
 	"os"
 	"path/filepath"
 	//"net/http/pprof"
@@ -52,6 +51,8 @@ var (
 	// whether to do buffer flow debugging
 	bufFlowDebugType = flag.String("bufflowdebug", "off", "off = (default) We do not send back any debug JSON, on = We will send back a JSON response with debug info based on the configuration of the buffer flow that the user picked")
 
+	logDump = flag.String("log", "off", "off = (default)")
+
 	// hostname. allow user to override, otherwise we look it up
 	hostname = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
 
@@ -73,6 +74,15 @@ func defaultAssetPath() string {
 	}
 	return p.Dir
 }
+
+type logWriter struct{}
+
+func (u *logWriter) Write(p []byte) (n int, err error) {
+	h.broadcastSys <- p
+	return 0, nil
+}
+
+var logger_ws logWriter
 
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
@@ -157,8 +167,11 @@ func startDaemon() {
 			}
 		}
 
-		// setup logging
-		log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+		//log.SetFormatter(&log.JSONFormatter{})
+
+		log.SetLevel(log.InfoLevel)
+
+		log.SetOutput(os.Stderr)
 
 		// see if we are supposed to wait 5 seconds
 		if *isLaunchSelf {
@@ -274,13 +287,13 @@ func startDaemon() {
 		r.Handle("WSS", "/socket.io/", socketHandler)
 		go func() {
 			if err := r.RunTLS(*addrSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
-				fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+				log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				log.Fatal("Error ListenAndServe:", err)
 			}
 		}()
 
 		if err := r.Run(*addr); err != nil {
-			fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+			log.Printf("Error trying to bind to port: %v, so exiting...", err)
 			log.Fatal("Error ListenAndServe:", err)
 		}
 	}()
@@ -389,6 +402,7 @@ body {
 <form id="form">
     <input type="submit" value="Send" />
     <input type="text" id="msg" size="64"/>
+    <input name="pause" type="checkbox" value="pause" id="myCheck"/> Pause <br>
 </form>
 </body>
 </html>

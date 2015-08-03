@@ -3,9 +3,9 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
-	"log"
 	"net/http"
 )
 
