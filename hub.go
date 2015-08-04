@@ -199,14 +199,6 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "list") {
 		go spList(false)
 		go spList(true)
-		// log.Println("Stack info", runtime.NumGoroutine())
-		// if runtime.NumGoroutine() > 30 {
-		// 	output := make([]byte, 1<<16)
-		// 	runtime.Stack(output, true)
-		// 	log.Println(output)
-		// 	log.Fatal("Crash because something is going wrong")
-		// }
-		//go getListViaWmiPnpEntity()
 	} else if strings.HasPrefix(sl, "bufferalgorithm") {
 		go spBufferAlgorithms()
 	} else if strings.HasPrefix(sl, "log") {

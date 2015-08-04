@@ -38,6 +38,10 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/inconshreveable/go-update"
+	"github.com/kardianos/osext"
+	"github.com/kr/binarydist"
+	patch "github.com/sanderhahn/gozip/patchzip"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -48,13 +52,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/inconshreveable/go-update"
-	"github.com/kardianos/osext"
-	"github.com/kr/binarydist"
-	//"github.com/termie/go-shutil"
-
-	patch "github.com/sanderhahn/gozip/patchzip"
 )
 
 func IsZip(path string) bool {

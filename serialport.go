@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	//"github.com/johnlauer/goserial"
 	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"io"

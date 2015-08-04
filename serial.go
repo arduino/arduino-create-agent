@@ -3,17 +3,9 @@
 package main
 
 import (
-	//"bufio"
 	"encoding/json"
 	"fmt"
-	//"path/filepath"
-	//"github.com/kballard/go-shellquote"
-	//"github.com/johnlauer/goserial"
-	//"github.com/mikepb/go-serial"
-	//"github.com/facchinm/go-serial"
-	//"github.com/kardianos/osext"
 	log "github.com/Sirupsen/logrus"
-	//"os"
 	"regexp"
 	"runtime/debug"
 	"strconv"
@@ -91,12 +83,10 @@ type SpPortList struct {
 
 type SpPortItem struct {
 	Name            string
-	Friendly        string
 	SerialNumber    string
 	DeviceClass     string
 	IsOpen          bool
 	IsPrimary       bool
-	RelatedNames    []string
 	Baud            int
 	BufferAlgorithm string
 	Ver             string
@@ -518,12 +508,10 @@ func spListDual(network bool) {
 		*/
 		spl.Ports[ctr] = SpPortItem{
 			Name:            item.Name,
-			Friendly:        item.FriendlyName,
 			SerialNumber:    item.SerialNumber,
 			DeviceClass:     item.DeviceClass,
 			IsOpen:          false,
 			IsPrimary:       false,
-			RelatedNames:    item.RelatedNames,
 			Baud:            0,
 			BufferAlgorithm: "",
 			Ver:             version,
@@ -552,18 +540,6 @@ func spListDual(network bool) {
 	} else {
 		SerialPorts = spl
 	}
-}
-
-func spListOld() {
-	ls := "{\"serialports\" : [\n"
-	list, _ := getList()
-	for _, item := range list {
-		ls += "{ \"name\" : \"" + item.Name + "\", \"friendly\" : \"" + item.FriendlyName + "\" },\n"
-	}
-	ls = strings.TrimSuffix(ls, "},\n")
-	ls += "}\n"
-	ls += "]}\n"
-	h.broadcastSys <- []byte(ls)
 }
 
 func spErr(err string) {

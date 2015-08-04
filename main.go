@@ -6,19 +6,17 @@ package main
 import (
 	"flag"
 	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
+	"github.com/kardianos/osext"
+	"github.com/vharitonsky/iniflags"
 	"go/build"
 	"os"
 	"path/filepath"
-	//"net/http/pprof"
-	"github.com/kardianos/osext"
-	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
-	//"github.com/sanderhahn/gozip"
-	"github.com/gin-gonic/gin"
-	"github.com/itsjamie/gin-cors"
-	"github.com/vharitonsky/iniflags"
 	"runtime/debug"
 	"text/template"
 	"time"
+	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
 var (
@@ -59,8 +57,6 @@ var (
 	updateUrl = flag.String("updateUrl", "", "")
 	appName   = flag.String("appName", "", "")
 )
-
-var globalConfigMap map[string]interface{}
 
 type NullWriter int
 
@@ -156,9 +152,6 @@ func main() {
 			// }
 		}
 
-		createGlobalConfigMap(&globalConfigMap)
-
-		//getList()
 		f := flag.Lookup("addr")
 		log.Println("Version:" + version)
 

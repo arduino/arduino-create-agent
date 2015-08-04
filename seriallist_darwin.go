@@ -1,18 +1,8 @@
 package main
 
 import (
-	//"fmt"
-	//"github.com/tarm/goserial"
-	log "github.com/Sirupsen/logrus"
-	"os"
-	"strings"
-	//"encoding/binary"
-	//"strconv"
-	//"syscall"
-	//"fmt"
-	//"bufio"
-	"io/ioutil"
 	"os/exec"
+	"strings"
 )
 
 // execute system_profiler SPUSBDataType | grep "Vendor ID: 0x2341" -A5 -B2
@@ -32,6 +22,7 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 
 	for index, _ := range ports {
 		port_hash := strings.Trim(ports[index].Name, "/dev/tty.usbmodem")
+		port_hash = strings.Trim(port_hash, "/dev/tty.usbserial-")
 
 		usbcmd := exec.Command("system_profiler", "SPUSBDataType")
 		grepcmd := exec.Command("grep", "Location ID: 0x"+port_hash[:len(port_hash)-1], "-B6")
@@ -64,49 +55,4 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 		ports[index].Manufacturer = cmdOutMap["Manufacturer"]
 	}
 	return ports
-}
-
-func getList() ([]OsSerialPort, os.SyscallError) {
-	//return getListViaWmiPnpEntity()
-	return getListViaTtyList()
-}
-
-func getListViaTtyList() ([]OsSerialPort, os.SyscallError) {
-	var err os.SyscallError
-
-	log.Println("getting serial list on darwin")
-
-	// make buffer of 100 max serial ports
-	// return a slice
-	list := make([]OsSerialPort, 100)
-
-	files, _ := ioutil.ReadDir("/dev/")
-	ctr := 0
-	for _, f := range files {
-		if strings.HasPrefix(f.Name(), "tty.") {
-			// it is a legitimate serial port
-			list[ctr].Name = "/dev/" + f.Name()
-			list[ctr].FriendlyName = f.Name()
-			log.Println("Added serial port to list: ", list[ctr])
-			ctr++
-		}
-		// stop-gap in case going beyond 100 (which should never happen)
-		// i mean, really, who has more than 100 serial ports?
-		if ctr > 99 {
-			ctr = 99
-		}
-		//fmt.Println(f.Name())
-		//fmt.Println(f.)
-	}
-	/*
-		list := make([]OsSerialPort, 3)
-		list[0].Name = "tty.serial1"
-		list[0].FriendlyName = "tty.serial1"
-		list[1].Name = "tty.serial2"
-		list[1].FriendlyName = "tty.serial2"
-		list[2].Name = "tty.Bluetooth-Modem"
-		list[2].FriendlyName = "tty.Bluetooth-Modem"
-	*/
-
-	return list[0:ctr], err
 }
