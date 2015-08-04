@@ -11,7 +11,6 @@ import (
 	//"syscall"
 	//"fmt"
 	//"bufio"
-	"fmt"
 	"io/ioutil"
 	"os/exec"
 )
@@ -42,8 +41,6 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 			usbcmd = exec.Command("system_profiler", "SPUSBDataType")
 			grepcmd = exec.Command("grep" /*"Serial Number: "+*/, strings.Trim(port_hash, "0"), "-B3", "-A3")
 			cmdOutput, _ = pipe_commands(usbcmd, grepcmd)
-
-			fmt.Println(string(cmdOutput))
 		}
 
 		if len(cmdOutput) == 0 {
@@ -52,8 +49,6 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 		}
 
 		cmdOutSlice := strings.Split(string(cmdOutput), "\n")
-
-		fmt.Println(cmdOutSlice)
 
 		cmdOutMap := make(map[string]string)
 

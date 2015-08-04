@@ -10,7 +10,6 @@ import (
 	//"encoding/binary"
 	"strconv"
 	//"syscall"
-	//"fmt"
 	"bytes"
 	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
