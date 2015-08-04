@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -82,4 +83,18 @@ func downloadFromUrl(url string) (filename string, err error) {
 	log.Println(n, "bytes downloaded.")
 
 	return fileName, nil
+}
+
+func spDownloadTool(name string, url string) {
+	fileName, err := downloadFromUrl(url)
+	if err != nil {
+		log.Error("Could not download flashing tools!")
+		return
+	}
+	Unzip(fileName, tempToolsPath)
+	extension := ""
+	if runtime.GOOS == "windows" {
+		extension = ".exe"
+	}
+	globalToolsMap[name] = tempToolsPath + "/bin/" + name + extension
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
 	"go/build"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -54,8 +55,10 @@ var (
 	// hostname. allow user to override, otherwise we look it up
 	hostname = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
 
-	updateUrl = flag.String("updateUrl", "", "")
-	appName   = flag.String("appName", "", "")
+	updateUrl        = flag.String("updateUrl", "", "")
+	appName          = flag.String("appName", "", "")
+	globalToolsMap   = make(map[string]string)
+	tempToolsPath, _ = ioutil.TempDir("", "arduino-create-agent-tools")
 )
 
 type NullWriter int

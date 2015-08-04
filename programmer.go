@@ -8,44 +8,30 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"github.com/kardianos/osext"
+	"github.com/mattn/go-shellwords"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
 
 var compiling = false
 
-// Download the file from URL first, store in tmp folder, then pass to spProgram
-func spProgramFromUrl(portname string, boardname string, url string) {
-	mapB, _ := json.Marshal(map[string]string{"ProgrammerStatus": "DownloadStart", "Url": url})
-	h.broadcastSys <- mapB
-	filename, err := downloadFromUrl(url)
-	mapB, _ = json.Marshal(map[string]string{"ProgrammerStatus": "DownloadDone", "Filename": filename, "Url": url})
-	h.broadcastSys <- mapB
-
-	if err != nil {
-		spErr(err.Error())
-		return
-	} else {
-		spProgram(portname, boardname, filename)
-	}
-
-	// delete file
-
-}
-
 func colonToUnderscore(input string) string {
 	output := strings.Replace(input, ":", "_", -1)
 	return output
 }
 
-func spProgramNetwork(portname string, boardname string, filePath string) error {
+type basicAuthData struct {
+	UserName string
+	Password string
+}
+
+func spProgramNetwork(portname string, boardname string, filePath string, authdata basicAuthData) error {
 
 	log.Println("Starting network upload")
 	log.Println("Board Name: " + boardname)
@@ -91,7 +77,9 @@ func spProgramNetwork(portname string, boardname string, filePath string) error 
 	}
 	// Don't forget to set the content type, this will contain the boundary.
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	req.SetBasicAuth("root", "arduino")
+	if authdata.UserName != "" {
+		req.SetBasicAuth(authdata.UserName, authdata.Password)
+	}
 
 	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
 	log.Printf("Network flashing on " + portname)
@@ -128,29 +116,18 @@ func spProgramNetwork(portname string, boardname string, filePath string) error 
 	return err
 }
 
-func spProgramLocal(portname string, boardname string, filePath string) {
-	isFound, flasher, mycmd := assembleCompilerCommand(boardname, portname, filePath)
-	mapD := map[string]string{"ProgrammerStatus": "CommandReady", "IsFound": strconv.FormatBool(isFound), "Flasher": flasher, "Cmd": strings.Join(mycmd, " ")}
-	mapB, _ := json.Marshal(mapD)
-	h.broadcastSys <- mapB
+func spProgramLocal(portname string, boardname string, filePath string, commandline string) {
 
-	if isFound {
-		spHandlerProgram(flasher, mycmd)
-	} else {
-		spErr("Could not find the board " + boardname + "  that you were trying to program.")
-		mapD := map[string]string{"ProgrammerStatus": "Failed", "IsFound": strconv.FormatBool(isFound), "Flasher": flasher, "Cmd": strings.Join(mycmd, " "), "Err": "Could not find the board " + boardname + "  that you were trying to program."}
-		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
-		return
-	}
+	z, _ := shellwords.Parse(commandline)
+	spHandlerProgram(z[0], z[1:])
 }
 
-func spProgram(portname string, boardname string, filePath string) {
+func spProgram(portname string, boardname string, filePath string, commandline string, networkPort bool, authdata basicAuthData) {
 
-	spProgramRW(portname, boardname, "", filePath)
+	spProgramRW(portname, boardname, "", filePath, commandline, networkPort, authdata)
 }
 
-func spProgramRW(portname string, boardname string, boardname_rewrite string, filePath string) {
+func spProgramRW(portname string, boardname string, boardname_rewrite string, filePath string, commandline string, networkPort bool, authdata basicAuthData) {
 	compiling = true
 
 	defer func() {
@@ -158,23 +135,13 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 		compiling = false
 	}()
 
-	// check if the port is physical or network
-	var networkPort bool
-	myport, exist := findPortByNameRerun(portname, false)
-	if !exist {
-		// it could be a network port that has not been found at the second lap
-		networkPort = true
-	} else {
-		networkPort = myport.NetworkPort
-	}
-
 	var err error
 
 	if networkPort {
 		if boardname_rewrite == "" {
-			err = spProgramNetwork(portname, boardname_rewrite, filePath)
+			err = spProgramNetwork(portname, boardname_rewrite, filePath, authdata)
 		} else {
-			err = spProgramNetwork(portname, boardname, filePath)
+			err = spProgramNetwork(portname, boardname, filePath, authdata)
 		}
 		if err != nil {
 			mapD := map[string]string{"ProgrammerStatus": "Error " + err.Error(), "Msg": "Could not program the board", "Output": "", "Err": err.Error()}
@@ -182,7 +149,7 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 			h.broadcastSys <- mapB
 		}
 	} else {
-		spProgramLocal(portname, boardname, filePath)
+		spProgramLocal(portname, boardname, filePath, commandline)
 	}
 }
 
@@ -195,8 +162,8 @@ func spHandlerProgram(flasher string, cmdString []string) {
 	// 	cmdString = append([]string{flasher}, cmdString...)
 	// 	oscmd = exec.Command(sh, cmdString...)
 	// } else {
-	oscmd = exec.Command(flasher, cmdString...)
-	// }
+
+	oscmd = exec.Command(globalToolsMap[flasher], cmdString...)
 
 	// Stdout buffer
 	//var cmdOutput []byte
