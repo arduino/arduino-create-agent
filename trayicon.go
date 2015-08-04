@@ -104,7 +104,7 @@ func setupSysTrayHibernate() {
 
 	systray.SetIcon(icon.DataHibernate)
 	mOpen := systray.AddMenuItem("Open Plugin", "")
-	//mQuit := systray.AddMenuItem("Quit Plugin", "")
+	mQuit := systray.AddMenuItem("Kill Plugin", "")
 
 	go func() {
 		<-mOpen.ClickedCh
@@ -112,9 +112,9 @@ func setupSysTrayHibernate() {
 		restart("")
 	}()
 
-	// go func() {
-	// 	<-mQuit.ClickedCh
-	// 	systray.Quit()
-	// 	exit()
-	// }()
+	go func() {
+		<-mQuit.ClickedCh
+		systray.Quit()
+		exit()
+	}()
 }
