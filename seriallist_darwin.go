@@ -11,6 +11,7 @@ import (
 	//"syscall"
 	//"fmt"
 	//"bufio"
+	"fmt"
 	"io/ioutil"
 	"os/exec"
 )
@@ -23,52 +24,50 @@ import (
 // search all board.txt files for map[Product ID]
 // assign it to name
 
-func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
-	usbcmd := exec.Command("system_profiler", "SPUSBDataType")
-	grepcmd := exec.Command("grep", "0x2341", "-A5", "-B1")
+func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 
-	cmdOutput, _ := pipe_commands(usbcmd, grepcmd)
+	// prefilter ports
+	ports = Filter(ports, func(port OsSerialPort) bool {
+		return !strings.Contains(port.Name, "Blue") && !strings.Contains(port.Name, "/cu")
+	})
 
-	//log.Println(string(cmdOutput))
-	cmdOutSlice := strings.Split(string(cmdOutput), "\n")
+	for index, _ := range ports {
+		port_hash := strings.Trim(ports[index].Name, "/dev/tty.usbmodem")
 
-	// how many lines is the output? boards attached = lines/8
-	for i := 0; i < len(cmdOutSlice)/8; i++ {
+		usbcmd := exec.Command("system_profiler", "SPUSBDataType")
+		grepcmd := exec.Command("grep", "Location ID: 0x"+port_hash[:len(port_hash)-1], "-B6")
+		cmdOutput, _ := pipe_commands(usbcmd, grepcmd)
 
-		cmdOutSliceN := cmdOutSlice[i*8 : (i+1)*8]
+		if len(cmdOutput) == 0 {
+			usbcmd = exec.Command("system_profiler", "SPUSBDataType")
+			grepcmd = exec.Command("grep" /*"Serial Number: "+*/, strings.Trim(port_hash, "0"), "-B3", "-A3")
+			cmdOutput, _ = pipe_commands(usbcmd, grepcmd)
+
+			fmt.Println(string(cmdOutput))
+		}
+
+		if len(cmdOutput) == 0 {
+			//give up
+			continue
+		}
+
+		cmdOutSlice := strings.Split(string(cmdOutput), "\n")
+
+		fmt.Println(cmdOutSlice)
 
 		cmdOutMap := make(map[string]string)
 
-		for _, element := range cmdOutSliceN {
-			if strings.Contains(element, "ID") {
+		for _, element := range cmdOutSlice {
+			if strings.Contains(element, "ID") || strings.Contains(element, "Manufacturer") {
 				element = strings.TrimSpace(element)
 				arr := strings.Split(element, ": ")
 				cmdOutMap[arr[0]] = arr[1]
 			}
 		}
-
-		archBoardName, boardName, _ := getBoardName(cmdOutMap["Product ID"])
-
-		// remove initial 0x and final zeros
-		ttyHeader := strings.Trim((cmdOutMap["Location ID"]), "0x")
-		ttyHeader = strings.Split(ttyHeader, " ")[0]
-		ttyHeader = strings.Trim(ttyHeader, "0")
-
-		for _, port := range ports {
-			if strings.Contains(port.Name, ttyHeader) {
-				if !strings.Contains(port.Name, "/cu") {
-					port.RelatedNames = append(port.RelatedNames, archBoardName)
-					port.FriendlyName = strings.Trim(boardName, "\n")
-				}
-			}
-		}
+		ports[index].IdProduct = strings.Split(cmdOutMap["Product ID"], " ")[0]
+		ports[index].IdVendor = strings.Split(cmdOutMap["Vendor ID"], " ")[0]
+		ports[index].Manufacturer = cmdOutMap["Manufacturer"]
 	}
-
-	// additional remove phase
-	ports = Filter(ports, func(port OsSerialPort) bool {
-		return !strings.Contains(port.Name, "Blue") && !strings.Contains(port.Name, "/cu")
-	})
-
 	return ports
 }
 

@@ -59,7 +59,7 @@ func GetList(network bool) ([]OsSerialPort, error) {
 			arrPorts = newarrPorts
 		}
 
-		arrPorts = removeNonArduinoBoards(arrPorts)
+		arrPorts = associateVidPidWithPort(arrPorts)
 		return arrPorts, err
 		//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 	}

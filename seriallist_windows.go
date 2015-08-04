@@ -22,7 +22,7 @@ var (
 	serialListWindowsWg sync.WaitGroup
 )
 
-func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
+func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 	ports, _ = getList()
 	return ports
 }
@@ -206,13 +206,8 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 			}
 		}
 
-		if list[i].IdVendor != "2341" {
-			list[i].FriendlyName = asString.ToString()
-		} else {
-			archBoardName, boardName, _ := getBoardName("0x" + list[i].IdProduct)
-			list[i].RelatedNames = append(list[i].RelatedNames, archBoardName)
-			list[i].FriendlyName = strings.Trim(boardName, "\n")
-		}
+		list[i].IdVendor = "0x" + list[i].IdVendor
+		list[i].IdProduct = "0x" + list[i].IdProduct
 
 		manufStr, _ := oleutil.GetProperty(item, "Manufacturer")
 		list[i].Manufacturer = manufStr.ToString()

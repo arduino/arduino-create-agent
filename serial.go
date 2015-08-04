@@ -101,6 +101,8 @@ type SpPortItem struct {
 	BufferAlgorithm string
 	Ver             string
 	NetworkPort     bool
+	VendorID        string
+	ProductID       string
 }
 
 // SerialPorts contains the ports attached to the machine
@@ -526,6 +528,8 @@ func spListDual(network bool) {
 			BufferAlgorithm: "",
 			Ver:             version,
 			NetworkPort:     item.NetworkPort,
+			VendorID:        item.IdVendor,
+			ProductID:       item.IdProduct,
 		}
 
 		// figure out if port is open
