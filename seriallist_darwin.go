@@ -32,9 +32,6 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 	//log.Println(string(cmdOutput))
 	cmdOutSlice := strings.Split(string(cmdOutput), "\n")
 
-	var arduino_ports []OsSerialPort
-	var other_ports []OsSerialPort
-
 	// how many lines is the output? boards attached = lines/8
 	for i := 0; i < len(cmdOutSlice)/8; i++ {
 
@@ -62,22 +59,17 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 				if !strings.Contains(port.Name, "/cu") {
 					port.RelatedNames = append(port.RelatedNames, archBoardName)
 					port.FriendlyName = strings.Trim(boardName, "\n")
-					arduino_ports = append(arduino_ports, port)
-				} else {
-					other_ports = append(other_ports, port)
 				}
 			}
 		}
 	}
 
-	arduino_ports = append(arduino_ports, other_ports...)
-
 	// additional remove phase
-	arduino_ports = Filter(arduino_ports, func(port OsSerialPort) bool {
+	ports = Filter(ports, func(port OsSerialPort) bool {
 		return !strings.Contains(port.Name, "Blue") && !strings.Contains(port.Name, "/cu")
 	})
 
-	return arduino_ports
+	return ports
 }
 
 func getList() ([]OsSerialPort, os.SyscallError) {
