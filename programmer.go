@@ -211,6 +211,18 @@ func spHandlerProgram(flasher string, cmdString []string) {
 
 	oscmd = exec.Command(flasher+extension, cmdString...)
 
+	stdout, err := oscmd.StdoutPipe()
+	if err != nil {
+		return
+	}
+
+	stderr, err := oscmd.StderrPipe()
+	if err != nil {
+		return
+	}
+
+	multi := io.MultiReader(stderr, stdout)
+
 	// Stdout buffer
 	//var cmdOutput []byte
 
@@ -220,16 +232,29 @@ func spHandlerProgram(flasher string, cmdString []string) {
 	mapB, _ := json.Marshal(mapD)
 	h.broadcastSys <- mapB
 
-	cmdOutput, err := oscmd.CombinedOutput()
+	err = oscmd.Start()
+
+	in := bufio.NewScanner(multi)
+
+	in.Split(bufio.ScanLines)
+
+	for in.Scan() {
+		log.Info(in.Text())
+		mapD := map[string]string{"ProgrammerStatus": "Busy", "Msg": in.Text()}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+	}
+
+	err = oscmd.Wait()
 
 	if err != nil {
-		log.Printf("Command finished with error: %v "+string(cmdOutput), err)
-		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board", "Output": string(cmdOutput), "Err": string(cmdOutput)}
+		log.Printf("Command finished with error: %v", err)
+		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board"}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 	} else {
-		log.Printf("Finished without error. Good stuff. stdout: " + string(cmdOutput))
-		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok", "Output": string(cmdOutput)}
+		log.Printf("Finished without error. Good stuff")
+		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok"}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 		// analyze stdin
