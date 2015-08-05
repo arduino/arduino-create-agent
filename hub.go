@@ -201,8 +201,6 @@ func checkCmd(m []byte) {
 		memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
 		garbageCollection()
-	} else if strings.HasPrefix(sl, "bufflowdebug") {
-		bufflowdebug(sl)
 	} else if strings.HasPrefix(sl, "hostname") {
 		getHostname()
 	} else if strings.HasPrefix(sl, "version") {
@@ -227,17 +225,6 @@ func logAction(sl string) {
 		// TODO: send all the saved log to websocket
 		//h.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
 	}
-}
-
-func bufflowdebug(sl string) {
-	log.Println("bufflowdebug start")
-	if strings.HasPrefix(sl, "bufflowdebug on") {
-		*bufFlowDebugType = "on"
-	} else if strings.HasPrefix(sl, "bufflowdebug off") {
-		*bufFlowDebugType = "off"
-	}
-	h.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *bufFlowDebugType + "\"}")
-	log.Println("bufflowdebug end")
 }
 
 func memoryStats() {
@@ -374,5 +361,4 @@ func broadcast(arg string) {
 	json, _ := json.Marshal(bcmd)
 	log.Printf("bcmd:%v\n", string(json))
 	h.broadcastSys <- json
-
 }

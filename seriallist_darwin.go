@@ -56,3 +56,6 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 	}
 	return ports
 }
+
+func hideFile(path string) {
+}

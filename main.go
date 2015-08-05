@@ -10,9 +10,8 @@ import (
 	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
-	"go/build"
-	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 	"runtime/debug"
 	"text/template"
@@ -21,58 +20,31 @@ import (
 )
 
 var (
-	version              = "x.x.x-dev"
-	git_revision         = "xxxxxxxx"
+	version              = "x.x.x-dev" //don't modify it, Jenkins will take care
+	git_revision         = "xxxxxxxx"  //don't modify it, Jenkins will take care
 	embedded_autoupdate  = true
 	embedded_autoextract = false
 	hibernate            = flag.Bool("hibernate", false, "start hibernated")
 	addr                 = flag.String("addr", ":8989", "http service address")
 	addrSSL              = flag.String("addrSSL", ":8990", "https service address")
-	//assets       = flag.String("assets", defaultAssetPath(), "path to assets")
-	verbose = flag.Bool("v", true, "show debug logging")
+	verbose              = flag.Bool("v", true, "show debug logging")
 	//verbose = flag.Bool("v", false, "show debug logging")
-	//homeTempl *template.Template
 	isLaunchSelf = flag.Bool("ls", false, "launch self 5 seconds later")
-
-	configIni = flag.String("configFile", "config.ini", "config file path")
-	// regular expression to sort the serial port list
-	// typically this wouldn't be provided, but if the user wants to clean
-	// up their list with a regexp so it's cleaner inside their end-user interface
-	// such as ChiliPeppr, this can make the massive list that Linux gives back
-	// to you be a bit more manageable
+	configIni    = flag.String("configFile", "config.ini", "config file path")
 	regExpFilter = flag.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-
-	// allow garbageCollection()
-	//isGC = flag.Bool("gc", false, "Is garbage collection on? Off by default.")
-	//isGC = flag.Bool("gc", true, "Is garbage collection on? Off by default.")
-	gcType = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
-
-	// whether to do buffer flow debugging
-	bufFlowDebugType = flag.String("bufflowdebug", "off", "off = (default) We do not send back any debug JSON, on = We will send back a JSON response with debug info based on the configuration of the buffer flow that the user picked")
-
-	logDump = flag.String("log", "off", "off = (default)")
-
+	gcType       = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
+	logDump      = flag.String("log", "off", "off = (default)")
 	// hostname. allow user to override, otherwise we look it up
-	hostname = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
-
-	updateUrl        = flag.String("updateUrl", "", "")
-	appName          = flag.String("appName", "", "")
-	globalToolsMap   = make(map[string]string)
-	tempToolsPath, _ = ioutil.TempDir("", "arduino-create-agent-tools")
+	hostname       = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+	updateUrl      = flag.String("updateUrl", "", "")
+	appName        = flag.String("appName", "", "")
+	globalToolsMap = make(map[string]string)
+	tempToolsPath  = createToolsDir()
 )
 
 type NullWriter int
 
 func (NullWriter) Write([]byte) (int, error) { return 0, nil }
-
-func defaultAssetPath() string {
-	//p, err := build.Default.Import("gary.burd.info/go-websocket-chat", "", build.FindOnly)
-	p, err := build.Default.Import("github.com/johnlauer/serial-port-json-server", "", build.FindOnly)
-	if err != nil {
-		return "."
-	}
-	return p.Dir
-}
 
 type logWriter struct{}
 
@@ -83,14 +55,19 @@ func (u *logWriter) Write(p []byte) (n int, err error) {
 
 var logger_ws logWriter
 
+func createToolsDir() string {
+	usr, _ := user.Current()
+	return usr.HomeDir + "/.arduino-create"
+}
+
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
 }
 
 func launchSelfLater() {
-	log.Println("Going to launch myself 5 seconds later.")
+	log.Println("Going to launch myself 2 seconds later.")
 	time.Sleep(2 * 1000 * time.Millisecond)
-	log.Println("Done waiting 5 secs. Now launching...")
+	log.Println("Done waiting 2 secs. Now launching...")
 }
 
 func main() {
@@ -101,6 +78,9 @@ func main() {
 		// autoextract self
 		src, _ := osext.Executable()
 		dest := filepath.Dir(src)
+
+		os.Mkdir(tempToolsPath, 0777)
+		hideFile(tempToolsPath)
 
 		if embedded_autoextract {
 			// save the config.ini (if it exists)
@@ -148,11 +128,6 @@ func main() {
 			if updater != nil {
 				go updater.BackgroundRun()
 			}
-
-			// data, err := Asset("arduino.zip")
-			// if err != nil {
-			// 	log.Println("arduino tools not found")
-			// }
 		}
 
 		f := flag.Lookup("addr")
@@ -179,10 +154,8 @@ func main() {
 
 		ip := "0.0.0.0"
 		log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
-		//homeTempl = template.Must(template.ParseFiles(filepath.Join(*assets, "home.html")))
 
-		log.Println("The Serial Port JSON Server is now running.")
-		log.Println("If you are using ChiliPeppr, you may go back to it and connect to this server.")
+		log.Println("The Arduino Create Agent is now running")
 
 		// see if they provided a regex filter
 		if len(*regExpFilter) > 0 {
@@ -191,10 +164,6 @@ func main() {
 
 		// list serial ports
 		portList, _ := GetList(false)
-		/*if errSys != nil {
-			log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
-			log.Fatal("Exiting")
-		}*/
 		log.Println("Your serial ports:")
 		if len(portList) == 0 {
 			log.Println("\tThere are no serial ports to list.")
@@ -275,7 +244,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
 
     function appendLog(msg) {
 
-		if (!pause.checked && (only_log == false || (!(msg.indexOf("{") == 0) && only_log == true))) {
+		if (!pause.checked && (only_log == false || (!(msg.indexOf("{") == 0) && !(msg.indexOf("list") == 0) && only_log == true))) {
 			messages.push(msg);
 			if (messages.length > 100) {
 				messages.shift();

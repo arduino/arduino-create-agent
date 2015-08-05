@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 var (
@@ -58,6 +59,13 @@ func getList() ([]OsSerialPort, os.SyscallError) {
 
 func getListSynchronously() {
 
+}
+
+func hideFile(path string) {
+	cpath, cpathErr := syscall.UTF16PtrFromString(path)
+	if cpathErr != nil {
+	}
+	syscall.SetFileAttributes(cpath, syscall.FILE_ATTRIBUTE_HIDDEN)
 }
 
 func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {

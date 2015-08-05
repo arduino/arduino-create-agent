@@ -15,6 +15,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -29,6 +31,13 @@ func colonToUnderscore(input string) string {
 type basicAuthData struct {
 	UserName string
 	Password string
+}
+
+type boardExtraInfo struct {
+	use_1200bps_touch    bool
+	wait_for_upload_port bool
+	networkPort          bool
+	authdata             basicAuthData
 }
 
 func spProgramNetwork(portname string, boardname string, filePath string, authdata basicAuthData) error {
@@ -116,18 +125,43 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 	return err
 }
 
-func spProgramLocal(portname string, boardname string, filePath string, commandline string) {
+func spProgramLocal(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) {
+
+	var err error
+	if extraInfo.use_1200bps_touch {
+		portname, err = touch_port_1200bps(portname, extraInfo.wait_for_upload_port)
+	}
+
+	if err != nil {
+		log.Println("Could not touch the port")
+		return
+	}
+
+	commandline = strings.Replace(commandline, "{build.path}", filepath.Dir(filePath), 1)
+	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath))), 1)
+	commandline = strings.Replace(commandline, "{serial.port}", portname, 1)
+	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(portname), 1)
+
+	// search for runtime variables and replace with values from globalToolsMap
+	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
+	runtimeVars := runtimeRe.FindAllString(commandline, -1)
+
+	fmt.Println(runtimeVars)
+
+	for _, element := range runtimeVars {
+		commandline = strings.Replace(commandline, element, globalToolsMap[element], 1)
+	}
 
 	z, _ := shellwords.Parse(commandline)
 	spHandlerProgram(z[0], z[1:])
 }
 
-func spProgram(portname string, boardname string, filePath string, commandline string, networkPort bool, authdata basicAuthData) {
+func spProgram(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) {
 
-	spProgramRW(portname, boardname, "", filePath, commandline, networkPort, authdata)
+	spProgramRW(portname, boardname, "", filePath, commandline, extraInfo)
 }
 
-func spProgramRW(portname string, boardname string, boardname_rewrite string, filePath string, commandline string, networkPort bool, authdata basicAuthData) {
+func spProgramRW(portname string, boardname string, boardname_rewrite string, filePath string, commandline string, extraInfo boardExtraInfo) {
 	compiling = true
 
 	defer func() {
@@ -137,11 +171,11 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 
 	var err error
 
-	if networkPort {
+	if extraInfo.networkPort {
 		if boardname_rewrite == "" {
-			err = spProgramNetwork(portname, boardname_rewrite, filePath, authdata)
+			err = spProgramNetwork(portname, boardname_rewrite, filePath, extraInfo.authdata)
 		} else {
-			err = spProgramNetwork(portname, boardname, filePath, authdata)
+			err = spProgramNetwork(portname, boardname, filePath, extraInfo.authdata)
 		}
 		if err != nil {
 			mapD := map[string]string{"ProgrammerStatus": "Error " + err.Error(), "Msg": "Could not program the board", "Output": "", "Err": err.Error()}
@@ -149,7 +183,7 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 			h.broadcastSys <- mapB
 		}
 	} else {
-		spProgramLocal(portname, boardname, filePath, commandline)
+		spProgramLocal(portname, boardname, filePath, commandline, extraInfo)
 	}
 }
 
@@ -163,7 +197,19 @@ func spHandlerProgram(flasher string, cmdString []string) {
 	// 	oscmd = exec.Command(sh, cmdString...)
 	// } else {
 
-	oscmd = exec.Command(globalToolsMap[flasher], cmdString...)
+	// remove quotes form flasher command and cmdString
+	flasher = strings.Replace(flasher, "\"", "", -1)
+
+	for index, _ := range cmdString {
+		cmdString[index] = strings.Replace(cmdString[index], "\"", "", -1)
+	}
+
+	extension := ""
+	if runtime.GOOS == "windows" {
+		extension = ".exe"
+	}
+
+	oscmd = exec.Command(flasher+extension, cmdString...)
 
 	// Stdout buffer
 	//var cmdOutput []byte
@@ -241,6 +287,56 @@ func findNewPortName(slice1 []string, slice2 []string) string {
 	}
 
 	return ""
+}
+
+func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, error) {
+	initialPortName := portname
+	log.Println("Restarting in bootloader mode")
+
+	mode := &serial.Mode{
+		BaudRate: 1200,
+		Vmin:     1,
+		Vtimeout: 0,
+	}
+	port, err := serial.OpenPort(portname, mode)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	//port.SetDTR(false)
+	port.Close()
+	time.Sleep(time.Second / 2.0)
+
+	timeout := false
+	go func() {
+		time.Sleep(2 * time.Second)
+		timeout = true
+	}()
+
+	// time.Sleep(time.Second / 4)
+	// wait for port to reappear
+	if wait_for_upload_port {
+		after_reset_ports, _ := serial.GetPortsList()
+		log.Println(after_reset_ports)
+		var ports []string
+		for {
+			ports, _ = serial.GetPortsList()
+			log.Println(ports)
+			time.Sleep(time.Millisecond * 200)
+			portname = findNewPortName(ports, after_reset_ports)
+			if portname != "" {
+				break
+			}
+			if timeout {
+				break
+			}
+		}
+	}
+
+	if portname == "" {
+		portname = initialPortName
+	}
+	return portname, nil
 }
 
 func assembleCompilerCommand(boardname string, portname string, filePath string) (bool, string, []string) {

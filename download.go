@@ -86,15 +86,19 @@ func downloadFromUrl(url string) (filename string, err error) {
 }
 
 func spDownloadTool(name string, url string) {
-	fileName, err := downloadFromUrl(url)
-	if err != nil {
-		log.Error("Could not download flashing tools!")
-		return
+
+	if _, err := os.Stat(tempToolsPath + "/" + name); err != nil {
+
+		fileName, err := downloadFromUrl(url + "/" + name + "-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip")
+		if err != nil {
+			log.Error("Could not download flashing tools!")
+			return
+		}
+		Unzip(fileName, tempToolsPath)
+	} else {
+		log.Info("Tool already present, skipping download")
 	}
-	Unzip(fileName, tempToolsPath)
-	extension := ""
-	if runtime.GOOS == "windows" {
-		extension = ".exe"
-	}
-	globalToolsMap[name] = tempToolsPath + "/bin/" + name + extension
+
+	// will be something like ${tempfolder}/avrdude/bin/avrdude
+	globalToolsMap["{runtime.tools."+name+".path}"] = tempToolsPath + "/" + name
 }
