@@ -29,8 +29,8 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/oleksandr/bonjour"
-	"log"
 	"net"
 	"strings"
 	"time"
@@ -53,7 +53,7 @@ func GetNetworkList() ([]OsSerialPort, error) {
 	SavedNetworkPorts = Filter(SavedNetworkPorts, func(port OsSerialPort) bool {
 		any := true
 		for _, p := range newPorts {
-			if p.Name == port.Name && p.FriendlyName == port.FriendlyName {
+			if p.Name == port.Name {
 				any = false
 				return any
 			}
@@ -125,13 +125,7 @@ func getPorts() ([]OsSerialPort, error) {
 	arrPorts := []OsSerialPort{}
 	go func(results chan *bonjour.ServiceEntry, exitCh chan<- bool) {
 		for e := range results {
-			var boardInfosSlice []string
-			for _, element := range e.Text {
-				if strings.Contains(element, "board=yun") {
-					boardInfosSlice = append(boardInfosSlice, "arduino:avr:yun")
-				}
-			}
-			arrPorts = append(arrPorts, OsSerialPort{Name: e.AddrIPv4.String(), FriendlyName: e.Instance, NetworkPort: true, RelatedNames: boardInfosSlice})
+			arrPorts = append(arrPorts, OsSerialPort{Name: e.AddrIPv4.String(), IdVendor: strings.Join(e.Text[:], " "), NetworkPort: true})
 		}
 		timeout <- true
 	}(results, resolver.Exit)

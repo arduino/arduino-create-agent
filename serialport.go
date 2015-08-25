@@ -3,10 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	//"github.com/johnlauer/goserial"
+	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"io"
-	"log"
 	"strconv"
 	"time"
 )
@@ -341,35 +340,10 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	// we can go up to 256,000 lines of gcode in the buffer
 	p := &serport{sendBuffered: make(chan Cmd, 256000), done: make(chan bool), sendNoBuf: make(chan Cmd), portConf: conf, portIo: sp, BufferType: buftype, IsPrimary: isPrimary, IsSecondary: isSecondary}
 
-	// if user asked for a buffer watcher, i.e. tinyg/grbl then attach here
-	if buftype == "tinyg" {
-
-		bw := &BufferflowTinyg{Name: "tinyg", parent_serport: p}
-		bw.Init()
-		bw.Port = portname
-		p.bufferwatcher = bw
-	} else if buftype == "dummypause" {
-
-		// this is a dummy pause type bufferflow object
-		// to test artificially a delay on the serial port write
-		// it just pauses 3 seconds on each serial port write
-		bw := &BufferflowDummypause{}
-		bw.Init()
-		bw.Port = portname
-		p.bufferwatcher = bw
-	} else if buftype == "grbl" {
-		// grbl bufferflow
-		// store port as parent_serport for use in intializing a status query loop for '?'
-		bw := &BufferflowGrbl{Name: "grbl", parent_serport: p}
-		bw.Init()
-		bw.Port = portname
-		p.bufferwatcher = bw
-	} else {
-		bw := &BufferflowDefault{}
-		bw.Init()
-		bw.Port = portname
-		p.bufferwatcher = bw
-	}
+	bw := &BufferflowDefault{}
+	bw.Init()
+	bw.Port = portname
+	p.bufferwatcher = bw
 
 	sh.register <- p
 	defer func() { sh.unregister <- p }()
@@ -381,35 +355,6 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	//go p.reader()
 	//p.done = make(chan bool)
 	//<-p.done
-}
-
-func spHandlerCloseExperimental(p *serport) {
-	h.broadcastSys <- []byte("Pre-closing serial port " + p.portConf.Name)
-	p.isClosing = true
-	//close the port
-
-	p.bufferwatcher.Close()
-	p.portIo.Close()
-	h.broadcastSys <- []byte("Bufferwatcher closed")
-	p.portIo.Close()
-	//elicit response from hardware to close out p.reader()
-	//_, _ = p.portIo.Write([]byte("?"))
-	//p.portIo.Read(nil)
-
-	//close(p.portIo)
-	h.broadcastSys <- []byte("portIo closed")
-	close(p.sendBuffered)
-	h.broadcastSys <- []byte("p.sendBuffered closed")
-	close(p.sendNoBuf)
-	h.broadcastSys <- []byte("p.sendNoBuf closed")
-
-	//p.done <- true
-
-	// unregister myself
-	// we already have a deferred unregister in place from when
-	// we opened. the only thing holding up that thread is the p.reader()
-	// so if we close the reader we should get an exit
-	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
 }
 
 func spHandlerClose(p *serport) {

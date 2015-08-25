@@ -14,7 +14,7 @@ NC='\e[0m' # No Color
 
 extractVersionFromMain()
 {
-	VERSION=`grep versionFloat main.go | cut -d "(" -f2 | cut -d ")" -f1`
+	VERSION=`grep version main.go | cut -d "\"" -f2 | cut -d "\"" -f1 | head -1`
 }
 
 createZipEmbeddableFileArduino()
@@ -75,7 +75,7 @@ compilePlatform()
 	fi
 	echo createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
 	createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
-	#GOOS=$GOOS GOARCH=$GOARCH go-selfupdate $NAME $VERSION
+	GOOS=$GOOS GOARCH=$GOARCH go-selfupdate $NAME $VERSION
 	rm -rf $NAME*
 }
 

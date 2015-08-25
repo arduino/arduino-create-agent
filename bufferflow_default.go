@@ -1,10 +1,7 @@
 package main
 
 import (
-	"log"
-	//"regexp"
-	//"strconv"
-	//"time"
+	log "github.com/Sirupsen/logrus"
 )
 
 type BufferflowDefault struct {

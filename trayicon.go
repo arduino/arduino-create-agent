@@ -31,7 +31,8 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/facchinm/go-serial"
 	"github.com/facchinm/systray"
 	"github.com/facchinm/systray/example/icon"
 	"github.com/skratchdot/open-golang/open"
@@ -40,28 +41,80 @@ import (
 
 func setupSysTray() {
 	runtime.LockOSThread()
-	systray.Run(setupSysTrayReal)
+	if *hibernate == true {
+		systray.Run(setupSysTrayHibernate)
+	} else {
+		systray.Run(setupSysTrayReal)
+	}
+}
+
+func addRebootTrayElement() {
+	reboot_tray := systray.AddMenuItem("Reboot to update", "")
+
+	go func() {
+		<-reboot_tray.ClickedCh
+		systray.Quit()
+		log.Println("Restarting now...")
+		restart("")
+	}()
 }
 
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.Data)
-	mUrl := systray.AddMenuItem("Go to Create (staging)", "Arduino Create")
-	menuVer := systray.AddMenuItem("Agent version "+version, "")
-	mQuit := systray.AddMenuItem("Quit", "Quit the bridge")
+	mUrl := systray.AddMenuItem("Go to Arduino Create (staging)", "Arduino Create")
+	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
+	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
+	mPause := systray.AddMenuItem("Quit Plugin", "")
+	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
 	menuVer.Disable()
 
 	go func() {
-		<-mQuit.ClickedCh
+		<-mPause.ClickedCh
+		ports, _ := serial.GetPortsList()
+		for _, element := range ports {
+			spClose(element)
+		}
 		systray.Quit()
-		fmt.Println("Quit now...")
-		exit()
+		*hibernate = true
+		restart("")
+	}()
+
+	// go func() {
+	// 	<-mQuit.ClickedCh
+	// 	systray.Quit()
+	// 	exit()
+	// }()
+
+	go func() {
+		<-mDebug.ClickedCh
+		open.Run("http://localhost:8989")
+		logAction("log on")
 	}()
 
 	// We can manipulate the systray in other goroutines
 	go func() {
 		<-mUrl.ClickedCh
 		open.Run("http://create-staging.arduino.cc")
+	}()
+}
+
+func setupSysTrayHibernate() {
+
+	systray.SetIcon(icon.DataHibernate)
+	mOpen := systray.AddMenuItem("Open Plugin", "")
+	mQuit := systray.AddMenuItem("Kill Plugin", "")
+
+	go func() {
+		<-mOpen.ClickedCh
+		*hibernate = false
+		restart("")
+	}()
+
+	go func() {
+		<-mQuit.ClickedCh
+		systray.Quit()
+		exit()
 	}()
 }

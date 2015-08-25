@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/kardianos/osext"
-	"log"
 	//"os"
 	"os/exec"
 	//"path"
@@ -11,6 +11,8 @@ import (
 	//"runtime"
 	//"debug"
 	"encoding/json"
+	"io"
+	"os"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -112,6 +114,11 @@ func checkCmd(m []byte) {
 
 	sl := strings.ToLower(strings.Trim(s, "\n"))
 
+	if *hibernate == true {
+		//do nothing
+		return
+	}
+
 	if strings.HasPrefix(sl, "open") {
 
 		// check if user wants to open this port as a secondary port
@@ -159,25 +166,6 @@ func checkCmd(m []byte) {
 			go spErr("You did not specify a port to close")
 		}
 
-	} else if strings.HasPrefix(sl, "programfromurl") {
-
-		args := strings.Split(s, " ")
-		if len(args) == 4 {
-			go spProgramFromUrl(args[1], args[2], args[3])
-		} else {
-			go spErr("You did not specify a port, a board to program and/or a URL")
-		}
-
-	} else if strings.HasPrefix(sl, "program") {
-
-		args := strings.Split(s, " ")
-		if len(args) > 3 {
-			var slice []string = args[3:len(args)]
-			go spProgram(args[1], args[2], strings.Join(slice, " "))
-		} else {
-			go spErr("You did not specify a port, a board to program and/or a filename")
-		}
-
 	} else if strings.HasPrefix(sl, "sendjson") {
 		// will catch sendjson
 
@@ -192,30 +180,27 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "list") {
 		go spList(false)
 		go spList(true)
-		// log.Println("Stack info", runtime.NumGoroutine())
-		// if runtime.NumGoroutine() > 30 {
-		// 	output := make([]byte, 1<<16)
-		// 	runtime.Stack(output, true)
-		// 	log.Println(output)
-		// 	log.Fatal("Crash because something is going wrong")
-		// }
-		//go getListViaWmiPnpEntity()
+	} else if strings.HasPrefix(sl, "downloadtool") {
+		args := strings.Split(s, " ")
+		if len(args) > 2 {
+			go spDownloadTool(args[1], args[2])
+		}
 	} else if strings.HasPrefix(sl, "bufferalgorithm") {
 		go spBufferAlgorithms()
+	} else if strings.HasPrefix(sl, "log") {
+		go logAction(sl)
 	} else if strings.HasPrefix(sl, "baudrate") {
 		go spBaudRates()
 	} else if strings.HasPrefix(sl, "broadcast") {
 		go broadcast(s)
 	} else if strings.HasPrefix(sl, "restart") {
-		restart()
+		restart("")
 	} else if strings.HasPrefix(sl, "exit") {
 		exit()
 	} else if strings.HasPrefix(sl, "memstats") {
 		memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
 		garbageCollection()
-	} else if strings.HasPrefix(sl, "bufflowdebug") {
-		bufflowdebug(sl)
 	} else if strings.HasPrefix(sl, "hostname") {
 		getHostname()
 	} else if strings.HasPrefix(sl, "version") {
@@ -227,15 +212,19 @@ func checkCmd(m []byte) {
 	//log.Print("Done with checkCmd")
 }
 
-func bufflowdebug(sl string) {
-	log.Println("bufflowdebug start")
-	if strings.HasPrefix(sl, "bufflowdebug on") {
-		*bufFlowDebugType = "on"
-	} else if strings.HasPrefix(sl, "bufflowdebug off") {
-		*bufFlowDebugType = "off"
+var multi_writer = io.MultiWriter(&logger_ws, os.Stderr)
+
+func logAction(sl string) {
+	if strings.HasPrefix(sl, "log on") {
+		*logDump = "on"
+		log.SetOutput(multi_writer)
+	} else if strings.HasPrefix(sl, "log off") {
+		*logDump = "off"
+		log.SetOutput(os.Stderr)
+	} else if strings.HasPrefix(sl, "log show") {
+		// TODO: send all the saved log to websocket
+		//h.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
 	}
-	h.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *bufFlowDebugType + "\"}")
-	log.Println("bufflowdebug end")
 }
 
 func memoryStats() {
@@ -273,7 +262,7 @@ func exit() {
 
 }
 
-func restart() {
+func restart(path string) {
 	// relaunch ourself and exit
 	// the relaunch works because we pass a cmdline in
 	// that has serial-port-json-server only initialize 5 seconds later
@@ -301,14 +290,19 @@ func restart() {
 	// using osext
 	exePath, err3 := osext.Executable()
 	if err3 != nil {
-		fmt.Printf("Error getting exe path using osext lib. err: %v\n", err3)
+		log.Printf("Error getting exe path using osext lib. err: %v\n", err3)
 	}
-	fmt.Printf("exePath using osext: %v\n", exePath)
 
+	if path == "" {
+		log.Printf("exePath using osext: %v\n", exePath)
+	} else {
+		exePath = path
+	}
 	// figure out garbageCollection flag
 	//isGcFlag := "false"
 
 	var cmd *exec.Cmd
+
 	/*if *isGC {
 		//isGcFlag = "true"
 		cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc")
@@ -316,7 +310,15 @@ func restart() {
 		cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter)
 
 	}*/
-	cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc", *gcType)
+
+	hiberString := ""
+	if *hibernate == true {
+		hiberString = "-hibernate"
+	}
+
+	cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc", *gcType, hiberString)
+
+	fmt.Println(cmd)
 
 	//cmd := exec.Command("./serial-port-json-server", "ls")
 	err := cmd.Start()
@@ -359,5 +361,4 @@ func broadcast(arg string) {
 	json, _ := json.Marshal(bcmd)
 	log.Printf("bcmd:%v\n", string(json))
 	h.broadcastSys <- json
-
 }
