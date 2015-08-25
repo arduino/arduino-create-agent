@@ -39,8 +39,6 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 		cmdOutSlice = append(cmdOutSlice, re.FindString(element))
 	}
 
-	var arduino_ports, other_ports []OsSerialPort
-
 	for _, element := range cmdOutSlice {
 
 		if element == "" {
@@ -60,16 +58,11 @@ func removeNonArduinoBoards(ports []OsSerialPort) []OsSerialPort {
 			if strings.Contains(element, strings.Trim(cmdOutput2S, "\n")) && cmdOutput2S != "" {
 				port.RelatedNames = append(port.RelatedNames, archBoardName)
 				port.FriendlyName = strings.Trim(boardName, "\n")
-				arduino_ports = append(arduino_ports, port)
-			} else {
-				other_ports = append(other_ports, port)
 			}
 		}
 	}
 
-	arduino_ports = append(arduino_ports, other_ports...)
-
-	return arduino_ports
+	return ports
 }
 
 func getList() ([]OsSerialPort, os.SyscallError) {
