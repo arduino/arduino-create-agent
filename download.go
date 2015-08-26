@@ -2,6 +2,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"io"
@@ -92,13 +93,30 @@ func spDownloadTool(name string, url string) {
 		fileName, err := downloadFromUrl(url + "/" + name + "-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip")
 		if err != nil {
 			log.Error("Could not download flashing tools!")
+			mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
 			return
 		}
-		Unzip(fileName, tempToolsPath)
+		err = Unzip(fileName, tempToolsPath)
+		if err != nil {
+			log.Error("Could not unzip flashing tools!")
+			mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
+			return
+		}
 	} else {
 		log.Info("Tool already present, skipping download")
 	}
 
 	// will be something like ${tempfolder}/avrdude/bin/avrdude
 	globalToolsMap["{runtime.tools."+name+".path}"] = tempToolsPath + "/" + name
+
+	log.Info("Map Updated")
+	mapD := map[string]string{"DownloadStatus": "Success", "Msg": "Map Updated"}
+	mapB, _ := json.Marshal(mapD)
+	h.broadcastSys <- mapB
+	return
+
 }
