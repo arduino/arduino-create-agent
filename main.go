@@ -240,7 +240,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
     var log = document.getElementById('log');
     var pause = document.getElementById('myCheck');
     var messages = [];
-    var only_log = true;
+    var only_log = false;
 
     function appendLog(msg) {
 
@@ -265,8 +265,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
             return false;
         }
         socket.emit("command", msg.val());
-        if (msg.val().indexOf("log on") != -1) {only_log = true;}
-        if (msg.val().indexOf("log off") != -1) {only_log = false;}
+        if (msg.val().indexOf("log off") != -1) {only_log = true;}
+        if (msg.val().indexOf("log on") != -1) {only_log = false;}
         msg.val("");
         return false
     });
