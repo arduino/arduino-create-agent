@@ -41,6 +41,7 @@ import (
 	"github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 	"github.com/kr/binarydist"
+	"github.com/pivotal-golang/archiver/extractor"
 	patch "github.com/sanderhahn/gozip/patchzip"
 	"io"
 	"io/ioutil"
@@ -53,6 +54,11 @@ import (
 	"strings"
 	"time"
 )
+
+func UnzipWrapper(src, dest string) error {
+	e := extractor.NewDetectable()
+	return e.Extract(src, dest)
+}
 
 func IsZip(path string) bool {
 	r, err := zip.OpenReader(path)

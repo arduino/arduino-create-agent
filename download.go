@@ -98,7 +98,7 @@ func spDownloadTool(name string, url string) {
 			h.broadcastSys <- mapB
 			return
 		}
-		err = Unzip(fileName, tempToolsPath)
+		err = UnzipWrapper(fileName, tempToolsPath)
 		if err != nil {
 			log.Error("Could not unzip flashing tools!")
 			mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
