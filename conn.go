@@ -3,10 +3,11 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
-	"log"
 	"net/http"
+	"strconv"
 )
 
 type connection struct {
@@ -46,9 +47,26 @@ func uploadHandler(c *gin.Context) {
 	board := c.PostForm("board")
 	if board == "" {
 		c.String(http.StatusBadRequest, "board is required")
+		log.Error("board is required")
 		return
 	}
 	board_rewrite := c.PostForm("board_rewrite")
+
+	var extraInfo boardExtraInfo
+
+	extraInfo.authdata.UserName = c.PostForm("auth_user")
+	extraInfo.authdata.Password = c.PostForm("auth_pass")
+	commandline := c.PostForm("commandline")
+	extraInfo.use_1200bps_touch, _ = strconv.ParseBool(c.PostForm("use_1200bps_touch"))
+	extraInfo.wait_for_upload_port, _ = strconv.ParseBool(c.PostForm("wait_for_upload_port"))
+	extraInfo.networkPort, _ = strconv.ParseBool(c.PostForm("network"))
+
+	if extraInfo.networkPort == false && commandline == "" {
+		c.String(http.StatusBadRequest, "commandline is required for local board")
+		log.Error("commandline is required for local board")
+		return
+	}
+
 	sketch, header, err := c.Request.FormFile("sketch_hex")
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
@@ -60,7 +78,7 @@ func uploadHandler(c *gin.Context) {
 			c.String(http.StatusBadRequest, err.Error())
 		}
 
-		go spProgramRW(port, board, board_rewrite, path)
+		go spProgramRW(port, board, board_rewrite, path, commandline, extraInfo)
 	}
 }
 

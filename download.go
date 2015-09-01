@@ -2,19 +2,21 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	log "github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 func saveFileonTempDir(filename string, sketch io.Reader) (path string, err error) {
 	// create tmp dir
-	tmpdir, err := ioutil.TempDir("", "serial-port-json-server")
+	tmpdir, err := ioutil.TempDir("", "arduino-create-agent")
 	if err != nil {
 		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
 	}
@@ -47,7 +49,7 @@ func downloadFromUrl(url string) (filename string, err error) {
 	url = strings.TrimSpace(url)
 
 	// create tmp dir
-	tmpdir, err := ioutil.TempDir("", "serial-port-json-server")
+	tmpdir, err := ioutil.TempDir("", "arduino-create-agent")
 	if err != nil {
 		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
 	}
@@ -82,4 +84,39 @@ func downloadFromUrl(url string) (filename string, err error) {
 	log.Println(n, "bytes downloaded.")
 
 	return fileName, nil
+}
+
+func spDownloadTool(name string, url string) {
+
+	if _, err := os.Stat(tempToolsPath + "/" + name); err != nil {
+
+		fileName, err := downloadFromUrl(url + "/" + name + "-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip")
+		if err != nil {
+			log.Error("Could not download flashing tools!")
+			mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
+			return
+		}
+		err = UnzipWrapper(fileName, tempToolsPath)
+		if err != nil {
+			log.Error("Could not unzip flashing tools!")
+			mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
+			return
+		}
+	} else {
+		log.Info("Tool already present, skipping download")
+	}
+
+	// will be something like ${tempfolder}/avrdude/bin/avrdude
+	globalToolsMap["{runtime.tools."+name+".path}"] = tempToolsPath + "/" + name
+
+	log.Info("Map Updated")
+	mapD := map[string]string{"DownloadStatus": "Success", "Msg": "Map Updated"}
+	mapB, _ := json.Marshal(mapD)
+	h.broadcastSys <- mapB
+	return
+
 }

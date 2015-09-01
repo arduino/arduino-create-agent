@@ -37,9 +37,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/inconshreveable/go-update"
+	"github.com/kardianos/osext"
+	"github.com/kr/binarydist"
+	"github.com/pivotal-golang/archiver/extractor"
+	patch "github.com/sanderhahn/gozip/patchzip"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -48,14 +53,12 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/inconshreveable/go-update"
-	"github.com/kardianos/osext"
-	"github.com/kr/binarydist"
-	"github.com/termie/go-shutil"
-
-	patch "github.com/sanderhahn/gozip/patchzip"
 )
+
+func UnzipWrapper(src, dest string) error {
+	e := extractor.NewDetectable()
+	return e.Extract(src, dest)
+}
 
 func IsZip(path string) bool {
 	r, err := zip.OpenReader(path)
@@ -241,7 +244,7 @@ func (u *Updater) BackgroundRun() error {
 	os.MkdirAll(u.getExecRelativeDir(u.Dir), 0777)
 	if u.wantUpdate() {
 		if err := up.CanUpdate(); err != nil {
-			// fail
+			log.Println(err)
 			return err
 		}
 		//self, err := osext.Executable()
@@ -278,6 +281,7 @@ func (u *Updater) update() error {
 
 	err = u.fetchInfo()
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	if u.Info.Version == u.CurrentVersion {
@@ -310,6 +314,7 @@ func (u *Updater) update() error {
 
 	err, errRecover := up.FromStream(bytes.NewBuffer(bin))
 	if errRecover != nil {
+		log.Errorf("update and recovery errors: %q %q", err, errRecover)
 		return fmt.Errorf("update and recovery errors: %q %q", err, errRecover)
 	}
 	if err != nil {
@@ -317,8 +322,11 @@ func (u *Updater) update() error {
 	}
 
 	// remove config.ini so at restart the package will extract again
-	shutil.CopyFile(*configIni, *configIni+".bak", false)
-	os.Remove(*configIni)
+	//shutil.CopyFile(*configIni, *configIni+".bak", false)
+	//os.Remove(*configIni)
+
+	restart(path)
+	//addRebootTrayElement()
 
 	// update done, we should decide if we need to restart ASAP (maybe a field in update json?)
 	// BIG issue: the file has been renamed in the meantime
@@ -405,6 +413,7 @@ func fetch(url string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
+		log.Errorf("bad http status from %s: %v", url, resp.Status)
 		return nil, fmt.Errorf("bad http status from %s: %v", url, resp.Status)
 	}
 	return resp.Body, nil

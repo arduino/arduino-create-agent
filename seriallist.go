@@ -3,16 +3,13 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
-	"log"
-	//"os"
 	"regexp"
 )
 
 type OsSerialPort struct {
 	Name         string
-	FriendlyName string
-	RelatedNames []string // for some devices there are 2 or more ports, i.e. TinyG v9 has 2 serial ports
 	SerialNumber string
 	DeviceClass  string
 	Manufacturer string
@@ -36,7 +33,7 @@ func GetList(network bool) ([]OsSerialPort, error) {
 
 		arrPorts := []OsSerialPort{}
 		for _, element := range ports {
-			arrPorts = append(arrPorts, OsSerialPort{Name: element, FriendlyName: element})
+			arrPorts = append(arrPorts, OsSerialPort{Name: element})
 		}
 
 		// see if we should filter the list
@@ -49,17 +46,15 @@ func GetList(network bool) ([]OsSerialPort, error) {
 				// if matches regex, include
 				if reFilter.MatchString(element.Name) {
 					newarrPorts = append(newarrPorts, element)
-				} else if reFilter.MatchString(element.FriendlyName) {
-					newarrPorts = append(newarrPorts, element)
 				} else {
-					log.Printf("serial port did not match. port: %v\n", element)
+					log.Debug("serial port did not match. port: %v\n", element)
 				}
 
 			}
 			arrPorts = newarrPorts
 		}
 
-		arrPorts = removeNonArduinoBoards(arrPorts)
+		arrPorts = associateVidPidWithPort(arrPorts)
 		return arrPorts, err
 		//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 	}

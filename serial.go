@@ -3,17 +3,9 @@
 package main
 
 import (
-	//"bufio"
 	"encoding/json"
 	"fmt"
-	//"path/filepath"
-	//"github.com/kballard/go-shellquote"
-	//"github.com/johnlauer/goserial"
-	//"github.com/mikepb/go-serial"
-	//"github.com/facchinm/go-serial"
-	//"github.com/kardianos/osext"
-	"log"
-	//"os"
+	log "github.com/Sirupsen/logrus"
 	"regexp"
 	"runtime/debug"
 	"strconv"
@@ -90,18 +82,17 @@ type SpPortList struct {
 }
 
 type SpPortItem struct {
-	Name                      string
-	Friendly                  string
-	SerialNumber              string
-	DeviceClass               string
-	IsOpen                    bool
-	IsPrimary                 bool
-	RelatedNames              []string
-	Baud                      int
-	BufferAlgorithm           string
-	AvailableBufferAlgorithms []string
-	Ver                       float32
-	NetworkPort               bool
+	Name            string
+	SerialNumber    string
+	DeviceClass     string
+	IsOpen          bool
+	IsPrimary       bool
+	Baud            int
+	BufferAlgorithm string
+	Ver             string
+	NetworkPort     bool
+	VendorID        string
+	ProductID       string
 }
 
 // SerialPorts contains the ports attached to the machine
@@ -513,21 +504,20 @@ func spListDual(network bool) {
 			DtrOn                     bool
 			BufferAlgorithm           string
 			AvailableBufferAlgorithms []string
-			Ver                       float32
+			Ver                       string
 		*/
 		spl.Ports[ctr] = SpPortItem{
-			Name:                      item.Name,
-			Friendly:                  item.FriendlyName,
-			SerialNumber:              item.SerialNumber,
-			DeviceClass:               item.DeviceClass,
-			IsOpen:                    false,
-			IsPrimary:                 false,
-			RelatedNames:              item.RelatedNames,
-			Baud:                      0,
-			BufferAlgorithm:           "",
-			AvailableBufferAlgorithms: availableBufferAlgorithms,
-			Ver:         versionFloat,
-			NetworkPort: item.NetworkPort,
+			Name:            item.Name,
+			SerialNumber:    item.SerialNumber,
+			DeviceClass:     item.DeviceClass,
+			IsOpen:          false,
+			IsPrimary:       false,
+			Baud:            0,
+			BufferAlgorithm: "",
+			Ver:             version,
+			NetworkPort:     item.NetworkPort,
+			VendorID:        item.IdVendor,
+			ProductID:       item.IdProduct,
 		}
 
 		// figure out if port is open
@@ -550,18 +540,6 @@ func spListDual(network bool) {
 	} else {
 		SerialPorts = spl
 	}
-}
-
-func spListOld() {
-	ls := "{\"serialports\" : [\n"
-	list, _ := getList()
-	for _, item := range list {
-		ls += "{ \"name\" : \"" + item.Name + "\", \"friendly\" : \"" + item.FriendlyName + "\" },\n"
-	}
-	ls = strings.TrimSuffix(ls, "},\n")
-	ls += "}\n"
-	ls += "]}\n"
-	h.broadcastSys <- []byte(ls)
 }
 
 func spErr(err string) {

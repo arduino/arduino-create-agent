@@ -5,73 +5,59 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"go/build"
-	"log"
-	"os"
-	"path/filepath"
-	//"net/http/pprof"
-	"github.com/kardianos/osext"
-	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
-	//"github.com/sanderhahn/gozip"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
-	"github.com/kardianos/service"
+	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
+	"os"
+	"os/user"
+	"path/filepath"
 	"runtime/debug"
 	"text/template"
 	"time"
+	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
 var (
-	version              = "1.83"
-	versionFloat         = float32(1.83)
-	embedded_autoupdate  = false
+	version              = "x.x.x-dev" //don't modify it, Jenkins will take care
+	git_revision         = "xxxxxxxx"  //don't modify it, Jenkins will take care
+	embedded_autoupdate  = true
 	embedded_autoextract = false
+	hibernate            = flag.Bool("hibernate", false, "start hibernated")
 	addr                 = flag.String("addr", ":8989", "http service address")
 	addrSSL              = flag.String("addrSSL", ":8990", "https service address")
-	//assets       = flag.String("assets", defaultAssetPath(), "path to assets")
-	verbose = flag.Bool("v", true, "show debug logging")
+	verbose              = flag.Bool("v", true, "show debug logging")
 	//verbose = flag.Bool("v", false, "show debug logging")
-	//homeTempl *template.Template
 	isLaunchSelf = flag.Bool("ls", false, "launch self 5 seconds later")
-
-	configIni = flag.String("configFile", "config.ini", "config file path")
-	// regular expression to sort the serial port list
-	// typically this wouldn't be provided, but if the user wants to clean
-	// up their list with a regexp so it's cleaner inside their end-user interface
-	// such as ChiliPeppr, this can make the massive list that Linux gives back
-	// to you be a bit more manageable
+	configIni    = flag.String("configFile", "config.ini", "config file path")
 	regExpFilter = flag.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-
-	// allow garbageCollection()
-	//isGC = flag.Bool("gc", false, "Is garbage collection on? Off by default.")
-	//isGC = flag.Bool("gc", true, "Is garbage collection on? Off by default.")
-	gcType = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
-
-	// whether to do buffer flow debugging
-	bufFlowDebugType = flag.String("bufflowdebug", "off", "off = (default) We do not send back any debug JSON, on = We will send back a JSON response with debug info based on the configuration of the buffer flow that the user picked")
-
+	gcType       = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
+	logDump      = flag.String("log", "off", "off = (default)")
 	// hostname. allow user to override, otherwise we look it up
-	hostname = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
-
-	updateUrl = flag.String("updateUrl", "", "")
-	appName   = flag.String("appName", "", "")
+	hostname       = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+	updateUrl      = flag.String("updateUrl", "", "")
+	appName        = flag.String("appName", "", "")
+	globalToolsMap = make(map[string]string)
+	tempToolsPath  = createToolsDir()
 )
-
-var globalConfigMap map[string]interface{}
 
 type NullWriter int
 
 func (NullWriter) Write([]byte) (int, error) { return 0, nil }
 
-func defaultAssetPath() string {
-	//p, err := build.Default.Import("gary.burd.info/go-websocket-chat", "", build.FindOnly)
-	p, err := build.Default.Import("github.com/johnlauer/serial-port-json-server", "", build.FindOnly)
-	if err != nil {
-		return "."
-	}
-	return p.Dir
+type logWriter struct{}
+
+func (u *logWriter) Write(p []byte) (n int, err error) {
+	h.broadcastSys <- p
+	return 0, nil
+}
+
+var logger_ws logWriter
+
+func createToolsDir() string {
+	usr, _ := user.Current()
+	return usr.HomeDir + "/.arduino-create"
 }
 
 func homeHandler(c *gin.Context) {
@@ -79,86 +65,49 @@ func homeHandler(c *gin.Context) {
 }
 
 func launchSelfLater() {
-	log.Println("Going to launch myself 5 seconds later.")
+	log.Println("Going to launch myself 2 seconds later.")
 	time.Sleep(2 * 1000 * time.Millisecond)
-	log.Println("Done waiting 5 secs. Now launching...")
-}
-
-var logger service.Logger
-
-type program struct{}
-
-func (p *program) Start(s service.Service) error {
-	// Start should not block. Do the actual work async.
-	go p.run()
-	return nil
-}
-func (p *program) run() {
-	startDaemon()
-}
-func (p *program) Stop(s service.Service) error {
-	// Stop should not block. Return with a few seconds.
-	<-time.After(time.Second * 13)
-	return nil
+	log.Println("Done waiting 2 secs. Now launching...")
 }
 
 func main() {
-	svcConfig := &service.Config{
-		Name:        "ArduinoCreateAgent",
-		DisplayName: "Arduino Create Agent",
-		Description: "A bridge that allows Arduino Create to operate on the boards connected to the computer",
-	}
 
-	prg := &program{}
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if len(os.Args) > 1 {
-		err = service.Control(s, os.Args[1])
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	logger, err = s.Logger(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = s.Run()
-	if err != nil {
-		logger.Error(err)
-	}
-}
-
-func startDaemon() {
+	flag.Parse()
 	go func() {
 
 		// autoextract self
 		src, _ := osext.Executable()
 		dest := filepath.Dir(src)
 
+		os.Mkdir(tempToolsPath, 0777)
+		hideFile(tempToolsPath)
+
 		if embedded_autoextract {
 			// save the config.ini (if it exists)
 			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-				fmt.Println("First run, unzipping self")
+				log.Println("First run, unzipping self")
 				err := Unzip(src, dest)
-				fmt.Println("Self extraction, err:", err)
+				log.Println("Self extraction, err:", err)
 			}
 
 			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
 				flag.Parse()
-				fmt.Println("No config.ini at", *configIni)
+				log.Println("No config.ini at", *configIni)
 			} else {
+				flag.Parse()
 				flag.Set("config", dest+"/"+*configIni)
 				iniflags.Parse()
 			}
+		} else {
+			flag.Set("config", dest+"/"+*configIni)
+			iniflags.Parse()
 		}
 
-		// setup logging
-		log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+		//log.SetFormatter(&log.JSONFormatter{})
+
+		log.SetLevel(log.InfoLevel)
+
+		log.SetOutput(os.Stderr)
 
 		// see if we are supposed to wait 5 seconds
 		if *isLaunchSelf {
@@ -179,16 +128,8 @@ func startDaemon() {
 			if updater != nil {
 				go updater.BackgroundRun()
 			}
-
-			// data, err := Asset("arduino.zip")
-			// if err != nil {
-			// 	log.Println("arduino tools not found")
-			// }
 		}
 
-		createGlobalConfigMap(&globalConfigMap)
-
-		//getList()
 		f := flag.Lookup("addr")
 		log.Println("Version:" + version)
 
@@ -213,10 +154,8 @@ func startDaemon() {
 
 		ip := "0.0.0.0"
 		log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
-		//homeTempl = template.Must(template.ParseFiles(filepath.Join(*assets, "home.html")))
 
-		log.Println("The Serial Port JSON Server is now running.")
-		log.Println("If you are using ChiliPeppr, you may go back to it and connect to this server.")
+		log.Println("The Arduino Create Agent is now running")
 
 		// see if they provided a regex filter
 		if len(*regExpFilter) > 0 {
@@ -225,10 +164,6 @@ func startDaemon() {
 
 		// list serial ports
 		portList, _ := GetList(false)
-		/*if errSys != nil {
-			log.Printf("Got system error trying to retrieve serial port list. Err:%v\n", errSys)
-			log.Fatal("Exiting")
-		}*/
 		log.Println("Your serial ports:")
 		if len(portList) == 0 {
 			log.Println("\tThere are no serial ports to list.")
@@ -274,13 +209,13 @@ func startDaemon() {
 		r.Handle("WSS", "/socket.io/", socketHandler)
 		go func() {
 			if err := r.RunTLS(*addrSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
-				fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+				log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				log.Fatal("Error ListenAndServe:", err)
 			}
 		}()
 
 		if err := r.Run(*addr); err != nil {
-			fmt.Printf("Error trying to bind to port: %v, so exiting...", err)
+			log.Printf("Error trying to bind to port: %v, so exiting...", err)
 			log.Fatal("Error ListenAndServe:", err)
 		}
 	}()
@@ -303,18 +238,23 @@ const homeTemplateHtml = `<!DOCTYPE html>
     var socket;
     var msg = $("#msg");
     var log = document.getElementById('log');
+    var pause = document.getElementById('myCheck');
     var messages = [];
+    var only_log = false;
 
     function appendLog(msg) {
-    	messages.push(msg);
-    	if (messages.length > 100) {
-    		messages.shift();
-    	}
-    	var doScroll = log.scrollTop == log.scrollHeight - log.clientHeight;
-    	log.innerHTML = messages.join("<br>");
-        if (doScroll) {
-            log.scrollTop = log.scrollHeight - log.clientHeight;
-        }
+
+		if (!pause.checked && (only_log == false || (!(msg.indexOf("{") == 0) && !(msg.indexOf("list") == 0) && only_log == true))) {
+			messages.push(msg);
+			if (messages.length > 100) {
+				messages.shift();
+			}
+			var doScroll = log.scrollTop == log.scrollHeight - log.clientHeight;
+			log.innerHTML = messages.join("<br>");
+			if (doScroll) {
+				log.scrollTop = log.scrollHeight - log.clientHeight;
+			}
+		}
     }
 
     $("#form").submit(function() {
@@ -325,6 +265,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
             return false;
         }
         socket.emit("command", msg.val());
+        if (msg.val().indexOf("log off") != -1) {only_log = true;}
+        if (msg.val().indexOf("log on") != -1) {only_log = false;}
         msg.val("");
         return false
     });
@@ -389,6 +331,7 @@ body {
 <form id="form">
     <input type="submit" value="Send" />
     <input type="text" id="msg" size="64"/>
+    <input name="pause" type="checkbox" value="pause" id="myCheck"/> Pause <br>
 </form>
 </body>
 </html>
