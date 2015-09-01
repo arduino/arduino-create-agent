@@ -166,9 +166,12 @@ func checkCmd(m []byte) {
 			go spErr("You did not specify a port to close")
 		}
 
+	} else if strings.HasPrefix(sl, "killprogrammer") {
+		// kill the running process (assumes singleton for now)
+		go spHandlerProgramKill()
+
 	} else if strings.HasPrefix(sl, "sendjson") {
 		// will catch sendjson
-
 		go spWriteJson(s)
 
 	} else if strings.HasPrefix(sl, "send") {

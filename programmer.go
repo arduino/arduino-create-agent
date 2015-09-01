@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -187,9 +188,10 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 	}
 }
 
+var oscmd *exec.Cmd
+
 func spHandlerProgram(flasher string, cmdString []string) {
 
-	var oscmd *exec.Cmd
 	// if runtime.GOOS == "darwin" {
 	// 	sh, _ := exec.LookPath("sh")
 	// 	// prepend the flasher to run it via sh
@@ -259,6 +261,23 @@ func spHandlerProgram(flasher string, cmdString []string) {
 		h.broadcastSys <- mapB
 		// analyze stdin
 
+	}
+}
+
+func spHandlerProgramKill() {
+
+	// Kill the process if there is one running
+	if oscmd != nil && oscmd.Process.Pid > 0 {
+		h.broadcastSys <- []byte("{\"ProgrammerStatus\": \"PreKilled\", \"Pid\": " + strconv.Itoa(oscmd.Process.Pid) + ", \"ProcessState\": \"" + oscmd.ProcessState.String() + "\"}")
+		oscmd.Process.Kill()
+		h.broadcastSys <- []byte("{\"ProgrammerStatus\": \"Killed\", \"Pid\": " + strconv.Itoa(oscmd.Process.Pid) + ", \"ProcessState\": \"" + oscmd.ProcessState.String() + "\"}")
+
+	} else {
+		if oscmd != nil {
+			h.broadcastSys <- []byte("{\"ProgrammerStatus\": \"KilledError\", \"Msg\": \"No current process\", \"Pid\": " + strconv.Itoa(oscmd.Process.Pid) + ", \"ProcessState\": \"" + oscmd.ProcessState.String() + "\"}")
+		} else {
+			h.broadcastSys <- []byte("{\"ProgrammerStatus\": \"KilledError\", \"Msg\": \"No current process\"}")
+		}
 	}
 }
 
