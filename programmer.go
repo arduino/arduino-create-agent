@@ -173,7 +173,7 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 	var err error
 
 	if extraInfo.networkPort {
-		if boardname_rewrite == "" {
+		if boardname_rewrite != "" {
 			err = spProgramNetwork(portname, boardname_rewrite, filePath, extraInfo.authdata)
 		} else {
 			err = spProgramNetwork(portname, boardname, filePath, extraInfo.authdata)
