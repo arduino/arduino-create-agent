@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	log "github.com/Sirupsen/logrus"
+	"github.com/carlescere/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
@@ -126,7 +127,10 @@ func main() {
 			}
 
 			if updater != nil {
-				go updater.BackgroundRun()
+				updater_job := func() {
+					go updater.BackgroundRun()
+				}
+				scheduler.Every(5).Minutes().Run(updater_job)
 			}
 		}
 
