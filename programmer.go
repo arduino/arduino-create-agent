@@ -339,15 +339,18 @@ func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, err
 
 	mode := &serial.Mode{
 		BaudRate: 1200,
-		Vmin:     1,
-		Vtimeout: 0,
+		Vmin:     0,
+		Vtimeout: 1,
 	}
 	port, err := serial.OpenPort(portname, mode)
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
-	//port.SetDTR(false)
+	err = port.SetDTR(false)
+	if err != nil {
+		log.Println(err)
+	}
 	port.Close()
 	time.Sleep(time.Second / 2.0)
 
