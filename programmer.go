@@ -138,7 +138,7 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 		return
 	}
 
-	commandline = strings.Replace(commandline, "{build.path}", filepath.Dir(filePath), 1)
+	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(filePath)), 1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath))), 1)
 	commandline = strings.Replace(commandline, "{serial.port}", portname, 1)
 	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(portname), 1)
