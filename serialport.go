@@ -186,7 +186,7 @@ func (p *serport) reader() {
 			}
 		}
 	}
-	p.portIo.Close()
+	spCloseReal(p)
 }
 
 // this method runs as its own thread because it's instantiated
@@ -322,7 +322,7 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	mode := &serial.Mode{
 		BaudRate: baud,
 		Vmin:     0,
-		Vtimeout: 10,
+		Vtimeout: 1,
 	}
 
 	sp, err := serial.OpenPort(portname, mode)
@@ -359,15 +359,10 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 
 func spHandlerClose(p *serport) {
 	p.isClosing = true
-	//close the port
-	//elicit response from hardware to close out p.reader()
-	_, _ = p.portIo.Write([]byte("?"))
+	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
+}
 
+func spCloseReal(p *serport) {
 	p.bufferwatcher.Close()
 	p.portIo.Close()
-	// unregister myself
-	// we already have a deferred unregister in place from when
-	// we opened. the only thing holding up that thread is the p.reader()
-	// so if we close the reader we should get an exit
-	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
 }
