@@ -138,6 +138,8 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 		return
 	}
 
+	log.Printf("Received commandline (unresolved):" + commandline)
+
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(filePath)), 1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath))), 1)
 	commandline = strings.Replace(commandline, "{serial.port}", portname, 1)
@@ -229,7 +231,7 @@ func spHandlerProgram(flasher string, cmdString []string) {
 	//var cmdOutput []byte
 
 	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
-	log.Printf("Flashing with command:" + strings.Join(cmdString, " "))
+	log.Printf("Flashing with command:" + flasher + extension + " " + strings.Join(cmdString, " "))
 	mapD := map[string]string{"ProgrammerStatus": "Starting", "Cmd": strings.Join(cmdString, " ")}
 	mapB, _ := json.Marshal(mapD)
 	h.broadcastSys <- mapB
