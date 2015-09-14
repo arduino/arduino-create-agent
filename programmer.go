@@ -210,6 +210,7 @@ func spHandlerProgram(flasher string, cmdString []string) {
 
 	extension := ""
 	if runtime.GOOS == "windows" {
+		tellCommandNotToSpawnShell(oscmd)
 		extension = ".exe"
 	}
 

@@ -5,6 +5,7 @@ import (
 	"github.com/mattn/go-ole"
 	"github.com/mattn/go-ole/oleutil"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
@@ -231,4 +232,8 @@ func convertByteArrayToUint16Array(b []byte, mylen uint32) []uint16 {
 		ret[i/2] = uint16(b[i]) | uint16(b[i+1])<<8
 	}
 	return ret
+}
+
+func tellCommandNotToSpawnShell(oscmd *exec.Cmd) {
+	oscmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 }

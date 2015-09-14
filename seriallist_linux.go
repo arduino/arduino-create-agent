@@ -35,3 +35,6 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 
 func hideFile(path string) {
 }
+
+func tellCommandNotToSpawnShell(_ *exec.Cmd) {
+}
