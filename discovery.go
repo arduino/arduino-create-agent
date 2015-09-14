@@ -125,7 +125,9 @@ func getPorts() ([]OsSerialPort, error) {
 	arrPorts := []OsSerialPort{}
 	go func(results chan *bonjour.ServiceEntry, exitCh chan<- bool) {
 		for e := range results {
-			arrPorts = append(arrPorts, OsSerialPort{Name: e.AddrIPv4.String(), IdProduct: e.Instance, IdVendor: strings.Join(e.Text[:], " "), NetworkPort: true})
+			if e.AddrIPv4 != nil {
+				arrPorts = append(arrPorts, OsSerialPort{Name: e.AddrIPv4.String(), IdProduct: e.Instance, IdVendor: strings.Join(e.Text[:], " "), NetworkPort: true})
+			}
 		}
 		timeout <- true
 	}(results, resolver.Exit)
