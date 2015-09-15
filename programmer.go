@@ -210,11 +210,12 @@ func spHandlerProgram(flasher string, cmdString []string) {
 
 	extension := ""
 	if runtime.GOOS == "windows" {
-		tellCommandNotToSpawnShell(oscmd)
 		extension = ".exe"
 	}
 
 	oscmd = exec.Command(flasher+extension, cmdString...)
+
+	tellCommandNotToSpawnShell(oscmd)
 
 	stdout, err := oscmd.StdoutPipe()
 	if err != nil {
