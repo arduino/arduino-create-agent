@@ -113,7 +113,7 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 
 	if err != nil {
 		log.Printf("Command finished with error: %v ", err)
-		mapD := map[string]string{"ProgrammerStatus": "Error " + res.Status, "Msg": "Could not program the board", "Output": "", "Err": "Could not program the board"}
+		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board", "Output": "", "Err": "Could not program the board"}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 	} else {
@@ -181,7 +181,7 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 			err = spProgramNetwork(portname, boardname, filePath, extraInfo.authdata)
 		}
 		if err != nil {
-			mapD := map[string]string{"ProgrammerStatus": "Error " + err.Error(), "Msg": "Could not program the board", "Output": "", "Err": err.Error()}
+			mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board", "Output": "", "Err": err.Error()}
 			mapB, _ := json.Marshal(mapD)
 			h.broadcastSys <- mapB
 		}
