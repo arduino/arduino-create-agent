@@ -88,15 +88,19 @@ func setupSysTrayReal() {
 	// }()
 
 	go func() {
-		<-mDebug.ClickedCh
-		open.Run("http://localhost:8989")
-		logAction("log on")
+		for {
+			<-mDebug.ClickedCh
+			logAction("log on")
+			open.Start("http://localhost:8989")
+		}
 	}()
 
 	// We can manipulate the systray in other goroutines
 	go func() {
-		<-mUrl.ClickedCh
-		open.Run("http://create-staging.arduino.cc")
+		for {
+			<-mUrl.ClickedCh
+			open.Start("http://create-staging.arduino.cc")
+		}
 	}()
 }
 
