@@ -4,7 +4,7 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/facchinm/go-serial",
-			"Rev": "b89db9f164e4ce33d2ddca93b5f8b1e29aff14a1"
+			"Rev": "3cfbd2fab741f7c9d238cb3bd17980110c81bd46"
 		},
 		{
 			"ImportPath": "github.com/facchinm/systray",
