@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os/exec"
 	"strings"
 )
@@ -44,6 +45,7 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 		cmdOutMap := make(map[string]string)
 
 		for _, element := range cmdOutSlice {
+			log.Println(element)
 			if strings.Contains(element, "ID") || strings.Contains(element, "Manufacturer") {
 				element = strings.TrimSpace(element)
 				arr := strings.Split(element, ": ")
