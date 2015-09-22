@@ -280,18 +280,25 @@
                 </platformTest>
             </ruleList>
         </runProgram>
-        <xmlFileSet>
-            <attribute>AbandonProcessGroup</attribute>
-            <element></element>
-            <file>/Users/${system_username}/Library/LaunchAgents/${product_shortname}.plist</file>
-            <value>true</value>
+        <substitute>
+            <files>/Users/${system_username}/Library/LaunchAgents/${product_shortname}.plist</files>
+            <type>exact</type>
             <ruleList>
                 <osxServiceTest>
                     <condition>exists</condition>
                     <service>${product_shortname}</service>
                 </osxServiceTest>
             </ruleList>
-        </xmlFileSet>
+            <substitutionList>
+                <substitution>
+                    <pattern>&lt;key&gt;RunAtLoad&lt;/key&gt;</pattern>
+                    <value>
+&lt;key&gt;RunAtLoad&lt;/key&gt;
+&lt;true/&gt;
+&lt;key&gt;AbandonProcessGroup&lt;/key&gt;</value>
+                </substitution>
+            </substitutionList>
+        </substitute>
     </postInstallationActionList>
     <preUninstallationActionList>
         <deleteOSXService>

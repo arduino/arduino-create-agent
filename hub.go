@@ -301,6 +301,8 @@ func restart(path string) {
 	} else {
 		exePath = path
 	}
+
+	exePath = strings.Trim(exePath, "\n")
 	// figure out garbageCollection flag
 	//isGcFlag := "false"
 
