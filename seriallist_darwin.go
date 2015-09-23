@@ -47,7 +47,11 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 			if strings.Contains(element, "ID") || strings.Contains(element, "Manufacturer") {
 				element = strings.TrimSpace(element)
 				arr := strings.Split(element, ": ")
-				cmdOutMap[arr[0]] = arr[1]
+				if len(arr) > 1 {
+					cmdOutMap[arr[0]] = arr[1]
+				} else {
+					cmdOutMap[arr[0]] = ""
+				}
 			}
 		}
 		ports[index].IdProduct = strings.Split(cmdOutMap["Product ID"], " ")[0]
