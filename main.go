@@ -74,155 +74,159 @@ func launchSelfLater() {
 func main() {
 
 	flag.Parse()
-	go func() {
 
-		// autoextract self
-		src, _ := osext.Executable()
-		dest := filepath.Dir(src)
+	if *hibernate == false {
 
-		os.Mkdir(tempToolsPath, 0777)
-		hideFile(tempToolsPath)
+		go func() {
 
-		if embedded_autoextract {
-			// save the config.ini (if it exists)
-			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-				log.Println("First run, unzipping self")
-				err := Unzip(src, dest)
-				log.Println("Self extraction, err:", err)
-			}
+			// autoextract self
+			src, _ := osext.Executable()
+			dest := filepath.Dir(src)
 
-			if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-				flag.Parse()
-				log.Println("No config.ini at", *configIni)
+			os.Mkdir(tempToolsPath, 0777)
+			hideFile(tempToolsPath)
+
+			if embedded_autoextract {
+				// save the config.ini (if it exists)
+				if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
+					log.Println("First run, unzipping self")
+					err := Unzip(src, dest)
+					log.Println("Self extraction, err:", err)
+				}
+
+				if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
+					flag.Parse()
+					log.Println("No config.ini at", *configIni)
+				} else {
+					flag.Parse()
+					flag.Set("config", dest+"/"+*configIni)
+					iniflags.Parse()
+				}
 			} else {
-				flag.Parse()
 				flag.Set("config", dest+"/"+*configIni)
 				iniflags.Parse()
 			}
-		} else {
-			flag.Set("config", dest+"/"+*configIni)
-			iniflags.Parse()
-		}
 
-		//log.SetFormatter(&log.JSONFormatter{})
+			//log.SetFormatter(&log.JSONFormatter{})
 
-		log.SetLevel(log.InfoLevel)
+			log.SetLevel(log.InfoLevel)
 
-		log.SetOutput(os.Stderr)
+			log.SetOutput(os.Stderr)
 
-		// see if we are supposed to wait 5 seconds
-		if *isLaunchSelf {
-			launchSelfLater()
-		}
-
-		if embedded_autoupdate {
-
-			var updater = &Updater{
-				CurrentVersion: version,
-				ApiURL:         *updateUrl,
-				BinURL:         *updateUrl,
-				DiffURL:        "",
-				Dir:            "update/",
-				CmdName:        *appName,
+			// see if we are supposed to wait 5 seconds
+			if *isLaunchSelf {
+				launchSelfLater()
 			}
 
-			if updater != nil {
-				updater_job := func() {
-					go updater.BackgroundRun()
+			if embedded_autoupdate {
+
+				var updater = &Updater{
+					CurrentVersion: version,
+					ApiURL:         *updateUrl,
+					BinURL:         *updateUrl,
+					DiffURL:        "",
+					Dir:            "update/",
+					CmdName:        *appName,
 				}
-				scheduler.Every(5).Minutes().Run(updater_job)
+
+				if updater != nil {
+					updater_job := func() {
+						go updater.BackgroundRun()
+					}
+					scheduler.Every(5).Minutes().Run(updater_job)
+				}
 			}
-		}
 
-		f := flag.Lookup("addr")
-		log.Println("Version:" + version)
+			f := flag.Lookup("addr")
+			log.Println("Version:" + version)
 
-		// hostname
-		hn, _ := os.Hostname()
-		if *hostname == "unknown-hostname" {
-			*hostname = hn
-		}
-		log.Println("Hostname:", *hostname)
+			// hostname
+			hn, _ := os.Hostname()
+			if *hostname == "unknown-hostname" {
+				*hostname = hn
+			}
+			log.Println("Hostname:", *hostname)
 
-		// turn off garbage collection
-		// this is dangerous, as u could overflow memory
-		//if *isGC {
-		if *gcType == "std" {
-			log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
-		} else if *gcType == "max" {
-			log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
-		} else {
-			log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
-			debug.SetGCPercent(-1)
-		}
+			// turn off garbage collection
+			// this is dangerous, as u could overflow memory
+			//if *isGC {
+			if *gcType == "std" {
+				log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
+			} else if *gcType == "max" {
+				log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
+			} else {
+				log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
+				debug.SetGCPercent(-1)
+			}
 
-		ip := "0.0.0.0"
-		log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
+			ip := "0.0.0.0"
+			log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
 
-		log.Println("The Arduino Create Agent is now running")
+			log.Println("The Arduino Create Agent is now running")
 
-		// see if they provided a regex filter
-		if len(*regExpFilter) > 0 {
-			log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
-		}
+			// see if they provided a regex filter
+			if len(*regExpFilter) > 0 {
+				log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
+			}
 
-		// list serial ports
-		portList, _ := GetList(false)
-		log.Println("Your serial ports:")
-		if len(portList) == 0 {
-			log.Println("\tThere are no serial ports to list.")
-		}
-		for _, element := range portList {
-			log.Printf("\t%v\n", element)
+			// list serial ports
+			portList, _ := GetList(false)
+			log.Println("Your serial ports:")
+			if len(portList) == 0 {
+				log.Println("\tThere are no serial ports to list.")
+			}
+			for _, element := range portList {
+				log.Printf("\t%v\n", element)
 
-		}
+			}
 
-		if !*verbose {
-			log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
-			log.SetOutput(new(NullWriter)) //route all logging to nullwriter
-		}
+			if !*verbose {
+				log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
+				log.SetOutput(new(NullWriter)) //route all logging to nullwriter
+			}
 
-		// launch the hub routine which is the singleton for the websocket server
-		go h.run()
-		// launch our serial port routine
-		go sh.run()
-		// launch our dummy data routine
-		//go d.run()
+			// launch the hub routine which is the singleton for the websocket server
+			go h.run()
+			// launch our serial port routine
+			go sh.run()
+			// launch our dummy data routine
+			//go d.run()
 
-		go discoverLoop()
+			go discoverLoop()
 
-		r := gin.New()
+			r := gin.New()
 
-		socketHandler := wsHandler().ServeHTTP
+			socketHandler := wsHandler().ServeHTTP
 
-		r.Use(cors.Middleware(cors.Config{
-			Origins:         "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://webide.arduino.cc:8080, http://create-staging.arduino.cc, https://create-staging.arduino.cc, http://localhost:8989, https://localhost:8990",
-			Methods:         "GET, PUT, POST, DELETE",
-			RequestHeaders:  "Origin, Authorization, Content-Type",
-			ExposedHeaders:  "",
-			MaxAge:          50 * time.Second,
-			Credentials:     true,
-			ValidateHeaders: false,
-		}))
+			r.Use(cors.Middleware(cors.Config{
+				Origins:         "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://webide.arduino.cc:8080, http://create-staging.arduino.cc, https://create-staging.arduino.cc, http://localhost:8989, https://localhost:8990",
+				Methods:         "GET, PUT, POST, DELETE",
+				RequestHeaders:  "Origin, Authorization, Content-Type",
+				ExposedHeaders:  "",
+				MaxAge:          50 * time.Second,
+				Credentials:     true,
+				ValidateHeaders: false,
+			}))
 
-		r.GET("/", homeHandler)
-		r.POST("/upload", uploadHandler)
-		r.GET("/socket.io/", socketHandler)
-		r.POST("/socket.io/", socketHandler)
-		r.Handle("WS", "/socket.io/", socketHandler)
-		r.Handle("WSS", "/socket.io/", socketHandler)
-		go func() {
-			if err := r.RunTLS(*addrSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+			r.GET("/", homeHandler)
+			r.POST("/upload", uploadHandler)
+			r.GET("/socket.io/", socketHandler)
+			r.POST("/socket.io/", socketHandler)
+			r.Handle("WS", "/socket.io/", socketHandler)
+			r.Handle("WSS", "/socket.io/", socketHandler)
+			go func() {
+				if err := r.RunTLS(*addrSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+					log.Printf("Error trying to bind to port: %v, so exiting...", err)
+					log.Fatal("Error ListenAndServe:", err)
+				}
+			}()
+
+			if err := r.Run(*addr); err != nil {
 				log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				log.Fatal("Error ListenAndServe:", err)
 			}
 		}()
-
-		if err := r.Run(*addr); err != nil {
-			log.Printf("Error trying to bind to port: %v, so exiting...", err)
-			log.Fatal("Error ListenAndServe:", err)
-		}
-	}()
+	}
 	setupSysTray()
 }
 
