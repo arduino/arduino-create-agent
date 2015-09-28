@@ -91,7 +91,7 @@ func setupSysTrayReal() {
 		for {
 			<-mDebug.ClickedCh
 			logAction("log on")
-			open.Start("http://localhost:8989")
+			open.Start("http://localhost" + port)
 		}
 	}()
 
