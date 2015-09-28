@@ -209,6 +209,7 @@ func main() {
 			r.POST("/socket.io/", socketHandler)
 			r.Handle("WS", "/socket.io/", socketHandler)
 			r.Handle("WSS", "/socket.io/", socketHandler)
+			r.GET("/info", infoHandler)
 			go func() {
 				start := 49152
 				end := 65535
