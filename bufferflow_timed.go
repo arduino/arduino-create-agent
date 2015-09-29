@@ -11,6 +11,7 @@ type BufferflowTimed struct {
 	Port   string
 	Output chan []byte
 	Input  chan string
+	ticker *time.Ticker
 }
 
 var (
@@ -28,9 +29,8 @@ func (b *BufferflowTimed) Init() {
 	}()
 
 	go func() {
-		c := time.Tick(16 * time.Millisecond)
-		log.Println(bufferedOutput)
-		for _ = range c {
+		b.ticker = time.NewTicker(16 * time.Millisecond)
+		for _ = range b.ticker.C {
 			m := SpPortMessage{bufferedOutput}
 			buf, _ := json.Marshal(m)
 			b.Output <- []byte(buf)
@@ -93,4 +93,6 @@ func (b *BufferflowTimed) IsBufferGloballySendingBackIncomingData() bool {
 }
 
 func (b *BufferflowTimed) Close() {
+	b.ticker.Stop()
+	close(b.Input)
 }
