@@ -55,6 +55,7 @@ func addRebootTrayElement() {
 		<-reboot_tray.ClickedCh
 		systray.Quit()
 		log.Println("Restarting now...")
+		log.Println("Restart because addReebotTrayElement")
 		restart("")
 	}()
 }
@@ -78,6 +79,7 @@ func setupSysTrayReal() {
 		}
 		systray.Quit()
 		*hibernate = true
+		log.Println("Restart becayse setup went wrong?")
 		restart("")
 	}()
 
@@ -113,6 +115,7 @@ func setupSysTrayHibernate() {
 	go func() {
 		<-mOpen.ClickedCh
 		*hibernate = false
+		log.Println("Restart for hubernation")
 		restart("")
 	}()
 
