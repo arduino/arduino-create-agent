@@ -197,6 +197,7 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "broadcast") {
 		go broadcast(s)
 	} else if strings.HasPrefix(sl, "restart") {
+		log.Println("Received restart from the daemon. Why? Boh")
 		restart("")
 	} else if strings.HasPrefix(sl, "exit") {
 		exit()
@@ -266,6 +267,7 @@ func exit() {
 }
 
 func restart(path string) {
+	log.Println("called restart", path)
 	// relaunch ourself and exit
 	// the relaunch works because we pass a cmdline in
 	// that has serial-port-json-server only initialize 5 seconds later

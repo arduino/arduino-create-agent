@@ -325,6 +325,8 @@ func (u *Updater) update() error {
 	//shutil.CopyFile(*configIni, *configIni+".bak", false)
 	//os.Remove(*configIni)
 
+	log.Println("Restarting because update!")
+
 	restart(path)
 	//addRebootTrayElement()
 
