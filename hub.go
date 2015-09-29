@@ -321,7 +321,7 @@ func restart(path string) {
 		hiberString = "-hibernate"
 	}
 
-	cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc", *gcType, hiberString)
+	cmd = exec.Command(exePath, "-ls", "-regex", *regExpFilter, "-gc", *gcType, hiberString)
 
 	fmt.Println(cmd)
 
