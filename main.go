@@ -5,12 +5,6 @@ package main
 
 import (
 	"flag"
-	log "github.com/Sirupsen/logrus"
-	"github.com/carlescere/scheduler"
-	"github.com/gin-gonic/gin"
-	"github.com/itsjamie/gin-cors"
-	"github.com/kardianos/osext"
-	"github.com/vharitonsky/iniflags"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -18,6 +12,13 @@ import (
 	"strconv"
 	"text/template"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/carlescere/scheduler"
+	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
+	"github.com/kardianos/osext"
+	"github.com/vharitonsky/iniflags"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
@@ -212,7 +213,7 @@ func main() {
 			r.GET("/info", infoHandler)
 			go func() {
 				start := 49152
-				end := 65535
+				end := 49162
 				i := start
 				for i < end {
 					i = i + 1
@@ -230,7 +231,7 @@ func main() {
 
 			go func() {
 				start := 49152
-				end := 65535
+				end := 49162
 				i := start
 				for i < end {
 					i = i + 1
