@@ -32,7 +32,7 @@ createZipEmbeddableFileArduino()
     cp fakecerts/*.pem arduino/
 	mv arduino/arduino/tools* arduino/arduino/tools
 	cd arduino
-	zip -r arduino.zip arduino/* config.ini *.pem > /dev/null
+	zip -r arduino.zip config.ini *.pem > /dev/null
 	cd ..
 	#cat arduino/arduino.zip >> $3
 	#zip  --adjust-sfx $3
