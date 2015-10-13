@@ -212,8 +212,8 @@ func main() {
 			r.Handle("WSS", "/socket.io/", socketHandler)
 			r.GET("/info", infoHandler)
 			go func() {
-				start := 49152
-				end := 49162
+				start := 8990
+				end := 9000
 				i := start
 				for i < end {
 					i = i + 1
@@ -230,8 +230,8 @@ func main() {
 			}()
 
 			go func() {
-				start := 49152
-				end := 49162
+				start := 8990
+				end := 9000
 				i := start
 				for i < end {
 					i = i + 1
