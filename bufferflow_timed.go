@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type BufferflowTimed struct {
@@ -31,10 +32,12 @@ func (b *BufferflowTimed) Init() {
 	go func() {
 		b.ticker = time.NewTicker(16 * time.Millisecond)
 		for _ = range b.ticker.C {
-			m := SpPortMessage{bufferedOutput}
-			buf, _ := json.Marshal(m)
-			b.Output <- []byte(buf)
-			bufferedOutput = ""
+			if bufferedOutput != "" {
+				m := SpPortMessage{bufferedOutput}
+				buf, _ := json.Marshal(m)
+				b.Output <- []byte(buf)
+				bufferedOutput = ""
+			}
 		}
 	}()
 
