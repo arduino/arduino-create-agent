@@ -110,8 +110,10 @@ func spDownloadTool(name string, url string) {
 		log.Info("Tool already present, skipping download")
 	}
 
-	// will be something like ${tempfolder}/avrdude/bin/avrdude
-	globalToolsMap["{runtime.tools."+name+".path}"] = filepath.ToSlash(tempToolsPath + "/" + name)
+	folders, _ := ioutil.ReadDir(tempToolsPath)
+	for _, f := range folders {
+		globalToolsMap["{runtime.tools."+f.Name()+".path}"] = filepath.ToSlash(tempToolsPath + "/" + f.Name())
+	}
 
 	log.Info("Map Updated")
 	mapD := map[string]string{"DownloadStatus": "Success", "Msg": "Map Updated"}

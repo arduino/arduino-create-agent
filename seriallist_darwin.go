@@ -24,6 +24,8 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 		port_hash := strings.Trim(ports[index].Name, "/dev/tty.usbmodem")
 		port_hash = strings.Trim(port_hash, "/dev/tty.usbserial-")
 
+		port_hash = strings.ToLower(port_hash)
+
 		usbcmd := exec.Command("system_profiler", "SPUSBDataType")
 		grepcmd := exec.Command("grep", "Location ID: 0x"+port_hash[:len(port_hash)-1], "-B6")
 		cmdOutput, _ := pipe_commands(usbcmd, grepcmd)
