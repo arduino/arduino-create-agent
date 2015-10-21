@@ -340,9 +340,15 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	// we can go up to 256,000 lines of gcode in the buffer
 	p := &serport{sendBuffered: make(chan Cmd, 256000), sendNoBuf: make(chan Cmd), portConf: conf, portIo: sp, BufferType: buftype, IsPrimary: isPrimary, IsSecondary: isSecondary}
 
-	bw := &BufferflowDefault{}
+	var bw Bufferflow
+
+	if buftype == "timed" {
+		bw = &BufferflowTimed{Name: "timed", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
+	} else {
+		bw = &BufferflowDefault{Port: portname}
+	}
+
 	bw.Init()
-	bw.Port = portname
 	p.bufferwatcher = bw
 
 	sh.register <- p

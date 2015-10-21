@@ -23,7 +23,7 @@ Please use the current latest version:
 
 ## Submitting an issue
 
-Please attach the output of the commands running at http://localhost:8989 if useful.
+Please attach the output of the commands running at the debug console if useful.
 
 ## Submitting a pull request
 

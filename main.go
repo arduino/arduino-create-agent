@@ -5,18 +5,20 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/user"
+	"path/filepath"
+	"runtime/debug"
+	"strconv"
+	"text/template"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/carlescere/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
-	"os"
-	"os/user"
-	"path/filepath"
-	"runtime/debug"
-	"text/template"
-	"time"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
@@ -26,8 +28,6 @@ var (
 	embedded_autoupdate  = true
 	embedded_autoextract = false
 	hibernate            = flag.Bool("hibernate", false, "start hibernated")
-	addr                 = flag.String("addr", ":8989", "http service address")
-	addrSSL              = flag.String("addrSSL", ":8990", "https service address")
 	verbose              = flag.Bool("v", true, "show debug logging")
 	//verbose = flag.Bool("v", false, "show debug logging")
 	isLaunchSelf = flag.Bool("ls", false, "launch self 5 seconds later")
@@ -41,6 +41,8 @@ var (
 	appName        = flag.String("appName", "", "")
 	globalToolsMap = make(map[string]string)
 	tempToolsPath  = createToolsDir()
+	port           string
+	portSSL        string
 )
 
 type NullWriter int
@@ -137,7 +139,6 @@ func main() {
 				}
 			}
 
-			f := flag.Lookup("addr")
 			log.Println("Version:" + version)
 
 			// hostname
@@ -158,11 +159,6 @@ func main() {
 				log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
 				debug.SetGCPercent(-1)
 			}
-
-			ip := "0.0.0.0"
-			log.Print("Starting server and websocket on " + ip + "" + f.Value.String())
-
-			log.Println("The Arduino Create Agent is now running")
 
 			// see if they provided a regex filter
 			if len(*regExpFilter) > 0 {
@@ -214,17 +210,43 @@ func main() {
 			r.POST("/socket.io/", socketHandler)
 			r.Handle("WS", "/socket.io/", socketHandler)
 			r.Handle("WSS", "/socket.io/", socketHandler)
+			r.GET("/info", infoHandler)
 			go func() {
-				if err := r.RunTLS(*addrSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
-					log.Printf("Error trying to bind to port: %v, so exiting...", err)
-					log.Fatal("Error ListenAndServe:", err)
+				start := 8990
+				end := 9000
+				i := start
+				for i < end {
+					i = i + 1
+					portSSL = ":" + strconv.Itoa(i)
+					if err := r.RunTLS(portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+						log.Printf("Error trying to bind to port: %v, so exiting...", err)
+						continue
+					} else {
+						ip := "0.0.0.0"
+						log.Print("Starting server and websocket (SSL) on " + ip + "" + port)
+						break
+					}
 				}
 			}()
 
-			if err := r.Run(*addr); err != nil {
-				log.Printf("Error trying to bind to port: %v, so exiting...", err)
-				log.Fatal("Error ListenAndServe:", err)
-			}
+			go func() {
+				start := 8990
+				end := 9000
+				i := start
+				for i < end {
+					i = i + 1
+					port = ":" + strconv.Itoa(i)
+					if err := r.Run(port); err != nil {
+						log.Printf("Error trying to bind to port: %v, so exiting...", err)
+						continue
+					} else {
+						ip := "0.0.0.0"
+						log.Print("Starting server and websocket on " + ip + "" + port)
+						break
+					}
+				}
+			}()
+
 		}()
 	}
 	setupSysTray()
