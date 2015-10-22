@@ -57,6 +57,9 @@ func uploadHandler(c *gin.Context) {
 	extraInfo.authdata.UserName = c.PostForm("auth_user")
 	extraInfo.authdata.Password = c.PostForm("auth_pass")
 	commandline := c.PostForm("commandline")
+	if commandline == "undefined" {
+		commandline = ""
+	}
 	extraInfo.use_1200bps_touch, _ = strconv.ParseBool(c.PostForm("use_1200bps_touch"))
 	extraInfo.wait_for_upload_port, _ = strconv.ParseBool(c.PostForm("wait_for_upload_port"))
 	extraInfo.networkPort, _ = strconv.ParseBool(c.PostForm("network"))
