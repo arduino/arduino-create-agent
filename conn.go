@@ -81,7 +81,11 @@ func uploadHandler(c *gin.Context) {
 			c.String(http.StatusBadRequest, err.Error())
 		}
 
-		go spProgramRW(port, board, board_rewrite, path, commandline, extraInfo)
+		if board_rewrite != "" {
+			board = board_rewrite
+		}
+
+		go spProgramRW(port, board, path, commandline, extraInfo)
 	}
 }
 

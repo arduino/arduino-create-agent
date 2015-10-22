@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"github.com/mattn/go-shellwords"
+	"github.com/sfreiberg/simplessh"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -40,10 +41,104 @@ type boardExtraInfo struct {
 	authdata             basicAuthData
 }
 
+// Scp uploads sourceFile to remote machine like native scp console app.
+func Scp(client *simplessh.Client, sourceFile, targetFile string) error {
+
+	session, err := client.SSHClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	src, srcErr := os.Open(sourceFile)
+
+	if srcErr != nil {
+		return srcErr
+	}
+
+	srcStat, statErr := src.Stat()
+
+	if statErr != nil {
+		return statErr
+	}
+
+	go func() {
+		w, _ := session.StdinPipe()
+
+		fmt.Fprintln(w, "C0644", srcStat.Size(), filepath.Base(targetFile))
+
+		if srcStat.Size() > 0 {
+			io.Copy(w, src)
+			fmt.Fprint(w, "\x00")
+			w.Close()
+		} else {
+			fmt.Fprint(w, "\x00")
+			w.Close()
+		}
+
+	}()
+
+	if err := session.Run("scp -t " + targetFile); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func spProgramSSHNetwork(portname string, boardname string, filePath string, commandline string, authdata basicAuthData) error {
+	log.Println("Starting network upload")
+	log.Println("Board Name: " + boardname)
+
+	if authdata.UserName == "" {
+		authdata.UserName = "root"
+	}
+
+	if authdata.Password == "" {
+		authdata.Password = "arduino"
+	}
+
+	ssh_client, err := simplessh.ConnectWithPassword(portname+":22", authdata.UserName, authdata.Password)
+	if err != nil {
+		log.Println("Error connecting via ssh")
+		return err
+	}
+	defer ssh_client.Close()
+
+	err = Scp(ssh_client, filePath, "/tmp/sketch"+filepath.Ext(filePath))
+	if err != nil {
+		log.Printf("Upload: %s\n", err)
+		return err
+	}
+
+	if commandline == "" {
+		// very special case for Yun (remove once AVR boards.txt is fixed)
+		commandline = "merge-sketch-with-bootloader.lua /tmp/sketch.hex && /usr/bin/run-avrdude /tmp/sketch.hex"
+	}
+
+	fmt.Println(commandline)
+
+	ssh_output, err := ssh_client.Exec(commandline)
+	if err == nil {
+		log.Printf("Flash: %s\n", ssh_output)
+		mapD := map[string]string{"ProgrammerStatus": "Busy", "Msg": string(ssh_output)}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+	}
+	return err
+}
+
 func spProgramNetwork(portname string, boardname string, filePath string, authdata basicAuthData) error {
 
 	log.Println("Starting network upload")
 	log.Println("Board Name: " + boardname)
+
+	if authdata.UserName == "" {
+		authdata.UserName = "root"
+	}
+
+	if authdata.Password == "" {
+		authdata.Password = "arduino"
+	}
 
 	// Prepare a form that you will submit to that URL.
 	_url := "http://" + portname + "/data/upload_sketch_silent"
@@ -109,23 +204,10 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 		log.Errorf("bad status: %s", res.Status)
 		err = fmt.Errorf("bad status: %s", res.Status)
 	}
-
-	if err != nil {
-		log.Printf("Command finished with error: %v ", err)
-		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board", "Output": "", "Err": "Could not program the board"}
-		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
-	} else {
-		log.Printf("Finished without error. Good stuff.")
-		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok", "Output": ""}
-		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
-		// analyze stdin
-	}
 	return err
 }
 
-func spProgramLocal(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) {
+func spProgramLocal(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) error {
 
 	var err error
 	if extraInfo.use_1200bps_touch {
@@ -134,7 +216,7 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 
 	if err != nil {
 		log.Println("Could not touch the port")
-		return
+		return err
 	}
 
 	log.Printf("Received commandline (unresolved):" + commandline)
@@ -155,15 +237,10 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 	}
 
 	z, _ := shellwords.Parse(commandline)
-	spHandlerProgram(z[0], z[1:])
+	return spHandlerProgram(z[0], z[1:])
 }
 
-func spProgram(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) {
-
-	spProgramRW(portname, boardname, "", filePath, commandline, extraInfo)
-}
-
-func spProgramRW(portname string, boardname string, boardname_rewrite string, filePath string, commandline string, extraInfo boardExtraInfo) {
+func spProgramRW(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) {
 	compiling = true
 
 	defer func() {
@@ -174,24 +251,32 @@ func spProgramRW(portname string, boardname string, boardname_rewrite string, fi
 	var err error
 
 	if extraInfo.networkPort {
-		if boardname_rewrite != "" {
-			err = spProgramNetwork(portname, boardname_rewrite, filePath, extraInfo.authdata)
-		} else {
-			err = spProgramNetwork(portname, boardname, filePath, extraInfo.authdata)
-		}
+		err = spProgramNetwork(portname, boardname, filePath, extraInfo.authdata)
 		if err != nil {
-			mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board", "Output": "", "Err": err.Error()}
-			mapB, _ := json.Marshal(mapD)
-			h.broadcastSys <- mapB
+			// no http method available, try ssh upload
+			err = spProgramSSHNetwork(portname, boardname, filePath, commandline, extraInfo.authdata)
 		}
 	} else {
-		spProgramLocal(portname, boardname, filePath, commandline, extraInfo)
+		err = spProgramLocal(portname, boardname, filePath, commandline, extraInfo)
+	}
+
+	if err != nil {
+		log.Printf("Command finished with error: %v", err)
+		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board"}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+	} else {
+		log.Printf("Finished without error. Good stuff")
+		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok"}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+		// analyze stdin
 	}
 }
 
 var oscmd *exec.Cmd
 
-func spHandlerProgram(flasher string, cmdString []string) {
+func spHandlerProgram(flasher string, cmdString []string) error {
 
 	// if runtime.GOOS == "darwin" {
 	// 	sh, _ := exec.LookPath("sh")
@@ -218,12 +303,12 @@ func spHandlerProgram(flasher string, cmdString []string) {
 
 	stdout, err := oscmd.StdoutPipe()
 	if err != nil {
-		return
+		return err
 	}
 
 	stderr, err := oscmd.StderrPipe()
 	if err != nil {
-		return
+		return err
 	}
 
 	multi := io.MultiReader(stderr, stdout)
@@ -252,19 +337,7 @@ func spHandlerProgram(flasher string, cmdString []string) {
 
 	err = oscmd.Wait()
 
-	if err != nil {
-		log.Printf("Command finished with error: %v", err)
-		mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not program the board"}
-		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
-	} else {
-		log.Printf("Finished without error. Good stuff")
-		mapD := map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok"}
-		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
-		// analyze stdin
-
-	}
+	return err
 }
 
 func spHandlerProgramKill() {
