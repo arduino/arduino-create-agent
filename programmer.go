@@ -297,7 +297,7 @@ func spHandlerProgram(flasher string, cmdString []string) error {
 		extension = ".exe"
 	}
 
-	oscmd = exec.Command(flasher+extension, cmdString...)
+	oscmd = exec.Command(flasher, cmdString...)
 
 	tellCommandNotToSpawnShell(oscmd)
 
