@@ -53,7 +53,7 @@ type logWriter struct{}
 
 func (u *logWriter) Write(p []byte) (n int, err error) {
 	h.broadcastSys <- p
-	return 0, nil
+	return len(p), nil
 }
 
 var logger_ws logWriter
@@ -270,7 +270,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
     var log = document.getElementById('log');
     var pause = document.getElementById('myCheck');
     var messages = [];
-    var only_log = false;
+    var only_log = true;
 
     function appendLog(msg) {
 

@@ -217,11 +217,10 @@ func checkCmd(m []byte) {
 	//log.Print("Done with checkCmd")
 }
 
-var multi_writer = io.MultiWriter(&logger_ws, os.Stderr)
-
 func logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
+		multi_writer := io.MultiWriter(&logger_ws, os.Stderr)
 		log.SetOutput(multi_writer)
 	} else if strings.HasPrefix(sl, "log off") {
 		*logDump = "off"
