@@ -413,6 +413,11 @@ func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, err
 	initialPortName := portname
 	log.Println("Restarting in bootloader mode")
 
+	before_reset_ports, _ := serial.GetPortsList()
+	log.Println(before_reset_ports)
+
+	var ports []string
+
 	mode := &serial.Mode{
 		BaudRate: 1200,
 		Vmin:     0,
@@ -428,24 +433,36 @@ func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, err
 		log.Println(err)
 	}
 	port.Close()
-	time.Sleep(time.Second / 2.0)
 
 	timeout := false
 	go func() {
-		time.Sleep(2 * time.Second)
+		time.Sleep(10 * time.Second)
 		timeout = true
 	}()
 
-	// time.Sleep(time.Second / 4)
+	// wait for port to disappear
+	if wait_for_upload_port {
+		for {
+			ports, _ = serial.GetPortsList()
+			log.Println(ports)
+			portname = findNewPortName(ports, before_reset_ports)
+			if portname != "" {
+				break
+			}
+			if timeout {
+				break
+			}
+			time.Sleep(time.Millisecond * 100)
+		}
+	}
+
 	// wait for port to reappear
 	if wait_for_upload_port {
 		after_reset_ports, _ := serial.GetPortsList()
 		log.Println(after_reset_ports)
-		var ports []string
 		for {
 			ports, _ = serial.GetPortsList()
 			log.Println(ports)
-			time.Sleep(time.Millisecond * 200)
 			portname = findNewPortName(ports, after_reset_ports)
 			if portname != "" {
 				break
@@ -453,6 +470,7 @@ func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, err
 			if timeout {
 				break
 			}
+			time.Sleep(time.Millisecond * 100)
 		}
 	}
 
