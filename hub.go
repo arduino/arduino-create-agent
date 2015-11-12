@@ -171,6 +171,10 @@ func checkCmd(m []byte) {
 		// kill the running process (assumes singleton for now)
 		go spHandlerProgramKill()
 
+	} else if strings.HasPrefix(sl, "sendjsonraw") {
+		// will catch sendjsonraw
+		go spWriteJsonRaw(s)
+
 	} else if strings.HasPrefix(sl, "sendjson") {
 		// will catch sendjson
 		go spWriteJson(s)
