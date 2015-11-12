@@ -5,7 +5,7 @@ import (
 //"time"
 )
 
-var availableBufferAlgorithms = []string{"default", "timed"}
+var availableBufferAlgorithms = []string{"default", "timed", "timedraw"}
 
 type BufferMsg struct {
 	Cmd                string
