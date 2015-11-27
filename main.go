@@ -39,6 +39,7 @@ var (
 	hostname       = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
 	updateUrl      = flag.String("updateUrl", "", "")
 	appName        = flag.String("appName", "", "")
+	genCert        = flag.Bool("generateCert", false, "")
 	globalToolsMap = make(map[string]string)
 	tempToolsPath  = createToolsDir()
 	port           string
@@ -77,6 +78,11 @@ func launchSelfLater() {
 func main() {
 
 	flag.Parse()
+
+	if *genCert == true {
+		generateCertificates()
+		exit()
+	}
 
 	if *hibernate == false {
 
@@ -233,6 +239,11 @@ func main() {
 			r.Handle("WSS", "/socket.io/", socketHandler)
 			r.GET("/info", infoHandler)
 			go func() {
+				// check if certificates exist; if not, use plain http
+				if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
+					return
+				}
+
 				start := 8990
 				end := 9000
 				i := start
