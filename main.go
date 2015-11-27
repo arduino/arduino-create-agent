@@ -43,6 +43,7 @@ var (
 	tempToolsPath  = createToolsDir()
 	port           string
 	portSSL        string
+	origins        = flag.String("origins", "", "Allowed origin list for CORS")
 )
 
 type NullWriter int
@@ -53,7 +54,7 @@ type logWriter struct{}
 
 func (u *logWriter) Write(p []byte) (n int, err error) {
 	h.broadcastSys <- p
-	return 0, nil
+	return len(p), nil
 }
 
 var logger_ws logWriter
@@ -109,6 +110,20 @@ func main() {
 				iniflags.Parse()
 			}
 
+			// move CORS to config file compatibility, Vagrant version
+			if *origins == "" {
+				log.Println("Patching config.ini for compatibility")
+				f, err := os.OpenFile(dest+"/"+*configIni, os.O_APPEND|os.O_WRONLY, 0666)
+				if err != nil {
+					panic(err)
+				}
+				_, err = f.WriteString("\norigins = http://webide.arduino.cc:8080\n")
+				if err != nil {
+					panic(err)
+				}
+				f.Close()
+				restart("")
+			}
 			//log.SetFormatter(&log.JSONFormatter{})
 
 			log.SetLevel(log.InfoLevel)
@@ -194,8 +209,14 @@ func main() {
 
 			socketHandler := wsHandler().ServeHTTP
 
+			extraOriginStr := "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://create-staging.arduino.cc, https://create-staging.arduino.cc"
+
+			for i := 8990; i < 9001; i++ {
+				extraOriginStr = extraOriginStr + ", http://localhost:" + strconv.Itoa(i) + ", https://localhost:" + strconv.Itoa(i)
+			}
+
 			r.Use(cors.Middleware(cors.Config{
-				Origins:         "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://webide.arduino.cc:8080, http://create-staging.arduino.cc, https://create-staging.arduino.cc, http://localhost:8989, https://localhost:8990",
+				Origins:         *origins + "," + extraOriginStr,
 				Methods:         "GET, PUT, POST, DELETE",
 				RequestHeaders:  "Origin, Authorization, Content-Type",
 				ExposedHeaders:  "",
@@ -270,7 +291,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
     var log = document.getElementById('log');
     var pause = document.getElementById('myCheck');
     var messages = [];
-    var only_log = false;
+    var only_log = true;
 
     function appendLog(msg) {
 
