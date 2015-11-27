@@ -216,7 +216,7 @@ func main() {
 			}
 
 			r.Use(cors.Middleware(cors.Config{
-				Origins:         *origins + "," + extraOriginStr,
+				Origins:         *origins + ", " + extraOriginStr,
 				Methods:         "GET, PUT, POST, DELETE",
 				RequestHeaders:  "Origin, Authorization, Content-Type",
 				ExposedHeaders:  "",
