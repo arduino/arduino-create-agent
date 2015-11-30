@@ -81,7 +81,7 @@ func main() {
 
 	if *genCert == true {
 		generateCertificates()
-		exit()
+		os.Exit(0)
 	}
 
 	if *hibernate == false {
