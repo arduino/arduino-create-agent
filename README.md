@@ -1,8 +1,6 @@
 arduino-create-agent
 ====================
 
-Version X.XX
-
 Get the latest version of the Agent for all supported platforms:
 
 * [Windows](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer.exe)
@@ -20,6 +18,16 @@ Please use the current latest version:
 * [Windows dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
 * [MacOSX dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer.dmg) 
 * [Linux x64 dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer.run)
+
+## Compiling
+
+`compile_webidebridge.sh` contains the cross-platform script we use to deploy the agent for all the supported platforms; it needs to be adjusted as per your `go` installation paths and OS.
+
+You can use `bootstrapPlatforms` function to compile the needed CGO-enabled environment
+
+Other prerequisites are:
+* libappindicator (Linux only)
+* [go-selfupdate] (https://github.com/sanbornm/go-selfupdate) if you want to test automatic updates
 
 ## Submitting an issue
 
