@@ -9,6 +9,7 @@ import (
 	"github.com/facchinm/go-serial"
 	"github.com/mattn/go-shellwords"
 	"github.com/sfreiberg/simplessh"
+	"github.com/xrash/smetrics"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -233,6 +234,19 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 	fmt.Println(runtimeVars)
 
 	for _, element := range runtimeVars {
+
+		// use string similarity to resolve a runtime var with a "similar" map element
+		if globalToolsMap[element] == "" {
+			max_similarity := 0.0
+			for i, candidate := range globalToolsMap {
+				similarity := smetrics.Jaro(element, i)
+				if similarity > 0.8 && similarity > max_similarity {
+					max_similarity = similarity
+					globalToolsMap[element] = candidate
+				}
+			}
+		}
+
 		commandline = strings.Replace(commandline, element, globalToolsMap[element], 1)
 	}
 
