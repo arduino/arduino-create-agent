@@ -106,13 +106,16 @@ func generateCertificates() {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"Arduino LLC US"},
+			Organization:       []string{"Arduino LLC US"},
+			Country:            []string{"US"},
+			CommonName:         "localhost",
+			OrganizationalUnit: []string{"IT"},
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,
 
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
 
@@ -134,6 +137,11 @@ func generateCertificates() {
 	if err != nil {
 		log.Fatalf("Failed to create certificate: %s", err)
 	}
+
+	// remove old certificates
+	os.Remove("cert.pem")
+	os.Remove("key.pem")
+	os.Remove("cert.cer")
 
 	certOut, err := os.Create("cert.pem")
 	if err != nil {
