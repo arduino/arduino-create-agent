@@ -133,6 +133,11 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 
 func generateCertificates() {
 
+	os.Remove("ca.cert.pem")
+	os.Remove("ca.key.pem")
+	os.Remove("cert.pem")
+	os.Remove("key.pem")
+
 	// Create the key for the certification authority
 	caKey, err := generateKey("")
 	if err != nil {
@@ -159,12 +164,47 @@ func generateCertificates() {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, publicKey(caKey), caKey)
 
-	certOut, err := os.Create("ca.crt.pem")
+	certOut, err := os.Create("ca.cert.pem")
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
-	log.Print("written ca.crt.pem")
+	log.Print("written ca.cert.pem")
+
+	// Create the key for the final certificate
+	key, err := generateKey("")
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	keyOut, err = os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	pem.Encode(keyOut, pemBlockForKey(key))
+	keyOut.Close()
+	log.Println("written key.pem")
+
+	// Create the final certificate
+	template, err := generateSingleCertificate(false)
+
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	derBytes, err = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), key)
+
+	certOut, err = os.Create("cert.pem")
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	certOut.Close()
+	log.Print("written cert.pem")
 }
