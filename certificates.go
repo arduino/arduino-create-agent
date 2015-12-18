@@ -26,12 +26,10 @@ import (
 )
 
 var (
-	host       = "localhost"
-	validFrom  = ""
-	validFor   = 365 * 24 * time.Hour * 2 // 2 years
-	isCA       = true
-	rsaBits    = 2048
-	ecdsaCurve = ""
+	host      = "localhost"
+	validFrom = ""
+	validFor  = 365 * 24 * time.Hour * 2 // 2 years
+	rsaBits   = 2048
 )
 
 func publicKey(priv interface{}) interface{} {
@@ -123,7 +121,7 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 		}
 	}
 
-	if isCA {
+	if isCa {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
@@ -197,7 +195,7 @@ func generateCertificates() {
 		os.Exit(1)
 	}
 
-	derBytes, err = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), key)
+	derBytes, err = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), caKey)
 
 	certOut, err = os.Create("cert.pem")
 	if err != nil {
