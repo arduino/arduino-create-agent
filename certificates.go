@@ -16,6 +16,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"net"
 	"os"
@@ -170,6 +171,9 @@ func generateCertificates() {
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
 	log.Print("written ca.cert.pem")
+
+	ioutil.WriteFile("ca.cert.cer", derBytes, 0644)
+	log.Print("written ca.cert.cer")
 
 	// Create the key for the final certificate
 	key, err := generateKey("")
