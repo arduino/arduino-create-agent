@@ -16,22 +16,21 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
 	"math/big"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 var (
-	host       = "localhost"
-	validFrom  = ""
-	validFor   = 365 * 24 * time.Hour * 2 // 2 years
-	isCA       = true
-	rsaBits    = 2048
-	ecdsaCurve = ""
+	host      = "localhost"
+	validFrom = ""
+	validFor  = 365 * 24 * time.Hour * 2 // 2 years
+	rsaBits   = 2048
 )
 
 func publicKey(priv interface{}) interface{} {
@@ -61,37 +60,32 @@ func pemBlockForKey(priv interface{}) *pem.Block {
 	}
 }
 
-func generateCertificates() {
-
-	var priv interface{}
-	var err error
+func generateKey(ecdsaCurve string) (interface{}, error) {
 	switch ecdsaCurve {
 	case "":
-		priv, err = rsa.GenerateKey(rand.Reader, rsaBits)
+		return rsa.GenerateKey(rand.Reader, rsaBits)
 	case "P224":
-		priv, err = ecdsa.GenerateKey(elliptic.P224(), rand.Reader)
+		return ecdsa.GenerateKey(elliptic.P224(), rand.Reader)
 	case "P256":
-		priv, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		return ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	case "P384":
-		priv, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+		return ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	case "P521":
-		priv, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+		return ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	default:
-		fmt.Fprintf(os.Stderr, "Unrecognized elliptic curve: %q", ecdsaCurve)
-		os.Exit(1)
+		return nil, fmt.Errorf("Unrecognized elliptic curve: %q", ecdsaCurve)
 	}
-	if err != nil {
-		log.Fatalf("failed to generate private key: %s", err)
-	}
+}
 
+func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	var notBefore time.Time
+	var err error
 	if len(validFrom) == 0 {
 		notBefore = time.Now()
 	} else {
 		notBefore, err = time.Parse("Jan 2 15:04:05 2006", validFrom)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to parse creation date: %s\n", err)
-			os.Exit(1)
+			return nil, fmt.Errorf("Failed to parse creation date: %s\n", err.Error())
 		}
 	}
 
@@ -100,7 +94,7 @@ func generateCertificates() {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		log.Fatalf("failed to generate serial number: %s", err)
+		return nil, fmt.Errorf("failed to generate serial number: %s\n", err.Error())
 	}
 
 	template := x509.Certificate{
@@ -128,37 +122,91 @@ func generateCertificates() {
 		}
 	}
 
-	if isCA {
+	if isCa {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(priv), priv)
-	if err != nil {
-		log.Fatalf("Failed to create certificate: %s", err)
-	}
+	return &template, nil
+}
 
-	// remove old certificates
+func generateCertificates() {
+
+	os.Remove("ca.cert.pem")
+	os.Remove("ca.key.pem")
 	os.Remove("cert.pem")
 	os.Remove("key.pem")
-	os.Remove("cert.cer")
 
-	certOut, err := os.Create("cert.pem")
+	// Create the key for the certification authority
+	caKey, err := generateKey("")
 	if err != nil {
-		log.Fatalf("failed to open cert.pem for writing: %s", err)
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	keyOut, err := os.OpenFile("ca.key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	pem.Encode(keyOut, pemBlockForKey(caKey))
+	keyOut.Close()
+	log.Println("written ca.key.pem")
+
+	// Create the certification authority
+	caTemplate, err := generateSingleCertificate(true)
+
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, publicKey(caKey), caKey)
+
+	certOut, err := os.Create("ca.cert.pem")
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
 	}
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
-	log.Print("written cert.pem\n")
+	log.Print("written ca.cert.pem")
 
-	ioutil.WriteFile("cert.cer", derBytes, 0644)
+	ioutil.WriteFile("ca.cert.cer", derBytes, 0644)
+	log.Print("written ca.cert.cer")
 
-	keyOut, err := os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	// Create the key for the final certificate
+	key, err := generateKey("")
 	if err != nil {
-		log.Print("failed to open key.pem for writing:", err)
-		return
+		log.Error(err.Error())
+		os.Exit(1)
 	}
-	pem.Encode(keyOut, pemBlockForKey(priv))
+
+	keyOut, err = os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	pem.Encode(keyOut, pemBlockForKey(key))
 	keyOut.Close()
-	log.Print("written key.pem\n")
+	log.Println("written key.pem")
+
+	// Create the final certificate
+	template, err := generateSingleCertificate(false)
+
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	derBytes, err = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), caKey)
+
+	certOut, err = os.Create("cert.pem")
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
+	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	certOut.Close()
+	log.Print("written cert.pem")
 }
