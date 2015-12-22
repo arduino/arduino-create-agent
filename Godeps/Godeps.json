@@ -1,20 +1,24 @@
 {
-	"ImportPath": "github.com/arduino/arduino-create-agent",
-	"GoVersion": "go1.4.2",
+	"ImportPath": ".",
+	"GoVersion": "go1.4",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.8.6-1-g8bca266",
-			"Rev": "8bca2664072173a3c71db4c28ca8d304079b1787"
+			"Comment": "v0.8.7-53-g446d1c1",
+			"Rev": "446d1c146faa8ed3f4218f056fcd165f6bcfda81"
 		},
 		{
 			"ImportPath": "github.com/carlescere/scheduler",
-			"Comment": "0.1-11-gd39e4af",
-			"Rev": "d39e4af87bb89586f86db467fa203d353b5d34ff"
+			"Comment": "0.1-13-g025e9f5",
+			"Rev": "025e9f58462112b9fb636708374467aef7161289"
 		},
 		{
 			"ImportPath": "github.com/facchinm/go-serial",
 			"Rev": "3cfbd2fab741f7c9d238cb3bd17980110c81bd46"
+		},
+		{
+			"ImportPath": "github.com/facchinm/go-serial-native",
+			"Rev": "6c62fb894d873784830ec370e85ab1f29c2e0324"
 		},
 		{
 			"ImportPath": "github.com/facchinm/systray",
@@ -30,29 +34,25 @@
 		},
 		{
 			"ImportPath": "github.com/gin-gonic/gin",
-			"Comment": "v1.0rc1-136-gfd5d429",
-			"Rev": "fd5d4294a5d5223d55fc76d7840f4b0ad91647bb"
+			"Comment": "v1.0rc1-148-g52fcc5d",
+			"Rev": "52fcc5dbf6e94df33ad313858fb94b713e9d1b4a"
 		},
 		{
 			"ImportPath": "github.com/googollee/go-engine.io",
-			"Rev": "5525e3de461352f4c88d28287161ca2272c024ac"
+			"Rev": "a66cf68b24e56df0cacdc6041b93742f983a296a"
 		},
 		{
 			"ImportPath": "github.com/googollee/go-socket.io",
-			"Comment": "0.9.x-35-g647d8ca",
-			"Rev": "647d8cabbf6b58e48570e56cb59692cbc8fdb1d3"
+			"Comment": "0.9.x-51-g14bb3d0",
+			"Rev": "14bb3d0368089a74cb52164a7a697cf404bda9c6"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
 		},
 		{
-			"ImportPath": "github.com/inconshreveable/go-update",
-			"Rev": "f848a144bdfc3d6dc7669d4b026ecc7a42ed4575"
-		},
-		{
 			"ImportPath": "github.com/itsjamie/gin-cors",
-			"Rev": "bd9551838cd52133960a2f44ab990be71744b663"
+			"Rev": "9526714e382db4023de25bfdad89cec9b7446092"
 		},
 		{
 			"ImportPath": "github.com/kardianos/osext",
@@ -68,32 +68,28 @@
 		},
 		{
 			"ImportPath": "github.com/manucorporat/sse",
-			"Rev": "c142f0f1baea5cef7f98a8a6c222f6134368c1f5"
+			"Rev": "fe6ea2c8e398672518ef204bf0fbd9af858d0e15"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-colorable",
-			"Rev": "40e4aedc8fabf8c23e040057540867186712faa5"
+			"Rev": "3dac7b4f76f6e17fb39b768b89e3783d16e237fe"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
-			"Rev": "ae0b1f8f8004be68d791a576e3d8e7648ab41449"
-		},
-		{
-			"ImportPath": "github.com/mattn/go-ole",
-			"Comment": "v0.1.0-13-g3de65c4",
-			"Rev": "3de65c40eb2a56df91d6cf1a2486f1eb9d3c04eb"
+			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-shellwords",
+			"Comment": "v1.0.0",
 			"Rev": "f4e566c536cf69158e808ec28ef4182a37fdc981"
 		},
 		{
 			"ImportPath": "github.com/miekg/dns",
-			"Rev": "3e549e2f6fd420cdffa528144b925305401bf55c"
+			"Rev": "75e6e86cc601825c5dbcd4e0c209eab180997cd7"
 		},
 		{
 			"ImportPath": "github.com/oleksandr/bonjour",
-			"Rev": "415cafc6ab8894ea7b7bcbed933ce2d8c611683c"
+			"Rev": "7ee314fe2bb898db0072d9af4b540b816fe7c6b5"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/archiver/extractor",
@@ -101,11 +97,7 @@
 		},
 		{
 			"ImportPath": "github.com/pkg/sftp",
-			"Rev": "9d712e91b1f05c35bf7e8fa71a1b09392925d452"
-		},
-		{
-			"ImportPath": "github.com/sanderhahn/gozip/patchzip",
-			"Rev": "85893825032e0136f506cc9e3f36d42d56305ee9"
+			"Rev": "2bc00847a6f77f5d32fa46b0ab829f0531d73244"
 		},
 		{
 			"ImportPath": "github.com/sfreiberg/simplessh",
@@ -117,8 +109,8 @@
 		},
 		{
 			"ImportPath": "github.com/vharitonsky/iniflags",
-			"Comment": "v.1.0-22-g5f0bb03",
-			"Rev": "5f0bb0369da23c35ce1201e53783d957df85c23b"
+			"Comment": "v.1.0-28-g02b57ef",
+			"Rev": "02b57ef987a5ee59eedc7dcd93315a43f6dcc4a7"
 		},
 		{
 			"ImportPath": "github.com/xrash/smetrics",
@@ -126,18 +118,14 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/curve25519",
-			"Rev": "c8b9e6388ef638d5a8a9d865c634befdc46a6784"
+			"Rev": "f18420efc3b4f8e9f3d51f6bd2476e92c46260e9"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ssh",
-			"Rev": "c8b9e6388ef638d5a8a9d865c634befdc46a6784"
+			"Rev": "f18420efc3b4f8e9f3d51f6bd2476e92c46260e9"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "84ba27dd5b2d8135e9da1395277f2c9333a2ffda"
-		},
-		{
-			"ImportPath": "golang.org/x/net/internal/iana",
 			"Rev": "84ba27dd5b2d8135e9da1395277f2c9333a2ffda"
 		},
 		{
@@ -149,9 +137,17 @@
 			"Rev": "84ba27dd5b2d8135e9da1395277f2c9333a2ffda"
 		},
 		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "833a04a10549a95dc34458c195cbad61bbb6cb4d"
+		},
+		{
 			"ImportPath": "gopkg.in/bluesuncorp/validator.v5",
-			"Comment": "v5.10.2",
-			"Rev": "ac33a23e6e6451492f246d6ed9384af421b71d0d"
+			"Comment": "v5.12",
+			"Rev": "d5acf1dac43705f8bfbb71d878e290e2bed3950b"
+		},
+		{
+			"ImportPath": "gopkg.in/inconshreveable/go-update.v0",
+			"Rev": "d8b0b1d421aa1cbf392c05869f8abbc669bb7066"
 		}
 	]
 }
