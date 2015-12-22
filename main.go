@@ -5,12 +5,6 @@ package main
 
 import (
 	"flag"
-	log "github.com/Sirupsen/logrus"
-	"github.com/carlescere/scheduler"
-	"github.com/gin-gonic/gin"
-	"github.com/itsjamie/gin-cors"
-	"github.com/kardianos/osext"
-	"github.com/vharitonsky/iniflags"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -18,6 +12,13 @@ import (
 	"strconv"
 	"text/template"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/carlescere/scheduler"
+	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
+	"github.com/kardianos/osext"
+	"github.com/vharitonsky/iniflags"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
@@ -399,7 +400,7 @@ body {
     <input type="submit" value="Send" />
     <input type="text" id="msg" size="64"/>
     <input name="pause" type="checkbox" value="pause" id="myCheck"/> Pause
-    <input type="button" value="Install Certificate" onclick="window.open('http://localhost:8991/certificate.crt')" />
+    <!--<input type="button" value="Install Certificate" onclick="window.open('http://localhost:8991/certificate.crt')" />-->
 </form>
 </form>
 </body>
