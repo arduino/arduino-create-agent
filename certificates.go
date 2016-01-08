@@ -125,6 +125,7 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	if isCa {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
+		template.Subject.CommonName = "Arduino"
 	}
 
 	return &template, nil
@@ -209,4 +210,8 @@ func generateCertificates() {
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
 	log.Print("written cert.pem")
+
+	ioutil.WriteFile("cert.cer", derBytes, 0644)
+	log.Print("written cert.cer")
+
 }
