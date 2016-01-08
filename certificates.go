@@ -138,7 +138,7 @@ func generateCertificates() {
 	os.Remove("key.pem")
 
 	// Create the key for the certification authority
-	caKey, err := generateKey("")
+	caKey, err := generateKey("P256")
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
@@ -176,7 +176,7 @@ func generateCertificates() {
 	log.Print("written ca.cert.cer")
 
 	// Create the key for the final certificate
-	key, err := generateKey("")
+	key, err := generateKey("P256")
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
