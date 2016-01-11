@@ -21,9 +21,11 @@ import (
 	"net"
 	"os"
 	"strings"
+	"text/template"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -215,3 +217,20 @@ func generateCertificates() {
 	log.Print("written cert.cer")
 
 }
+
+func certHandler(c *gin.Context) {
+	if strings.Contains(c.Request.UserAgent(), "Firefox") {
+		c.Header("content-type", "application/x-x509-ca-cert")
+		c.File("ca.cert.cer")
+		return
+	}
+	noFirefoxTemplate.Execute(c.Writer, c.Request.Host)
+}
+
+const noFirefoxTemplateHTML = `<!DOCTYPE html>
+
+
+
+`
+
+var noFirefoxTemplate = template.Must(template.New("home").Parse(noFirefoxTemplateHTML))

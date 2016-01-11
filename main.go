@@ -75,11 +75,6 @@ func launchSelfLater() {
 	log.Println("Done waiting 2 secs. Now launching...")
 }
 
-func certHandler(c *gin.Context) {
-	c.Header("content-type", "application/x-x509-ca-cert")
-	c.File("cert.cer")
-}
-
 func main() {
 
 	flag.Parse()
@@ -235,6 +230,8 @@ func main() {
 				Credentials:     true,
 				ValidateHeaders: false,
 			}))
+
+			r.LoadHTMLFiles("templates/nofirefox.html")
 
 			r.GET("/", homeHandler)
 			r.GET("/certificate.crt", certHandler)
