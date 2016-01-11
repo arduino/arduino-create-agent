@@ -260,7 +260,7 @@ body {
     height: auto;
     margin: 0 auto;
     min-width: 600px;
-    padding: 0 4%;
+    padding: 2% 4%;
     position: relative;
     width: 65%;
     box-shadow: 0 0 10px 0 rgba(21,110,114,.8);
