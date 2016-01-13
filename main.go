@@ -39,6 +39,7 @@ var (
 	hostname       = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
 	updateUrl      = flag.String("updateUrl", "", "")
 	appName        = flag.String("appName", "", "")
+	genCert        = flag.Bool("generateCert", false, "")
 	globalToolsMap = make(map[string]string)
 	tempToolsPath  = createToolsDir()
 	port           string
@@ -54,7 +55,7 @@ type logWriter struct{}
 
 func (u *logWriter) Write(p []byte) (n int, err error) {
 	h.broadcastSys <- p
-	return 0, nil
+	return len(p), nil
 }
 
 var logger_ws logWriter
@@ -77,6 +78,11 @@ func launchSelfLater() {
 func main() {
 
 	flag.Parse()
+
+	if *genCert == true {
+		generateCertificates()
+		os.Exit(0)
+	}
 
 	if *hibernate == false {
 
@@ -225,7 +231,10 @@ func main() {
 				ValidateHeaders: false,
 			}))
 
+			r.LoadHTMLFiles("templates/nofirefox.html")
+
 			r.GET("/", homeHandler)
+			r.GET("/certificate.crt", certHandler)
 			r.POST("/upload", uploadHandler)
 			r.GET("/socket.io/", socketHandler)
 			r.POST("/socket.io/", socketHandler)
@@ -233,6 +242,11 @@ func main() {
 			r.Handle("WSS", "/socket.io/", socketHandler)
 			r.GET("/info", infoHandler)
 			go func() {
+				// check if certificates exist; if not, use plain http
+				if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
+					return
+				}
+
 				start := 8990
 				end := 9000
 				i := start
@@ -291,7 +305,7 @@ const homeTemplateHtml = `<!DOCTYPE html>
     var log = document.getElementById('log');
     var pause = document.getElementById('myCheck');
     var messages = [];
-    var only_log = false;
+    var only_log = true;
 
     function appendLog(msg) {
 
@@ -382,7 +396,9 @@ body {
 <form id="form">
     <input type="submit" value="Send" />
     <input type="text" id="msg" size="64"/>
-    <input name="pause" type="checkbox" value="pause" id="myCheck"/> Pause <br>
+    <input name="pause" type="checkbox" value="pause" id="myCheck"/> Pause
+    <!--<input type="button" value="Install Certificate" onclick="window.open('http://localhost:8991/certificate.crt')" />-->
+</form>
 </form>
 </body>
 </html>

@@ -57,6 +57,7 @@ func (h *hub) run() {
 			c.send <- []byte("{\"Version\" : \"" + version + "\"} ")
 			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud] [bufferAlgorithm (optional)]\", \"send [portName] [cmd]\", \"sendnobuf [portName] [cmd]\", \"close [portName]\", \"bufferalgorithms\", \"baudrates\", \"restart\", \"exit\", \"program [portName] [board:name] [$path/to/filename/without/extension]\", \"programfromurl [portName] [board:name] [urlToHexFile]\"]} ")
 			c.send <- []byte("{\"Hostname\" : \"" + *hostname + "\"} ")
+			c.send <- []byte("{\"OS\" : \"" + runtime.GOOS + "\"} ")
 		case c := <-h.unregister:
 			delete(h.connections, c)
 			// put close in func cuz it was creating panics and want
@@ -216,11 +217,10 @@ func checkCmd(m []byte) {
 	//log.Print("Done with checkCmd")
 }
 
-var multi_writer = io.MultiWriter(&logger_ws, os.Stderr)
-
 func logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
+		multi_writer := io.MultiWriter(&logger_ws, os.Stderr)
 		log.SetOutput(multi_writer)
 	} else if strings.HasPrefix(sl, "log off") {
 		*logDump = "off"
