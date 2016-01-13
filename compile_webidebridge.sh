@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # git submodule init
 # git submodule update
 
@@ -29,10 +31,10 @@ createZipEmbeddableFileArduino()
 	mkdir arduino/arduino
 	cp -r arduino/hardware arduino/tools\_$GOOS\_$GOARCH arduino/boards.json arduino/arduino
 	cp config.ini arduino
-    cp fakecerts/*.pem arduino/
+	cp fakecerts/*.pem fakecerts/*.cer arduino/
 	mv arduino/arduino/tools* arduino/arduino/tools
 	cd arduino
-	zip -r arduino.zip config.ini *.pem > /dev/null
+	zip -r arduino.zip config.ini *.pem *.cer > /dev/null
 	cd ..
 	#cat arduino/arduino.zip >> $3
 	#zip  --adjust-sfx $3

@@ -38,11 +38,10 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 	"github.com/kr/binarydist"
 	"github.com/pivotal-golang/archiver/extractor"
-	patch "github.com/sanderhahn/gozip/patchzip"
+	"gopkg.in/inconshreveable/go-update.v0"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -67,57 +66,6 @@ func IsZip(path string) bool {
 		return true
 	}
 	return false
-}
-
-func Zip(path string, dirs []string) (err error) {
-	if IsZip(path) {
-		return errors.New(path + " is already a zip file")
-	}
-
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-
-	startoffset, err := f.Seek(0, os.SEEK_END)
-	if err != nil {
-		return
-	}
-
-	w := patch.NewWriterAt(f, startoffset)
-
-	for _, dir := range dirs {
-		err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			fh, err := patch.FileInfoHeader(info)
-			if err != nil {
-				return err
-			}
-			fh.Name = path
-
-			p, err := w.CreateHeader(fh)
-			if err != nil {
-				return err
-			}
-			if !info.IsDir() {
-				content, err := ioutil.ReadFile(path)
-				if err != nil {
-					return err
-				}
-				_, err = p.Write(content)
-				if err != nil {
-					return err
-				}
-			}
-			return err
-		})
-	}
-	err = w.Close()
-	return
 }
 
 func Unzip(zippath string, destination string) (err error) {
