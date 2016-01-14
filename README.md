@@ -21,6 +21,14 @@ Please use the current latest version:
 
 ## Compiling
 
+From the project root dir executing:
+```
+export GOPATH=$PWD
+go get
+go build
+```
+will build the `arduino-create-agent` binary.
+
 `compile_webidebridge.sh` contains the cross-platform script we use to deploy the agent for all the supported platforms; it needs to be adjusted as per your `go` installation paths and OS.
 
 You can use `bootstrapPlatforms` function to compile the needed CGO-enabled environment
