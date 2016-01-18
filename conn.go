@@ -4,7 +4,6 @@ package main
 
 import (
 	"net/http"
-	"os"
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
@@ -102,12 +101,6 @@ func wsHandler() *WsServer {
 		h.register <- c
 		so.On("command", func(message string) {
 			h.broadcast <- []byte(message)
-		})
-
-		so.On("deleteCA", func() {
-			os.Remove("ca.cert.pem")
-			os.Remove("ca.cert.cer")
-			os.Remove("ca.key.pem")
 		})
 
 		so.On("disconnection", func() {

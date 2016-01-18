@@ -235,6 +235,7 @@ func main() {
 
 			r.GET("/", homeHandler)
 			r.GET("/certificate.crt", certHandler)
+			r.DELETE("/certificate.crt", deleteCertHandler)
 			r.POST("/upload", uploadHandler)
 			r.GET("/socket.io/", socketHandler)
 			r.POST("/socket.io/", socketHandler)
