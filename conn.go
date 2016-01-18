@@ -3,11 +3,13 @@
 package main
 
 import (
+	"net/http"
+	"os"
+	"strconv"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
-	"net/http"
-	"strconv"
 )
 
 type connection struct {
@@ -101,6 +103,13 @@ func wsHandler() *WsServer {
 		so.On("command", func(message string) {
 			h.broadcast <- []byte(message)
 		})
+
+		so.On("deleteCA", func() {
+			os.Remove("ca.cert.pem")
+			os.Remove("ca.cert.cer")
+			os.Remove("ca.key.pem")
+		})
+
 		so.On("disconnection", func() {
 			h.unregister <- c
 		})
