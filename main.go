@@ -16,7 +16,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/arduino/arduino-builder/src/github.com/itsjamie/gin-cors"
+	"github.com/itsjamie/gin-cors"
 	"github.com/carlescere/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/kardianos/osext"
