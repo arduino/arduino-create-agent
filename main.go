@@ -16,9 +16,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-builder/src/github.com/itsjamie/gin-cors"
 	"github.com/carlescere/scheduler"
 	"github.com/gin-gonic/gin"
-	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
@@ -236,6 +236,10 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+			// All the ports p in the range  8990 <= p <= portPlain
+			// has already been scanned and results not free.
+			// Thus we can restrict the search range for portSSL
+			// to [portPlain+1, 9001).
 			portSSL, err := getBindPort(portPlain+1, 9001)
 			if err != nil {
 				panic(err)
