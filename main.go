@@ -16,9 +16,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/itsjamie/gin-cors"
 	"github.com/carlescere/scheduler"
 	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
@@ -232,21 +232,21 @@ func main() {
 
 			socketHandler := wsHandler().ServeHTTP
 
-			portPlain, err := getBindPort(8990, 9001)
+			port, err := getBindPort(8990, 9001)
 			if err != nil {
 				panic(err)
 			}
-			// All the ports p in the range  8990 <= p <= portPlain
+			// All the ports p in the range  8990 <= p <= port
 			// has already been scanned and results not free.
 			// Thus we can restrict the search range for portSSL
-			// to [portPlain+1, 9001).
-			portSSL, err := getBindPort(portPlain+1, 9001)
+			// to [port+1, 9001).
+			portSSL, err := getBindPort(port+1, 9001)
 			if err != nil {
 				panic(err)
 			}
 
 			extraOriginStr := "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://create-staging.arduino.cc, https://create-staging.arduino.cc"
-			extraOriginStr += ", http://localhost:" + strconv.Itoa(portPlain) + ", https://localhost:" + strconv.Itoa(portPlain)
+			extraOriginStr += ", http://localhost:" + strconv.Itoa(port) + ", https://localhost:" + strconv.Itoa(port)
 			extraOriginStr += ", http://localhost:" + strconv.Itoa(portSSL) + ", https://localhost:" + strconv.Itoa(portSSL)
 
 			r.Use(cors.Middleware(cors.Config{
@@ -280,18 +280,18 @@ func main() {
 					log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				} else {
 					ip := "0.0.0.0"
-					log.Print("Starting server and websocket (SSL) on " + ip + "" + port)
+					log.Print("Starting server and websocket (SSL) on " + ip + "" + string(port))
 				}
 			}()
 
 			go func() {
 
-				portStr := ":" + strconv.Itoa(portPlain)
+				portStr := ":" + strconv.Itoa(port)
 				if err := r.Run(portStr); err != nil {
 					log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				} else {
 					ip := "0.0.0.0"
-					log.Print("Starting server and websocket on " + ip + "" + port)
+					log.Print("Starting server and websocket on " + ip + "" + string(port))
 				}
 			}()
 
