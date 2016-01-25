@@ -25,7 +25,7 @@ extractVersionFromMain()
 
 createZipEmbeddableFileArduino()
 {
-    echo 'In createZipEmbeddableFileArduino'
+	echo 'In createZipEmbeddableFileArduino'
 	GOOS=$1
 	GOARCH=$2
 
@@ -50,7 +50,7 @@ createZipEmbeddableFileArduino()
 
 bootstrapPlatforms()
 {
-    echo 'In bootstrapPlatforms'
+	echo 'In bootstrapPlatforms'
 	#export PATH=$PATH:/opt/osxcross/target/bin
 	cd $GOROOT/src
 	env CC_FOR_TARGET=$DARWIN_CC CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 ./make.bash --no-clean
@@ -62,7 +62,7 @@ bootstrapPlatforms()
 
 compilePlatform()
 {
-    echo 'In compilePlatform'
+	echo 'In compilePlatform'
 	GOOS=$1
 	GOARCH=$2
 	CC=$3
@@ -74,14 +74,14 @@ compilePlatform()
 	NAME=$APP_NAME
 	if [ $GOOS == "windows" ]
 	then
-	NAME=$NAME".exe"
-	EXTRAFLAGS="-ldflags -H=windowsgui"
+		NAME=$NAME".exe"
+		EXTRAFLAGS="-ldflags -H=windowsgui"
 	fi
 	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CXX=$CC CGO_ENABLED=$CGO_ENABLED go build -o=$NAME $EXTRAFLAGS
 	if [ $? != 0 ]
 	then
-	echo -e "${red}Target $GOOS, $GOARCH failed${NC}"
-	exit 1
+		echo -e "${red}Target $GOOS, $GOARCH failed${NC}"
+		exit 1
 	fi
 	echo createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
 	createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
