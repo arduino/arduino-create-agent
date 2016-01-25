@@ -4,9 +4,7 @@
 package main
 
 import (
-	"errors"
 	"flag"
-	"net"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -16,9 +14,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/itsjamie/gin-cors"
 	"github.com/carlescere/scheduler"
 	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
@@ -75,21 +73,6 @@ func launchSelfLater() {
 	log.Println("Going to launch myself 2 seconds later.")
 	time.Sleep(2 * 1000 * time.Millisecond)
 	log.Println("Done waiting 2 secs. Now launching...")
-}
-
-// getBindPort returns the first bindable port in the given range
-func getBindPort(minPort, maxPort int) (int, error) {
-
-	for i := minPort; i < maxPort; i++ {
-		ln, _ := net.Listen("tcp", ":"+strconv.Itoa(i))
-		if ln != nil {
-			ln.Close()
-			return i, nil
-		}
-	}
-
-	return -1, errors.New("Unable to bind any port in the range [" + strconv.Itoa(minPort) + "," + strconv.Itoa(maxPort) + ")")
-
 }
 
 func main() {
@@ -232,22 +215,11 @@ func main() {
 
 			socketHandler := wsHandler().ServeHTTP
 
-			portPlain, err := getBindPort(8990, 9001)
-			if err != nil {
-				panic(err)
-			}
-			// All the ports p in the range  8990 <= p <= portPlain
-			// has already been scanned and results not free.
-			// Thus we can restrict the search range for portSSL
-			// to [portPlain+1, 9001).
-			portSSL, err := getBindPort(portPlain+1, 9001)
-			if err != nil {
-				panic(err)
-			}
-
 			extraOriginStr := "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://create-staging.arduino.cc, https://create-staging.arduino.cc"
-			extraOriginStr += ", http://localhost:" + strconv.Itoa(portPlain) + ", https://localhost:" + strconv.Itoa(portPlain)
-			extraOriginStr += ", http://localhost:" + strconv.Itoa(portSSL) + ", https://localhost:" + strconv.Itoa(portSSL)
+
+			for i := 8990; i < 9001; i++ {
+				extraOriginStr = extraOriginStr + ", http://localhost:" + strconv.Itoa(i) + ", https://localhost:" + strconv.Itoa(i)
+			}
 
 			r.Use(cors.Middleware(cors.Config{
 				Origins:         *origins + ", " + extraOriginStr,
@@ -275,23 +247,38 @@ func main() {
 					return
 				}
 
-				portStr := ":" + strconv.Itoa(portSSL)
-				if err := r.RunTLS(portStr, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
-					log.Printf("Error trying to bind to port: %v, so exiting...", err)
-				} else {
-					ip := "0.0.0.0"
-					log.Print("Starting server and websocket (SSL) on " + ip + "" + port)
+				start := 8990
+				end := 9000
+				i := start
+				for i < end {
+					i = i + 1
+					portSSL = ":" + strconv.Itoa(i)
+					if err := r.RunTLS(portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+						log.Printf("Error trying to bind to port: %v, so exiting...", err)
+						continue
+					} else {
+						ip := "0.0.0.0"
+						log.Print("Starting server and websocket (SSL) on " + ip + "" + port)
+						break
+					}
 				}
 			}()
 
 			go func() {
-
-				portStr := ":" + strconv.Itoa(portPlain)
-				if err := r.Run(portStr); err != nil {
-					log.Printf("Error trying to bind to port: %v, so exiting...", err)
-				} else {
-					ip := "0.0.0.0"
-					log.Print("Starting server and websocket on " + ip + "" + port)
+				start := 8990
+				end := 9000
+				i := start
+				for i < end {
+					i = i + 1
+					port = ":" + strconv.Itoa(i)
+					if err := r.Run(port); err != nil {
+						log.Printf("Error trying to bind to port: %v, so exiting...", err)
+						continue
+					} else {
+						ip := "0.0.0.0"
+						log.Print("Starting server and websocket on " + ip + "" + port)
+						break
+					}
 				}
 			}()
 
