@@ -241,6 +241,8 @@ func main() {
 			r.Handle("WS", "/socket.io/", socketHandler)
 			r.Handle("WSS", "/socket.io/", socketHandler)
 			r.GET("/info", infoHandler)
+			r.POST("/killbrowser", killBrowserHandler)
+
 			go func() {
 				// check if certificates exist; if not, use plain http
 				if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
