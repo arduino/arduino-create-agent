@@ -12,6 +12,6 @@ func killBrowser(process string) ([]byte, error) {
 }
 
 func startBrowser(command []byte, url string) ([]byte, error) {
-	cmd := exec.Command("start", string(command), url)
+	cmd := exec.Command("cmd", "/C", "start", string(command), url)
 	return cmd.Output()
 }
