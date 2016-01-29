@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,18 +17,23 @@ func killBrowserHandler(c *gin.Context) {
 
 	c.BindJSON(&data)
 
-	command, err := findBrowser(data.Process)
+	if data.Process != "chrome" && data.Process != "chrom" {
+		c.JSON(http.StatusBadRequest, errors.New("You can't kill the process"+data.Process))
+		return
+	}
 
-	log.Println(command)
+	command, err := findBrowser(data.Process)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	if data.Action == "kill" || data.Action == "restart" {
 		_, err := killBrowser(data.Process)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err.Error())
+			return
 		}
 	}
 
@@ -36,6 +41,7 @@ func killBrowserHandler(c *gin.Context) {
 		_, err := startBrowser(command, data.URL)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err.Error())
+			return
 		}
 	}
 
