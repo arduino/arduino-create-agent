@@ -22,20 +22,20 @@ func killBrowserHandler(c *gin.Context) {
 	log.Println(command)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	if data.Action == "kill" || data.Action == "restart" {
 		// _, err := killBrowser(data.Process)
 		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, err)
+		// 	c.JSON(http.StatusInternalServerError, err.Error())
 		// }
 	}
 
 	if data.Action == "restart" {
 		_, err := startBrowser(command, data.URL)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, err)
+			c.JSON(http.StatusInternalServerError, err.Error())
 		}
 	}
 
