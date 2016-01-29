@@ -25,14 +25,14 @@ func killBrowserHandler(c *gin.Context) {
 	command, err := findBrowser(data.Process)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"when": "find", "err": err.Error()})
 		return
 	}
 
 	if data.Action == "kill" || data.Action == "restart" {
 		_, err := killBrowser(data.Process)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"when": "kill", "err": err.Error()})
 			return
 		}
 	}
@@ -40,7 +40,7 @@ func killBrowserHandler(c *gin.Context) {
 	if data.Action == "restart" {
 		_, err := startBrowser(command, data.URL)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"when": "start", "err": err.Error()})
 			return
 		}
 	}
