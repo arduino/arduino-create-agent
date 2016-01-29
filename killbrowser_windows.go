@@ -7,7 +7,7 @@ func findBrowser(process string) ([]byte, error) {
 }
 
 func killBrowser(process string) ([]byte, error) {
-	cmd := exec.Command("pskill", process)
+	cmd := exec.Command("Taskkill", "/F", "/IM", process+".exe")
 	return cmd.Output()
 }
 
