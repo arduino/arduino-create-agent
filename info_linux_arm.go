@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/facchinm/go-serial"
-	"github.com/facchinm/systray"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,7 +21,6 @@ func pauseHandler(c *gin.Context) {
 		for _, element := range ports {
 			spClose(element)
 		}
-		systray.Quit()
 		*hibernate = true
 		restart("")
 	}()
