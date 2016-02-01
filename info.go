@@ -6,9 +6,10 @@ import (
 
 func infoHandler(c *gin.Context) {
 	c.JSON(200, gin.H{
-		"http":  "http://localhost" + port,
-		"https": "https://localhost" + portSSL,
-		"ws":    "ws://localhost" + port,
-		"wss":   "wss://localhost" + portSSL,
+		"version": version,
+		"http":    "http://localhost" + port,
+		"https":   "https://localhost" + portSSL,
+		"ws":      "ws://localhost" + port,
+		"wss":     "wss://localhost" + portSSL,
 	})
 }
