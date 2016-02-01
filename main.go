@@ -242,6 +242,7 @@ func main() {
 			r.Handle("WSS", "/socket.io/", socketHandler)
 			r.GET("/info", infoHandler)
 			r.POST("/killbrowser", killBrowserHandler)
+			r.POST("/pause", pauseHandler)
 
 			go func() {
 				// check if certificates exist; if not, use plain http
