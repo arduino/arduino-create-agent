@@ -14,6 +14,10 @@ red='\e[0;31m'
 green='\e[0;32m'
 NC='\e[0m' # No Color
 
+DARWIN_CC=o64-clang
+LINUX_CC=gcc
+WIN_CC=i686-w64-mingw32-gcc
+
 extractVersionFromMain()
 {
 	VERSION=`grep version main.go | cut -d "\"" -f2 | cut -d "\"" -f1 | head -1`
@@ -21,7 +25,7 @@ extractVersionFromMain()
 
 createZipEmbeddableFileArduino()
 {
-    echo 'In createZipEmbeddableFileArduino'
+	echo 'In createZipEmbeddableFileArduino'
 	GOOS=$1
 	GOARCH=$2
 
@@ -46,34 +50,38 @@ createZipEmbeddableFileArduino()
 
 bootstrapPlatforms()
 {
-    echo 'In bootstrapPlatforms'
+	echo 'In bootstrapPlatforms'
 	#export PATH=$PATH:/opt/osxcross/target/bin
 	cd $GOROOT/src
-	env CC_FOR_TARGET=o64-clang CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 ./make.bash --no-clean
-	env CC_FOR_TARGET=gcc CGO_ENABLED=1 GOOS=linux GOARCH=amd64 ./make.bash --no-clean
-	env CC_FOR_TARGET=gcc CGO_ENABLED=1 GOOS=linux GOARCH=386 ./make.bash --no-clean
+	env CC_FOR_TARGET=$DARWIN_CC CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 ./make.bash --no-clean
+	env CC_FOR_TARGET=$LINUX_CC CGO_ENABLED=1 GOOS=linux GOARCH=amd64 ./make.bash --no-clean
+	env CC_FOR_TARGET=$LINUX_CC CGO_ENABLED=1 GOOS=linux GOARCH=386 ./make.bash --no-clean
 	env CGO_ENABLED=0 GOOS=linux GOARCH=arm ./make.bash --no-clean
-	env CC_FOR_TARGET=i686-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows GOARCH=386 ./make.bash --no-clean
+	env CC_FOR_TARGET=$WIN_CC CGO_ENABLED=1 GOOS=windows GOARCH=386 ./make.bash --no-clean
 }
 
 compilePlatform()
 {
-    echo 'In compilePlatform'
+	echo 'In compilePlatform'
 	GOOS=$1
 	GOARCH=$2
 	CC=$3
+	if [ -z $(which $CC) ]; then
+		echo -e "${red}$CC not available. Skipping...${NC}"
+		return
+	fi
 	CGO_ENABLED=$4
 	NAME=$APP_NAME
 	if [ $GOOS == "windows" ]
 	then
-	NAME=$NAME".exe"
-	EXTRAFLAGS="-ldflags -H=windowsgui"
+		NAME=$NAME".exe"
+		EXTRAFLAGS="-ldflags -H=windowsgui"
 	fi
 	env GOOS=$GOOS GOARCH=$GOARCH CC=$CC CXX=$CC CGO_ENABLED=$CGO_ENABLED go build -o=$NAME $EXTRAFLAGS
 	if [ $? != 0 ]
 	then
-	echo -e "${red}Target $GOOS, $GOARCH failed${NC}"
-	exit 1
+		echo -e "${red}Target $GOOS, $GOARCH failed${NC}"
+		exit 1
 	fi
 	echo createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
 	createZipEmbeddableFileArduino $GOOS $GOARCH $NAME
@@ -81,12 +89,16 @@ compilePlatform()
 	rm -rf $NAME*
 }
 
-extractVersionFromMain
-compilePlatform darwin amd64 o64-clang 1
-#compilePlatformLinux linux 386 gcc
-compilePlatform linux amd64 gcc 1
-compilePlatform linux arm 0
-compilePlatform windows 386 i686-w64-mingw32-gcc 1
+compileAllPlatforms()
+{
+	compilePlatform darwin amd64 $DARWIN_CC 1
+	#compilePlatformLinux linux 386 $LINUX_CC
+	compilePlatform linux amd64 $LINUX_CC 1
+	compilePlatform linux arm 0
+	compilePlatform windows 386 $WIN_CC 1
+}
 
+extractVersionFromMain
+compileAllPlatforms
 
 exit 0
