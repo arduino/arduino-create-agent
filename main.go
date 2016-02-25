@@ -45,6 +45,7 @@ var (
 	port           string
 	portSSL        string
 	origins        = flag.String("origins", "", "Allowed origin list for CORS")
+	signatureKey   = flag.String("signatureKey", "", "Pem-encoded public key to verify signed commandlines")
 )
 
 type NullWriter int

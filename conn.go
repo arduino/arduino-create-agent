@@ -7,8 +7,9 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
-	"io/ioutil"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -80,6 +81,7 @@ func uploadHandler(c *gin.Context) {
 	if err != nil {
 		c.String(http.StatusBadRequest, "signature is invalid")
 		log.Error("signature is invalid")
+		log.Error(err)
 		return
 	}
 
@@ -113,12 +115,11 @@ func uploadHandler(c *gin.Context) {
 }
 
 func verifyCommandLine(input string, signature string) error {
-	publicKey, err := ioutil.ReadFile("commandline.pub")
-	if err != nil {
-		return err
+	sign, _ := hex.DecodeString(signature)
+	block, _ := pem.Decode([]byte(*signatureKey))
+	if block == nil {
+		return errors.New("invalid key")
 	}
-
-	block, _ := pem.Decode(publicKey)
 	key, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
 		return err
@@ -127,7 +128,7 @@ func verifyCommandLine(input string, signature string) error {
 	h := sha256.New()
 	h.Write([]byte(input))
 	d := h.Sum(nil)
-	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, []byte(signature))
+	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, sign)
 }
 
 func wsHandler() *WsServer {
