@@ -46,6 +46,7 @@ var (
 	portSSL        string
 	origins        = flag.String("origins", "", "Allowed origin list for CORS")
 	signatureKey   = flag.String("signatureKey", "", "Pem-encoded public key to verify signed commandlines")
+	address        = flag.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
 )
 
 type NullWriter int
@@ -258,12 +259,11 @@ func main() {
 				for i < end {
 					i = i + 1
 					portSSL = ":" + strconv.Itoa(i)
-					if err := r.RunTLS(portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+					if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
 						log.Printf("Error trying to bind to port: %v, so exiting...", err)
 						continue
 					} else {
-						ip := "0.0.0.0"
-						log.Print("Starting server and websocket (SSL) on " + ip + "" + port)
+						log.Print("Starting server and websocket (SSL) on " + *address + "" + port)
 						break
 					}
 				}
@@ -276,12 +276,11 @@ func main() {
 				for i < end {
 					i = i + 1
 					port = ":" + strconv.Itoa(i)
-					if err := r.Run(port); err != nil {
+					if err := r.Run(*address + port); err != nil {
 						log.Printf("Error trying to bind to port: %v, so exiting...", err)
 						continue
 					} else {
-						ip := "0.0.0.0"
-						log.Print("Starting server and websocket on " + ip + "" + port)
+						log.Print("Starting server and websocket on " + *address + "" + port)
 						break
 					}
 				}
