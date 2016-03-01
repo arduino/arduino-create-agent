@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/arduino/arduino-create-agent/utilities"
 )
 
 func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
@@ -14,7 +16,7 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 		ueventcmd := exec.Command("cat", "/sys/class/tty/"+filepath.Base(ports[index].Name)+"/device/uevent")
 		grep3cmd := exec.Command("grep", "PRODUCT=")
 
-		cmdOutput2, _ := pipe_commands(ueventcmd, grep3cmd)
+		cmdOutput2, _ := utilities.PipeCommands(ueventcmd, grep3cmd)
 		cmdOutput2S := string(cmdOutput2)
 
 		if len(cmdOutput2S) == 0 {

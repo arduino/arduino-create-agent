@@ -3,6 +3,8 @@ package main
 import (
 	"os/exec"
 	"strings"
+
+	"github.com/arduino/arduino-create-agent/utilities"
 )
 
 func findBrowser(process string) ([]byte, error) {
@@ -10,7 +12,7 @@ func findBrowser(process string) ([]byte, error) {
 	grep := exec.Command("grep", process)
 	head := exec.Command("head", "-n", "1")
 
-	return pipe_commands(ps, grep, head)
+	return utilities.PipeCommands(ps, grep, head)
 }
 
 func killBrowser(process string) ([]byte, error) {

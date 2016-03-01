@@ -29,11 +29,12 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/oleksandr/bonjour"
 	"net"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/oleksandr/bonjour"
 )
 
 const timeoutConst = 2
@@ -142,4 +143,15 @@ func getPorts() ([]OsSerialPort, error) {
 	case <-timeout:
 		return arrPorts, nil
 	}
+}
+
+// Filter returns a new slice containing all OsSerialPort in the slice that satisfy the predicate f.
+func Filter(vs []OsSerialPort, f func(OsSerialPort) bool) []OsSerialPort {
+	var vsf []OsSerialPort
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
 }
