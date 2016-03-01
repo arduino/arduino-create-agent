@@ -81,6 +81,11 @@ compilePlatform()
 	rm -rf $NAME*
 }
 
+rm -rf snapshot/linux_amd64
+rm -rf snapshot/linux_arm
+rm -rf snapshot/darwin_amd64
+rm -rf snapshot/windows_386
+
 extractVersionFromMain
 compilePlatform darwin amd64 o64-clang 1
 #compilePlatformLinux linux 386 gcc
