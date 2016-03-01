@@ -4,3 +4,4 @@ environment:
     DOCKER_EMAIL: ""
     SLACK_WEBHOOK: ""
     SLACK_CHANNEL: ""
+    GITHUB_API_KEY: ""

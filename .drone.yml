@@ -21,8 +21,18 @@ build:
         # Windows 386
         - GOOS=windows GOARCH=386 CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-gcc CGO_ENABLED=1 go build -o artifacts/windows/arduino-create-agent.exe -ldflags -H=windowsgui
         - cp config.ini artifacts/windows
+        - zip -r arduino-create-agent.zip artifacts/*
 notify:
     slack:
         webhook_url: $$SLACK_WEBHOOK
         channel: $$SLACK_CHANNEL
         username: drone
+publish:
+    github_release:
+        api_key: $$GITHUB_API_KEY
+        files:
+            - arduino-create-agent.zip
+        checksum:
+            - md5
+        when:
+            branch: [master, devel, test]
