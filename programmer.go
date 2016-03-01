@@ -21,7 +21,6 @@ import (
 	"github.com/facchinm/go-serial"
 	"github.com/mattn/go-shellwords"
 	"github.com/sfreiberg/simplessh"
-	"github.com/xrash/smetrics"
 )
 
 var compiling = false
@@ -232,23 +231,16 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
 	runtimeVars := runtimeRe.FindAllString(commandline, -1)
 
-	fmt.Println(runtimeVars)
-
 	for _, element := range runtimeVars {
 
-		// use string similarity to resolve a runtime var with a "similar" map element
-		if globalToolsMap[element] == "" {
-			max_similarity := 0.0
-			for i, candidate := range globalToolsMap {
-				similarity := smetrics.Jaro(element, i)
-				if similarity > 0.8 && similarity > max_similarity {
-					max_similarity = similarity
-					globalToolsMap[element] = candidate
-				}
-			}
+		location, err := Tools.GetLocation(element)
+		if err != nil {
+			log.Printf("Command finished with error: %v", err)
+			mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not find the upload tool"}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
 		}
-
-		commandline = strings.Replace(commandline, element, globalToolsMap[element], 1)
+		commandline = strings.Replace(commandline, element, location, 1)
 	}
 
 	z, _ := shellwords.Parse(commandline)
@@ -292,7 +284,6 @@ func spProgramRW(portname string, boardname string, filePath string, commandline
 var oscmd *exec.Cmd
 
 func spHandlerProgram(flasher string, cmdString []string) error {
-
 	// if runtime.GOOS == "darwin" {
 	// 	sh, _ := exec.LookPath("sh")
 	// 	// prepend the flasher to run it via sh
@@ -392,7 +383,6 @@ func formatCmdline(cmdline string, boardOptions map[string]string) (string, bool
 			}
 		}
 	}
-	log.Println(cmdline)
 	return cmdline, true
 }
 
