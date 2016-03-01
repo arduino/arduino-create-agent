@@ -1,15 +1,16 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/mattn/go-ole"
-	"github.com/mattn/go-ole/oleutil"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
 	"syscall"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/mattn/go-ole"
+	"github.com/mattn/go-ole/oleutil"
 )
 
 var (
@@ -60,13 +61,6 @@ func getList() ([]OsSerialPort, os.SyscallError) {
 
 func getListSynchronously() {
 
-}
-
-func hideFile(path string) {
-	cpath, cpathErr := syscall.UTF16PtrFromString(path)
-	if cpathErr != nil {
-	}
-	syscall.SetFileAttributes(cpath, syscall.FILE_ATTRIBUTE_HIDDEN)
 }
 
 func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {

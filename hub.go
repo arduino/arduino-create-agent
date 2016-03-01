@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/kardianos/osext"
 	//"os"
 	"os/exec"
@@ -191,7 +193,7 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		args := strings.Split(s, " ")
 		if len(args) > 2 {
-			go spDownloadTool(args[1], args[2])
+			go tools.Download(args[1], args[2])
 		}
 	} else if strings.HasPrefix(sl, "bufferalgorithm") {
 		go spBufferAlgorithms()
