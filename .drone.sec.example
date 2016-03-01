@@ -2,3 +2,5 @@ environment:
     DOCKER_USERNAME: ""
     DOCKER_PASSWORD: ""
     DOCKER_EMAIL: ""
+    SLACK_WEBHOOK: ""
+    SLACK_CHANNEL: ""
