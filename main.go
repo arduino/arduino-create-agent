@@ -45,6 +45,7 @@ var (
 	port           string
 	portSSL        string
 	origins        = flag.String("origins", "", "Allowed origin list for CORS")
+	address        = flag.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
 )
 
 type NullWriter int
@@ -257,7 +258,7 @@ func main() {
 				for i < end {
 					i = i + 1
 					portSSL = ":" + strconv.Itoa(i)
-					if err := r.RunTLS(portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+					if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
 						log.Printf("Error trying to bind to port: %v, so exiting...", err)
 						continue
 					} else {
@@ -275,7 +276,7 @@ func main() {
 				for i < end {
 					i = i + 1
 					port = ":" + strconv.Itoa(i)
-					if err := r.Run(port); err != nil {
+					if err := r.Run(*address + port); err != nil {
 						log.Printf("Error trying to bind to port: %v, so exiting...", err)
 						continue
 					} else {
