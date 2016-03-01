@@ -14,6 +14,7 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
 )
@@ -95,7 +96,7 @@ func uploadHandler(c *gin.Context) {
 
 	buffer := bytes.NewBuffer(data.Hex)
 
-	path, err := saveFileonTempDir(data.Filename, buffer)
+	path, err := utilities.SaveFileonTempDir(data.Filename, buffer)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 	}
