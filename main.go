@@ -6,7 +6,6 @@ package main
 import (
 	"flag"
 	"os"
-	"os/user"
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
@@ -14,6 +13,11 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+<<<<<<< e73846650fde9b0955aa35e237100ec552af47fb
+=======
+	"github.com/arduino/arduino-create-agent/tools"
+	"github.com/carlescere/scheduler"
+>>>>>>> Move initialization of tools in package tools
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
@@ -39,7 +43,6 @@ var (
 	appName        = flag.String("appName", "", "")
 	genCert        = flag.Bool("generateCert", false, "")
 	globalToolsMap = make(map[string]string)
-	tempToolsPath  = createToolsDir()
 	port           string
 	portSSL        string
 	origins        = flag.String("origins", "", "Allowed origin list for CORS")
@@ -59,11 +62,6 @@ func (u *logWriter) Write(p []byte) (n int, err error) {
 }
 
 var logger_ws logWriter
-
-func createToolsDir() string {
-	usr, _ := user.Current()
-	return usr.HomeDir + "/.arduino-create"
-}
 
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
@@ -92,8 +90,7 @@ func main() {
 			src, _ := osext.Executable()
 			dest := filepath.Dir(src)
 
-			os.Mkdir(tempToolsPath, 0777)
-			hideFile(tempToolsPath)
+			tools.CreateDir()
 
 			if embedded_autoextract {
 				// save the config.ini (if it exists)
