@@ -52,7 +52,13 @@ func updateHandler(c *gin.Context) {
 		return
 	}
 
+	path, err := osext.Executable()
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
-	path, _ := osext.Executable()
 	restart(path)
 }
