@@ -1,0 +1,38 @@
+build:
+    image: arduino/golang-linux-32
+    commands:
+        - apt-get update && apt-get install libgtk-3-dev libappindicator3-dev
+        - GOOS=linux GOARCH=386 CC=gcc CXX=gcc CGO_ENABLED=1 go build -o artifacts/linux-386/arduino-create-agent
+        - cp config.ini artifacts/linux-386
+build:
+    image: arduino/golang-cross
+    auth_config:
+        username: $$DOCKER_USERNAME
+        password: $$DOCKER_PASSWORD
+        email: $$DOCKER_EMAIL
+    commands:
+        - apt-get update && apt-get install libgtk-3-dev libappindicator3-dev zip
+        # Linux amd64
+        - GOOS=linux GOARCH=amd64 CC=gcc CXX=gcc CGO_ENABLED=1 go build -o artifacts/linux-amd64/arduino-create-agent
+        - cp config.ini artifacts/linux-amd64
+        # Darwin amd64
+        - GOOS=darwin GOARCH=amd64 CC=o64-clang CXX=o64-clang CGO_ENABLED=1 go build -o artifacts/osx/arduino-create-agent
+        - cp config.ini artifacts/osx
+        # Windows 386
+        - GOOS=windows GOARCH=386 CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-gcc CGO_ENABLED=1 go build -o artifacts/windows/arduino-create-agent.exe -ldflags -H=windowsgui
+        - cp config.ini artifacts/windows
+        - zip -r arduino-create-agent.zip artifacts/*
+notify:
+    slack:
+        webhook_url: $$SLACK_WEBHOOK
+        channel: $$SLACK_CHANNEL
+        username: drone
+publish:
+    github_release:
+        api_key: $$GITHUB_API_KEY
+        files:
+            - arduino-create-agent.zip
+        checksum:
+            - md5
+        when:
+            branch: [master, devel, test]

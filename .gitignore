@@ -5,3 +5,4 @@ serial-port-json-server
 
 snapshot/*
 public/
+artifacts*
