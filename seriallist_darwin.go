@@ -3,6 +3,8 @@ package main
 import (
 	"os/exec"
 	"strings"
+
+	"github.com/arduino/arduino-create-agent/utilities"
 )
 
 // execute system_profiler SPUSBDataType | grep "Vendor ID: 0x2341" -A5 -B2
@@ -28,12 +30,12 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 
 		usbcmd := exec.Command("system_profiler", "SPUSBDataType")
 		grepcmd := exec.Command("grep", "Location ID: 0x"+port_hash[:len(port_hash)-1], "-B6")
-		cmdOutput, _ := utillities.PipeCommands(usbcmd, grepcmd)
+		cmdOutput, _ := utilities.PipeCommands(usbcmd, grepcmd)
 
 		if len(cmdOutput) == 0 {
 			usbcmd = exec.Command("system_profiler", "SPUSBDataType")
 			grepcmd = exec.Command("grep" /*"Serial Number: "+*/, strings.Trim(port_hash, "0"), "-B3", "-A3")
-			cmdOutput, _ = utillities.PipeCommands(usbcmd, grepcmd)
+			cmdOutput, _ = utilities.PipeCommands(usbcmd, grepcmd)
 		}
 
 		if len(cmdOutput) == 0 {
