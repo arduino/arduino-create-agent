@@ -335,8 +335,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
             return false;
         }
         socket.emit("command", msg.val());
-        if (msg.val().indexOf("log off") != -1) {only_log = true;}
-        if (msg.val().indexOf("log on") != -1) {only_log = false;}
+        if (msg.val().indexOf("log off") != -1) {only_log = true}
+        if (msg.val().indexOf("log on") != -1) {only_log = false}
         msg.val("");
         return false
     });
