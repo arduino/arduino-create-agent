@@ -30,7 +30,7 @@ notify:
         channel: $$SLACK_CHANNEL
         username: drone
         when:
-            event: [pull_request]
+            event: pull_request
         template: |
             {{#success build.status}}
                 [{{ repo.name}}] Congrats {{ build.author }}! Your PR works:  {{ build.link_url}}
@@ -45,14 +45,14 @@ publish:
         checksum:
             - md5
         when:
-            event: [tag]
+            event: tag
 notify:
     slack:
         webhook_url: $$SLACK_WEBHOOK
         channel: $$SLACK_CHANNEL
         username: drone
         when:
-            event: [tag]
+            event: tag
         template: |
             {{#success build.status}}
                 [{{ repo.name}}/{{ build.branch }}] A new release is available: {{ build.link_url}}
