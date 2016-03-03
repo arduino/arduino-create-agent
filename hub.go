@@ -193,6 +193,11 @@ func checkCmd(m []byte) {
 		if len(args) > 2 {
 			go spDownloadTool(args[1], args[2])
 		}
+	} else if strings.HasPrefix(sl, "checktool") {
+		args := strings.Split(s, " ")
+		if len(args) > 1 {
+			go spCheckToolVersion(args[1])
+		}
 	} else if strings.HasPrefix(sl, "bufferalgorithm") {
 		go spBufferAlgorithms()
 	} else if strings.HasPrefix(sl, "log") {

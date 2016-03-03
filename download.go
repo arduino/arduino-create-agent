@@ -86,28 +86,38 @@ func downloadFromUrl(url string) (filename string, err error) {
 	return fileName, nil
 }
 
+func spCheckToolVersion(name string) {
+	var outlist []string
+	dirlist, err := ioutil.ReadDir(tempToolsPath + "/")
+	if err == nil {
+		for _, element := range dirlist {
+			if element.IsDir() && strings.Contains(element.Name(), name) {
+				outlist = append(outlist, element.Name())
+			}
+		}
+	}
+	mapD := map[string][]string{"ToolVersions": outlist}
+	mapB, _ := json.Marshal(mapD)
+	h.broadcastSys <- mapB
+}
+
 func spDownloadTool(name string, url string) {
 
-	if _, err := os.Stat(tempToolsPath + "/" + name); err != nil {
-
-		fileName, err := downloadFromUrl(url + "/" + name + "-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip")
-		if err != nil {
-			log.Error("Could not download flashing tools!")
-			mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
-			mapB, _ := json.Marshal(mapD)
-			h.broadcastSys <- mapB
-			return
-		}
-		err = UnzipWrapper(fileName, tempToolsPath)
-		if err != nil {
-			log.Error("Could not unzip flashing tools!")
-			mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
-			mapB, _ := json.Marshal(mapD)
-			h.broadcastSys <- mapB
-			return
-		}
-	} else {
-		log.Info("Tool already present, skipping download")
+	fileName, err := downloadFromUrl(url + "/" + name + "-" + runtime.GOOS + "-" + runtime.GOARCH + ".zip")
+	if err != nil {
+		log.Error("Could not download flashing tools!")
+		mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+		return
+	}
+	err = UnzipWrapper(fileName, tempToolsPath)
+	if err != nil {
+		log.Error("Could not unzip flashing tools!")
+		mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+		return
 	}
 
 	folders, _ := ioutil.ReadDir(tempToolsPath)
