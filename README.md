@@ -16,7 +16,7 @@ The history has been rewritten to keep the repo small (thus removing all binarie
 Please use the current latest version:
 
 * [Windows dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
-* [MacOSX dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer.dmg) 
+* [MacOSX dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer.dmg)
 * [Linux x64 dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer.run)
 
 ## Compiling
@@ -91,3 +91,7 @@ By making a contribution to this project, I certify that:
     maintained indefinitely and may be redistributed consistent with
     this project or the open source license(s) involved.
 ```
+
+## Creating a release
+Just create a new release on github, and our drone server will build and upload
+the compiled binaries for every architecture in a zip file in the release itself.
