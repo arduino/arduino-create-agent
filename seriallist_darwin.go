@@ -28,12 +28,12 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 
 		usbcmd := exec.Command("system_profiler", "SPUSBDataType")
 		grepcmd := exec.Command("grep", "Location ID: 0x"+port_hash[:len(port_hash)-1], "-B6")
-		cmdOutput, _ := pipe_commands(usbcmd, grepcmd)
+		cmdOutput, _ := utillities.PipeCommands(usbcmd, grepcmd)
 
 		if len(cmdOutput) == 0 {
 			usbcmd = exec.Command("system_profiler", "SPUSBDataType")
 			grepcmd = exec.Command("grep" /*"Serial Number: "+*/, strings.Trim(port_hash, "0"), "-B3", "-A3")
-			cmdOutput, _ = pipe_commands(usbcmd, grepcmd)
+			cmdOutput, _ = utillities.PipeCommands(usbcmd, grepcmd)
 		}
 
 		if len(cmdOutput) == 0 {
