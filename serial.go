@@ -26,8 +26,20 @@ type writeRequestJson struct {
 	Data []writeRequestJsonData
 }
 
+type writeRequestJsonRaw struct {
+	p    *serport
+	P    string
+	Data []writeRequestJsonDataRaw
+}
+
 type writeRequestJsonData struct {
 	D   string
+	Id  string
+	Buf string
+}
+
+type writeRequestJsonDataRaw struct {
+	D   []byte
 	Id  string
 	Buf string
 }
@@ -73,7 +85,8 @@ type serialhub struct {
 	unregister chan *serport
 
 	// regexp for json trimming
-	reJsonTrim *regexp.Regexp
+	reJsonTrim    *regexp.Regexp
+	reJsonRawTrim *regexp.Regexp
 }
 
 type SpPortList struct {
@@ -103,12 +116,13 @@ var NetworkPorts SpPortList
 
 var sh = serialhub{
 	//write:   	make(chan *serport, chan []byte),
-	write:      make(chan writeRequest),
-	writeJson:  make(chan writeRequestJson),
-	register:   make(chan *serport),
-	unregister: make(chan *serport),
-	ports:      make(map[*serport]bool),
-	reJsonTrim: regexp.MustCompile("sendjson"),
+	write:         make(chan writeRequest),
+	writeJson:     make(chan writeRequestJson),
+	register:      make(chan *serport),
+	unregister:    make(chan *serport),
+	ports:         make(map[*serport]bool),
+	reJsonTrim:    regexp.MustCompile("sendjson"),
+	reJsonRawTrim: regexp.MustCompile("sendjsonraw"),
 }
 
 func (sh *serialhub) run() {
@@ -613,6 +627,64 @@ func spWriteJson(arg string) {
 
 	// send it to the writeJson channel
 	sh.writeJson <- m
+}
+
+func spWriteJsonRaw(arg string) {
+
+	log.Printf("spWriteJson. arg:%v\n", arg)
+
+	// remove sendjson string
+	arg = sh.reJsonRawTrim.ReplaceAllString(arg, "")
+	//log.Printf("string we're going to parse:%v\n", arg)
+
+	// this is a structured command now for sending in serial commands multiple at a time
+	// with an ID so we can send back the ID when the command is done
+	var m writeRequestJsonRaw
+	/*
+		m.P = "COM22"
+		var data writeRequestJsonData
+		data.Id = "234"
+		str := "yeah yeah"
+		data.D = str //[]byte(str) //[]byte(string("blah blah"))
+		m.Data = append(m.Data, data)
+		//m.Data = append(m.Data, data)
+		bm, err2 := json.Marshal(m)
+		if err2 == nil {
+			log.Printf("Test json serialize:%v\n", string(bm))
+		}
+	*/
+
+	err := json.Unmarshal([]byte(arg), &m)
+
+	if err != nil {
+		log.Printf("Problem decoding json. giving up. json:%v, err:%v\n", arg, err)
+		spErr(fmt.Sprintf("Problem decoding json. giving up. json:%v, err:%v", arg, err))
+		return
+	}
+
+	// see if we have this port open
+	portname := m.P
+	myport, isFound := findPortByName(portname)
+
+	if !isFound {
+		// we couldn't find the port, so send err
+		spErr("We could not find the serial port " + portname + " that you were trying to write to.")
+		return
+	}
+
+	// we found our port
+	m.p = myport
+
+	var mr writeRequestJson
+
+	mr.p = m.p
+	mr.P = m.P
+	var data writeRequestJsonData
+	data.D = string(m.Data[0].D)
+	mr.Data = append(mr.Data, data)
+
+	// send it to the writeJson channel
+	sh.writeJson <- mr
 }
 
 func spWrite(arg string) {
