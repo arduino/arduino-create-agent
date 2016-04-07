@@ -3,11 +3,16 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"crypto/md5"
 	"io"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
+
+	"github.com/pivotal-golang/archiver/extractor"
 )
 
 func computeMd5(filePath string) ([]byte, error) {
@@ -75,4 +80,66 @@ func Filter(vs []OsSerialPort, f func(OsSerialPort) bool) []OsSerialPort {
 		}
 	}
 	return vsf
+}
+
+func UnzipWrapper(src, dest string) error {
+	e := extractor.NewDetectable()
+	return e.Extract(src, dest)
+}
+
+func IsZip(path string) bool {
+	r, err := zip.OpenReader(path)
+	if err == nil {
+		r.Close()
+		return true
+	}
+	return false
+}
+
+func Unzip(zippath string, destination string) (err error) {
+	r, err := zip.OpenReader(zippath)
+	if err != nil {
+		return err
+	}
+	for _, f := range r.File {
+		fullname := path.Join(destination, f.Name)
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(fullname, f.FileInfo().Mode().Perm())
+		} else {
+			os.MkdirAll(filepath.Dir(fullname), 0755)
+			perms := f.FileInfo().Mode().Perm()
+			out, err := os.OpenFile(fullname, os.O_CREATE|os.O_RDWR, perms)
+			if err != nil {
+				return err
+			}
+			rc, err := f.Open()
+			if err != nil {
+				return err
+			}
+			_, err = io.CopyN(out, rc, f.FileInfo().Size())
+			if err != nil {
+				return err
+			}
+			rc.Close()
+			out.Close()
+
+			mtime := f.FileInfo().ModTime()
+			err = os.Chtimes(fullname, mtime, mtime)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return
+}
+
+func UnzipList(path string) (list []string, err error) {
+	r, err := zip.OpenReader(path)
+	if err != nil {
+		return
+	}
+	for _, f := range r.File {
+		list = append(list, f.Name)
+	}
+	return
 }
