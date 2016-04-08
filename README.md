@@ -92,6 +92,7 @@ By making a contribution to this project, I certify that:
     this project or the open source license(s) involved.
 ```
 
+
 ## Creating a release
 Just create a new release on github, and our drone server will build and upload
 the compiled binaries for every architecture in a zip file in the release itself.
