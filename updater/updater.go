@@ -12,13 +12,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/inconshreveable/go-update"
 	"github.com/kr/binarydist"
 
-	"github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 )
 
@@ -257,8 +256,8 @@ func (u *Updater) update() error {
 }
 
 func (u *Updater) wantUpdate() bool {
-	if strings.Contains(u.CurrentVersion, "dev") {
-		return false
-	}
+	// if strings.Contains(u.CurrentVersion, "dev") {
+	// 	return false
+	// }
 	return true
 }
