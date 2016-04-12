@@ -12,13 +12,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/inconshreveable/go-update"
 	"github.com/kr/binarydist"
 
-	"github.com/inconshreveable/go-update"
 	"github.com/kardianos/osext"
 )
 
@@ -90,22 +89,20 @@ type Updater struct {
 // BackgroundRun starts the update check and apply cycle.
 func (u *Updater) BackgroundRun() error {
 	os.MkdirAll(u.getExecRelativeDir(u.Dir), 0777)
-	if u.wantUpdate() {
-		if err := up.CanUpdate(); err != nil {
-			log.Println(err)
-			return err
-		}
-		//self, err := osext.Executable()
-		//if err != nil {
-		// fail update, couldn't figure out path to self
-		//return
-		//}
-		// TODO(bgentry): logger isn't on Windows. Replace w/ proper error reports.
-		if err := u.update(); err != nil {
-			return err
-		}
+	if err := up.CanUpdate(); err != nil {
+		log.Println(err)
+		return err
 	}
-	return errors.New("Won't update because it's a development daemon. Change the version in main.go")
+	//self, err := osext.Executable()
+	//if err != nil {
+	// fail update, couldn't figure out path to self
+	//return
+	//}
+	// TODO(bgentry): logger isn't on Windows. Replace w/ proper error reports.
+	if err := u.update(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func fetch(url string) (io.ReadCloser, error) {
@@ -254,11 +251,4 @@ func (u *Updater) update() error {
 	}
 
 	return nil
-}
-
-func (u *Updater) wantUpdate() bool {
-	if strings.Contains(u.CurrentVersion, "dev") {
-		return false
-	}
-	return true
 }
