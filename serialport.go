@@ -88,6 +88,11 @@ type SpPortMessage struct {
 	D string // the data, i.e. G0 X0 Y0
 }
 
+type SpPortMessageRaw struct {
+	// P string // the port, i.e. com22
+	D []byte // the data, i.e. G0 X0 Y0
+}
+
 func (p *serport) reader() {
 
 	//var buf bytes.Buffer
@@ -344,6 +349,8 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 
 	if buftype == "timed" {
 		bw = &BufferflowTimed{Name: "timed", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
+	} else if buftype == "timedraw" {
+		bw = &BufferflowTimedRaw{Name: "timedraw", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
 	} else {
 		bw = &BufferflowDefault{Port: portname}
 	}

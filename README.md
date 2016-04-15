@@ -34,7 +34,7 @@ will build the `arduino-create-agent` binary.
 You can use `bootstrapPlatforms` function to compile the needed CGO-enabled environment
 
 Other prerequisites are:
-* libappindicator (Linux only)
+* libappindicator (Linux only on Ubuntu `sudo apt-get install libappindicator1`)
 * [go-selfupdate] (https://github.com/sanbornm/go-selfupdate) if you want to test automatic updates
 
 ## Submitting an issue
@@ -91,6 +91,7 @@ By making a contribution to this project, I certify that:
     maintained indefinitely and may be redistributed consistent with
     this project or the open source license(s) involved.
 ```
+
 
 ## Creating a release
 Just create a new release on github, and our drone server will build and upload

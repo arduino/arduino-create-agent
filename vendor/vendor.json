@@ -93,6 +93,16 @@
 			"revisionTime": "2015-03-09T12:10:02-07:00"
 		},
 		{
+			"path": "github.com/inconshreveable/go-update",
+			"revision": "f848a144bdfc3d6dc7669d4b026ecc7a42ed4575",
+			"revisionTime": "2015-07-06T15:23:39-07:00"
+		},
+		{
+			"path": "github.com/inconshreveable/go-update/download",
+			"revision": "f848a144bdfc3d6dc7669d4b026ecc7a42ed4575",
+			"revisionTime": "2015-07-06T15:23:39-07:00"
+		},
+		{
 			"path": "github.com/itsjamie/gin-cors",
 			"revision": "bd9551838cd52133960a2f44ab990be71744b663",
 			"revisionTime": "2015-07-02T20:22:01-03:00"

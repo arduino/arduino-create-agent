@@ -14,7 +14,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/carlescere/scheduler"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
@@ -25,7 +24,6 @@ import (
 var (
 	version              = "x.x.x-dev" //don't modify it, Jenkins will take care
 	git_revision         = "xxxxxxxx"  //don't modify it, Jenkins will take care
-	embedded_autoupdate  = true
 	embedded_autoextract = false
 	hibernate            = flag.Bool("hibernate", false, "start hibernated")
 	verbose              = flag.Bool("v", true, "show debug logging")
@@ -143,25 +141,6 @@ func main() {
 				launchSelfLater()
 			}
 
-			if embedded_autoupdate {
-
-				var updater = &Updater{
-					CurrentVersion: version,
-					ApiURL:         *updateUrl,
-					BinURL:         *updateUrl,
-					DiffURL:        "",
-					Dir:            "update/",
-					CmdName:        *appName,
-				}
-
-				if updater != nil {
-					updater_job := func() {
-						go updater.BackgroundRun()
-					}
-					scheduler.Every(5).Minutes().Run(updater_job)
-				}
-			}
-
 			log.Println("Version:" + version)
 
 			// hostname
@@ -246,6 +225,7 @@ func main() {
 			r.GET("/info", infoHandler)
 			r.POST("/killbrowser", killBrowserHandler)
 			r.POST("/pause", pauseHandler)
+			r.POST("/update", updateHandler)
 
 			go func() {
 				// check if certificates exist; if not, use plain http
@@ -334,8 +314,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
             return false;
         }
         socket.emit("command", msg.val());
-        if (msg.val().indexOf("log off") != -1) {only_log = true;}
-        if (msg.val().indexOf("log on") != -1) {only_log = false;}
+        if (msg.val().indexOf("log off") != -1) {only_log = true}
+        if (msg.val().indexOf("log on") != -1) {only_log = false}
         msg.val("");
         return false
     });
