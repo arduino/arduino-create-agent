@@ -195,7 +195,7 @@ func main() {
 
 			socketHandler := wsHandler().ServeHTTP
 
-			extraOriginStr := "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, http://create-staging.arduino.cc, https://create-staging.arduino.cc"
+			extraOriginStr := "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc"
 
 			for i := 8990; i < 9001; i++ {
 				extraOriginStr = extraOriginStr + ", http://localhost:" + strconv.Itoa(i) + ", https://localhost:" + strconv.Itoa(i)
