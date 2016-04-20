@@ -31,12 +31,13 @@
 package main
 
 import (
+	"runtime"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"github.com/facchinm/systray"
 	"github.com/facchinm/systray/example/icon"
 	"github.com/skratchdot/open-golang/open"
-	"runtime"
 )
 
 func setupSysTray() {
@@ -63,7 +64,7 @@ func addRebootTrayElement() {
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.Data)
-	mUrl := systray.AddMenuItem("Go to Arduino Create (staging)", "Arduino Create")
+	mUrl := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
 	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
 	mPause := systray.AddMenuItem("Pause Plugin", "")
@@ -101,7 +102,7 @@ func setupSysTrayReal() {
 	go func() {
 		for {
 			<-mUrl.ClickedCh
-			open.Start("http://create-staging.arduino.cc")
+			open.Start("http://create.arduino.cc")
 		}
 	}()
 }
