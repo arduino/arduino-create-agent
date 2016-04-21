@@ -1,12 +1,14 @@
 package utilities
 
 import (
+	"archive/zip"
 	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 )
 
@@ -86,4 +88,41 @@ func call(stack []*exec.Cmd, pipes []*io.PipeWriter) (err error) {
 		}()
 	}
 	return stack[0].Wait()
+}
+
+func Unzip(zippath string, destination string) (err error) {
+	r, err := zip.OpenReader(zippath)
+	if err != nil {
+		return err
+	}
+	for _, f := range r.File {
+		fullname := path.Join(destination, f.Name)
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(fullname, f.FileInfo().Mode().Perm())
+		} else {
+			os.MkdirAll(filepath.Dir(fullname), 0755)
+			perms := f.FileInfo().Mode().Perm()
+			out, err := os.OpenFile(fullname, os.O_CREATE|os.O_RDWR, perms)
+			if err != nil {
+				return err
+			}
+			rc, err := f.Open()
+			if err != nil {
+				return err
+			}
+			_, err = io.CopyN(out, rc, f.FileInfo().Size())
+			if err != nil {
+				return err
+			}
+			rc.Close()
+			out.Close()
+
+			mtime := f.FileInfo().ModTime()
+			err = os.Chtimes(fullname, mtime, mtime)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return
 }
