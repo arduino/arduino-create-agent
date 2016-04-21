@@ -15,6 +15,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/tools"
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
