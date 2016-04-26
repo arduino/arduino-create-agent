@@ -43,6 +43,7 @@ var (
 	port           string
 	portSSL        string
 	origins        = flag.String("origins", "", "Allowed origin list for CORS")
+	signatureKey   = flag.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
 	address        = flag.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
 )
 
@@ -242,8 +243,7 @@ func main() {
 						log.Printf("Error trying to bind to port: %v, so exiting...", err)
 						continue
 					} else {
-						ip := "0.0.0.0"
-						log.Print("Starting server and websocket (SSL) on " + ip + "" + port)
+						log.Print("Starting server and websocket (SSL) on " + *address + "" + port)
 						break
 					}
 				}
@@ -260,8 +260,7 @@ func main() {
 						log.Printf("Error trying to bind to port: %v, so exiting...", err)
 						continue
 					} else {
-						ip := "0.0.0.0"
-						log.Print("Starting server and websocket on " + ip + "" + port)
+						log.Print("Starting server and websocket on " + *address + "" + port)
 						break
 					}
 				}

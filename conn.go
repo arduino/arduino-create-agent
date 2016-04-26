@@ -3,6 +3,13 @@
 package main
 
 import (
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
+	"encoding/pem"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -61,6 +68,23 @@ func uploadHandler(c *gin.Context) {
 	if commandline == "undefined" {
 		commandline = ""
 	}
+
+	signature := c.PostForm("signature")
+	if signature == "" {
+		c.String(http.StatusBadRequest, "signature is required")
+		log.Error("signature is required")
+		return
+	}
+
+	err := verifyCommandLine(commandline, signature)
+
+	if err != nil {
+		c.String(http.StatusBadRequest, "signature is invalid")
+		log.Error("signature is invalid")
+		log.Error(err)
+		return
+	}
+
 	extraInfo.use_1200bps_touch, _ = strconv.ParseBool(c.PostForm("use_1200bps_touch"))
 	extraInfo.wait_for_upload_port, _ = strconv.ParseBool(c.PostForm("wait_for_upload_port"))
 	extraInfo.networkPort, _ = strconv.ParseBool(c.PostForm("network"))
@@ -88,6 +112,23 @@ func uploadHandler(c *gin.Context) {
 
 		go spProgramRW(port, board, path, commandline, extraInfo)
 	}
+}
+
+func verifyCommandLine(input string, signature string) error {
+	sign, _ := hex.DecodeString(signature)
+	block, _ := pem.Decode([]byte(*signatureKey))
+	if block == nil {
+		return errors.New("invalid key")
+	}
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return err
+	}
+	rsaKey := key.(*rsa.PublicKey)
+	h := sha256.New()
+	h.Write([]byte(input))
+	d := h.Sum(nil)
+	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, sign)
 }
 
 func wsHandler() *WsServer {
