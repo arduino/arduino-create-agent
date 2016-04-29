@@ -5,11 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/facchinm/go-serial"
-	"github.com/mattn/go-shellwords"
-	"github.com/sfreiberg/simplessh"
-	"github.com/xrash/smetrics"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -21,6 +16,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/facchinm/go-serial"
+	"github.com/mattn/go-shellwords"
+	"github.com/sfreiberg/simplessh"
+	"github.com/xrash/smetrics"
 )
 
 var compiling = false
@@ -31,15 +32,15 @@ func colonToUnderscore(input string) string {
 }
 
 type basicAuthData struct {
-	UserName string
-	Password string
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type boardExtraInfo struct {
-	use_1200bps_touch    bool
-	wait_for_upload_port bool
-	networkPort          bool
-	authdata             basicAuthData
+	Use1200bpsTouch   bool          `json:"use_100bps_touch"`
+	WaitForUploadPort bool          `json:"wait_for_upload_port"`
+	Network           bool          `json:"network"`
+	Auth              basicAuthData `json:"auth"`
 }
 
 // Scp uploads sourceFile to remote machine like native scp console app.
@@ -90,15 +91,15 @@ func spProgramSSHNetwork(portname string, boardname string, filePath string, com
 	log.Println("Starting network upload")
 	log.Println("Board Name: " + boardname)
 
-	if authdata.UserName == "" {
-		authdata.UserName = "root"
+	if authdata.Username == "" {
+		authdata.Username = "root"
 	}
 
 	if authdata.Password == "" {
 		authdata.Password = "arduino"
 	}
 
-	ssh_client, err := simplessh.ConnectWithPassword(portname+":22", authdata.UserName, authdata.Password)
+	ssh_client, err := simplessh.ConnectWithPassword(portname+":22", authdata.Username, authdata.Password)
 	if err != nil {
 		log.Println("Error connecting via ssh")
 		return err
@@ -133,8 +134,8 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 	log.Println("Starting network upload")
 	log.Println("Board Name: " + boardname)
 
-	if authdata.UserName == "" {
-		authdata.UserName = "root"
+	if authdata.Username == "" {
+		authdata.Username = "root"
 	}
 
 	if authdata.Password == "" {
@@ -182,8 +183,8 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 	}
 	// Don't forget to set the content type, this will contain the boundary.
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	if authdata.UserName != "" {
-		req.SetBasicAuth(authdata.UserName, authdata.Password)
+	if authdata.Username != "" {
+		req.SetBasicAuth(authdata.Username, authdata.Password)
 	}
 
 	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
@@ -211,8 +212,8 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 func spProgramLocal(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) error {
 
 	var err error
-	if extraInfo.use_1200bps_touch {
-		portname, err = touch_port_1200bps(portname, extraInfo.wait_for_upload_port)
+	if extraInfo.Use1200bpsTouch {
+		portname, err = touch_port_1200bps(portname, extraInfo.WaitForUploadPort)
 	}
 
 	if err != nil {
@@ -264,11 +265,11 @@ func spProgramRW(portname string, boardname string, filePath string, commandline
 
 	var err error
 
-	if extraInfo.networkPort {
-		err = spProgramNetwork(portname, boardname, filePath, extraInfo.authdata)
+	if extraInfo.Network {
+		err = spProgramNetwork(portname, boardname, filePath, extraInfo.Auth)
 		if err != nil {
 			// no http method available, try ssh upload
-			err = spProgramSSHNetwork(portname, boardname, filePath, commandline, extraInfo.authdata)
+			err = spProgramSSHNetwork(portname, boardname, filePath, commandline, extraInfo.Auth)
 		}
 	} else {
 		err = spProgramLocal(portname, boardname, filePath, commandline, extraInfo)
@@ -423,7 +424,7 @@ func findNewPortName(slice1 []string, slice2 []string) string {
 	return ""
 }
 
-func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, error) {
+func touch_port_1200bps(portname string, WaitForUploadPort bool) (string, error) {
 	initialPortName := portname
 	log.Println("Restarting in bootloader mode")
 
@@ -455,7 +456,7 @@ func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, err
 	}()
 
 	// wait for port to disappear
-	if wait_for_upload_port {
+	if WaitForUploadPort {
 		for {
 			ports, _ = serial.GetPortsList()
 			log.Println(ports)
@@ -471,7 +472,7 @@ func touch_port_1200bps(portname string, wait_for_upload_port bool) (string, err
 	}
 
 	// wait for port to reappear
-	if wait_for_upload_port {
+	if WaitForUploadPort {
 		after_reset_ports, _ := serial.GetPortsList()
 		log.Println(after_reset_ports)
 		for {
