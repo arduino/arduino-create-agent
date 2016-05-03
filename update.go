@@ -36,6 +36,14 @@ import (
 )
 
 func updateHandler(c *gin.Context) {
+
+	path, err := osext.Executable()
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
 	var up = &updater.Updater{
 		CurrentVersion: version,
 		APIURL:         *updateUrl,
@@ -45,14 +53,7 @@ func updateHandler(c *gin.Context) {
 		CmdName:        *appName,
 	}
 
-	err := up.BackgroundRun()
-
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	path, err := osext.Executable()
+	err = up.BackgroundRun()
 
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
