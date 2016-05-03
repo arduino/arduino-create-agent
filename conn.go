@@ -76,13 +76,15 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
-	err := verifyCommandLine(commandline, signature)
+	if extraInfo.networkPort {
+		err := verifyCommandLine(commandline, signature)
 
-	if err != nil {
-		c.String(http.StatusBadRequest, "signature is invalid")
-		log.Error("signature is invalid")
-		log.Error(err)
-		return
+		if err != nil {
+			c.String(http.StatusBadRequest, "signature is invalid")
+			log.Error("signature is invalid")
+			log.Error(err)
+			return
+		}
 	}
 
 	extraInfo.use_1200bps_touch, _ = strconv.ParseBool(c.PostForm("use_1200bps_touch"))
