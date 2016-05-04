@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -11,7 +12,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"net/http"
-	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gin-gonic/gin"
@@ -45,75 +45,68 @@ func (s *WsServer) ServeHTTP(c *gin.Context) {
 	s.Server.ServeHTTP(c.Writer, c.Request)
 }
 
+// Upload contains the data to upload a sketch onto a board
+type Upload struct {
+	Port        string         `json:"port"`
+	Board       string         `json:"board"`
+	Rewrite     string         `json:"rewrite"`
+	Commandline string         `json:"commandline"`
+	Signature   string         `json:"signature"`
+	Extra       boardExtraInfo `json:"extra"`
+	Hex         []byte         `json:"hex"`
+	Filename    string         `json:"filename"`
+}
+
 func uploadHandler(c *gin.Context) {
-	log.Print("Received a upload")
-	port := c.PostForm("port")
-	if port == "" {
+	data := new(Upload)
+	c.BindJSON(data)
+
+	log.Printf("%+v", data)
+
+	if data.Port == "" {
 		c.String(http.StatusBadRequest, "port is required")
 		return
 	}
-	board := c.PostForm("board")
-	if board == "" {
+
+	if data.Board == "" {
 		c.String(http.StatusBadRequest, "board is required")
 		log.Error("board is required")
 		return
 	}
-	board_rewrite := c.PostForm("board_rewrite")
 
-	var extraInfo boardExtraInfo
-
-	extraInfo.authdata.UserName = c.PostForm("auth_user")
-	extraInfo.authdata.Password = c.PostForm("auth_pass")
-	commandline := c.PostForm("commandline")
-	if commandline == "undefined" {
-		commandline = ""
-	}
-
-	signature := c.PostForm("signature")
-	if signature == "" {
+	if data.Signature == "" {
 		c.String(http.StatusBadRequest, "signature is required")
-		log.Error("signature is required")
 		return
 	}
 
-	if extraInfo.networkPort {
-		err := verifyCommandLine(commandline, signature)
+	if data.Extra.Network {
+		err := verifyCommandLine(data.Commandline, data.Signature)
 
 		if err != nil {
 			c.String(http.StatusBadRequest, "signature is invalid")
-			log.Error("signature is invalid")
-			log.Error(err)
 			return
 		}
 	}
 
-	extraInfo.use_1200bps_touch, _ = strconv.ParseBool(c.PostForm("use_1200bps_touch"))
-	extraInfo.wait_for_upload_port, _ = strconv.ParseBool(c.PostForm("wait_for_upload_port"))
-	extraInfo.networkPort, _ = strconv.ParseBool(c.PostForm("network"))
-
-	if extraInfo.networkPort == false && commandline == "" {
+	if data.Extra.Network == false && data.Commandline == "" {
 		c.String(http.StatusBadRequest, "commandline is required for local board")
-		log.Error("commandline is required for local board")
 		return
 	}
 
-	sketch, header, err := c.Request.FormFile("sketch_hex")
+	buffer := bytes.NewBuffer(data.Hex)
+
+	path, err := saveFileonTempDir(data.Filename, buffer)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 	}
 
-	if header != nil {
-		path, err := saveFileonTempDir(header.Filename, sketch)
-		if err != nil {
-			c.String(http.StatusBadRequest, err.Error())
-		}
-
-		if board_rewrite != "" {
-			board = board_rewrite
-		}
-
-		go spProgramRW(port, board, path, commandline, extraInfo)
+	if data.Rewrite != "" {
+		data.Board = data.Rewrite
 	}
+
+	go spProgramRW(data.Port, data.Board, path, data.Commandline, data.Extra)
+
+	c.String(http.StatusAccepted, "")
 }
 
 func verifyCommandLine(input string, signature string) error {

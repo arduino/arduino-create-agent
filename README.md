@@ -95,4 +95,5 @@ By making a contribution to this project, I certify that:
 
 ## Creating a release
 Just create a new release on github, and our drone server will build and upload
-the compiled binaries for every architecture in a zip file in the release itself.
+ithe compiled binaries for every architecture in a zip file in the release itself.
+
