@@ -79,7 +79,7 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
-	if extraInfo.networkPort {
+	if data.Extra.Network {
 		err := verifyCommandLine(data.Commandline, data.Signature)
 
 		if err != nil {
