@@ -37,7 +37,7 @@ type basicAuthData struct {
 }
 
 type boardExtraInfo struct {
-	Use1200bpsTouch   bool          `json:"use_100bps_touch"`
+	Use1200bpsTouch   bool          `json:"use_1200bps_touch"`
 	WaitForUploadPort bool          `json:"wait_for_upload_port"`
 	Network           bool          `json:"network"`
 	Auth              basicAuthData `json:"auth"`
