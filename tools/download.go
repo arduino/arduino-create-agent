@@ -73,20 +73,7 @@ func mimeType(data []byte) (string, error) {
 // version again. If instead behaviour is "keep" it will not download the version
 // if it already exists.
 func (t *Tools) Download(name, version, behaviour string) error {
-	var key string
-	if version == "latest" {
-		key = name
-	} else {
-		key = name + "-" + version
-	}
 
-	// Check if it already exists
-	if version != "latest" && behaviour == "keep" {
-		if _, ok := t.installed[key]; ok {
-			t.Logger.Println("The tool is already present on the system")
-			return nil
-		}
-	}
 	// Fetch the index
 	resp, err := http.Get(t.IndexURL)
 	if err != nil {
@@ -120,6 +107,16 @@ func (t *Tools) Download(name, version, behaviour string) error {
 		if similarity > max_similarity {
 			correctSystem = s
 			max_similarity = similarity
+		}
+	}
+
+	key := correctTool.Name + "-" + correctTool.Version
+
+	// Check if it already exists
+	if behaviour == "keep" {
+		if _, ok := t.installed[key]; ok {
+			t.Logger.Println("The tool is already present on the system")
+			return nil
 		}
 	}
 
@@ -221,7 +218,10 @@ func findBaseDir(dirList []string) string {
 				return baseDir
 			}
 		}
-		baseDir = candidateBaseDir
+		// avoid setting the candidate if it is the last file
+		if dirList[len(dirList)-1] != candidateBaseDir {
+			baseDir = candidateBaseDir
+		}
 	}
 	return baseDir
 }
@@ -236,9 +236,7 @@ func extractZip(body []byte, location string) (string, error) {
 	var dirList []string
 
 	for _, f := range r.File {
-		if f.FileInfo().IsDir() {
-			dirList = append(dirList, f.Name)
-		}
+		dirList = append(dirList, f.Name)
 	}
 
 	basedir := findBaseDir(dirList)
@@ -288,9 +286,7 @@ func extractTarGz(body []byte, location string) (string, error) {
 		if err == io.EOF {
 			break
 		}
-		if header.FileInfo().IsDir() {
-			dirList = append(dirList, header.Name)
-		}
+		dirList = append(dirList, header.Name)
 	}
 
 	basedir := findBaseDir(dirList)
@@ -358,9 +354,7 @@ func extractBz2(body []byte, location string) (string, error) {
 		if err == io.EOF {
 			break
 		}
-		if header.FileInfo().IsDir() {
-			dirList = append(dirList, header.Name)
-		}
+		dirList = append(dirList, header.Name)
 	}
 
 	basedir := findBaseDir(dirList)
