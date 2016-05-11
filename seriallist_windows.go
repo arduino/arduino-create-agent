@@ -2,11 +2,9 @@ package main
 
 import (
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
-	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/mattn/go-ole"
@@ -226,8 +224,4 @@ func convertByteArrayToUint16Array(b []byte, mylen uint32) []uint16 {
 		ret[i/2] = uint16(b[i]) | uint16(b[i+1])<<8
 	}
 	return ret
-}
-
-func tellCommandNotToSpawnShell(oscmd *exec.Cmd) {
-	oscmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 }

@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/tools"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"github.com/mattn/go-shellwords"
@@ -305,7 +307,7 @@ func spHandlerProgram(flasher string, cmdString []string) error {
 
 	oscmd = exec.Command(flasher, cmdString...)
 
-	tellCommandNotToSpawnShell(oscmd)
+	tools.TellCommandNotToSpawnShell(oscmd)
 
 	stdout, err := oscmd.StdoutPipe()
 	if err != nil {

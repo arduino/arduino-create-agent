@@ -64,6 +64,3 @@ func associateVidPidWithPort(ports []OsSerialPort) []OsSerialPort {
 	}
 	return ports
 }
-
-func tellCommandNotToSpawnShell(_ *exec.Cmd) {
-}
