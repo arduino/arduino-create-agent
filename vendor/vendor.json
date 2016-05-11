@@ -8,6 +8,12 @@
 			"revisionTime": "2015-07-28T08:10:54-04:00"
 		},
 		{
+			"checksumSHA1": "1LNMQR+ZHVc8ujJRbFOF3X2mINk=",
+			"path": "github.com/blang/semver",
+			"revision": "aea32c919a18e5ef4537bbd283ff29594b1b0165",
+			"revisionTime": "2015-12-05T09:49:59Z"
+		},
+		{
 			"path": "github.com/carlescere/scheduler",
 			"revision": "d39e4af87bb89586f86db467fa203d353b5d34ff",
 			"revisionTime": "2015-08-26T22:43:44+01:00"
