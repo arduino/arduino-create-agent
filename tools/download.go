@@ -176,6 +176,8 @@ func (t *Tools) Download(name, version, behaviour string) error {
 		return err
 	}
 
+	t.installDrivers(location)
+
 	// Ensure that the files are executable
 	t.Logger.Println("Ensure that the files are executable")
 
@@ -332,9 +334,10 @@ func extractTarGz(body []byte, location string) (string, error) {
 	return location, nil
 }
 
-func installDrivers(location string) {
+func (t *Tools) installDrivers(location string) {
 	if runtime.GOOS == "windows" {
 		if _, err := os.Stat(filepath.Join(location, "post_install.bat")); err == nil {
+			t.Logger.Println("Installing drivers")
 			oscmd := exec.Command(filepath.Join(location, "post_install.bat"))
 			TellCommandNotToSpawnShell(oscmd)
 			oscmd.Run()
