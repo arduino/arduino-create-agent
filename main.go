@@ -91,7 +91,7 @@ func main() {
 
 			// Instantiate Tools
 			usr, _ := user.Current()
-			directory := usr.HomeDir + "/.arduino-create"
+			directory := filepath.Join(usr.HomeDir, ".arduino-create")
 			Tools = tools.Tools{
 				Directory: directory,
 				IndexURL:  *indexURL,
