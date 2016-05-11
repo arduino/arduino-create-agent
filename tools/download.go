@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -329,6 +330,16 @@ func extractTarGz(body []byte, location string) (string, error) {
 		}
 	}
 	return location, nil
+}
+
+func installDrivers(location string) {
+	if runtime.GOOS == "windows" {
+		if _, err := os.Stat(filepath.Join(location, "post_install.bat")); err == nil {
+			oscmd := exec.Command(filepath.Join(location, "post_install.bat"))
+			TellCommandNotToSpawnShell(oscmd)
+			oscmd.Run()
+		}
+	}
 }
 
 func extractBz2(body []byte, location string) (string, error) {
