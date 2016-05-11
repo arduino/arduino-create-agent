@@ -178,7 +178,7 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 		// USB\VID_1D50&PID_606D&MI_00\6&2F09EA14&0&0000
 		deviceIdStr, _ := oleutil.GetProperty(item, "DeviceID")
 		devIdItems := strings.Split(deviceIdStr.ToString(), "&")
-		log.Printf("DeviceId elements:%v", devIdItems)
+		//log.Printf("DeviceId elements:%v", devIdItems)
 		if len(devIdItems) > 3 {
 			list[i].SerialNumber = devIdItems[3]
 			list[i].IdProduct = strings.Replace(devIdItems[1], "PID_", "", 1)
