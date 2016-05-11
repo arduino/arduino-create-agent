@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -62,7 +63,7 @@ func (t *Tools) GetLocation(command string) (string, error) {
 		}
 	}
 
-	return location, nil
+	return filepath.ToSlash(location), nil
 }
 
 func (t *Tools) writeMap() error {
@@ -85,7 +86,7 @@ func (t *Tools) readMap() error {
 
 func dir() string {
 	usr, _ := user.Current()
-	return usr.HomeDir + "/.arduino-create"
+	return path.Join(usr.HomeDir, ".arduino-create")
 }
 
 // createDir creates the directory where the tools will be stored
