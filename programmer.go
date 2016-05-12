@@ -42,6 +42,9 @@ type boardExtraInfo struct {
 	WaitForUploadPort bool          `json:"wait_for_upload_port"`
 	Network           bool          `json:"network"`
 	Auth              basicAuthData `json:"auth"`
+	Verbose           bool          `json:"verbose"`
+	ParamsVerbose     string        `json:"params_verbose"`
+	ParamsQuiet       string        `json:"params_quiet"`
 }
 
 // Scp uploads sourceFile to remote machine like native scp console app.
@@ -228,6 +231,12 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath))), 1)
 	commandline = strings.Replace(commandline, "{serial.port}", portname, 1)
 	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(portname), 1)
+
+	if extraInfo.Verbose == true {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsVerbose, 1)
+	} else {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsQuiet, 1)
+	}
 
 	// search for runtime variables and replace with values from globalToolsMap
 	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
