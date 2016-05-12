@@ -98,6 +98,7 @@ func uploadHandler(c *gin.Context) {
 	path, err := saveFileonTempDir(data.Filename, buffer)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
+		return
 	}
 
 	if data.Rewrite != "" {
