@@ -209,9 +209,23 @@ func findTool(name, version string, data index) tool {
 	return correctTool
 }
 
+func stringInSlice(str string, list []string) bool {
+	for _, v := range list {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
 func findBaseDir(dirList []string) string {
 	baseDir := ""
+	// https://github.com/backdrop-ops/contrib/issues/55#issuecomment-73814500
+	dontdiff := []string{"pax_global_header"}
 	for index, _ := range dirList {
+		if stringInSlice(dirList[index], dontdiff) {
+			continue
+		}
 		candidateBaseDir := dirList[index]
 		for i := index; i < len(dirList); i++ {
 			if !strings.Contains(dirList[i], candidateBaseDir) {
