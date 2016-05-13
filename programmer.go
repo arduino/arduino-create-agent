@@ -267,8 +267,8 @@ func spProgramRW(portname string, boardname string, filePath string, commandline
 
 	if extraInfo.Network {
 		err = spProgramNetwork(portname, boardname, filePath, extraInfo.Auth)
-		if err != nil {
-			// no http method available, try ssh upload
+		if err != nil && boardname == "arduino:avr:yun" {
+			// http method failed, try ssh upload (Yun only)
 			err = spProgramSSHNetwork(portname, boardname, filePath, commandline, extraInfo.Auth)
 		}
 	} else {
