@@ -19,8 +19,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
-	"golang.org/x/crypto/openpgp/packet"
+	"golang.org/x/crypto/openpgp"
 
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/blang/semver"
@@ -65,88 +66,35 @@ var publicKeyHex string = "99020D0452FAA2FA011000D0C5604932111750628F171E4E612D5
 
 func checkGPGSig(fileName string, sigFileName string) error {
 
-	// First, get the content of the file we have signed
-	fileContent, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-
 	// Get a Reader for the signature file
 	sigFile, err := os.Open(sigFileName)
 	if err != nil {
 		return err
 	}
 
-	defer func() {
-		if err := sigFile.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer sigFile.Close()
 
-	// Read the signature file
-	pack, err := packet.Read(sigFile)
+	// Get a Reader for the signature file
+	file, err := os.Open(fileName)
 	if err != nil {
 		return err
 	}
 
-	// Was it really a signature file ? If yes, get the Signature
-	signature, ok := pack.(*packet.Signature)
-	if !ok {
-		return errors.New("Not a valid signature file.")
-	}
+	defer file.Close()
 
-	// For convenience, we have the key in hexadecimal, convert it to binary
 	publicKeyBin, err := hex.DecodeString(publicKeyHex)
 	if err != nil {
 		return err
 	}
 
-	// Read the key
-	pack, err = packet.Read(bytes.NewReader(publicKeyBin))
-	if err != nil {
-		return err
-	}
+	keyring, _ := openpgp.ReadKeyRing(bytes.NewReader(publicKeyBin))
 
-	// Was it really a public key file ? If yes, get the PublicKey
-	publicKey, ok := pack.(*packet.PublicKey)
-	if !ok {
-		return errors.New("Invalid public key.")
-	}
+	_, err = openpgp.CheckDetachedSignature(keyring, file, sigFile)
 
-	// Get the hash method used for the signature
-	hash := signature.Hash.New()
-
-	// Hash the content of the file (if the file is big, that's where you have to change the code to avoid getting the whole file in memory, by reading and writting in small chunks)
-	_, err = hash.Write(fileContent)
-	if err != nil {
-		return err
-	}
-
-	// Check the signature
-	err = publicKey.VerifySignature(hash, signature)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
-// Download will parse the index at the indexURL for the tool to download.
-// It will extract it in a folder in .arduino-create, and it will update the
-// Installed map.
-//
-// name contains the name of the tool.
-// version contains the version of the tool.
-// behaviour contains the strategy to use when there is already a tool installed
-//
-// If version is "latest" it will always download the latest version (regardless
-// of the value of behaviour)
-//
-// If version is not "latest" and behaviour is "replace", it will download the
-// version again. If instead behaviour is "keep" it will not download the version
-// if it already exists.
-func (t *Tools) Download(name, version, behaviour string) error {
-
+func (t *Tools) DownloadPackageIndex(index_file, signature_file string) error {
 	// Fetch the index
 	resp, err := http.Get(t.IndexURL)
 	if err != nil {
@@ -172,9 +120,50 @@ func (t *Tools) Download(name, version, behaviour string) error {
 	if err != nil {
 		return err
 	}
+	ioutil.WriteFile(index_file, body, 0644)
+	ioutil.WriteFile(signature_file, signature_body, 0644)
 
-	index_file, err := utilities.SaveFileonTempDir("package_index.json", bytes.NewReader(body))
-	signature_file, err := utilities.SaveFileonTempDir("package_index.json.sig", bytes.NewReader(signature_body))
+	t.LastRefresh = time.Now()
+
+	return nil
+}
+
+// Download will parse the index at the indexURL for the tool to download.
+// It will extract it in a folder in .arduino-create, and it will update the
+// Installed map.
+//
+// name contains the name of the tool.
+// version contains the version of the tool.
+// behaviour contains the strategy to use when there is already a tool installed
+//
+// If version is "latest" it will always download the latest version (regardless
+// of the value of behaviour)
+//
+// If version is not "latest" and behaviour is "replace", it will download the
+// version again. If instead behaviour is "keep" it will not download the version
+// if it already exists.
+func (t *Tools) Download(name, version, behaviour string) error {
+
+	index_file := path.Join(t.Directory, "package_index.json")
+	signature_file := path.Join(t.Directory, "package_index.json.sig")
+
+	if _, err := os.Stat(path.Join(t.Directory, "package_index.json")); err != nil || time.Since(t.LastRefresh) > 1*time.Hour {
+		// Download the file again and save it
+		err = t.DownloadPackageIndex(index_file, signature_file)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := checkGPGSig(index_file, signature_file)
+	if err != nil {
+		return err
+	}
+
+	body, err := ioutil.ReadFile(index_file)
+	if err != nil {
+		return err
+	}
 
 	var data index
 	json.Unmarshal(body, &data)
@@ -210,17 +199,9 @@ func (t *Tools) Download(name, version, behaviour string) error {
 		}
 	}
 
-	err = checkGPGSig(index_file, signature_file)
-	// FIXME - try to understand why it fails
-	/*
-		if err != nil {
-			return err
-		}
-	*/
-
 	// Download the tool
 	t.Logger.Println("Downloading tool " + name + " from " + correctSystem.URL)
-	resp, err = http.Get(correctSystem.URL)
+	resp, err := http.Get(correctSystem.URL)
 	if err != nil {
 		return err
 	}
