@@ -1,15 +1,14 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/mattn/go-ole"
-	"github.com/mattn/go-ole/oleutil"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
-	"syscall"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/mattn/go-ole"
+	"github.com/mattn/go-ole/oleutil"
 )
 
 var (
@@ -60,13 +59,6 @@ func getList() ([]OsSerialPort, os.SyscallError) {
 
 func getListSynchronously() {
 
-}
-
-func hideFile(path string) {
-	cpath, cpathErr := syscall.UTF16PtrFromString(path)
-	if cpathErr != nil {
-	}
-	syscall.SetFileAttributes(cpath, syscall.FILE_ATTRIBUTE_HIDDEN)
 }
 
 func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
@@ -186,7 +178,7 @@ func getListViaWmiPnpEntity() ([]OsSerialPort, os.SyscallError) {
 		// USB\VID_1D50&PID_606D&MI_00\6&2F09EA14&0&0000
 		deviceIdStr, _ := oleutil.GetProperty(item, "DeviceID")
 		devIdItems := strings.Split(deviceIdStr.ToString(), "&")
-		log.Printf("DeviceId elements:%v", devIdItems)
+		//log.Printf("DeviceId elements:%v", devIdItems)
 		if len(devIdItems) > 3 {
 			list[i].SerialNumber = devIdItems[3]
 			list[i].IdProduct = strings.Replace(devIdItems[1], "PID_", "", 1)
@@ -232,8 +224,4 @@ func convertByteArrayToUint16Array(b []byte, mylen uint32) []uint16 {
 		ret[i/2] = uint16(b[i]) | uint16(b[i+1])<<8
 	}
 	return ret
-}
-
-func tellCommandNotToSpawnShell(oscmd *exec.Cmd) {
-	oscmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 }

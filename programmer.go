@@ -17,11 +17,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/tools"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/facchinm/go-serial"
 	"github.com/mattn/go-shellwords"
 	"github.com/sfreiberg/simplessh"
-	"github.com/xrash/smetrics"
 )
 
 var compiling = false
@@ -41,6 +42,9 @@ type boardExtraInfo struct {
 	WaitForUploadPort bool          `json:"wait_for_upload_port"`
 	Network           bool          `json:"network"`
 	Auth              basicAuthData `json:"auth"`
+	Verbose           bool          `json:"verbose"`
+	ParamsVerbose     string        `json:"params_verbose"`
+	ParamsQuiet       string        `json:"params_quiet"`
 }
 
 // Scp uploads sourceFile to remote machine like native scp console app.
@@ -228,27 +232,26 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 	commandline = strings.Replace(commandline, "{serial.port}", portname, 1)
 	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(portname), 1)
 
+	if extraInfo.Verbose == true {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsVerbose, 1)
+	} else {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsQuiet, 1)
+	}
+
 	// search for runtime variables and replace with values from globalToolsMap
 	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
 	runtimeVars := runtimeRe.FindAllString(commandline, -1)
 
-	fmt.Println(runtimeVars)
-
 	for _, element := range runtimeVars {
 
-		// use string similarity to resolve a runtime var with a "similar" map element
-		if globalToolsMap[element] == "" {
-			max_similarity := 0.0
-			for i, candidate := range globalToolsMap {
-				similarity := smetrics.Jaro(element, i)
-				if similarity > 0.8 && similarity > max_similarity {
-					max_similarity = similarity
-					globalToolsMap[element] = candidate
-				}
-			}
+		location, err := Tools.GetLocation(element)
+		if err != nil {
+			log.Printf("Command finished with error: %v", err)
+			mapD := map[string]string{"ProgrammerStatus": "Error", "Msg": "Could not find the upload tool"}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
 		}
-
-		commandline = strings.Replace(commandline, element, globalToolsMap[element], 1)
+		commandline = strings.Replace(commandline, element, location, 1)
 	}
 
 	z, _ := shellwords.Parse(commandline)
@@ -292,7 +295,6 @@ func spProgramRW(portname string, boardname string, filePath string, commandline
 var oscmd *exec.Cmd
 
 func spHandlerProgram(flasher string, cmdString []string) error {
-
 	// if runtime.GOOS == "darwin" {
 	// 	sh, _ := exec.LookPath("sh")
 	// 	// prepend the flasher to run it via sh
@@ -314,7 +316,7 @@ func spHandlerProgram(flasher string, cmdString []string) error {
 
 	oscmd = exec.Command(flasher, cmdString...)
 
-	tellCommandNotToSpawnShell(oscmd)
+	tools.TellCommandNotToSpawnShell(oscmd)
 
 	stdout, err := oscmd.StdoutPipe()
 	if err != nil {
@@ -392,7 +394,6 @@ func formatCmdline(cmdline string, boardOptions map[string]string) (string, bool
 			}
 		}
 	}
-	log.Println(cmdline)
 	return cmdline, true
 }
 

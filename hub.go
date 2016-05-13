@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/kardianos/osext"
 	//"os"
@@ -190,8 +191,19 @@ func checkCmd(m []byte) {
 		go spList(true)
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		args := strings.Split(s, " ")
-		if len(args) > 2 {
-			go spDownloadTool(args[1], args[2])
+		if len(args) > 1 {
+			go func() {
+				err := Tools.Download(args[1], "latest", "keep")
+				if err != nil {
+					mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+					mapB, _ := json.Marshal(mapD)
+					h.broadcastSys <- mapB
+				} else {
+					mapD := map[string]string{"DownloadStatus": "Success", "Msg": "Map Updated"}
+					mapB, _ := json.Marshal(mapD)
+					h.broadcastSys <- mapB
+				}
+			}()
 		}
 	} else if strings.HasPrefix(sl, "bufferalgorithm") {
 		go spBufferAlgorithms()
