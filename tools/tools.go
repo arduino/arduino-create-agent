@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/xrash/smetrics"
@@ -29,10 +30,11 @@ import (
 //         Logger: log.Logger
 //     }
 type Tools struct {
-	Directory string
-	IndexURL  string
-	Logger    log.StdLogger
-	installed map[string]string
+	Directory   string
+	IndexURL    string
+	LastRefresh time.Time
+	Logger      log.StdLogger
+	installed   map[string]string
 }
 
 // Init creates the Installed map and populates it from a file in .arduino-create
