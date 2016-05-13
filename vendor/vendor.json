@@ -216,6 +216,12 @@
 			"revisionTime": "2016-04-25T13:45:47Z"
 		},
 		{
+			"checksumSHA1": "olOKkhrdkYQHZ0lf1orrFQPQrv4=",
+			"path": "golang.org/x/crypto/openpgp/armor",
+			"revision": "b76c864ef1dca1d8f271f917c290cddcce3d9e0d",
+			"revisionTime": "2016-04-25T13:45:47Z"
+		},
+		{
 			"checksumSHA1": "eo/KtdjieJQXH7Qy+faXFcF70ME=",
 			"path": "golang.org/x/crypto/openpgp/elgamal",
 			"revision": "b76c864ef1dca1d8f271f917c290cddcce3d9e0d",
