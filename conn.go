@@ -74,12 +74,17 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
-	if data.Signature == "" {
-		c.String(http.StatusBadRequest, "signature is required")
-		return
-	}
+	if data.Extra.Network == false {
+		if data.Signature == "" {
+			c.String(http.StatusBadRequest, "signature is required")
+			return
+		}
 
-	if data.Extra.Network {
+		if data.Commandline == "" {
+			c.String(http.StatusBadRequest, "commandline is required for local board")
+			return
+		}
+
 		err := verifyCommandLine(data.Commandline, data.Signature)
 
 		if err != nil {
@@ -88,16 +93,12 @@ func uploadHandler(c *gin.Context) {
 		}
 	}
 
-	if data.Extra.Network == false && data.Commandline == "" {
-		c.String(http.StatusBadRequest, "commandline is required for local board")
-		return
-	}
-
 	buffer := bytes.NewBuffer(data.Hex)
 
 	path, err := saveFileonTempDir(data.Filename, buffer)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
+		return
 	}
 
 	if data.Rewrite != "" {
