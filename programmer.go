@@ -145,78 +145,99 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 
 	// Prepare a form that you will submit to that URL.
 	_url := "http://" + portname + "/data/upload_sketch_silent"
-	var b bytes.Buffer
-	w := multipart.NewWriter(&b)
-	// Add your image file
-	filePath = strings.Trim(filePath, "\n")
-	f, err := os.Open(filePath)
-	if err != nil {
-		log.Println("Error opening file" + filePath + " err: " + err.Error())
-		return err
-	}
-	fw, err := w.CreateFormFile("sketch_hex", filePath)
-	if err != nil {
-		log.Println("Error creating form file")
-		return err
-	}
-	if _, err = io.Copy(fw, f); err != nil {
-		log.Println("Error copying form file")
-		return err
-	}
-	// Add the other fields
-	if fw, err = w.CreateFormField("board"); err != nil {
-		log.Println("Error creating form field")
-		return err
-	}
-	if _, err = fw.Write([]byte(colonToUnderscore(boardname))); err != nil {
-		log.Println("Error writing form field")
-		return err
-	}
-	// Don't forget to close the multipart writer.
-	// If you don't close it, your request will be missing the terminating boundary.
-	w.Close()
+	var cookies []*http.Cookie
 
-	// Now that you have a form, you can submit it to your handler.
-	req, err := http.NewRequest("POST", _url, &b)
-	if err != nil {
-		log.Println("Error creating post request")
+	for {
+		var b bytes.Buffer
+		w := multipart.NewWriter(&b)
+		// Add your image file
+		filePath = strings.Trim(filePath, "\n")
+		f, err := os.Open(filePath)
+		if err != nil {
+			log.Println("Error opening file" + filePath + " err: " + err.Error())
+			return err
+		}
+		fw, err := w.CreateFormFile("sketch_hex", filePath)
+		if err != nil {
+			log.Println("Error creating form file")
+			return err
+		}
+		if _, err = io.Copy(fw, f); err != nil {
+			log.Println("Error copying form file")
+			return err
+		}
+		// Add the other fields
+		if fw, err = w.CreateFormField("board"); err != nil {
+			log.Println("Error creating form field")
+			return err
+		}
+		if _, err = fw.Write([]byte(colonToUnderscore(boardname))); err != nil {
+			log.Println("Error writing form field")
+			return err
+		}
+		// Don't forget to close the multipart writer.
+		// If you don't close it, your request will be missing the terminating boundary.
+		w.Close()
+
+		// Now that you have a form, you can submit it to your handler.
+		req, err := http.NewRequest("POST", _url, &b)
+		if err != nil {
+			log.Println("Error creating post request")
+			return err
+		}
+		// Don't forget to set the content type, this will contain the boundary.
+		req.Header.Set("Content-Type", w.FormDataContentType())
+		if authdata.Username != "" {
+			req.SetBasicAuth(authdata.Username, authdata.Password)
+		}
+
+		// set any cookies from the previous request
+		for _, cookie := range cookies {
+			req.AddCookie(cookie)
+		}
+
+		//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
+		log.Printf("Network flashing on " + portname)
+		mapD := map[string]string{"ProgrammerStatus": "Starting", "Cmd": "POST"}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
+
+		// Submit the request
+		client := &http.Client{}
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return errors.New("redirect")
+		}
+		res, err := client.Do(req)
+
+		// clear redirect errors and use status code
+		if err != nil && strings.HasSuffix(err.Error(), "redirect") {
+			err = nil
+		}
+
+		if err != nil {
+			log.Println("Error during post request")
+			return err
+		}
+
+		// check for found status
+		if res.StatusCode == http.StatusFound {
+			if urlStr := res.Header.Get("Location"); urlStr != "" {
+				// try redirect path
+				log.Printf("Got redirected to %s", urlStr)
+				_url = "http://" + portname + urlStr
+				cookies = res.Cookies()
+				continue
+			}
+		}
+
+		// Check the response
+		if res.StatusCode != http.StatusOK {
+			log.Errorf("bad status: %s", res.Status)
+			err = fmt.Errorf("bad status: %s", res.Status)
+		}
 		return err
 	}
-	// Don't forget to set the content type, this will contain the boundary.
-	req.Header.Set("Content-Type", w.FormDataContentType())
-	if authdata.Username != "" {
-		req.SetBasicAuth(authdata.Username, authdata.Password)
-	}
 
-	//h.broadcastSys <- []byte("Start flashing with command " + cmdString)
-	log.Printf("Network flashing on " + portname)
-	mapD := map[string]string{"ProgrammerStatus": "Starting", "Cmd": "POST"}
-	mapB, _ := json.Marshal(mapD)
-	h.broadcastSys <- mapB
-
-	// Submit the request
-	client := &http.Client{}
-	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return errors.New("redirect")
-	}
-	res, err := client.Do(req)
-
-	// clear redirect errors and use status code
-	if err != nil && strings.HasSuffix(err.Error(), "redirect") {
-		err = nil
-	}
-
-	if err != nil {
-		log.Println("Error during post request")
-		return err
-	}
-
-	// Check the response
-	if res.StatusCode != http.StatusOK {
-		log.Errorf("bad status: %s", res.Status)
-		err = fmt.Errorf("bad status: %s", res.Status)
-	}
-	return err
 }
 
 func spProgramLocal(portname string, boardname string, filePath string, commandline string, extraInfo boardExtraInfo) error {
