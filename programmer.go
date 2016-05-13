@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -195,7 +196,16 @@ func spProgramNetwork(portname string, boardname string, filePath string, authda
 
 	// Submit the request
 	client := &http.Client{}
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return errors.New("redirect")
+	}
 	res, err := client.Do(req)
+
+	// clear redirect errors and use status code
+	if err != nil && strings.HasSuffix(err.Error(), "redirect") {
+		err = nil
+	}
+
 	if err != nil {
 		log.Println("Error during post request")
 		return err
