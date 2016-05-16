@@ -52,7 +52,7 @@ bootstrapPlatforms()
 	env CC_FOR_TARGET=o64-clang CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 ./make.bash --no-clean
 	env CC_FOR_TARGET=gcc CGO_ENABLED=1 GOOS=linux GOARCH=amd64 ./make.bash --no-clean
 	env CC_FOR_TARGET=gcc CGO_ENABLED=1 GOOS=linux GOARCH=386 ./make.bash --no-clean
-	env CGO_ENABLED=0 GOOS=linux GOARCH=arm ./make.bash --no-clean
+	#env CGO_ENABLED=0 GOOS=linux GOARCH=arm ./make.bash --no-clean
 	env CC_FOR_TARGET=i686-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows GOARCH=386 ./make.bash --no-clean
 }
 
