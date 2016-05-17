@@ -29,6 +29,7 @@ build:
     installer:
         image: arduino/installbuilder
         commands:
+            - cat ArduinoCreateAgent_autoupdate.xml
             - builder build ArduinoCreateAgent_autoupdate.xml --license license.xml
 notify:
     slack:
