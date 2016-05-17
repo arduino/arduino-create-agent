@@ -227,15 +227,15 @@ func spProgramLocal(portname string, boardname string, filePath string, commandl
 
 	log.Printf("Received commandline (unresolved):" + commandline)
 
-	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(filePath)), 1)
-	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath))), 1)
-	commandline = strings.Replace(commandline, "{serial.port}", portname, 1)
-	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(portname), 1)
+	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(filePath)), -1)
+	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath))), -1)
+	commandline = strings.Replace(commandline, "{serial.port}", portname, -1)
+	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(portname), -1)
 
 	if extraInfo.Verbose == true {
-		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsVerbose, 1)
+		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsVerbose, -1)
 	} else {
-		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsQuiet, 1)
+		commandline = strings.Replace(commandline, "{upload.verbose}", extraInfo.ParamsQuiet, -1)
 	}
 
 	// search for runtime variables and replace with values from globalToolsMap
