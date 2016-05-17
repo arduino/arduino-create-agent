@@ -328,7 +328,7 @@ func spHandlerProgram(flasher string, cmdString []string) error {
 		return err
 	}
 
-	multi := io.MultiReader(stderr, stdout)
+	//multi := io.MultiReader(stderr, stdout)
 
 	// Stdout buffer
 	//var cmdOutput []byte
@@ -341,16 +341,29 @@ func spHandlerProgram(flasher string, cmdString []string) error {
 
 	err = oscmd.Start()
 
-	in := bufio.NewScanner(multi)
+	stdout_copy := bufio.NewScanner(stdout)
+	stderr_copy := bufio.NewScanner(stderr)
 
-	in.Split(bufio.ScanLines)
+	stdout_copy.Split(bufio.ScanLines)
+	stderr_copy.Split(bufio.ScanLines)
 
-	for in.Scan() {
-		log.Info(in.Text())
-		mapD := map[string]string{"ProgrammerStatus": "Busy", "Msg": in.Text()}
-		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
-	}
+	go func() {
+		for stdout_copy.Scan() {
+			log.Info(stdout_copy.Text())
+			mapD := map[string]string{"ProgrammerStatus": "Busy", "Msg": stdout_copy.Text()}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
+		}
+	}()
+
+	go func() {
+		for stderr_copy.Scan() {
+			log.Info(stderr_copy.Text())
+			mapD := map[string]string{"ProgrammerStatus": "Busy", "Msg": stderr_copy.Text()}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
+		}
+	}()
 
 	err = oscmd.Wait()
 
