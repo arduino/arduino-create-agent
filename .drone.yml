@@ -24,6 +24,10 @@ build:
         commands:
             - GOOS=linux GOARCH=386 CC=gcc CXX=gcc CGO_ENABLED=1 go build -o artifacts/linux-386/arduino-create-agent
             - cp config.ini artifacts/linux-386
+    installer:
+        image: arduino/installbuilder
+        commands:
+            - builder build ~/ArduinoCreateAgent_autoupdate.xml --license license.xml
 notify:
     slack:
         webhook_url: $$SLACK_WEBHOOK
