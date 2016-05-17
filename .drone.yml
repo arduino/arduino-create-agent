@@ -28,7 +28,7 @@ build:
         image: arduino/installbuilder
         commands:
             - ls
-            - builder build ~/ArduinoCreateAgent_autoupdate.xml --license license.xml
+            - builder build ArduinoCreateAgent_autoupdate.xml --license license.xml
 notify:
     slack:
         webhook_url: $$SLACK_WEBHOOK
