@@ -10,24 +10,25 @@ build:
             - govendor vet +local
             - govendor test +local
             # Linux amd64
-            - GOOS=linux GOARCH=amd64 CC=gcc CXX=gcc CGO_ENABLED=1 go build -o artifacts/linux-amd64/arduino-create-agent
-            - cp config.ini artifacts/linux-amd64
+            - GOOS=linux GOARCH=amd64 CC=gcc CXX=gcc CGO_ENABLED=1 go build -o snapshot/linux_amd64/Arduino_Create_Bridge
+            - cp config.ini snapshot/linux_amd64
+            - zip -r arduino.zip snapshot/*
             # Darwin amd64
-            - GOOS=darwin GOARCH=amd64 CC=o64-clang CXX=o64-clang CGO_ENABLED=1 go build -o artifacts/osx/arduino-create-agent
-            - cp config.ini artifacts/osx
+            - GOOS=darwin GOARCH=amd64 CC=o64-clang CXX=o64-clang CGO_ENABLED=1 go build -o snapshot/darwin_amd64/Arduino_Create_Bridge
+            - cp config.ini snapshot/darwin_amd64
+            - zip -r arduino.zip snapshot/*
             # Windows 386
-            - GOOS=windows GOARCH=386 CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-gcc CGO_ENABLED=1 go build -o artifacts/windows/arduino-create-agent.exe -ldflags -H=windowsgui
-            - cp config.ini artifacts/windows
-            - zip -r arduino-create-agent.zip artifacts/*
+            - GOOS=windows GOARCH=386 CC=i686-w64-mingw32-gcc CXX=i686-w64-mingw32-gcc CGO_ENABLED=1 go build -o snapshot/windows_386/Arduino_Create_Bridge.exe -ldflags -H=windowsgui
+            - cp config.ini snapshot/windows_386
+            - zip -r arduino.zip snapshot/*
     linux32:
         image: arduino/golang-linux-32
         commands:
-            - GOOS=linux GOARCH=386 CC=gcc CXX=gcc CGO_ENABLED=1 go build -o artifacts/linux-386/arduino-create-agent
-            - cp config.ini artifacts/linux-386
+            - GOOS=linux GOARCH=386 CC=gcc CXX=gcc CGO_ENABLED=1 go build -o snapshot/linux-386/Arduino_Create_Bridge
+            - cp config.ini snapshot/linux-386
     installer:
         image: arduino/installbuilder
         commands:
-            - ls
             - builder build ArduinoCreateAgent_autoupdate.xml --license license.xml
 notify:
     slack:
