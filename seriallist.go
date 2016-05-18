@@ -3,8 +3,9 @@
 package main
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/facchinm/go-serial"
+	"github.com/facchinm/go-serial-native"
 	"regexp"
 )
 
@@ -16,6 +17,7 @@ type OsSerialPort struct {
 	Product      string
 	IdProduct    string
 	IdVendor     string
+	ISerial      string
 	NetworkPort  bool
 }
 
@@ -29,11 +31,19 @@ func GetList(network bool) ([]OsSerialPort, error) {
 	} else {
 
 		// will timeout in 2 seconds
-		ports, err := serial.GetPortsList()
-
 		arrPorts := []OsSerialPort{}
+		ports, err := serial.ListPorts()
+		if err != nil {
+			return arrPorts, err
+		}
+
 		for _, element := range ports {
-			arrPorts = append(arrPorts, OsSerialPort{Name: element})
+			vid, pid, _ := element.USBVIDPID()
+			vidString := fmt.Sprintf("0x%04X", vid)
+			pidString := fmt.Sprintf("0x%04X", pid)
+			if vid != 0 && pid != 0 {
+				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name(), IdVendor: vidString, IdProduct: pidString, ISerial: element.USBSerialNumber()})
+			}
 		}
 
 		// see if we should filter the list
@@ -54,7 +64,6 @@ func GetList(network bool) ([]OsSerialPort, error) {
 			arrPorts = newarrPorts
 		}
 
-		arrPorts = associateVidPidWithPort(arrPorts)
 		return arrPorts, err
 		//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 	}

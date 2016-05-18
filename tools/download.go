@@ -169,22 +169,11 @@ func (t *Tools) Download(name, version, behaviour string) error {
 	t.Logger.Println(string(body))
 
 	// Find the tool by name
-	correctTool := findTool(name, version, data)
+	correctTool, correctSystem := findTool(name, version, data)
 
-	if correctTool.Name == "" {
-		return errors.New("We couldn't find a tool with the name " + name + " and version " + version)
-	}
-
-	// Find the url based on system
-	var correctSystem system
-	max_similarity := 0.7
-
-	for _, s := range correctTool.Systems {
-		similarity := smetrics.Jaro(s.Host, systems[runtime.GOOS+runtime.GOARCH])
-		if similarity > max_similarity {
-			correctSystem = s
-			max_similarity = similarity
-		}
+	if correctTool.Name == "" || correctSystem.URL == "" {
+		t.Logger.Println("We couldn't find a tool with the name " + name + " and version " + version)
+		return nil
 	}
 
 	key := correctTool.Name + "-" + correctTool.Version
@@ -266,7 +255,7 @@ func (t *Tools) Download(name, version, behaviour string) error {
 	return t.writeMap()
 }
 
-func findTool(name, version string, data index) tool {
+func findTool(name, version string, data index) (tool, system) {
 	var correctTool tool
 	correctTool.Version = "0.0"
 
@@ -286,7 +275,20 @@ func findTool(name, version string, data index) tool {
 			}
 		}
 	}
-	return correctTool
+
+	// Find the url based on system
+	var correctSystem system
+	max_similarity := 0.7
+
+	for _, s := range correctTool.Systems {
+		similarity := smetrics.Jaro(s.Host, systems[runtime.GOOS+runtime.GOARCH])
+		if similarity > max_similarity {
+			correctSystem = s
+			max_similarity = similarity
+		}
+	}
+
+	return correctTool, correctSystem
 }
 
 func stringInSlice(str string, list []string) bool {
