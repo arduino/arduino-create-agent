@@ -41,7 +41,9 @@ func GetList(network bool) ([]OsSerialPort, error) {
 			vid, pid, _ := element.USBVIDPID()
 			vidString := fmt.Sprintf("0x%04X", vid)
 			pidString := fmt.Sprintf("0x%04X", pid)
-			arrPorts = append(arrPorts, OsSerialPort{Name: element.Name(), IdVendor: vidString, IdProduct: pidString, ISerial: element.USBSerialNumber()})
+			if vid != 0 && pid != 0 {
+				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name(), IdVendor: vidString, IdProduct: pidString, ISerial: element.USBSerialNumber()})
+			}
 		}
 
 		// see if we should filter the list
@@ -62,7 +64,6 @@ func GetList(network bool) ([]OsSerialPort, error) {
 			arrPorts = newarrPorts
 		}
 
-		arrPorts = ExtraFilterPorts(arrPorts)
 		return arrPorts, err
 		//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 	}
