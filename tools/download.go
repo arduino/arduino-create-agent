@@ -53,7 +53,7 @@ type index struct {
 var systems = map[string]string{
 	"linuxamd64":  "x86_64-linux-gnu",
 	"linux386":    "i686-linux-gnu",
-	"darwinamd64": "i386-apple-darwin11",
+	"darwinamd64": "apple-darwin",
 	"windows386":  "i686-mingw32",
 }
 
@@ -71,7 +71,6 @@ func checkGPGSig(fileName string, sigFileName string) error {
 	if err != nil {
 		return err
 	}
-
 	defer sigFile.Close()
 
 	// Get a Reader for the signature file
@@ -79,7 +78,6 @@ func checkGPGSig(fileName string, sigFileName string) error {
 	if err != nil {
 		return err
 	}
-
 	defer file.Close()
 
 	publicKeyBin, err := hex.DecodeString(publicKeyHex)
@@ -241,7 +239,10 @@ func (t *Tools) Download(name, version, behaviour string) error {
 		return err
 	}
 
-	t.installDrivers(location)
+	err = t.installDrivers(location)
+	if err != nil {
+		return err
+	}
 
 	// Ensure that the files are executable
 	t.Logger.Println("Ensure that the files are executable")
@@ -413,10 +414,9 @@ func extractTarGz(body []byte, location string) (string, error) {
 		}
 
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			//return location, err
+		if err == nil {
+			defer file.Close()
 		}
-		defer file.Close()
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
 			//return location, err
@@ -425,15 +425,26 @@ func extractTarGz(body []byte, location string) (string, error) {
 	return location, nil
 }
 
-func (t *Tools) installDrivers(location string) {
+func (t *Tools) installDrivers(location string) error {
 	if runtime.GOOS == "windows" {
 		if _, err := os.Stat(filepath.Join(location, "post_install.bat")); err == nil {
 			t.Logger.Println("Installing drivers")
-			oscmd := exec.Command(filepath.Join(location, "post_install.bat"))
-			TellCommandNotToSpawnShell(oscmd)
-			oscmd.Run()
+			ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
+			t.Logger.Println(ok)
+			if ok == 6 {
+				os.Chdir(location)
+				oscmd := exec.Command("post_install.bat")
+				TellCommandNotToSpawnShell(oscmd)
+				t.Logger.Println(oscmd)
+				err = oscmd.Run()
+				t.Logger.Println(err)
+				return err
+			} else {
+				return errors.New("Could not install drivers")
+			}
 		}
 	}
+	return nil
 }
 
 func extractBz2(body []byte, location string) (string, error) {
@@ -481,10 +492,9 @@ func extractBz2(body []byte, location string) (string, error) {
 		}
 
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			//return location, err
+		if err == nil {
+			defer file.Close()
 		}
-		defer file.Close()
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
 			//return location, err

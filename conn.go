@@ -11,7 +11,9 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
+	"io/ioutil"
 	"net/http"
+	"path"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/utilities"
@@ -46,16 +48,22 @@ func (s *WsServer) ServeHTTP(c *gin.Context) {
 	s.Server.ServeHTTP(c.Writer, c.Request)
 }
 
+type AdditionalFile struct {
+	Hex      []byte `json:"hex"`
+	Filename string `json:"filename"`
+}
+
 // Upload contains the data to upload a sketch onto a board
 type Upload struct {
-	Port        string         `json:"port"`
-	Board       string         `json:"board"`
-	Rewrite     string         `json:"rewrite"`
-	Commandline string         `json:"commandline"`
-	Signature   string         `json:"signature"`
-	Extra       boardExtraInfo `json:"extra"`
-	Hex         []byte         `json:"hex"`
-	Filename    string         `json:"filename"`
+	Port        string           `json:"port"`
+	Board       string           `json:"board"`
+	Rewrite     string           `json:"rewrite"`
+	Commandline string           `json:"commandline"`
+	Signature   string           `json:"signature"`
+	Extra       boardExtraInfo   `json:"extra"`
+	Hex         []byte           `json:"hex"`
+	Filename    string           `json:"filename"`
+	ExtraFiles  []AdditionalFile `json:"extrafiles"`
 }
 
 func uploadHandler(c *gin.Context) {
@@ -96,17 +104,21 @@ func uploadHandler(c *gin.Context) {
 
 	buffer := bytes.NewBuffer(data.Hex)
 
-	path, err := utilities.SaveFileonTempDir(data.Filename, buffer)
+	filepath, err := utilities.SaveFileonTempDir(data.Filename, buffer)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
+	}
+
+	for _, extraFile := range data.ExtraFiles {
+		ioutil.WriteFile(path.Join(path.Dir(filepath), extraFile.Filename), extraFile.Hex, 0644)
 	}
 
 	if data.Rewrite != "" {
 		data.Board = data.Rewrite
 	}
 
-	go spProgramRW(data.Port, data.Board, path, data.Commandline, data.Extra)
+	go spProgramRW(data.Port, data.Board, filepath, data.Commandline, data.Extra)
 
 	c.String(http.StatusAccepted, "")
 }
