@@ -278,7 +278,7 @@ func findTool(name, version string, data index) (tool, system) {
 
 	// Find the url based on system
 	var correctSystem system
-	max_similarity := 0.8
+	max_similarity := 0.7
 
 	for _, s := range correctTool.Systems {
 		similarity := smetrics.Jaro(s.Host, systems[runtime.GOOS+runtime.GOARCH])
