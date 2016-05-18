@@ -24,10 +24,10 @@
 			"revisionTime": "2015-09-15T17:57:31+02:00"
 		},
 		{
-			"checksumSHA1": "zxWTxNYVyVmbb5BjmsjGsWUyqJc=",
+			"checksumSHA1": "e30hdVEI/Vn13gTmp/H90FkCa3s=",
 			"path": "github.com/facchinm/go-serial-native",
-			"revision": "6c62fb894d873784830ec370e85ab1f29c2e0324",
-			"revisionTime": "2015-12-22T14:55:54Z"
+			"revision": "4e85274940f67cca6a4e72c914692d2fbb5fb1a7",
+			"revisionTime": "2016-05-18T18:34:33Z"
 		},
 		{
 			"path": "github.com/facchinm/systray",
