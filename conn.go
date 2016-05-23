@@ -13,7 +13,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"path"
+	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/utilities"
@@ -104,21 +104,21 @@ func uploadHandler(c *gin.Context) {
 
 	buffer := bytes.NewBuffer(data.Hex)
 
-	filepath, err := utilities.SaveFileonTempDir(data.Filename, buffer)
+	filePath, err := utilities.SaveFileonTempDir(data.Filename, buffer)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	for _, extraFile := range data.ExtraFiles {
-		ioutil.WriteFile(path.Join(path.Dir(filepath), extraFile.Filename), extraFile.Hex, 0644)
+		ioutil.WriteFile(filepath.Join(filepath.Dir(filePath), extraFile.Filename), extraFile.Hex, 0644)
 	}
 
 	if data.Rewrite != "" {
 		data.Board = data.Rewrite
 	}
 
-	go spProgramRW(data.Port, data.Board, filepath, data.Commandline, data.Extra)
+	go spProgramRW(data.Port, data.Board, filePath, data.Commandline, data.Extra)
 
 	c.String(http.StatusAccepted, "")
 }
