@@ -19,7 +19,224 @@ Please use the current latest version:
 * [MacOSX dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer.dmg)
 * [Linux x64 dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer.run)
 
-## Compiling
+## How to use it
+The arduino create agent is a single binary that reads from a configuration file. Upon launching it will sit on the traybar and work in the background.
+
+It will listen to http and websocket connections on a range of ports from `8990` to `9000`.
+
+### Discover the port
+You should make GET request to the `/info` endpoint on the possible ports, until you find a reply:
+
+    $ curl http://localhost:8990/info
+    curl: (7) Failed to connect to localhost port 8990: Connection refused
+    $ curl http://localhost:8991/info
+    
+    $ curl http://localhost:8992/info
+    {"http":"http://localhost:8992","https":"https://localhost:8991","version":"1.0.36","ws":"ws://localhost:8992","wss":"wss://localhost:8991"}
+
+The reply will contain a json with info about the version and the http and https endpoints to use
+
+### Open a websocket
+Most of the commands can be performed with websocket instructions. We use a library called [socket.io](https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js) to handle the messages.
+Once you have the websocket endpoint you need you can:
+
+```javascript
+var socket = io(endpoint);
+socket.on('connect', function () {
+    socket.emit('message', yourCommand);
+
+    socket.on('message', function () {
+        // Your code to handle messages
+    })
+}
+```
+
+### Use the debug console
+By clicking on the tray icon and going to the debug console you can try most of the websocket commands. The first command you should type in is:
+
+    log on
+
+### List the boards
+To get a json list of the connected boards you can issue the command list:
+
+```javascript
+socket.emit('command', 'list');
+```
+
+You will receive an object of all the boards connected with USB or over the network:
+
+```json
+{
+  "Ports":[
+    {
+      "Name":"/dev/ttyACM0",
+      "SerialNumber":"",
+      "DeviceClass":"",
+      "IsOpen":false,
+      "IsPrimary":false,
+      "Baud":0,
+      "BufferAlgorithm":"",
+      "Ver":"1.0.36",
+      "NetworkPort":false,
+      "VendorID":"0x2341",
+      "ProductID":"0x8036"
+    }
+  ],
+  "Network":false
+}{
+  "Ports":[
+    {
+      "Name":"192.168.1.101",
+      "SerialNumber":"",
+      "DeviceClass":"",
+      "IsOpen":false,
+      "IsPrimary":false,
+      "Baud":0,
+      "BufferAlgorithm":"",
+      "Ver":"1.0.36",
+      "NetworkPort":true,
+      "VendorID":"board=Arduino Y\\195\\186n Shield distro_version=0.1",
+      "ProductID":"Shield"
+    }
+  ],
+  "Network":true
+}
+```
+
+## Open/Close ports
+
+To read input from a board connected to USB you must first open the port with the command
+
+    open /dev/ttyACM0 9600
+
+where you should replace /dev/ttyACM0 with the actual port and 9600 with the baud.
+
+You will receive a message like:
+
+```json
+{  
+  "Cmd":"Open",
+  "Desc":"Got register/open on port.",
+  "Port":"/dev/ttyACM0",
+  "IsPrimary":true,
+  "Baud":9600,
+  "BufferType":""
+}
+```
+
+or
+
+```json
+{  
+  "Cmd":"OpenFail",
+  "Desc":"Error opening port. Serial port busy",
+  "Port":"/dev/ttyACM0",
+  "Baud":9600
+}
+```
+
+You can then close the port with
+
+    close /dev/ttyACM0
+
+You will receive a message like:
+
+```json
+{  
+  "Cmd":"Close",
+  "Desc":"Got unregister/close on port.",
+  "Port":"/dev/ttyACM0",
+  "Baud":9600
+}
+```
+
+or
+
+
+```json
+{  
+  "Error":"We could not find the serial port /dev/ttyACM0 that you were trying to close."
+}
+```
+
+### Receiving and sending data
+
+While a port is open you can send input with
+
+    send /dev/ttyACM0 hello
+
+with a reply like
+
+```
+{"Cmd":"Queued","QCnt":1,"Ids":[""],"D":["hello"],"Port":"/dev/ttyACM0"}
+{"Cmd":"Write","QCnt":0,"Id":"","P":"/dev/ttyACM0"}
+{"Cmd":"CompleteFake","Id":"","P":"/dev/ttyACM0"}
+
+You can receive output from the serial port by listening to messages like this:
+
+```json
+{  
+  "D":"output string\r\n"
+}
+```
+
+### Download a tool
+You can download a tool on the computer with a command like
+
+    download avrdude
+
+receiving a reply like
+
+```json
+{
+  "DownloadStatus": "Success",
+  "Msg":"Map Updated"
+}
+```
+
+### Upload
+You can upload a binary sketch to a board connected to a port with a POST request to be made at the http endpoint.
+
+The payload is a json object that looks like this:
+
+```json
+{
+  "board":"arduino:avr:leonardo",
+  "port":"/dev/ttyACM1",
+  "commandline":"\"{runtime.tools.avrdude.path}/bin/avrdude\" \"-C{runtime.tools.avrdude.path}/etc/avrdude.conf\" {upload.verbose} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D \"-Uflash:w:{build.path}/{build.project_name}.hex:i\"",
+  "signature":"97db97ced2c",
+  "hex":"OjEwMDAwMDAwMEM5NEU1MDAwQzk0MEQwMTBDOTQwRDAxMEM5NDBEMDE2MQ0KOjEwMDAxMDAwMEM5NDBEMDEwQzk0M",
+  "filename":"Blink.ino.hex",
+  "extra":{
+    "auth":{
+      "password":null
+    },
+    "wait_for_upload_port":true,
+    "use_1200bps_touch":true,
+    "network":false,
+    "params_verbose":"-v",
+    "params_quiet":"-q -q",
+    "verbose":true
+  }
+}
+```
+
+- commandline is the command to execute to perform the upload. This is for example avrdude on a leonardo.
+
+- hex contains the sketch hex encoded in base64
+
+- signature is the signature of the commandline signed with the private key that matches the public key contained in the config.ini of the arduino-create-agent
+
+The results of the upload will be delivered via websocket with messages that looks like:
+
+```json
+{"Msg":"avrdude: verifying ...","ProgrammerStatus":"Busy"}
+{"Msg":"avrdude done. Thank you.","ProgrammerStatus":"Busy"}
+{"Flash":"Ok","ProgrammerStatus":"Done"}
+
+---
+
+## Development
 
 From the project root dir executing:
 ```
@@ -96,4 +313,3 @@ By making a contribution to this project, I certify that:
 ## Creating a release
 Just create a new release on github, and our drone server will build and upload
 ithe compiled binaries for every architecture in a zip file in the release itself.
-
