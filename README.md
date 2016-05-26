@@ -167,10 +167,11 @@ While a port is open you can send input with
 
 with a reply like
 
-```
+```json
 {"Cmd":"Queued","QCnt":1,"Ids":[""],"D":["hello"],"Port":"/dev/ttyACM0"}
 {"Cmd":"Write","QCnt":0,"Id":"","P":"/dev/ttyACM0"}
 {"Cmd":"CompleteFake","Id":"","P":"/dev/ttyACM0"}
+```
 
 You can receive output from the serial port by listening to messages like this:
 
@@ -233,6 +234,7 @@ The results of the upload will be delivered via websocket with messages that loo
 {"Msg":"avrdude: verifying ...","ProgrammerStatus":"Busy"}
 {"Msg":"avrdude done. Thank you.","ProgrammerStatus":"Busy"}
 {"Flash":"Ok","ProgrammerStatus":"Done"}
+```
 
 ---
 
