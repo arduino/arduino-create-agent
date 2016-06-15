@@ -494,6 +494,7 @@ func touch_port_1200bps(portname string, WaitForUploadPort bool) (string, error)
 			log.Println(ports)
 			portname = findNewPortName(ports, after_reset_ports)
 			if portname != "" {
+				time.Sleep(time.Millisecond * 500)
 				break
 			}
 			if timeout {

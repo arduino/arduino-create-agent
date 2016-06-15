@@ -281,7 +281,6 @@ func (p *serport) writerNoBuf() {
 			if err == nil {
 				h.broadcastSys <- msgJson
 			}
-
 		}
 
 		log.Print("Just wrote ", n2, " bytes to serial: ", string(data.data))
@@ -299,6 +298,8 @@ func (p *serport) writerNoBuf() {
 	log.Println(msgstr)
 	h.broadcastSys <- []byte(msgstr)
 	p.portIo.Close()
+	spListDual(false)
+	spList(false)
 }
 
 func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) {
@@ -360,6 +361,10 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 
 	sh.register <- p
 	defer func() { sh.unregister <- p }()
+
+	spListDual(false)
+	spList(false)
+
 	// this is internally buffered thread to not send to serial port if blocked
 	go p.writerBuffered()
 	// this is thread to send to serial port regardless of block
@@ -378,4 +383,6 @@ func spHandlerClose(p *serport) {
 func spCloseReal(p *serport) {
 	p.bufferwatcher.Close()
 	p.portIo.Close()
+	spListDual(false)
+	spList(false)
 }
