@@ -1,6 +1,7 @@
 arduino-create-agent
 ====================
 
+## Installation
 Get the latest version of the Agent for all supported platforms:
 
 * [Windows](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer.exe)
@@ -10,6 +11,45 @@ Get the latest version of the Agent for all supported platforms:
 arduino-create-agent is a fork of @johnlauer's serial-port-json-server (which we really want to thank for his kindness and great work)
 
 The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
+
+## Disable Autostart
+
+### Windows
+1. ![Type "Task Manager in the Windows Search Bar"](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/01.png)
+2. ![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/02.png)
+3. ![Select the autostart dir](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/03.png)
+4. ![Move the file to the trash](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/04.png)
+
+### Mac OSX
+1. ![Open Finder, click on Go menu, select 'Go to Folder'](https://github.com/arduino/arduino-create-agent/master/images/mac/01.png)
+2. ![Type the directory containing the autolauncher file, change <username> with your Mac username, by default the directory is /Users/username/Library/LaunchAgents](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/02.png)
+3. ![Select the ArduinoCreateAgent.plist file](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/03.png)
+4. ![Right click on the file name and select 'Move to Trash'](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/04.png)
+
+---
+The command line way:
+```
+$ launchctl unload ~/Library/LaunchAgents/ArduinoCreateAgent.plist
+```
+
+### Linux
+1. ![Show hidden files](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/01.png)
+2. ![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/02.png)
+3. ![Select the autostart dir](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/03.png)
+4. ![Move the file to the trash](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/04.png)
+
+---
+The command line way:
+
+Just remove the autostart file in your desktop manager, in Ubuntu is:
+```
+$ rm $HOME/.config/autostart/arduino-create-agent.desktop
+```
+To start manually the agent you can open the file at:
+```
+$ nohup $HOME/ArduinoCreateAgent-1.1/Arduino_Create_Bridge &
+```
+or in the location selected during the installation
 
 # Contributing
 
