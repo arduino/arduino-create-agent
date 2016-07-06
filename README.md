@@ -15,13 +15,23 @@ The history has been rewritten to keep the repo small (thus removing all binarie
 ## Disable Autostart
 
 ### Windows
-1. ![Type "Task Manager in the Windows Searchbar" ](https://github.com/arduino/arduino-create-agent/master/images/windows/01.png)
+1. ![Type "Task Manager in the Windows Search Bar"](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/01.png)
 2. ![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/02.png)
 3. ![Select the autostart dir](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/03.png)
 4. ![Move the file to the trash](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/04.png)
 2. Find the Arduino 
 
 ### Mac OSX
+1. ![Open the Go menu on Finder](https://github.com/arduino/arduino-create-agent/master/images/mac/01.png)
+2. ![Type the directory containing the autolauncher file, change <username> with your Mac username](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/02.png)
+3. ![Select the ArduinoCreateAgent.plist file](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/03.png)
+4. ![Move the file to the trash](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/04.png)
+2. Find the Arduino 
+---
+The command line way:
+```
+$ launchctl unload ~/Library/LaunchAgents/ArduinoCreateAgent.plist
+```
 
 ### Linux
 Visual way:
