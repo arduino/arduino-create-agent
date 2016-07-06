@@ -37,6 +37,7 @@ $ launchctl unload ~/Library/LaunchAgents/ArduinoCreateAgent.plist
 2. ![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/02.png)
 3. ![Select the autostart dir](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/03.png)
 4. ![Move the file to the trash](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/04.png)
+
 ---
 The command line way:
 
@@ -45,7 +46,6 @@ Just remove the autostart file in your desktop manager, in Ubuntu is:
 $ rm $HOME/.config/autostart/arduino-create-agent.desktop
 ```
 To start manually the agent you can open the file at:
-
 ```
 $ nohup $HOME/ArduinoCreateAgent-1.1/Arduino_Create_Bridge &
 ```
