@@ -19,14 +19,13 @@ The history has been rewritten to keep the repo small (thus removing all binarie
 2. ![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/02.png)
 3. ![Select the autostart dir](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/03.png)
 4. ![Move the file to the trash](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/windows/04.png)
-2. Find the Arduino 
 
 ### Mac OSX
 1. ![Open Finder, click on Go menu, select 'Go to Folder'](https://github.com/arduino/arduino-create-agent/master/images/mac/01.png)
 2. ![Type the directory containing the autolauncher file, change <username> with your Mac username, by default the directory is /Users/username/Library/LaunchAgents](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/02.png)
 3. ![Select the ArduinoCreateAgent.plist file](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/03.png)
 4. ![Right click on the file name and select 'Move to Trash'](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/mac/04.png)
-2. Find the Arduino 
+
 ---
 The command line way:
 ```
