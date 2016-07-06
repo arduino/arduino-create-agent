@@ -33,7 +33,6 @@ $ launchctl unload ~/Library/LaunchAgents/ArduinoCreateAgent.plist
 ```
 
 ### Linux
-Visual way:
 1. ![Show hidden files](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/01.png)
 2. ![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/02.png)
 3. ![Select the autostart dir](https://raw.githubusercontent.com/arduino/arduino-create-agent/master/images/linux/03.png)
