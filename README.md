@@ -18,9 +18,9 @@ The history has been rewritten to keep the repo small (thus removing all binarie
 1. Type "Task Manager in the Windows Search Bar"
 
 ![Type "Task Manager in the Windows Search Bar"](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/windows/01.png)
-2. Select the .config dir in your home
+2. Select the Startup tab
 
-![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/windows/02.png)
+![Select the Startup tab](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/windows/02.png)
 3. Select the autostart file
 
 ![Select the autostart file](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/windows/03.png)
