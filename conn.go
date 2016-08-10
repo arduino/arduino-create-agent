@@ -111,7 +111,12 @@ func uploadHandler(c *gin.Context) {
 	}
 
 	for _, extraFile := range data.ExtraFiles {
-		ioutil.WriteFile(filepath.Join(filepath.Dir(filePath), extraFile.Filename), extraFile.Hex, 0644)
+		path := filepath.Join(filepath.Dir(filePath), extraFile.Filename)
+		log.Printf("Saving %s on %s", extraFile.Filename, path)
+		err := ioutil.WriteFile(path, extraFile.Hex, 0644)
+		if err != nil {
+			log.Printf(err.Error())
+		}
 	}
 
 	if data.Rewrite != "" {
