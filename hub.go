@@ -193,7 +193,12 @@ func checkCmd(m []byte) {
 		args := strings.Split(s, " ")
 		if len(args) > 1 {
 			go func() {
-				err := Tools.Download(args[1], "latest", "keep")
+				var err error
+				if args[1] == "avrdude" {
+					err = Tools.Download(args[1], "6.0.1-arduino5", "keep")
+				} else {
+					err = Tools.Download(args[1], "latest", "keep")
+				}
 				if err != nil {
 					mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
 					mapB, _ := json.Marshal(mapD)
