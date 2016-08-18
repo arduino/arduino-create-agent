@@ -195,10 +195,11 @@ func checkCmd(m []byte) {
 			var tool, toolVersion, behaviour string
 			toolVersion = "latest"
 			behaviour = "keep"
-			if len(args) < 1 {
+			if len(args) <= 1 {
 				mapD := map[string]string{"DownloadStatus": "Error", "Msg": "Not enough arguments"}
 				mapB, _ := json.Marshal(mapD)
 				h.broadcastSys <- mapB
+				return
 			}
 			if len(args) > 1 {
 				tool = args[1]
