@@ -55,7 +55,7 @@ $ launchctl unload ~/Library/LaunchAgents/ArduinoCreateAgent.plist
 2. Select the .config dir in your home
 
 ![Select the .config dir in your home](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/02.png)
-3. Select the autostart dir 
+3. Select the autostart dir
 
 ![Select the autostart dir](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/03.png)
 4. Move the file to the trash
@@ -248,7 +248,7 @@ You can receive output from the serial port by listening to messages like this:
 ### Download a tool
 You can download a tool on the computer with a command like
 
-    download avrdude
+    downloadtool avrdude 6.0.1-arduino5 replace
 
 receiving a reply like
 
@@ -258,6 +258,13 @@ receiving a reply like
   "Msg":"Map Updated"
 }
 ```
+
+The syntax of the command is:
+
+    downloadtool {{name}} {{version}} {{behaviour}}
+
+where `version` can be a version number of the string "latest", and `behaviour` can be
+"keep" (which skip the download if the tool already exists) and "replace" (which will download it again).
 
 ### Upload
 You can upload a binary sketch to a board connected to a port with a POST request to be made at the http endpoint.
