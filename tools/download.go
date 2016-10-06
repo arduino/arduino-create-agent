@@ -140,7 +140,9 @@ func (t *Tools) DownloadPackageIndex(index_file, signature_file string) error {
 // If version is not "latest" and behaviour is "replace", it will download the
 // version again. If instead behaviour is "keep" it will not download the version
 // if it already exists.
-func (t *Tools) Download(name, version, behaviour string) error {
+func (t *Tools) Download(name, version, vendor, behaviour string) error {
+
+	// vendor is unused at the moment
 
 	index_file := path.Join(t.Directory, "package_index.json")
 	signature_file := path.Join(t.Directory, "package_index.json.sig")

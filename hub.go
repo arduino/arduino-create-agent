@@ -193,12 +193,23 @@ func checkCmd(m []byte) {
 		args := strings.Split(s, " ")
 		if len(args) > 1 {
 			go func() {
-				var err error
-				if args[1] == "avrdude" {
-					err = Tools.Download(args[1], "6.0.1-arduino5", "keep")
-				} else {
-					err = Tools.Download(args[1], "latest", "keep")
+				version := "latest"
+				vendor := ""
+				keep := "keep"
+				if len(args) > 2 {
+					if strings.HasPrefix(args[2], "http") {
+						//old APIs, ignore this field
+					} else {
+						version = args[2]
+					}
 				}
+				if len(args) > 3 {
+					vendor = args[3]
+				}
+				if len(args) > 4 {
+					keep = args[4]
+				}
+				err := Tools.Download(args[1], version, vendor, keep)
 				if err != nil {
 					mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
 					mapB, _ := json.Marshal(mapD)
