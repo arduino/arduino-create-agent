@@ -35,7 +35,7 @@ if cmd_exists apt-get; then
     DBDIR="$HOME/.pki/nssdb"
     $su_graph apt-get install libnss3-tools
     
-    # if the dir does not exists, created the cert db
+    # if the dir does not exists, create the cert db
     stat $DBDIR
     if [ "$?" -ne "0" ]; then
         mkdir -p $DBDIR
