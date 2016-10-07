@@ -12,11 +12,6 @@ for sudo_cmd in "kdesu" "gksu" "pkexec"; do
    fi
 done
 
-cmd_exists () {
-    type "$1" &> /dev/null;
-}
-
-
 export PATH=$PATH:/sbin/
 if cmd_exists update-ca-certificates; then
     ca_path=/usr/local/share/ca-certificates/
@@ -37,8 +32,18 @@ $su_graph $ca_update_cmd
 #Alway run install, it does not hurt
 
 if cmd_exists apt-get; then
+    DBDIR="$HOME/.pki/nssdb"
     $su_graph apt-get install libnss3-tools
-    certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n Arduino -i $1
+    
+    # if the dir does not exists, created the cert db
+    stat $DBDIR
+    if [ "$?" -ne "0" ]; then
+        mkdir -p $DBDIR
+        certutil -d sql:$DBDIR -N
+    fi
+
+    certutil -d sql:$DBDIR -A -t "C,," -n Arduino -i $1
 fi
 exit $?
+
 
