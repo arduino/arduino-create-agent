@@ -206,7 +206,11 @@ func checkCmd(m []byte) {
 				tool = args[1]
 			}
 			if len(args) > 2 {
-				toolVersion = args[2]
+				if strings.HasPrefix(args[2], "http") {
+					//old APIs, ignore this field
+				} else {
+					toolVersion = args[2]
+				}
 			}
 			if len(args) > 3 {
 				pack = args[3]
