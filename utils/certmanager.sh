@@ -39,7 +39,7 @@ if cmd_exists apt-get; then
     stat $DBDIR
     if [ "$?" -ne "0" ]; then
         mkdir -p $DBDIR
-        certutil -d sql:$DBDIR -N
+        certutil -d sql:$DBDIR --empty-password -N
     fi
 
     certutil -d sql:$DBDIR -A -t "C,," -n Arduino -i $1
