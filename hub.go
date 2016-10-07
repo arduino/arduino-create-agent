@@ -190,26 +190,38 @@ func checkCmd(m []byte) {
 		go spList(false)
 		go spList(true)
 	} else if strings.HasPrefix(sl, "downloadtool") {
-		args := strings.Split(s, " ")
-		if len(args) > 1 {
-			go func() {
-				var err error
-				if args[1] == "avrdude" {
-					err = Tools.Download(args[1], "6.0.1-arduino5", "keep")
-				} else {
-					err = Tools.Download(args[1], "latest", "keep")
-				}
-				if err != nil {
-					mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
-					mapB, _ := json.Marshal(mapD)
-					h.broadcastSys <- mapB
-				} else {
-					mapD := map[string]string{"DownloadStatus": "Success", "Msg": "Map Updated"}
-					mapB, _ := json.Marshal(mapD)
-					h.broadcastSys <- mapB
-				}
-			}()
-		}
+		go func() {
+			args := strings.Split(s, " ")
+			var tool, toolVersion, behaviour string
+			toolVersion = "latest"
+			behaviour = "keep"
+			if len(args) <= 1 {
+				mapD := map[string]string{"DownloadStatus": "Error", "Msg": "Not enough arguments"}
+				mapB, _ := json.Marshal(mapD)
+				h.broadcastSys <- mapB
+				return
+			}
+			if len(args) > 1 {
+				tool = args[1]
+			}
+			if len(args) > 2 {
+				toolVersion = args[2]
+			}
+			if len(args) > 3 {
+				behaviour = args[3]
+			}
+
+			err := Tools.Download(tool, toolVersion, behaviour)
+			if err != nil {
+				mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
+				mapB, _ := json.Marshal(mapD)
+				h.broadcastSys <- mapB
+			} else {
+				mapD := map[string]string{"DownloadStatus": "Success", "Msg": "Map Updated"}
+				mapB, _ := json.Marshal(mapD)
+				h.broadcastSys <- mapB
+			}
+		}()
 	} else if strings.HasPrefix(sl, "bufferalgorithm") {
 		go spBufferAlgorithms()
 	} else if strings.HasPrefix(sl, "log") {
