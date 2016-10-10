@@ -130,6 +130,7 @@ func (t *Tools) DownloadPackageIndex(index_file, signature_file string) error {
 // It will extract it in a folder in .arduino-create, and it will update the
 // Installed map.
 //
+// pack contains the packager of the tool
 // name contains the name of the tool.
 // version contains the version of the tool.
 // behaviour contains the strategy to use when there is already a tool installed
@@ -140,7 +141,7 @@ func (t *Tools) DownloadPackageIndex(index_file, signature_file string) error {
 // If version is not "latest" and behaviour is "replace", it will download the
 // version again. If instead behaviour is "keep" it will not download the version
 // if it already exists.
-func (t *Tools) Download(name, version, behaviour string) error {
+func (t *Tools) Download(pack, name, version, behaviour string) error {
 
 	index_file := path.Join(t.Directory, "package_index.json")
 	signature_file := path.Join(t.Directory, "package_index.json.sig")
@@ -169,10 +170,10 @@ func (t *Tools) Download(name, version, behaviour string) error {
 	t.Logger.Println(string(body))
 
 	// Find the tool by name
-	correctTool, correctSystem := findTool(name, version, data)
+	correctTool, correctSystem := findTool(pack, name, version, data)
 
 	if correctTool.Name == "" || correctSystem.URL == "" {
-		t.Logger.Println("We couldn't find a tool with the name " + name + " and version " + version)
+		t.Logger.Println("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
 		return nil
 	}
 
@@ -255,11 +256,14 @@ func (t *Tools) Download(name, version, behaviour string) error {
 	return t.writeMap()
 }
 
-func findTool(name, version string, data index) (tool, system) {
+func findTool(pack, name, version string, data index) (tool, system) {
 	var correctTool tool
 	correctTool.Version = "0.0"
 
 	for _, p := range data.Packages {
+		if p.Name != pack {
+			continue
+		}
 		for _, t := range p.Tools {
 			if version != "latest" {
 				if t.Name == name && t.Version == version {

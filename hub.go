@@ -192,8 +192,9 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		go func() {
 			args := strings.Split(s, " ")
-			var tool, toolVersion, behaviour string
+			var tool, toolVersion, pack, behaviour string
 			toolVersion = "latest"
+			pack = "arduino"
 			behaviour = "keep"
 			if len(args) <= 1 {
 				mapD := map[string]string{"DownloadStatus": "Error", "Msg": "Not enough arguments"}
@@ -205,13 +206,20 @@ func checkCmd(m []byte) {
 				tool = args[1]
 			}
 			if len(args) > 2 {
-				toolVersion = args[2]
+				if strings.HasPrefix(args[2], "http") {
+					//old APIs, ignore this field
+				} else {
+					toolVersion = args[2]
+				}
 			}
 			if len(args) > 3 {
-				behaviour = args[3]
+				pack = args[3]
+			}
+			if len(args) > 4 {
+				behaviour = args[4]
 			}
 
-			err := Tools.Download(tool, toolVersion, behaviour)
+			err := Tools.Download(pack, tool, toolVersion, behaviour)
 			if err != nil {
 				mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
 				mapB, _ := json.Marshal(mapD)
