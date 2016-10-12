@@ -12,6 +12,7 @@ type BufferflowTimed struct {
 	Port   string
 	Output chan []byte
 	Input  chan string
+	done   chan bool
 	ticker *time.Ticker
 }
 
@@ -24,21 +25,30 @@ func (b *BufferflowTimed) Init() {
 	bufferedOutput = ""
 
 	go func() {
-		for data := range b.Input {
-			bufferedOutput = bufferedOutput + data
-		}
-	}()
-
-	go func() {
 		b.ticker = time.NewTicker(16 * time.Millisecond)
-		for _ = range b.ticker.C {
-			if bufferedOutput != "" {
-				m := SpPortMessage{bufferedOutput}
-				buf, _ := json.Marshal(m)
-				b.Output <- []byte(buf)
-				bufferedOutput = ""
+		b.done = make(chan bool)
+	Loop:
+		for {
+			select {
+			case data := <-b.Input:
+				bufferedOutput = bufferedOutput + data
+			case <-b.ticker.C:
+				if bufferedOutput != "" {
+					m := SpPortMessage{bufferedOutput}
+					buf, _ := json.Marshal(m)
+					// data is now encoded in base64 format
+					// need a decoder on the other side
+					b.Output <- []byte(buf)
+					bufferedOutput = ""
+				}
+			case <-b.done:
+				break Loop
 			}
 		}
+
+		close(b.Input)
+		close(b.done)
+
 	}()
 
 }
@@ -97,5 +107,5 @@ func (b *BufferflowTimed) IsBufferGloballySendingBackIncomingData() bool {
 
 func (b *BufferflowTimed) Close() {
 	b.ticker.Stop()
-	close(b.Input)
+	b.done <- true
 }
