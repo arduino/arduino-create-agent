@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-create-agent/programmer"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
@@ -60,7 +61,7 @@ type Upload struct {
 	Rewrite     string           `json:"rewrite"`
 	Commandline string           `json:"commandline"`
 	Signature   string           `json:"signature"`
-	Extra       boardExtraInfo   `json:"extra"`
+	Extra       programmer.Extra `json:"extra"`
 	Hex         []byte           `json:"hex"`
 	Filename    string           `json:"filename"`
 	ExtraFiles  []AdditionalFile `json:"extrafiles"`
@@ -123,7 +124,7 @@ func uploadHandler(c *gin.Context) {
 		data.Board = data.Rewrite
 	}
 
-	go spProgramRW(data.Port, data.Board, filePath, data.Commandline, data.Extra)
+	go programmer.Do(data.Port, data.Board, filePath, data.Commandline, data.Extra, nil)
 
 	c.String(http.StatusAccepted, "")
 }
