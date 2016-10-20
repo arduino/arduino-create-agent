@@ -1,5 +1,10 @@
 package programmer
 
+import (
+	"path/filepath"
+	"strings"
+)
+
 // differ returns the first item that differ between the two input slices
 func differ(slice1 []string, slice2 []string) string {
 	m := map[string]int{}
@@ -18,4 +23,19 @@ func differ(slice1 []string, slice2 []string) string {
 	}
 
 	return ""
+}
+
+// resolve replaces some symbols in the commandline with the appropriate values
+func resolve(port, board, file, commandline string, extra Extra) string {
+	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
+	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
+	commandline = strings.Replace(commandline, "{serial.port}", port, -1)
+	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(port), -1)
+
+	if extra.Verbose == true {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsVerbose, -1)
+	} else {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsQuiet, -1)
+	}
+	return commandline
 }
