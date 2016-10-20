@@ -39,7 +39,6 @@ func TestSerial(t *testing.T) {
 		err := programmer.Do(test.Port, commandline, test.Extra, logger)
 		log.Println(err)
 	}
-	t.Fail()
 }
 
 var TestNetworkData = []struct {
@@ -64,7 +63,6 @@ func TestNetwork(t *testing.T) {
 		err := programmer.Do(test.Port, commandline, test.Extra, logger)
 		log.Println(err)
 	}
-	t.Fail()
 }
 
 var TestResolveData = []struct {
