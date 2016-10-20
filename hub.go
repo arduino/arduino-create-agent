@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-create-agent/programmer"
 	"github.com/kardianos/osext"
 	//"os"
 	"os/exec"
@@ -170,7 +171,7 @@ func checkCmd(m []byte) {
 
 	} else if strings.HasPrefix(sl, "killprogrammer") {
 		// kill the running process (assumes singleton for now)
-		go spHandlerProgramKill()
+		go programmer.Kill()
 
 	} else if strings.HasPrefix(sl, "sendjsonraw") {
 		// will catch sendjsonraw

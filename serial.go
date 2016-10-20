@@ -5,12 +5,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"regexp"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-create-agent/programmer"
 )
 
 type writeRequest struct {
@@ -453,7 +455,7 @@ func discoverLoop() {
 
 	go func() {
 		for {
-			if !compiling {
+			if !programmer.Busy {
 				spListDual(false)
 			}
 			time.Sleep(2 * time.Second)

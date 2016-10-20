@@ -23,27 +23,8 @@ import (
 	"github.com/sfreiberg/simplessh"
 )
 
-type logger interface {
-	Debug(args ...interface{})
-	Info(args ...interface{})
-}
-
-func debug(l logger, args ...interface{}) {
-	if l != nil {
-		l.Debug(args...)
-	}
-}
-
-func info(l logger, args ...interface{}) {
-	if l != nil {
-		l.Info(args...)
-	}
-}
-
-// locater can return the location of a tool in the system
-type locater interface {
-	GetLocation(command string) (string, error)
-}
+// Busy tells wether the programmer is doing something
+var Busy = false
 
 // Auth contains username and password used for a network upload
 type Auth struct {
@@ -110,6 +91,9 @@ func Network(port, board, file, commandline string, auth Auth, l logger) error {
 	}
 	return err
 }
+
+// Kill stops any upload process as soon as possible
+func Kill() {}
 
 // Serial performs a serial upload
 func Serial(port, commandline string, extra Extra, l logger) error {
