@@ -44,8 +44,8 @@ type Extra struct {
 }
 
 // Resolve replaces some symbols in the commandline with the appropriate values
-// it can return an error when looking a variable in the locater
-func Resolve(port, board, file, commandline string, extra Extra, t locater) (string, error) {
+// it can return an error when looking a variable in the Locater
+func Resolve(port, board, file, commandline string, extra Extra, t Locater) (string, error) {
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
 	commandline = strings.Replace(commandline, "{serial.port}", port, -1)
@@ -57,7 +57,7 @@ func Resolve(port, board, file, commandline string, extra Extra, t locater) (str
 		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsQuiet, -1)
 	}
 
-	// search for runtime variables and replace with values from locater
+	// search for runtime variables and replace with values from Locater
 	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
 	runtimeVars := runtimeRe.FindAllString(commandline, -1)
 
@@ -74,7 +74,7 @@ func Resolve(port, board, file, commandline string, extra Extra, t locater) (str
 }
 
 // Network performs a network upload
-func Network(port, board, file, commandline string, auth Auth, l logger) error {
+func Network(port, board, file, commandline string, auth Auth, l Logger) error {
 	Busy = true
 
 	// Defaults
@@ -97,7 +97,7 @@ func Network(port, board, file, commandline string, auth Auth, l logger) error {
 }
 
 // Serial performs a serial upload
-func Serial(port, commandline string, extra Extra, l logger) error {
+func Serial(port, commandline string, extra Extra, l Logger) error {
 	Busy = true
 	defer func() { Busy = false }()
 
@@ -128,7 +128,7 @@ func Kill() {
 
 // reset opens the port at 1200bps. It returns the new port name (which could change
 // sometimes) and an error (usually because the port listing failed)
-func reset(port string, wait bool, l logger) (string, error) {
+func reset(port string, wait bool, l Logger) (string, error) {
 	info(l, "Restarting in bootloader mode")
 
 	// Get port list before reset
@@ -169,7 +169,7 @@ func reset(port string, wait bool, l logger) (string, error) {
 // waitReset is meant to be called just after a reset. It watches the ports connected
 // to the machine until a port disappears and reappears. The port name could be different
 // so it returns the name of the new port.
-func waitReset(beforeReset []string, l logger) string {
+func waitReset(beforeReset []string, l Logger) string {
 	var port string
 	timeout := false
 
@@ -220,8 +220,8 @@ func waitReset(beforeReset []string, l logger) string {
 var cmd *exec.Cmd
 
 // program spawns the given binary with the given args, logging the sdtout and stderr
-// through the logger
-func program(binary string, args []string, l logger) error {
+// through the Logger
+func program(binary string, args []string, l Logger) error {
 	defer func() { cmd = nil }()
 
 	// remove quotes form binary command and args
@@ -280,7 +280,7 @@ func program(binary string, args []string, l logger) error {
 	return nil
 }
 
-func form(port, board, file string, auth Auth, l logger) error {
+func form(port, board, file string, auth Auth, l Logger) error {
 	// Prepare a form that you will submit to that URL.
 	_url := "http://" + port + "/data/upload_sketch_silent"
 	var b bytes.Buffer
@@ -342,7 +342,7 @@ func form(port, board, file string, auth Auth, l logger) error {
 	return nil
 }
 
-func ssh(port, file, commandline string, auth Auth, l logger) error {
+func ssh(port, file, commandline string, auth Auth, l Logger) error {
 	// Connect via ssh
 	client, err := simplessh.ConnectWithPassword(port+":22", auth.Username, auth.Password)
 	debug(l, "Connect via ssh ", client, err)

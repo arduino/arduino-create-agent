@@ -1,24 +1,25 @@
 package programmer
 
-type logger interface {
+// Logger is an interface implemented by most loggers (like logrus)
+type Logger interface {
 	Debug(args ...interface{})
 	Info(args ...interface{})
 }
 
-func debug(l logger, args ...interface{}) {
+func debug(l Logger, args ...interface{}) {
 	if l != nil {
 		l.Debug(args...)
 	}
 }
 
-func info(l logger, args ...interface{}) {
+func info(l Logger, args ...interface{}) {
 	if l != nil {
 		l.Info(args...)
 	}
 }
 
-// locater can return the location of a tool in the system
-type locater interface {
+// Locater can return the location of a tool in the system
+type Locater interface {
 	GetLocation(command string) (string, error)
 }
 
