@@ -11,6 +11,7 @@ import (
 
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/facchinm/go-serial"
+	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 )
 
@@ -84,18 +85,18 @@ func Resolve(port, board, file, commandline string, extra Extra, t locater) (str
 }
 
 // Do performs a command on a port with a board attached to it
-func Do(port, board, file, commandline string, extra Extra, t locater, l logger) {
-	debug(l, port, board, file, commandline)
+func Do(port, commandline string, extra Extra, l logger) error {
 	if extra.Network {
 		doNetwork()
 	} else {
-		doSerial(port, board, file, commandline, extra, t, l)
+		return doSerial(port, commandline, extra, l)
 	}
+	return nil
 }
 
 func doNetwork() {}
 
-func doSerial(port, board, file, commandline string, extra Extra, t locater, l logger) error {
+func doSerial(port, commandline string, extra Extra, l logger) error {
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
 		var err error
@@ -105,7 +106,12 @@ func doSerial(port, board, file, commandline string, extra Extra, t locater, l l
 		}
 	}
 
-	return nil
+	z, err := shellwords.Parse(commandline)
+	if err != nil {
+		return errors.Wrapf(err, "Parse commandline")
+	}
+
+	return program(z[0], z[1:], l)
 }
 
 // reset opens the port at 1200bps. It returns the new port name (which could change
@@ -246,7 +252,7 @@ func program(binary string, args []string, l logger) error {
 
 	go func() {
 		for stderrCopy.Scan() {
-			info(l, stdoutCopy.Text())
+			info(l, stderrCopy.Text())
 		}
 	}()
 
