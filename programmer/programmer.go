@@ -42,22 +42,33 @@ type Extra struct {
 }
 
 // Do performs a command on a port with a board attached to it
-func Do(port, board, path, commandline string, extra Extra, l logger) {
-	debug(l, port, board, path, commandline)
+func Do(port, board, file, commandline string, extra Extra, l logger) {
+	debug(l, port, board, file, commandline)
 	if extra.Network {
 		doNetwork()
 	} else {
-		doSerial(port, extra, l)
+		doSerial(port, board, file, commandline, extra, l)
 	}
 }
 
 func doNetwork() {}
 
-func doSerial(port string, extra Extra, l logger) {
+func doSerial(port, board, file, commandline string, extra Extra, l logger) error {
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
-		port, _ = reset(port, extra.WaitForUploadPort, l)
+		var err error
+		port, err = reset(port, extra.WaitForUploadPort, l)
+		if err != nil {
+			return errors.Wrapf(err, "Reset before upload")
+		}
 	}
+
+	// resolve commandline
+	info(l, "unresolved commandline ", commandline)
+	commandline = resolve(port, board, file, commandline, extra)
+	info(l, "resolved commandline ", commandline)
+
+	return nil
 }
 
 // reset opens the port at 1200bps. It returns the new port name (which could change
