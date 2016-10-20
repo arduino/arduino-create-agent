@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
@@ -124,9 +125,37 @@ func uploadHandler(c *gin.Context) {
 		data.Board = data.Rewrite
 	}
 
-	go programmer.Do(data.Port, data.Board, filePath, data.Commandline, data.Extra, nil)
+	go func() {
+		// Resolve commandline
+		commandline, err := programmer.Resolve(data.Port, data.Board, filePath, data.Commandline, data.Extra, &Tools)
+		if err != nil {
+
+			return
+		}
+
+		// Upload
+		if data.Extra.Network {
+			send(map[string]string{"ProgrammerStatus": "Starting", "Cmd": "Network"})
+			err = programmer.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, nil)
+		} else {
+			send(map[string]string{"ProgrammerStatus": "Starting", "Cmd": "Serial"})
+			err = programmer.Serial(data.Port, commandline, data.Extra, nil)
+		}
+
+		// Handle result
+		if err != nil {
+			send(map[string]string{"ProgrammerStatus": "Error", "Msg": err.Error()})
+			return
+		}
+		send(map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok"})
+	}()
 
 	c.String(http.StatusAccepted, "")
+}
+
+func send(args map[string]string) {
+	mapB, _ := json.Marshal(args)
+	h.broadcastSys <- mapB
 }
 
 func verifyCommandLine(input string, signature string) error {

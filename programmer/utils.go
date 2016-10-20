@@ -1,5 +1,27 @@
 package programmer
 
+type logger interface {
+	Debug(args ...interface{})
+	Info(args ...interface{})
+}
+
+func debug(l logger, args ...interface{}) {
+	if l != nil {
+		l.Debug(args...)
+	}
+}
+
+func info(l logger, args ...interface{}) {
+	if l != nil {
+		l.Info(args...)
+	}
+}
+
+// locater can return the location of a tool in the system
+type locater interface {
+	GetLocation(command string) (string, error)
+}
+
 // differ returns the first item that differ between the two input slices
 func differ(slice1 []string, slice2 []string) string {
 	m := map[string]int{}
