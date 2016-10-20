@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arduino/arduino-create-agent/tools"
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/facchinm/go-serial"
 	"github.com/pkg/errors"
 )
@@ -198,6 +198,8 @@ func waitReset(beforeReset []string, l logger) string {
 	return port
 }
 
+// program spawns the given binary with the given args, logging the sdtout and stderr
+// through the logger
 func program(binary string, args []string, l logger) error {
 	// remove quotes form binary command and args
 	binary = strings.Replace(binary, "\"", "", -1)
@@ -214,16 +216,16 @@ func program(binary string, args []string, l logger) error {
 
 	oscmd := exec.Command(binary, args...)
 
-	tools.TellCommandNotToSpawnShell(oscmd)
+	utilities.TellCommandNotToSpawnShell(oscmd)
 
 	stdout, err := oscmd.StdoutPipe()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Retrieve output")
 	}
 
 	stderr, err := oscmd.StderrPipe()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Retrieve output")
 	}
 
 	info(l, "Flashing with command:"+binary+extension+" "+strings.Join(args, " "))
@@ -250,5 +252,5 @@ func program(binary string, args []string, l logger) error {
 
 	err = oscmd.Wait()
 
-	return err
+	return errors.Wrapf(err, "Executing command")
 }
