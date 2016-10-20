@@ -36,7 +36,7 @@ func TestSerial(t *testing.T) {
 
 	for _, test := range TestSerialData {
 		commandline := strings.Replace(test.Commandline, "~", home, -1)
-		err := programmer.Do(test.Port, commandline, test.Extra, logger)
+		err := programmer.Serial(test.Port, commandline, test.Extra, logger)
 		log.Println(err)
 	}
 }
@@ -44,12 +44,14 @@ func TestSerial(t *testing.T) {
 var TestNetworkData = []struct {
 	Name        string
 	Port        string
+	Board       string
+	File        string
 	Commandline string
-	Extra       programmer.Extra
+	Auth        programmer.Auth
 }{
 	{
-		"yun", "",
-		``, programmer.Extra{Network: true}},
+		"yun", "", "", "",
+		``, programmer.Auth{}},
 }
 
 func TestNetwork(t *testing.T) {
@@ -60,7 +62,7 @@ func TestNetwork(t *testing.T) {
 
 	for _, test := range TestNetworkData {
 		commandline := strings.Replace(test.Commandline, "~", home, -1)
-		err := programmer.Do(test.Port, commandline, test.Extra, logger)
+		err := programmer.Network(test.Port, test.Board, test.File, commandline, test.Auth, logger)
 		log.Println(err)
 	}
 }
