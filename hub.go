@@ -171,7 +171,11 @@ func checkCmd(m []byte) {
 
 	} else if strings.HasPrefix(sl, "killprogrammer") {
 		// kill the running process (assumes singleton for now)
-		go programmer.Kill()
+		go func() {
+			programmer.Kill()
+			h.broadcastSys <- []byte("{\"ProgrammerStatus\": \"Killed\"}")
+			log.Println("{\"ProgrammerStatus\": \"Killed\"}")
+		}()
 
 	} else if strings.HasPrefix(sl, "sendjsonraw") {
 		// will catch sendjsonraw
