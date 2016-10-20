@@ -16,6 +16,7 @@ func (mockTools) GetLocation(el string) (string, error) {
 	return "$loc" + el, nil
 }
 
+// TestSerialData requires a leonardo connected to the /dev/ttyACM0 port
 var TestSerialData = []struct {
 	Name        string
 	Port        string
@@ -34,6 +35,31 @@ func TestSerial(t *testing.T) {
 	home, _ := homedir.Dir()
 
 	for _, test := range TestSerialData {
+		commandline := strings.Replace(test.Commandline, "~", home, -1)
+		err := programmer.Do(test.Port, commandline, test.Extra, logger)
+		log.Println(err)
+	}
+	t.Fail()
+}
+
+var TestNetworkData = []struct {
+	Name        string
+	Port        string
+	Commandline string
+	Extra       programmer.Extra
+}{
+	{
+		"yun", "",
+		``, programmer.Extra{Network: true}},
+}
+
+func TestNetwork(t *testing.T) {
+	logger := logrus.New()
+	logger.Level = logrus.DebugLevel
+
+	home, _ := homedir.Dir()
+
+	for _, test := range TestNetworkData {
 		commandline := strings.Replace(test.Commandline, "~", home, -1)
 		err := programmer.Do(test.Port, commandline, test.Extra, logger)
 		log.Println(err)

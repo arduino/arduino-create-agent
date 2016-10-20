@@ -2,6 +2,13 @@ package programmer
 
 import (
 	"bufio"
+	"bytes"
+	"fmt"
+	"io"
+	"log"
+	"mime/multipart"
+	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -13,6 +20,7 @@ import (
 	"github.com/facchinm/go-serial"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
+	"github.com/sfreiberg/simplessh"
 )
 
 type logger interface {
@@ -84,19 +92,27 @@ func Resolve(port, board, file, commandline string, extra Extra, t locater) (str
 	return commandline, nil
 }
 
-// Do performs a command on a port with a board attached to it
-func Do(port, commandline string, extra Extra, l logger) error {
-	if extra.Network {
-		doNetwork()
-	} else {
-		return doSerial(port, commandline, extra, l)
+// Network performs a network upload
+func Network(port, board, file, commandline string, auth Auth, l logger) error {
+	// Defaults
+	if auth.Username == "" {
+		auth.Username = "root"
 	}
-	return nil
+	if auth.Password == "" {
+		auth.Password = "arduino"
+	}
+
+	// try with a form
+	err := form(port, board, file, auth, l)
+	if err != nil {
+		// try with ssh
+		err = ssh(port, file, commandline, auth, l)
+	}
+	return err
 }
 
-func doNetwork() {}
-
-func doSerial(port, commandline string, extra Extra, l logger) error {
+// Serial performs a serial upload
+func Serial(port, commandline string, extra Extra, l logger) error {
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
 		var err error
@@ -259,4 +275,139 @@ func program(binary string, args []string, l logger) error {
 	err = oscmd.Wait()
 
 	return errors.Wrapf(err, "Executing command")
+}
+
+func form(port, board, file string, auth Auth, l logger) error {
+	// Prepare a form that you will submit to that URL.
+	_url := "http://" + port + "/data/upload_sketch_silent"
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	// Add your image file
+	file = strings.Trim(file, "\n")
+	f, err := os.Open(file)
+	if err != nil {
+		return errors.Wrapf(err, "Open file %s", file)
+	}
+	fw, err := w.CreateFormFile("sketch_hex", file)
+	if err != nil {
+		return errors.Wrapf(err, "Create form file")
+	}
+	if _, err = io.Copy(fw, f); err != nil {
+		return errors.Wrapf(err, "Copy form file")
+	}
+	// Add the other fields
+	board = strings.Replace(board, ":", "_", -1)
+	if fw, err = w.CreateFormField("board"); err != nil {
+		return errors.Wrapf(err, "Create board field")
+	}
+	if _, err = fw.Write([]byte(board)); err != nil {
+		return errors.Wrapf(err, "")
+	}
+	// Don't forget to close the multipart writer.
+	// If you don't close it, your request will be missing the terminating boundary.
+	w.Close()
+
+	// Now that you have a form, you can submit it to your handler.
+	req, err := http.NewRequest("POST", _url, &b)
+	if err != nil {
+		return errors.Wrapf(err, "Create POST req")
+	}
+
+	// Don't forget to set the content type, this will contain the boundary.
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	if auth.Username != "" {
+		req.SetBasicAuth(auth.Username, auth.Password)
+	}
+
+	info(l, "Network upload on ", port)
+
+	// Submit the request
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		log.Println("Error during post request")
+		return errors.Wrapf(err, "")
+	}
+
+	// Check the response
+	if res.StatusCode != http.StatusOK {
+		return errors.Wrapf(err, "Bad status: %s", res.Status)
+	}
+	return nil
+}
+
+func ssh(port, file, commandline string, auth Auth, l logger) error {
+	// Connect via ssh
+	client, err := simplessh.ConnectWithPassword(port+":22", auth.Username, auth.Password)
+	debug(l, "Connect via ssh ", client, err)
+	if err != nil {
+		return errors.Wrapf(err, "Connect via ssh")
+	}
+	defer client.Close()
+
+	// Copy the sketch
+	err = scp(client, file, "/tmp/sketch"+filepath.Ext(file))
+	debug(l, "Copy the sketch ", err)
+	if err != nil {
+		return errors.Wrapf(err, "Copy sketch")
+	}
+
+	// very special case for Yun (remove once AVR boards.txt is fixed)
+	if commandline == "" {
+		commandline = "merge-sketch-with-bootloader.lua /tmp/sketch.hex && /usr/bin/run-avrdude /tmp/sketch.hex"
+	}
+
+	// Execute commandline
+	output, err := client.Exec(commandline)
+	debug(l, "Execute commandline ", commandline, output, err)
+	if err != nil {
+		return errors.Wrapf(err, "Execute commandline")
+	}
+	return nil
+}
+
+// scp uploads sourceFile to remote machine like native scp console app.
+func scp(client *simplessh.Client, sourceFile, targetFile string) error {
+	// open ssh session
+	session, err := client.SSHClient.NewSession()
+	if err != nil {
+		return errors.Wrapf(err, "open ssh session")
+	}
+	defer session.Close()
+
+	// open file
+	src, err := os.Open(sourceFile)
+	if err != nil {
+		return errors.Wrapf(err, "open file %s", sourceFile)
+	}
+
+	// stat file
+	srcStat, err := src.Stat()
+	if err != nil {
+		return errors.Wrapf(err, "stat file %s", sourceFile)
+	}
+
+	// Copy over ssh
+	go func() {
+		w, _ := session.StdinPipe()
+
+		fmt.Fprintln(w, "C0644", srcStat.Size(), filepath.Base(targetFile))
+
+		if srcStat.Size() > 0 {
+			io.Copy(w, src)
+			fmt.Fprint(w, "\x00")
+			w.Close()
+		} else {
+			fmt.Fprint(w, "\x00")
+			w.Close()
+		}
+
+	}()
+
+	if err := session.Run("scp -t " + targetFile); err != nil {
+		return errors.Wrapf(err, "Execute %s", "scp -t "+targetFile)
+	}
+
+	return nil
 }
