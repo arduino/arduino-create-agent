@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -129,17 +130,19 @@ func uploadHandler(c *gin.Context) {
 		// Resolve commandline
 		commandline, err := programmer.Resolve(data.Port, data.Board, filePath, data.Commandline, data.Extra, &Tools)
 		if err != nil {
-
+			send(map[string]string{"ProgrammerStatus": "Error", "Msg": err.Error()})
 			return
 		}
+
+		l := PLogger{Verbose: data.Extra.Verbose}
 
 		// Upload
 		if data.Extra.Network {
 			send(map[string]string{"ProgrammerStatus": "Starting", "Cmd": "Network"})
-			err = programmer.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, nil)
+			err = programmer.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l)
 		} else {
 			send(map[string]string{"ProgrammerStatus": "Starting", "Cmd": "Serial"})
-			err = programmer.Serial(data.Port, commandline, data.Extra, nil)
+			err = programmer.Serial(data.Port, commandline, data.Extra, l)
 		}
 
 		// Handle result
@@ -151,6 +154,24 @@ func uploadHandler(c *gin.Context) {
 	}()
 
 	c.String(http.StatusAccepted, "")
+}
+
+// PLogger sends the info from the programmer to the websocket
+type PLogger struct {
+	Verbose bool
+}
+
+// Debug only sends messages if verbose is true
+func (l PLogger) Debug(args ...interface{}) {
+	if l.Verbose {
+		l.Info(args...)
+	}
+}
+
+// Info always send messages
+func (l PLogger) Info(args ...interface{}) {
+	output := fmt.Sprint(args...)
+	send(map[string]string{"ProgrammerStatus": "Busy", "Msg": output})
 }
 
 func send(args map[string]string) {
