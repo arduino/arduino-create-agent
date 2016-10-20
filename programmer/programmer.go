@@ -1,6 +1,9 @@
 package programmer
 
 import (
+	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/facchinm/go-serial"
@@ -24,6 +27,11 @@ func info(l logger, args ...interface{}) {
 	}
 }
 
+// tools can return the location of a tool in the system
+type tools interface {
+	GetLocation(command string) (string, error)
+}
+
 // Auth contains username and password used for a network upload
 type Auth struct {
 	Username string `json:"username"`
@@ -41,19 +49,49 @@ type Extra struct {
 	ParamsQuiet       string `json:"params_quiet"`
 }
 
+// Resolve replaces some symbols in the commandline with the appropriate values
+// it can return an error when looking a variable in the tools
+func Resolve(port, board, file, commandline string, extra Extra, tools tools) (string, error) {
+	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
+	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
+	commandline = strings.Replace(commandline, "{serial.port}", port, -1)
+	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(port), -1)
+
+	if extra.Verbose == true {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsVerbose, -1)
+	} else {
+		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsQuiet, -1)
+	}
+
+	// search for runtime variables and replace with values from globalToolsMap
+	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
+	runtimeVars := runtimeRe.FindAllString(commandline, -1)
+
+	for _, element := range runtimeVars {
+
+		location, err := tools.GetLocation(element)
+		if err != nil {
+			return "", errors.Wrapf(err, "get location of %s", element)
+		}
+		commandline = strings.Replace(commandline, element, location, 1)
+	}
+
+	return commandline, nil
+}
+
 // Do performs a command on a port with a board attached to it
-func Do(port, board, file, commandline string, extra Extra, l logger) {
+func Do(port, board, file, commandline string, extra Extra, t tools, l logger) {
 	debug(l, port, board, file, commandline)
 	if extra.Network {
 		doNetwork()
 	} else {
-		doSerial(port, board, file, commandline, extra, l)
+		doSerial(port, board, file, commandline, extra, t, l)
 	}
 }
 
 func doNetwork() {}
 
-func doSerial(port, board, file, commandline string, extra Extra, l logger) error {
+func doSerial(port, board, file, commandline string, extra Extra, t tools, l logger) error {
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
 		var err error
@@ -62,11 +100,6 @@ func doSerial(port, board, file, commandline string, extra Extra, l logger) erro
 			return errors.Wrapf(err, "Reset before upload")
 		}
 	}
-
-	// resolve commandline
-	info(l, "unresolved commandline ", commandline)
-	commandline = resolve(port, board, file, commandline, extra)
-	info(l, "resolved commandline ", commandline)
 
 	return nil
 }
