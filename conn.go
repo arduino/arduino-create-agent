@@ -171,6 +171,7 @@ func (l PLogger) Debug(args ...interface{}) {
 // Info always send messages
 func (l PLogger) Info(args ...interface{}) {
 	output := fmt.Sprint(args...)
+	log.Println(output)
 	send(map[string]string{"ProgrammerStatus": "Busy", "Msg": output})
 }
 

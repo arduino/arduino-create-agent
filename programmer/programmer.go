@@ -75,6 +75,8 @@ func Resolve(port, board, file, commandline string, extra Extra, t locater) (str
 
 // Network performs a network upload
 func Network(port, board, file, commandline string, auth Auth, l logger) error {
+	Busy = true
+
 	// Defaults
 	if auth.Username == "" {
 		auth.Username = "root"
@@ -89,14 +91,16 @@ func Network(port, board, file, commandline string, auth Auth, l logger) error {
 		// try with ssh
 		err = ssh(port, file, commandline, auth, l)
 	}
+
+	Busy = false
 	return err
 }
 
-// Kill stops any upload process as soon as possible
-func Kill() {}
-
 // Serial performs a serial upload
 func Serial(port, commandline string, extra Extra, l logger) error {
+	Busy = true
+	defer func() { Busy = false }()
+
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
 		var err error
@@ -112,6 +116,14 @@ func Serial(port, commandline string, extra Extra, l logger) error {
 	}
 
 	return program(z[0], z[1:], l)
+}
+
+// Kill stops any upload process as soon as possible
+func Kill() {
+	log.Println(cmd)
+	if cmd != nil && cmd.Process.Pid > 0 {
+		cmd.Process.Kill()
+	}
 }
 
 // reset opens the port at 1200bps. It returns the new port name (which could change
@@ -204,9 +216,14 @@ func waitReset(beforeReset []string, l logger) string {
 	return port
 }
 
+// cmd is the upload command
+var cmd *exec.Cmd
+
 // program spawns the given binary with the given args, logging the sdtout and stderr
 // through the logger
 func program(binary string, args []string, l logger) error {
+	defer func() { cmd = nil }()
+
 	// remove quotes form binary command and args
 	binary = strings.Replace(binary, "\"", "", -1)
 
@@ -220,23 +237,23 @@ func program(binary string, args []string, l logger) error {
 		extension = ".exe"
 	}
 
-	oscmd := exec.Command(binary, args...)
+	cmd = exec.Command(binary, args...)
 
-	utilities.TellCommandNotToSpawnShell(oscmd)
+	utilities.TellCommandNotToSpawnShell(cmd)
 
-	stdout, err := oscmd.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return errors.Wrapf(err, "Retrieve output")
 	}
 
-	stderr, err := oscmd.StderrPipe()
+	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return errors.Wrapf(err, "Retrieve output")
 	}
 
 	info(l, "Flashing with command:"+binary+extension+" "+strings.Join(args, " "))
 
-	err = oscmd.Start()
+	err = cmd.Start()
 
 	stdoutCopy := bufio.NewScanner(stdout)
 	stderrCopy := bufio.NewScanner(stderr)
@@ -256,9 +273,11 @@ func program(binary string, args []string, l logger) error {
 		}
 	}()
 
-	err = oscmd.Wait()
-
-	return errors.Wrapf(err, "Executing command")
+	err = cmd.Wait()
+	if err != nil {
+		return errors.Wrapf(err, "Executing command")
+	}
+	return nil
 }
 
 func form(port, board, file string, auth Auth, l logger) error {
@@ -280,6 +299,7 @@ func form(port, board, file string, auth Auth, l logger) error {
 	if _, err = io.Copy(fw, f); err != nil {
 		return errors.Wrapf(err, "Copy form file")
 	}
+
 	// Add the other fields
 	board = strings.Replace(board, ":", "_", -1)
 	if fw, err = w.CreateFormField("board"); err != nil {
@@ -288,6 +308,7 @@ func form(port, board, file string, auth Auth, l logger) error {
 	if _, err = fw.Write([]byte(board)); err != nil {
 		return errors.Wrapf(err, "")
 	}
+
 	// Don't forget to close the multipart writer.
 	// If you don't close it, your request will be missing the terminating boundary.
 	w.Close()
