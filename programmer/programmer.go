@@ -1,11 +1,15 @@
 package programmer
 
 import (
+	"bufio"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/facchinm/go-serial"
 	"github.com/pkg/errors"
 )
@@ -27,8 +31,8 @@ func info(l logger, args ...interface{}) {
 	}
 }
 
-// tools can return the location of a tool in the system
-type tools interface {
+// locater can return the location of a tool in the system
+type locater interface {
 	GetLocation(command string) (string, error)
 }
 
@@ -50,8 +54,8 @@ type Extra struct {
 }
 
 // Resolve replaces some symbols in the commandline with the appropriate values
-// it can return an error when looking a variable in the tools
-func Resolve(port, board, file, commandline string, extra Extra, tools tools) (string, error) {
+// it can return an error when looking a variable in the locater
+func Resolve(port, board, file, commandline string, extra Extra, t locater) (string, error) {
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
 	commandline = strings.Replace(commandline, "{serial.port}", port, -1)
@@ -63,13 +67,13 @@ func Resolve(port, board, file, commandline string, extra Extra, tools tools) (s
 		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsQuiet, -1)
 	}
 
-	// search for runtime variables and replace with values from globalToolsMap
+	// search for runtime variables and replace with values from locater
 	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
 	runtimeVars := runtimeRe.FindAllString(commandline, -1)
 
 	for _, element := range runtimeVars {
 
-		location, err := tools.GetLocation(element)
+		location, err := t.GetLocation(element)
 		if err != nil {
 			return "", errors.Wrapf(err, "get location of %s", element)
 		}
@@ -80,7 +84,7 @@ func Resolve(port, board, file, commandline string, extra Extra, tools tools) (s
 }
 
 // Do performs a command on a port with a board attached to it
-func Do(port, board, file, commandline string, extra Extra, t tools, l logger) {
+func Do(port, board, file, commandline string, extra Extra, t locater, l logger) {
 	debug(l, port, board, file, commandline)
 	if extra.Network {
 		doNetwork()
@@ -91,7 +95,7 @@ func Do(port, board, file, commandline string, extra Extra, t tools, l logger) {
 
 func doNetwork() {}
 
-func doSerial(port, board, file, commandline string, extra Extra, t tools, l logger) error {
+func doSerial(port, board, file, commandline string, extra Extra, t locater, l logger) error {
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
 		var err error
@@ -192,4 +196,59 @@ func waitReset(beforeReset []string, l logger) string {
 	}
 
 	return port
+}
+
+func program(binary string, args []string, l logger) error {
+	// remove quotes form binary command and args
+	binary = strings.Replace(binary, "\"", "", -1)
+
+	for i := range args {
+		args[i] = strings.Replace(args[i], "\"", "", -1)
+	}
+
+	// find extension
+	extension := ""
+	if runtime.GOOS == "windows" {
+		extension = ".exe"
+	}
+
+	oscmd := exec.Command(binary, args...)
+
+	tools.TellCommandNotToSpawnShell(oscmd)
+
+	stdout, err := oscmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	stderr, err := oscmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
+	info(l, "Flashing with command:"+binary+extension+" "+strings.Join(args, " "))
+
+	err = oscmd.Start()
+
+	stdoutCopy := bufio.NewScanner(stdout)
+	stderrCopy := bufio.NewScanner(stderr)
+
+	stdoutCopy.Split(bufio.ScanLines)
+	stderrCopy.Split(bufio.ScanLines)
+
+	go func() {
+		for stdoutCopy.Scan() {
+			info(l, stdoutCopy.Text())
+		}
+	}()
+
+	go func() {
+		for stderrCopy.Scan() {
+			info(l, stdoutCopy.Text())
+		}
+	}()
+
+	err = oscmd.Wait()
+
+	return err
 }
