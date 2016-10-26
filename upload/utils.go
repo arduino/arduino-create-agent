@@ -1,4 +1,4 @@
-package programmer
+package upload
 
 // Logger is an interface implemented by most loggers (like logrus)
 type Logger interface {

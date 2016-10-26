@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/arduino/arduino-create-agent/programmer"
+	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
@@ -63,7 +63,7 @@ type Upload struct {
 	Rewrite     string           `json:"rewrite"`
 	Commandline string           `json:"commandline"`
 	Signature   string           `json:"signature"`
-	Extra       programmer.Extra `json:"extra"`
+	Extra       upload.Extra `json:"extra"`
 	Hex         []byte           `json:"hex"`
 	Filename    string           `json:"filename"`
 	ExtraFiles  []AdditionalFile `json:"extrafiles"`
@@ -128,9 +128,9 @@ func uploadHandler(c *gin.Context) {
 
 	go func() {
 		// Resolve commandline
-		commandline, err := programmer.Resolve(data.Port, data.Board, filePath, data.Commandline, data.Extra, &Tools)
+		commandline, err := upload.Resolve(data.Port, data.Board, filePath, data.Commandline, data.Extra, &Tools)
 		if err != nil {
-			send(map[string]string{"ProgrammerStatus": "Error", "Msg": err.Error()})
+			send(map[string]string{"uploadStatus": "Error", "Msg": err.Error()})
 			return
 		}
 
@@ -138,25 +138,25 @@ func uploadHandler(c *gin.Context) {
 
 		// Upload
 		if data.Extra.Network {
-			send(map[string]string{"ProgrammerStatus": "Starting", "Cmd": "Network"})
-			err = programmer.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l)
+			send(map[string]string{"uploadStatus": "Starting", "Cmd": "Network"})
+			err = upload.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l)
 		} else {
-			send(map[string]string{"ProgrammerStatus": "Starting", "Cmd": "Serial"})
-			err = programmer.Serial(data.Port, commandline, data.Extra, l)
+			send(map[string]string{"uploadStatus": "Starting", "Cmd": "Serial"})
+			err = upload.Serial(data.Port, commandline, data.Extra, l)
 		}
 
 		// Handle result
 		if err != nil {
-			send(map[string]string{"ProgrammerStatus": "Error", "Msg": err.Error()})
+			send(map[string]string{"uploadStatus": "Error", "Msg": err.Error()})
 			return
 		}
-		send(map[string]string{"ProgrammerStatus": "Done", "Flash": "Ok"})
+		send(map[string]string{"uploadStatus": "Done", "Flash": "Ok"})
 	}()
 
 	c.String(http.StatusAccepted, "")
 }
 
-// PLogger sends the info from the programmer to the websocket
+// PLogger sends the info from the upload to the websocket
 type PLogger struct {
 	Verbose bool
 }
@@ -172,7 +172,7 @@ func (l PLogger) Debug(args ...interface{}) {
 func (l PLogger) Info(args ...interface{}) {
 	output := fmt.Sprint(args...)
 	log.Println(output)
-	send(map[string]string{"ProgrammerStatus": "Busy", "Msg": output})
+	send(map[string]string{"uploadStatus": "Busy", "Msg": output})
 }
 
 func send(args map[string]string) {

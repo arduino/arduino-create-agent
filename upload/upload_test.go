@@ -1,4 +1,4 @@
-package programmer_test
+package upload_test
 
 import (
 	"log"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/arduino/arduino-create-agent/programmer"
+	"github.com/arduino/arduino-create-agent/upload"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
@@ -21,11 +21,11 @@ var TestSerialData = []struct {
 	Name        string
 	Port        string
 	Commandline string
-	Extra       programmer.Extra
+	Extra       upload.Extra
 }{
 	{
 		"leonardo", "/dev/ttyACM0",
-		`"~/.arduino-create/avrdude/6.3.0-arduino6/bin/avrdude" "-C~/.arduino-create/avrdude/6.3.0-arduino6/etc/avrdude.conf" -v -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./programmer_test.hex:i"`, programmer.Extra{Use1200bpsTouch: true, WaitForUploadPort: true}},
+		`"~/.arduino-create/avrdude/6.3.0-arduino6/bin/avrdude" "-C~/.arduino-create/avrdude/6.3.0-arduino6/etc/avrdude.conf" -v -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./upload_test.hex:i"`, upload.Extra{Use1200bpsTouch: true, WaitForUploadPort: true}},
 }
 
 func TestSerial(t *testing.T) {
@@ -36,7 +36,7 @@ func TestSerial(t *testing.T) {
 
 	for _, test := range TestSerialData {
 		commandline := strings.Replace(test.Commandline, "~", home, -1)
-		err := programmer.Serial(test.Port, commandline, test.Extra, logger)
+		err := upload.Serial(test.Port, commandline, test.Extra, logger)
 		log.Println(err)
 	}
 }
@@ -47,11 +47,11 @@ var TestNetworkData = []struct {
 	Board       string
 	File        string
 	Commandline string
-	Auth        programmer.Auth
+	Auth        upload.Auth
 }{
 	{
 		"yun", "", "", "",
-		``, programmer.Auth{}},
+		``, upload.Auth{}},
 }
 
 func TestNetwork(t *testing.T) {
@@ -62,7 +62,7 @@ func TestNetwork(t *testing.T) {
 
 	for _, test := range TestNetworkData {
 		commandline := strings.Replace(test.Commandline, "~", home, -1)
-		err := programmer.Network(test.Port, test.Board, test.File, commandline, test.Auth, logger)
+		err := upload.Network(test.Port, test.Board, test.File, commandline, test.Auth, logger)
 		log.Println(err)
 	}
 }
@@ -72,17 +72,17 @@ var TestResolveData = []struct {
 	Board       string
 	File        string
 	Commandline string
-	Extra       programmer.Extra
+	Extra       upload.Extra
 	Result      string
 }{
-	{"/dev/ttyACM0", "arduino:avr:leonardo", "./programmer_test.hex",
-		`"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf" {upload.verbose} {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`, programmer.Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
-		`"$loc$loc{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"  $loc{upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./programmer_test.hex:i"`},
+	{"/dev/ttyACM0", "arduino:avr:leonardo", "./upload_test.hex",
+		`"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf" {upload.verbose} {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`, upload.Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
+		`"$loc$loc{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"  $loc{upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./upload_test.hex:i"`},
 }
 
 func TestResolve(t *testing.T) {
 	for _, test := range TestResolveData {
-		result, _ := programmer.Resolve(test.Port, test.Board, test.File, test.Commandline, test.Extra, mockTools{})
+		result, _ := upload.Resolve(test.Port, test.Board, test.File, test.Commandline, test.Extra, mockTools{})
 		if result != test.Result {
 			t.Error("expected " + test.Result + ", got " + result)
 			continue
