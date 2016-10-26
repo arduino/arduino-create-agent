@@ -25,7 +25,7 @@ var TestSerialData = []struct {
 }{
 	{
 		"leonardo", "/dev/ttyACM0",
-		`"~/.arduino-create/avrdude/6.3.0-arduino6/bin/avrdude" "-C~/.arduino-create/avrdude/6.3.0-arduino6/etc/avrdude.conf" -v -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./upload_test.hex:i"`, upload.Extra{Use1200bpsTouch: true, WaitForUploadPort: true}},
+		`"$HOME/.arduino-create/avrdude/6.3.0-arduino6/bin/avrdude" "-C$HOME/.arduino-create/avrdude/6.3.0-arduino6/etc/avrdude.conf" -v -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./upload_test.hex:i"`, upload.Extra{Use1200bpsTouch: true, WaitForUploadPort: true}},
 }
 
 func TestSerial(t *testing.T) {
@@ -35,7 +35,7 @@ func TestSerial(t *testing.T) {
 	home, _ := homedir.Dir()
 
 	for _, test := range TestSerialData {
-		commandline := strings.Replace(test.Commandline, "~", home, -1)
+		commandline := strings.Replace(test.Commandline, "$HOME", home, -1)
 		err := upload.Serial(test.Port, commandline, test.Extra, logger)
 		log.Println(err)
 	}
@@ -61,7 +61,7 @@ func TestNetwork(t *testing.T) {
 	home, _ := homedir.Dir()
 
 	for _, test := range TestNetworkData {
-		commandline := strings.Replace(test.Commandline, "~", home, -1)
+		commandline := strings.Replace(test.Commandline, "$HOME", home, -1)
 		err := upload.Network(test.Port, test.Board, test.File, commandline, test.Auth, logger)
 		log.Println(err)
 	}
