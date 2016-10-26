@@ -9,13 +9,16 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/googollee/go-socket.io"
@@ -60,7 +63,7 @@ type Upload struct {
 	Rewrite     string           `json:"rewrite"`
 	Commandline string           `json:"commandline"`
 	Signature   string           `json:"signature"`
-	Extra       boardExtraInfo   `json:"extra"`
+	Extra       upload.Extra `json:"extra"`
 	Hex         []byte           `json:"hex"`
 	Filename    string           `json:"filename"`
 	ExtraFiles  []AdditionalFile `json:"extrafiles"`
@@ -123,9 +126,58 @@ func uploadHandler(c *gin.Context) {
 		data.Board = data.Rewrite
 	}
 
-	go spProgramRW(data.Port, data.Board, filePath, data.Commandline, data.Extra)
+	go func() {
+		// Resolve commandline
+		commandline, err := upload.Resolve(data.Port, data.Board, filePath, data.Commandline, data.Extra, &Tools)
+		if err != nil {
+			send(map[string]string{"uploadStatus": "Error", "Msg": err.Error()})
+			return
+		}
+
+		l := PLogger{Verbose: data.Extra.Verbose}
+
+		// Upload
+		if data.Extra.Network {
+			send(map[string]string{"uploadStatus": "Starting", "Cmd": "Network"})
+			err = upload.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l)
+		} else {
+			send(map[string]string{"uploadStatus": "Starting", "Cmd": "Serial"})
+			err = upload.Serial(data.Port, commandline, data.Extra, l)
+		}
+
+		// Handle result
+		if err != nil {
+			send(map[string]string{"uploadStatus": "Error", "Msg": err.Error()})
+			return
+		}
+		send(map[string]string{"uploadStatus": "Done", "Flash": "Ok"})
+	}()
 
 	c.String(http.StatusAccepted, "")
+}
+
+// PLogger sends the info from the upload to the websocket
+type PLogger struct {
+	Verbose bool
+}
+
+// Debug only sends messages if verbose is true
+func (l PLogger) Debug(args ...interface{}) {
+	if l.Verbose {
+		l.Info(args...)
+	}
+}
+
+// Info always send messages
+func (l PLogger) Info(args ...interface{}) {
+	output := fmt.Sprint(args...)
+	log.Println(output)
+	send(map[string]string{"uploadStatus": "Busy", "Msg": output})
+}
+
+func send(args map[string]string) {
+	mapB, _ := json.Marshal(args)
+	h.broadcastSys <- mapB
 }
 
 func verifyCommandLine(input string, signature string) error {
