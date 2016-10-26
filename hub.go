@@ -3,22 +3,18 @@ package main
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/arduino/arduino-create-agent/programmer"
-	"github.com/kardianos/osext"
-	//"os"
-	"os/exec"
-	//"path"
-	//"path/filepath"
-	//"runtime"
-	//"debug"
 	"encoding/json"
 	"io"
 	"os"
+	"os/exec"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/arduino/arduino-create-agent/upload"
+	"github.com/kardianos/osext"
 )
 
 type hub struct {
@@ -169,12 +165,12 @@ func checkCmd(m []byte) {
 			go spErr("You did not specify a port to close")
 		}
 
-	} else if strings.HasPrefix(sl, "killprogrammer") {
+	} else if strings.HasPrefix(sl, "killupload") {
 		// kill the running process (assumes singleton for now)
 		go func() {
-			programmer.Kill()
-			h.broadcastSys <- []byte("{\"ProgrammerStatus\": \"Killed\"}")
-			log.Println("{\"ProgrammerStatus\": \"Killed\"}")
+			upload.Kill()
+			h.broadcastSys <- []byte("{\"uploadStatus\": \"Killed\"}")
+			log.Println("{\"uploadStatus\": \"Killed\"}")
 		}()
 
 	} else if strings.HasPrefix(sl, "sendjsonraw") {

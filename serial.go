@@ -12,7 +12,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/arduino/arduino-create-agent/programmer"
+	"github.com/arduino/arduino-create-agent/upload"
 )
 
 type writeRequest struct {
@@ -455,7 +455,7 @@ func discoverLoop() {
 
 	go func() {
 		for {
-			if !programmer.Busy {
+			if !upload.Busy {
 				spListDual(false)
 			}
 			time.Sleep(2 * time.Second)

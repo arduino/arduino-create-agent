@@ -1,4 +1,4 @@
-// Package programmer allows to upload sketches into a board connected to the computer
+// Package upload allows to upload sketches into a board connected to the computer
 // It can do it via serial port or via network
 //
 // **Usage for a serial upload**
@@ -7,7 +7,7 @@
 //
 //   ```go
 //   commandline = ``"/usr/bin/avrdude" "-C/usr/bin/avrdude.conf" -v -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./sketch.hex:i"``
-//   err := programmer.Serial("/dev/ttyACM0", commandline, programmer.Extra{}, nil)
+//   err := upload.Serial("/dev/ttyACM0", commandline, upload.Extra{}, nil)
 //   ```
 //
 // note that the commandline contains the path of the sketch (sketch.hex)
@@ -17,7 +17,7 @@
 // Make sure that you have a compiled sketch somewhere on your disk
 //
 //   ```go
-//    err := programmer.Network("127.0.10.120", "arduino:avr:yun, "./sketch.hex", "", programmer.Auth{}, nil)
+//    err := upload.Network("127.0.10.120", "arduino:avr:yun, "./sketch.hex", "", upload.Auth{}, nil)
 //   ```
 //
 // The commandline can be empty or it can contain instructions (depends on the board)
@@ -28,7 +28,7 @@
 //
 //   ```go
 //    t := tools.Tools{}
-//    commandline = programmer.Resolve("/dev/ttyACM0", "arduino:avr:leonardo", "./sketch.hex", commandline, programmer.Extra{}, t)
+//    commandline = upload.Resolve("/dev/ttyACM0", "arduino:avr:leonardo", "./sketch.hex", commandline, upload.Extra{}, t)
 //    ```
 //
 // t must implement the locater interface (the Tools package does!)
@@ -39,6 +39,6 @@
 //   ```go
 //    logger := logrus.New()
 //    logger.Level = logrus.DebugLevel
-//    programmer.Serial("/dev/ttyACM0", commandline, programmer.Extra{}, logger)
+//    upload.Serial("/dev/ttyACM0", commandline, upload.Extra{}, logger)
 //    ```
-package programmer
+package upload
