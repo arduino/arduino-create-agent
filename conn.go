@@ -63,11 +63,13 @@ type Upload struct {
 	Rewrite     string           `json:"rewrite"`
 	Commandline string           `json:"commandline"`
 	Signature   string           `json:"signature"`
-	Extra       upload.Extra `json:"extra"`
+	Extra       upload.Extra     `json:"extra"`
 	Hex         []byte           `json:"hex"`
 	Filename    string           `json:"filename"`
 	ExtraFiles  []AdditionalFile `json:"extrafiles"`
 }
+
+var uploadStatusStr string = "ProgrammerStatus"
 
 func uploadHandler(c *gin.Context) {
 	data := new(Upload)
@@ -130,7 +132,7 @@ func uploadHandler(c *gin.Context) {
 		// Resolve commandline
 		commandline, err := upload.Resolve(data.Port, data.Board, filePath, data.Commandline, data.Extra, &Tools)
 		if err != nil {
-			send(map[string]string{"uploadStatus": "Error", "Msg": err.Error()})
+			send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 			return
 		}
 
@@ -138,19 +140,19 @@ func uploadHandler(c *gin.Context) {
 
 		// Upload
 		if data.Extra.Network {
-			send(map[string]string{"uploadStatus": "Starting", "Cmd": "Network"})
+			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Network"})
 			err = upload.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l)
 		} else {
-			send(map[string]string{"uploadStatus": "Starting", "Cmd": "Serial"})
+			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
 			err = upload.Serial(data.Port, commandline, data.Extra, l)
 		}
 
 		// Handle result
 		if err != nil {
-			send(map[string]string{"uploadStatus": "Error", "Msg": err.Error()})
+			send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 			return
 		}
-		send(map[string]string{"uploadStatus": "Done", "Flash": "Ok"})
+		send(map[string]string{uploadStatusStr: "Done", "Flash": "Ok"})
 	}()
 
 	c.String(http.StatusAccepted, "")
@@ -172,7 +174,7 @@ func (l PLogger) Debug(args ...interface{}) {
 func (l PLogger) Info(args ...interface{}) {
 	output := fmt.Sprint(args...)
 	log.Println(output)
-	send(map[string]string{"uploadStatus": "Busy", "Msg": output})
+	send(map[string]string{uploadStatusStr: "Busy", "Msg": output})
 }
 
 func send(args map[string]string) {
