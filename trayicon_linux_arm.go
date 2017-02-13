@@ -36,3 +36,6 @@ func setupSysTray() {
 func addRebootTrayElement() {
 	select {}
 }
+
+func quitSystray() {
+}

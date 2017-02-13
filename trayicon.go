@@ -34,8 +34,8 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/facchinm/systray"
 	"github.com/facchinm/systray/example/icon"
+	"github.com/getlantern/systray"
 	"github.com/skratchdot/open-golang/open"
 	"go.bug.st/serial.v1"
 )
@@ -117,6 +117,7 @@ func setupSysTrayHibernate() {
 		<-mOpen.ClickedCh
 		*hibernate = false
 		log.Println("Restart for hubernation")
+		systray.Quit()
 		restart("")
 	}()
 
@@ -125,4 +126,8 @@ func setupSysTrayHibernate() {
 		systray.Quit()
 		exit()
 	}()
+}
+
+func quitSystray() {
+	systray.Quit()
 }

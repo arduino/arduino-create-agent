@@ -241,8 +241,10 @@ func checkCmd(m []byte) {
 		go broadcast(s)
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
+		quitSystray()
 		restart("")
 	} else if strings.HasPrefix(sl, "exit") {
+		quitSystray()
 		exit()
 	} else if strings.HasPrefix(sl, "memstats") {
 		memoryStats()
