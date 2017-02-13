@@ -212,7 +212,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	// Decompress
 	t.Logger.Println("Unpacking tool " + name)
 
-	location := path.Join(dir(), correctTool.Name, correctTool.Version)
+	location := path.Join(dir(), pack, correctTool.Name, correctTool.Version)
 	err = os.RemoveAll(location)
 
 	if err != nil {

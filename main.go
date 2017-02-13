@@ -36,17 +36,18 @@ var (
 	gcType       = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
 	logDump      = flag.String("log", "off", "off = (default)")
 	// hostname. allow user to override, otherwise we look it up
-	hostname     = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
-	updateUrl    = flag.String("updateUrl", "", "")
-	appName      = flag.String("appName", "", "")
-	genCert      = flag.Bool("generateCert", false, "")
-	port         string
-	portSSL      string
-	origins      = flag.String("origins", "", "Allowed origin list for CORS")
-	address      = flag.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
-	signatureKey = flag.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
-	Tools        tools.Tools
-	indexURL     = flag.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
+	hostname              = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+	updateUrl             = flag.String("updateUrl", "", "")
+	appName               = flag.String("appName", "", "")
+	genCert               = flag.Bool("generateCert", false, "")
+	port                  string
+	portSSL               string
+	origins               = flag.String("origins", "", "Allowed origin list for CORS")
+	address               = flag.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
+	signatureKey          = flag.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
+	Tools                 tools.Tools
+	indexURL              = flag.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
+	requiredToolsAPILevel = "v1"
 )
 
 type NullWriter int
@@ -97,7 +98,7 @@ func main() {
 				IndexURL:  *indexURL,
 				Logger:    log.New(),
 			}
-			Tools.Init()
+			Tools.Init(requiredToolsAPILevel)
 
 			if embedded_autoextract {
 				// save the config.ini (if it exists)

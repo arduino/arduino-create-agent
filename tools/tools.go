@@ -38,10 +38,19 @@ type Tools struct {
 }
 
 // Init creates the Installed map and populates it from a file in .arduino-create
-func (t *Tools) Init() {
+func (t *Tools) Init(APIlevel string) {
 	createDir(t.Directory)
 	t.installed = make(map[string]string)
 	t.readMap()
+	if t.installed["apilevel"] != APIlevel {
+		// wipe the folder and reinitialize the data
+		os.RemoveAll(t.Directory)
+		createDir(t.Directory)
+		t.installed = make(map[string]string)
+		t.installed["apilevel"] = APIlevel
+		t.writeMap()
+		t.readMap()
+	}
 	t.Logger.Println(t.installed)
 }
 
