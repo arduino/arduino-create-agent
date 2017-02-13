@@ -35,15 +35,11 @@ type hub struct {
 }
 
 var h = hub{
-	// buffered. go with 1000 cuz should never surpass that
 	broadcast:    make(chan []byte, 1000),
 	broadcastSys: make(chan []byte, 1000),
-	// non-buffered
-	//broadcast:    make(chan []byte),
-	//broadcastSys: make(chan []byte),
-	register:    make(chan *connection),
-	unregister:  make(chan *connection),
-	connections: make(map[*connection]bool),
+	register:     make(chan *connection),
+	unregister:   make(chan *connection),
+	connections:  make(map[*connection]bool),
 }
 
 func (h *hub) run() {
@@ -74,10 +70,7 @@ func (h *hub) run() {
 			}()
 		case m := <-h.broadcast:
 			if len(m) > 0 {
-				//log.Print(string(m))
-				//log.Print(h.broadcast)
 				checkCmd(m)
-				//log.Print("-----")
 
 				for c := range h.connections {
 					select {
@@ -120,16 +113,6 @@ func checkCmd(m []byte) {
 
 	if strings.HasPrefix(sl, "open") {
 
-		// check if user wants to open this port as a secondary port
-		// this doesn't mean much other than allowing the UI to show
-		// a port as primary and make other ports sort of act less important
-		isSecondary := false
-		if strings.HasPrefix(s, "open secondary") {
-			isSecondary = true
-			// swap out the word secondary
-			s = strings.Replace(s, "open secondary", "open", 1)
-		}
-
 		args := strings.Split(s, " ")
 		if len(args) < 3 {
 			go spErr("You did not specify a port and baud rate in your open cmd")
@@ -154,7 +137,7 @@ func checkCmd(m []byte) {
 			buftype := strings.Replace(args[3], "\n", "", -1)
 			bufferAlgorithm = buftype
 		}
-		go spHandlerOpen(args[1], baud, bufferAlgorithm, isSecondary)
+		go spHandlerOpen(args[1], baud, bufferAlgorithm)
 
 	} else if strings.HasPrefix(sl, "close") {
 
@@ -173,20 +156,9 @@ func checkCmd(m []byte) {
 			log.Println("{\"uploadStatus\": \"Killed\"}")
 		}()
 
-	} else if strings.HasPrefix(sl, "sendjsonraw") {
-		// will catch sendjsonraw
-		go spWriteJsonRaw(s)
-
-	} else if strings.HasPrefix(sl, "sendjson") {
-		// will catch sendjson
-		go spWriteJson(s)
-
 	} else if strings.HasPrefix(sl, "send") {
 		// will catch send and sendnobuf
-
-		//args := strings.Split(s, "send ")
 		go spWrite(s)
-
 	} else if strings.HasPrefix(sl, "list") {
 		go spList(false)
 		go spList(true)
@@ -237,8 +209,6 @@ func checkCmd(m []byte) {
 		go logAction(sl)
 	} else if strings.HasPrefix(sl, "baudrate") {
 		go spBaudRates()
-	} else if strings.HasPrefix(sl, "broadcast") {
-		go broadcast(s)
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
 		quitSystray()
@@ -257,8 +227,6 @@ func checkCmd(m []byte) {
 	} else {
 		go spErr("Could not understand command.")
 	}
-
-	//log.Print("Done with checkCmd")
 }
 
 func logAction(sl string) {
@@ -321,22 +289,7 @@ func restart(path string) {
 	h.broadcastSys <- []byte("{\"Restarting\" : true}")
 
 	// figure out current path of executable so we know how to restart
-	// this process
-	/*
-		dir, err2 := filepath.Abs(filepath.Dir(os.Args[0]))
-		if err2 != nil {
-			//log.Fatal(err2)
-			fmt.Printf("Error getting executable file path. err: %v\n", err2)
-		}
-		fmt.Printf("The path to this exe is: %v\n", dir)
-
-		// alternate approach
-		_, filename, _, _ := runtime.Caller(1)
-		f, _ := os.Open(path.Join(path.Dir(filename), "serial-port-json-server"))
-		fmt.Println(f)
-	*/
-
-	// using osext
+	// this process using osext
 	exePath, err3 := osext.Executable()
 	if err3 != nil {
 		log.Printf("Error getting exe path using osext lib. err: %v\n", err3)
@@ -349,29 +302,16 @@ func restart(path string) {
 	}
 
 	exePath = strings.Trim(exePath, "\n")
-	// figure out garbageCollection flag
-	//isGcFlag := "false"
-
-	var cmd *exec.Cmd
-
-	/*if *isGC {
-		//isGcFlag = "true"
-		cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter, "-gc")
-	} else {
-		cmd = exec.Command(exePath, "-ls", "-addr", *addr, "-regex", *regExpFilter)
-
-	}*/
 
 	hiberString := ""
 	if *hibernate == true {
 		hiberString = "-hibernate"
 	}
 
-	cmd = exec.Command(exePath, "-ls", "-regex", *regExpFilter, "-gc", *gcType, hiberString)
+	cmd := exec.Command(exePath, "-ls", "-regex", *regExpFilter, "-gc", *gcType, hiberString)
 
 	fmt.Println(cmd)
 
-	//cmd := exec.Command("./serial-port-json-server", "ls")
 	err := cmd.Start()
 	if err != nil {
 		log.Printf("Got err restarting spjs: %v\n", err)
@@ -380,36 +320,4 @@ func restart(path string) {
 		h.broadcastSys <- []byte("{\"Restarted\" : true}")
 	}
 	log.Fatal("Exited current spjs for restart")
-	//log.Printf("Waiting for command to finish...")
-	//err = cmd.Wait()
-	//log.Printf("Command finished with error: %v", err)
-}
-
-type CmdBroadcast struct {
-	Cmd string
-	Msg string
-}
-
-func broadcast(arg string) {
-	// we will get a string of broadcast asdf asdf asdf
-	log.Println("Inside broadcast arg: " + arg)
-	arg = strings.TrimPrefix(arg, " ")
-	//log.Println("arg after trim: " + arg)
-	args := strings.SplitN(arg, " ", 2)
-	if len(args) != 2 {
-		errstr := "Could not parse broadcast command: " + arg
-		log.Println(errstr)
-		spErr(errstr)
-		return
-	}
-	broadcastcmd := strings.Trim(args[1], " ")
-	log.Println("The broadcast cmd is:" + broadcastcmd + "---")
-
-	bcmd := CmdBroadcast{
-		Cmd: "Broadcast",
-		Msg: broadcastcmd,
-	}
-	json, _ := json.Marshal(bcmd)
-	log.Printf("bcmd:%v\n", string(json))
-	h.broadcastSys <- json
 }

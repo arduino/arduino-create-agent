@@ -284,9 +284,6 @@ func (p *serport) writerNoBuf() {
 		}
 
 		log.Print("Just wrote ", n2, " bytes to serial: ", string(data.data))
-		//log.Print(n2)
-		//log.Print(" bytes to serial: ")
-		//log.Print(data)
 		if err != nil {
 			errstr := "Error writing to " + p.portConf.Name + " " + err.Error() + " Closing port."
 			log.Print(errstr)
@@ -302,7 +299,7 @@ func (p *serport) writerNoBuf() {
 	spList(false)
 }
 
-func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) {
+func spHandlerOpen(portname string, baud int, buftype string) {
 
 	log.Print("Inside spHandler")
 
@@ -315,20 +312,10 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	out.WriteString(" baud")
 	log.Print(out.String())
 
-	//h.broadcast <- []byte("Opened a serial port ")
-	//h.broadcastSys <- out.Bytes()
-
-	isPrimary := true
-	if isSecondary {
-		isPrimary = false
-	}
-
 	conf := &SerialConfig{Name: portname, Baud: baud, RtsOn: true}
 
 	mode := &serial.Mode{
 		BaudRate: baud,
-		//Vmin:     0,
-		//Vtimeout: 1,
 	}
 
 	sp, err := serial.Open(portname, mode)
@@ -344,7 +331,7 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan Cmd, 256000), sendNoBuf: make(chan Cmd), portConf: conf, portIo: sp, BufferType: buftype, IsPrimary: isPrimary, IsSecondary: isSecondary}
+	p := &serport{sendBuffered: make(chan Cmd, 256000), sendNoBuf: make(chan Cmd), portConf: conf, portIo: sp, BufferType: buftype}
 
 	var bw Bufferflow
 

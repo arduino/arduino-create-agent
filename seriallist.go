@@ -23,8 +23,6 @@ type OsSerialPort struct {
 
 func GetList(network bool) ([]OsSerialPort, error) {
 
-	//log.Println("Doing GetList()")
-
 	if network {
 		netportList, err := GetNetworkList()
 		return netportList, err
@@ -70,7 +68,5 @@ func GetList(network bool) ([]OsSerialPort, error) {
 		}
 
 		return arrPorts, err
-		//log.Printf("Done doing GetList(). arrPorts:%v\n", arrPorts)
 	}
-
 }
