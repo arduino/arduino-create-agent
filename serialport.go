@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
-	"github.com/facchinm/go-serial"
+	"go.bug.st/serial.v1"
 	"io"
 	"strconv"
 	"time"
@@ -327,11 +327,11 @@ func spHandlerOpen(portname string, baud int, buftype string, isSecondary bool) 
 
 	mode := &serial.Mode{
 		BaudRate: baud,
-		Vmin:     0,
-		Vtimeout: 1,
+		//Vmin:     0,
+		//Vtimeout: 1,
 	}
 
-	sp, err := serial.OpenPort(portname, mode)
+	sp, err := serial.Open(portname, mode)
 	log.Print("Just tried to open port")
 	if err != nil {
 		//log.Fatal(err)

@@ -17,10 +17,10 @@ import (
 	"time"
 
 	"github.com/arduino/arduino-create-agent/utilities"
-	"github.com/facchinm/go-serial"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/sfreiberg/simplessh"
+	"go.bug.st/serial.v1"
 )
 
 // Busy tells wether the programmer is doing something
@@ -142,10 +142,8 @@ func reset(port string, wait bool, l Logger) (string, error) {
 	// Open port
 	mode := &serial.Mode{
 		BaudRate: 1200,
-		Vmin:     0,
-		Vtimeout: 1,
 	}
-	p, err := serial.OpenPort(port, mode)
+	p, err := serial.Open(port, mode)
 	debug(l, "Open port", port)
 	debug(l, p, err)
 	if err != nil {

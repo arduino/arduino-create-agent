@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/facchinm/go-serial"
 	"github.com/gin-gonic/gin"
+	"go.bug.st/serial.v1"
 )
 
 func infoHandler(c *gin.Context) {

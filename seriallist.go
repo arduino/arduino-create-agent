@@ -5,7 +5,7 @@ package main
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/facchinm/go-serial-native"
+	"go.bug.st/serial.v1/enumerator"
 	"regexp"
 )
 
@@ -32,17 +32,22 @@ func GetList(network bool) ([]OsSerialPort, error) {
 
 		// will timeout in 2 seconds
 		arrPorts := []OsSerialPort{}
-		ports, err := serial.ListPorts()
+		ports, err := enumerator.GetDetailedPortsList()
 		if err != nil {
 			return arrPorts, err
 		}
 
 		for _, element := range ports {
-			vid, pid, _ := element.USBVIDPID()
-			vidString := fmt.Sprintf("0x%04X", vid)
-			pidString := fmt.Sprintf("0x%04X", pid)
-			if vid != 0 && pid != 0 {
-				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name(), IdVendor: vidString, IdProduct: pidString, ISerial: element.USBSerialNumber()})
+			if element.IsUSB {
+				vid := element.VID
+				pid := element.PID
+				vidString := fmt.Sprintf("0x%s", vid)
+				pidString := fmt.Sprintf("0x%s", pid)
+				if vid != "0000" && pid != "0000" {
+					arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IdVendor: vidString, IdProduct: pidString, ISerial: element.SerialNumber})
+				}
+			} else {
+				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IdVendor: "", IdProduct: "", ISerial: ""})
 			}
 		}
 

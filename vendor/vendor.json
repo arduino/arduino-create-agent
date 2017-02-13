@@ -19,9 +19,9 @@
 			"revisionTime": "2015-08-26T22:43:44+01:00"
 		},
 		{
-			"path": "github.com/facchinm/go-serial",
-			"revision": "3cfbd2fab741f7c9d238cb3bd17980110c81bd46",
-			"revisionTime": "2015-09-15T17:57:31+02:00"
+			"path": "go.bug.st/serial.v1",
+			"revision": "0d8c7bfd786fccf9405f3274a6a783ea23b743a6",
+			"revisionTime": "2016-10-08T11:15:50+02:00"
 		},
 		{
 			"checksumSHA1": "e30hdVEI/Vn13gTmp/H90FkCa3s=",
