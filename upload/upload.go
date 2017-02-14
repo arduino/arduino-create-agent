@@ -43,13 +43,11 @@ type Extra struct {
 	ParamsQuiet       string `json:"params_quiet"`
 }
 
-// Resolve replaces some symbols in the commandline with the appropriate values
+// PartiallyResolve replaces some symbols in the commandline with the appropriate values
 // it can return an error when looking a variable in the Locater
-func Resolve(port, board, file, commandline string, extra Extra, t Locater) (string, error) {
+func PartiallyResolve(board, file, commandline string, extra Extra, t Locater) (string, error) {
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
-	commandline = strings.Replace(commandline, "{serial.port}", port, -1)
-	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(port), -1)
 
 	if extra.Verbose == true {
 		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsVerbose, -1)
@@ -67,10 +65,18 @@ func Resolve(port, board, file, commandline string, extra Extra, t Locater) (str
 		if err != nil {
 			return "", errors.Wrapf(err, "get location of %s", element)
 		}
-		commandline = strings.Replace(commandline, element, location, 1)
+		if location != "" {
+			commandline = strings.Replace(commandline, element, location, 1)
+		}
 	}
 
 	return commandline, nil
+}
+
+func fixupPort(port, commandline string) string {
+	commandline = strings.Replace(commandline, "{serial.port}", port, -1)
+	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(port), -1)
+	return commandline
 }
 
 // Network performs a network upload
@@ -84,6 +90,8 @@ func Network(port, board, file, commandline string, auth Auth, l Logger) error {
 	if auth.Password == "" {
 		auth.Password = "arduino"
 	}
+
+	commandline = fixupPort(port, commandline)
 
 	// try with a form
 	err := form(port, board, file, auth, l)
@@ -109,6 +117,8 @@ func Serial(port, commandline string, extra Extra, l Logger) error {
 			return errors.Wrapf(err, "Reset before upload")
 		}
 	}
+
+	commandline = fixupPort(port, commandline)
 
 	z, err := shellwords.Parse(commandline)
 	if err != nil {

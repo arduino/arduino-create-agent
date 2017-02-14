@@ -126,6 +126,17 @@ func (t *Tools) DownloadPackageIndex(index_file, signature_file string) error {
 	return nil
 }
 
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
 // Download will parse the index at the indexURL for the tool to download.
 // It will extract it in a folder in .arduino-create, and it will update the
 // Installed map.
@@ -181,7 +192,8 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 
 	// Check if it already exists
 	if behaviour == "keep" {
-		if _, ok := t.installed[key]; ok {
+		location, ok := t.installed[key]
+		if ok && pathExists(location) {
 			t.Logger.Println("The tool is already present on the system")
 			return nil
 		}
