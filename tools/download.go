@@ -430,22 +430,24 @@ func extractTarGz(body []byte, location string) (string, error) {
 }
 
 func (t *Tools) installDrivers(location string) error {
-	if runtime.GOOS == "windows" {
-		if _, err := os.Stat(filepath.Join(location, "post_install.bat")); err == nil {
-			t.Logger.Println("Installing drivers")
-			ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
-			t.Logger.Println(ok)
-			if ok == 6 {
-				os.Chdir(location)
-				oscmd := exec.Command("post_install.bat")
-				TellCommandNotToSpawnShell(oscmd)
-				t.Logger.Println(oscmd)
-				err = oscmd.Run()
-				t.Logger.Println(err)
-				return err
-			} else {
-				return errors.New("Could not install drivers")
-			}
+	extension := ".bat"
+	if runtime.GOOS != "windows" {
+		extension = ".sh"
+	}
+	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
+		t.Logger.Println("Installing drivers")
+		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
+		t.Logger.Println(ok)
+		if ok == 6 {
+			os.Chdir(location)
+			oscmd := exec.Command("post_install.bat")
+			TellCommandNotToSpawnShell(oscmd)
+			t.Logger.Println(oscmd)
+			err = oscmd.Run()
+			t.Logger.Println(err)
+			return err
+		} else {
+			return errors.New("Could not install drivers")
 		}
 	}
 	return nil
