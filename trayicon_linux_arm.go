@@ -37,5 +37,5 @@ func addRebootTrayElement() {
 	select {}
 }
 
-func quitSystray() {
+func quitSysTray() {
 }

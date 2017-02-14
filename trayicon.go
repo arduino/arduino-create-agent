@@ -128,6 +128,6 @@ func setupSysTrayHibernate() {
 	}()
 }
 
-func quitSystray() {
+func quitSysTray() {
 	systray.Quit()
 }

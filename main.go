@@ -24,18 +24,16 @@ import (
 )
 
 var (
-	version              = "x.x.x-dev" //don't modify it, Jenkins will take care
-	git_revision         = "xxxxxxxx"  //don't modify it, Jenkins will take care
-	embedded_autoextract = false
-	hibernate            = flag.Bool("hibernate", false, "start hibernated")
-	verbose              = flag.Bool("v", true, "show debug logging")
-	//verbose = flag.Bool("v", false, "show debug logging")
-	isLaunchSelf = flag.Bool("ls", false, "launch self 5 seconds later")
-	configIni    = flag.String("configFile", "config.ini", "config file path")
-	regExpFilter = flag.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-	gcType       = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
-	logDump      = flag.String("log", "off", "off = (default)")
-	// hostname. allow user to override, otherwise we look it up
+	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
+	git_revision          = "xxxxxxxx"  //don't modify it, Jenkins will take care
+	embedded_autoextract  = false
+	hibernate             = flag.Bool("hibernate", false, "start hibernated")
+	verbose               = flag.Bool("v", true, "show debug logging")
+	isLaunchSelf          = flag.Bool("ls", false, "launch self 5 seconds later")
+	configIni             = flag.String("configFile", "config.ini", "config file path")
+	regExpFilter          = flag.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
+	gcType                = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
+	logDump               = flag.String("log", "off", "off = (default)")
 	hostname              = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
 	updateUrl             = flag.String("updateUrl", "", "")
 	appName               = flag.String("appName", "", "")

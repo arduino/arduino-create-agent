@@ -211,10 +211,8 @@ func checkCmd(m []byte) {
 		go spBaudRates()
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
-		quitSystray()
 		restart("")
 	} else if strings.HasPrefix(sl, "exit") {
-		quitSystray()
 		exit()
 	} else if strings.HasPrefix(sl, "memstats") {
 		memoryStats()
@@ -272,6 +270,7 @@ func garbageCollection() {
 }
 
 func exit() {
+	quitSysTray()
 	log.Println("Starting new spjs process")
 	h.broadcastSys <- []byte("{\"Exiting\" : true}")
 	log.Fatal("Exited current spjs cuz asked to")
@@ -280,6 +279,7 @@ func exit() {
 
 func restart(path string) {
 	log.Println("called restart", path)
+	quitSysTray()
 	// relaunch ourself and exit
 	// the relaunch works because we pass a cmdline in
 	// that has serial-port-json-server only initialize 5 seconds later
