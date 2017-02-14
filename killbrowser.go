@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/arduino/arduino-create-agent/killbrowser"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,7 +23,7 @@ func killBrowserHandler(c *gin.Context) {
 		return
 	}
 
-	command, err := findBrowser(data.Process)
+	command, err := browser.Find(data.Process)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -30,7 +31,7 @@ func killBrowserHandler(c *gin.Context) {
 	}
 
 	if data.Action == "kill" || data.Action == "restart" {
-		_, err := killBrowser(data.Process)
+		_, err := browser.Kill(data.Process)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err.Error())
 			return
@@ -38,7 +39,7 @@ func killBrowserHandler(c *gin.Context) {
 	}
 
 	if data.Action == "restart" {
-		_, err := startBrowser(command, data.URL)
+		_, err := browser.Start(command, data.URL)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, err.Error())
 			return
