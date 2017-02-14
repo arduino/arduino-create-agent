@@ -19,63 +19,12 @@ type writeRequest struct {
 	id     string
 }
 
-type writeRequestJson struct {
-	p    *serport
-	P    string
-	Data []writeRequestJsonData
-}
-
-type writeRequestJsonRaw struct {
-	p    *serport
-	P    string
-	Data []writeRequestJsonDataRaw
-}
-
-type writeRequestJsonData struct {
-	D   string
-	Id  string
-	Buf string
-}
-
-type writeRequestJsonDataRaw struct {
-	D   []byte
-	Id  string
-	Buf string
-}
-
-type qReportJson struct {
-	Cmd  string
-	QCnt int
-	P    string
-	Data []qReportJsonData
-}
-
-type qReportJsonData struct {
-	D     string
-	Id    string
-	Buf   string `json:"-"`
-	Parts int    `json:"-"`
-}
-
-type qReport struct {
-	Cmd  string
-	QCnt int
-	Type []string `json:"-"`
-	Ids  []string
-	D    []string //`json:"-"`
-	Port string
-}
-
 type serialhub struct {
 	// Opened serial ports.
 	ports map[*serport]bool
 
-	//open chan *io.ReadWriteCloser
 	//write chan *serport, chan []byte
 	write chan writeRequest
-	//read chan []byte
-
-	writeJson chan writeRequestJson
 
 	// Register requests from the connections.
 	register chan *serport
@@ -112,7 +61,6 @@ var NetworkPorts SpPortList
 var sh = serialhub{
 	//write:   	make(chan *serport, chan []byte),
 	write:      make(chan writeRequest),
-	writeJson:  make(chan writeRequestJson),
 	register:   make(chan *serport),
 	unregister: make(chan *serport),
 	ports:      make(map[*serport]bool),
