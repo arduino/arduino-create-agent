@@ -43,20 +43,15 @@ type serport struct {
 	itemsInBuffer int
 
 	// buffered channel containing up to 25600 outbound messages.
-	sendBuffered chan Cmd
+	sendBuffered chan string
 
 	// unbuffered channel of outbound messages that bypass internal serial port buffer
-	sendNoBuf chan Cmd
+	sendNoBuf chan string
 
 	// Do we have an extra channel/thread to watch our buffer?
 	BufferType string
 	//bufferwatcher *BufferflowDummypause
 	bufferwatcher Bufferflow
-
-	// Keep track of whether this is the primary serial port, i.e. cnc controller
-	// or if its secondary, i.e. a backup port or arduino or something tertiary
-	IsPrimary   bool
-	IsSecondary bool
 }
 
 type Cmd struct {
@@ -151,7 +146,6 @@ func (p *serport) reader() {
 				//log.Print("Printing out json byte data...")
 				//log.Print(string(b))
 				h.broadcastSys <- b
-				//h.broadcastSys <- []byte("{ \"p\" : \"" + p.portConf.Name + "\", \"d\": \"" + string(ch[:n]) + "\" }\n")
 			}
 		}
 
@@ -203,8 +197,7 @@ func (p *serport) writerBuffered() {
 
 	defer func() {
 		if e := recover(); e != nil {
-			// e is the interface{} typed-value we passed to panic()
-			log.Println("Got panic: ", e) // Prints "Whoops: boom!"
+			log.Println("Got panic: ", e)
 		}
 	}()
 
@@ -212,11 +205,8 @@ func (p *serport) writerBuffered() {
 	// sees something come in
 	for data := range p.sendBuffered {
 
-		//log.Printf("Got p.sendBuffered. data:%v, id:%v\n", string(data.data), string(data.id))
-
-		// we want to block here if we are being asked
-		// to pause.
-		goodToGo, willHandleCompleteResponse := p.bufferwatcher.BlockUntilReady(string(data.data), data.id)
+		// we want to block here if we are being asked to pause.
+		goodToGo, _ := p.bufferwatcher.BlockUntilReady(string(data), "")
 
 		if goodToGo == false {
 			log.Println("We got back from BlockUntilReady() but apparently we must cancel this cmd")
@@ -225,7 +215,6 @@ func (p *serport) writerBuffered() {
 		} else {
 			// send to the non-buffered serial port writer
 			//log.Println("About to send to p.sendNoBuf channel")
-			data.willHandleCompleteResponse = willHandleCompleteResponse
 			p.sendNoBuf <- data
 		}
 	}
@@ -241,49 +230,18 @@ func (p *serport) writerNoBuf() {
 	// sees something come in
 	for data := range p.sendNoBuf {
 
-		//log.Printf("Got p.sendNoBuf. data:%v, id:%v\n", string(data.data), string(data.id))
-
 		// if we get here, we were able to write successfully
 		// to the serial port because it blocks until it can write
 
 		// decrement counter
 		p.itemsInBuffer--
 		log.Printf("itemsInBuffer:%v\n", p.itemsInBuffer)
-		//h.broadcastSys <- []byte("{\"Cmd\":\"Write\",\"QCnt\":" + strconv.Itoa(p.itemsInBuffer) + ",\"Byte\":" + strconv.Itoa(n2) + ",\"Port\":\"" + p.portConf.Name + "\"}")
-
-		// For reducing load on websocket, stop transmitting write data
-		buf := "Buf"
-		if data.skippedBuffer {
-			buf = "NoBuf"
-		}
-		qwr := qwReport{
-			Cmd:  "Write",
-			QCnt: p.itemsInBuffer,
-			Id:   string(data.id),
-			D:    string(data.data),
-			Buf:  buf,
-			P:    p.portConf.Name,
-		}
-		qwrJson, _ := json.Marshal(qwr)
-		h.broadcastSys <- qwrJson
 
 		// FINALLY, OF ALL THE CODE IN THIS PROJECT
 		// WE TRULY/FINALLY GET TO WRITE TO THE SERIAL PORT!
-		n2, err := p.portIo.Write([]byte(data.data))
+		n2, err := p.portIo.Write([]byte(data))
 
-		// see if we need to send back the completeResponse
-		if data.willHandleCompleteResponse == false {
-			// we need to send back complete response
-			// Send fake cmd:"Complete" back
-			//strCmd := data.data
-			m := CmdComplete{"CompleteFake", data.id, p.portConf.Name, -1, data.data}
-			msgJson, err := json.Marshal(m)
-			if err == nil {
-				h.broadcastSys <- msgJson
-			}
-		}
-
-		log.Print("Just wrote ", n2, " bytes to serial: ", string(data.data))
+		log.Print("Just wrote ", n2, " bytes to serial: ", string(data))
 		if err != nil {
 			errstr := "Error writing to " + p.portConf.Name + " " + err.Error() + " Closing port."
 			log.Print(errstr)
@@ -331,7 +289,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan Cmd, 256000), sendNoBuf: make(chan Cmd), portConf: conf, portIo: sp, BufferType: buftype}
+	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan string), portConf: conf, portIo: sp, BufferType: buftype}
 
 	var bw Bufferflow
 

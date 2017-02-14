@@ -203,12 +203,8 @@ func checkCmd(m []byte) {
 				h.broadcastSys <- mapB
 			}
 		}()
-	} else if strings.HasPrefix(sl, "bufferalgorithm") {
-		go spBufferAlgorithms()
 	} else if strings.HasPrefix(sl, "log") {
 		go logAction(sl)
-	} else if strings.HasPrefix(sl, "baudrate") {
-		go spBaudRates()
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
 		restart("")
