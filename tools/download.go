@@ -441,7 +441,10 @@ func (t *Tools) installDrivers(location string) error {
 		if ok == 6 {
 			os.Chdir(location)
 			oscmd := exec.Command("post_install.bat")
-			TellCommandNotToSpawnShell(oscmd)
+			if runtime.GOOS != "linux" {
+				// spawning a shell could be the only way to let the user type his password
+				TellCommandNotToSpawnShell(oscmd)
+			}
 			t.Logger.Println(oscmd)
 			err = oscmd.Run()
 			t.Logger.Println(err)
