@@ -26,7 +26,7 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// +build !arm
+// +build !cli
 
 package main
 

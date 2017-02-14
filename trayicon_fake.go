@@ -26,6 +26,8 @@
 //  OTHER DEALINGS IN THE SOFTWARE.
 //
 
+// +build cli
+
 package main
 
 func setupSysTray() {
