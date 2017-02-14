@@ -134,9 +134,10 @@ func reset(port string, wait bool, l Logger) (string, error) {
 	// Get port list before reset
 	ports, err := serial.GetPortsList()
 	debug(l, "Get port list before reset")
-	debug(l, ports, err)
 	if err != nil {
 		return "", errors.Wrapf(err, "Get port list before reset")
+	} else {
+		debug(l, ports)
 	}
 
 	// Open port
@@ -145,7 +146,6 @@ func reset(port string, wait bool, l Logger) (string, error) {
 	}
 	p, err := serial.Open(port, mode)
 	debug(l, "Open port", port)
-	debug(l, p, err)
 	if err != nil {
 		return "", errors.Wrapf(err, "Open port %s", port)
 	}
@@ -153,7 +153,9 @@ func reset(port string, wait bool, l Logger) (string, error) {
 	// Set DTR
 	err = p.SetDTR(false)
 	debug(l, "Set DTR")
-	debug(l, err)
+	if err != nil {
+		return "", errors.Wrapf(err, "Can't set DTR")
+	}
 	p.Close()
 
 	// Wait for port to disappear and reappear
@@ -181,7 +183,7 @@ func waitReset(beforeReset []string, l Logger) string {
 	for {
 		ports, err := serial.GetPortsList()
 		port = differ(ports, beforeReset)
-		debug(l, "..", ports, beforeReset, err, port)
+		debug(l, beforeReset, " -> ", ports)
 
 		if port != "" {
 			break
@@ -197,10 +199,11 @@ func waitReset(beforeReset []string, l Logger) string {
 	debug(l, "Wait for the port to reappear")
 	afterReset, _ := serial.GetPortsList()
 	for {
-		ports, err := serial.GetPortsList()
+		ports, _ := serial.GetPortsList()
 		port = differ(ports, afterReset)
-		debug(l, "..", ports, afterReset, err, port)
+		debug(l, afterReset, " -> ", ports)
 		if port != "" {
+			debug(l, "Found upload port: ", port)
 			time.Sleep(time.Millisecond * 500)
 			break
 		}
