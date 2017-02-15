@@ -194,8 +194,10 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	if behaviour == "keep" {
 		location, ok := t.installed[key]
 		if ok && pathExists(location) {
+			// overwrite the default tool with this one
+			t.installed[correctTool.Name] = location
 			t.Logger.Println("The tool is already present on the system")
-			return nil
+			return t.writeMap()
 		}
 	}
 
@@ -249,6 +251,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	}
 
 	if err != nil {
+		t.Logger.Println("Error extracting the archive: ", err.Error())
 		return err
 	}
 
@@ -430,13 +433,14 @@ func extractTarGz(body []byte, location string) (string, error) {
 		}
 
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err == nil {
-			defer file.Close()
+		if err != nil {
+			return location, err
 		}
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
 			//return location, err
 		}
+		file.Close()
 	}
 	return location, nil
 }
@@ -494,6 +498,7 @@ func extractBz2(body []byte, location string) (string, error) {
 		if err == io.EOF {
 			break
 		} else if err != nil {
+			continue
 			//return location, err
 		}
 
@@ -513,13 +518,14 @@ func extractBz2(body []byte, location string) (string, error) {
 		}
 
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err == nil {
-			defer file.Close()
+		if err != nil {
+			return location, err
 		}
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
 			//return location, err
 		}
+		file.Close()
 	}
 	return location, nil
 }
