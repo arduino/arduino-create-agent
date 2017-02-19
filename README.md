@@ -121,11 +121,9 @@ By clicking on the tray icon and going to the debug console you can try most of 
     log on
 
 ### List the boards
-To get a json list of the connected boards you can issue the command list:
+To get a json list of the connected boards you can issue the command:
 
-```javascript
-socket.emit('command', 'list');
-```
+    list
 
 You will receive an object of all the boards connected with USB or over the network:
 
@@ -264,7 +262,7 @@ The syntax of the command is:
     downloadtool {{name}} {{version}} {{behaviour}}
 
 where `version` can be a version number of the string "latest", and `behaviour` can be
-"keep" (which skip the download if the tool already exists) and "replace" (which will download it again).
+"keep" (which skips the download if the tool already exists) and "replace" (which will download it again).
 
 ### Upload
 You can upload a binary sketch to a board connected to a port with a POST request to be made at the http endpoint.
@@ -293,13 +291,13 @@ The payload is a json object that looks like this:
 }
 ```
 
-- commandline is the command to execute to perform the upload. This is for example avrdude on a leonardo.
+- commandline is the command to execute to perform the upload. This is, for example, avrdude on a Leonardo.
 
 - hex contains the sketch hex encoded in base64
 
 - signature is the signature of the commandline signed with the private key that matches the public key contained in the config.ini of the arduino-create-agent
 
-The results of the upload will be delivered via websocket with messages that looks like:
+The results of the upload will be delivered via websocket with messages that look like:
 
 ```json
 {"Msg":"avrdude: verifying ...","ProgrammerStatus":"Busy"}
@@ -339,7 +337,7 @@ Your contribution is adding or modifying existing behaviour, please always refer
 
 Be sure to use `go vet` and `go fmt` on every file before each commit: it ensures your code is properly formatted.
 
-Also, for your contribution to be accepted, everyone of your commits must be "Signed-off". This is done by commiting using this command: `git commit --signoff`
+Also, for your contribution to be accepted, every one of your commits must be "Signed-off". This is done by committing using this command: `git commit --signoff`
 
 By signing off your commits, you agree to the following agreement, also known as [Developer Certificate of Origin](http://developercertificate.org/): it assures everyone that the code you're submitting is yours or that you have rights to submit it.
 
@@ -384,5 +382,5 @@ By making a contribution to this project, I certify that:
 
 
 ## Creating a release
-Just create a new release on github, and our drone server will build and upload
-ithe compiled binaries for every architecture in a zip file in the release itself.
+Just create a new release on GitHub, and our drone server will build and upload
+the compiled binaries for every architecture in a zip file in the release itself.
