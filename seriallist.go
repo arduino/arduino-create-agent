@@ -45,8 +45,6 @@ func GetList(network bool) ([]OsSerialPort, error) {
 				if vid != "0000" && pid != "0000" {
 					arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IdVendor: vidString, IdProduct: pidString, ISerial: element.SerialNumber})
 				}
-			} else {
-				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IdVendor: "", IdProduct: "", ISerial: ""})
 			}
 		}
 
