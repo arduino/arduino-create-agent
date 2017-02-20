@@ -15,7 +15,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/inconshreveable/go-update"
+	"gopkg.in/inconshreveable/go-update.v0"
 	"github.com/kr/binarydist"
 
 	"github.com/kardianos/osext"
