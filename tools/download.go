@@ -446,6 +446,7 @@ func extractTarGz(body []byte, location string) (string, error) {
 }
 
 func (t *Tools) installDrivers(location string) error {
+	OK_PRESSED := 6
 	extension := ".bat"
 	if runtime.GOOS != "windows" {
 		extension = ".sh"
@@ -454,9 +455,9 @@ func (t *Tools) installDrivers(location string) error {
 		t.Logger.Println("Installing drivers")
 		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
 		t.Logger.Println(ok)
-		if ok == 6 {
+		if ok == OK_PRESSED {
 			os.Chdir(location)
-			oscmd := exec.Command("post_install.bat")
+			oscmd := exec.Command("post_install"+extension)
 			if runtime.GOOS != "linux" {
 				// spawning a shell could be the only way to let the user type his password
 				TellCommandNotToSpawnShell(oscmd)
