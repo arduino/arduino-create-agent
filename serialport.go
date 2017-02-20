@@ -39,6 +39,8 @@ type serport struct {
 	// just so we don't show scary error messages
 	isClosing bool
 
+	isClosingDueToError bool
+
 	// counter incremented on queue, decremented on write
 	itemsInBuffer int
 
@@ -170,6 +172,7 @@ func (p *serport) reader() {
 				h.broadcastSys <- []byte("Error reading on " + p.portConf.Name + " " +
 					err.Error() + " Closing port.")
 				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
+				p.isClosingDueToError = true
 				break
 			}
 
@@ -179,13 +182,16 @@ func (p *serport) reader() {
 			if err == nil {
 				diff := time.Since(timeCheckOpen)
 				if diff.Nanoseconds() < 1000000 {
-					p.isClosing = true
+					p.isClosingDueToError = true
+					break
 				}
 				timeCheckOpen = time.Now()
 			}
 		}
 	}
-	spCloseReal(p)
+	if p.isClosingDueToError {
+		spCloseReal(p)
+	}
 }
 
 // this method runs as its own thread because it's instantiated
@@ -323,6 +329,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 func spHandlerClose(p *serport) {
 	p.isClosing = true
 	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
+	spCloseReal(p)
 }
 
 func spCloseReal(p *serport) {
