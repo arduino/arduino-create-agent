@@ -321,6 +321,10 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	// this is thread to send to serial port regardless of block
 	go p.writerNoBuf()
 	p.reader()
+
+	spListDual(false)
+	spList(false)
+
 	//go p.reader()
 	//p.done = make(chan bool)
 	//<-p.done

@@ -144,7 +144,15 @@ func discoverLoop() {
 func spListDual(network bool) {
 
 	// call our os specific implementation of getting the serial list
-	list, _ := GetList(network)
+	list, err := GetList(network)
+
+	log.Println(list)
+	log.Println(err)
+
+	if err != nil {
+		// avoid reporting dummy data if an error occurred
+		return
+	}
 
 	// do a quick loop to see if any of our open ports
 	// did not end up in the list port list. this can
