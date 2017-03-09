@@ -34,7 +34,7 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/facchinm/systray/example/icon"
+	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/getlantern/systray"
 	"github.com/skratchdot/open-golang/open"
 	"go.bug.st/serial.v1"
@@ -63,7 +63,7 @@ func addRebootTrayElement() {
 
 func setupSysTrayReal() {
 
-	systray.SetIcon(icon.Data)
+	systray.SetIcon(icon.GetIcon())
 	mUrl := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
 	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
@@ -109,7 +109,7 @@ func setupSysTrayReal() {
 
 func setupSysTrayHibernate() {
 
-	systray.SetIcon(icon.DataHibernate)
+	systray.SetIcon(icon.GetIconHiber())
 	mOpen := systray.AddMenuItem("Open Plugin", "")
 	mQuit := systray.AddMenuItem("Kill Plugin", "")
 
