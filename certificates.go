@@ -230,6 +230,10 @@ func certHandler(c *gin.Context) {
 }
 
 func deleteCertHandler(c *gin.Context) {
+	DeleteCertificates()
+}
+
+func DeleteCertificates() {
 	os.Remove("ca.cert.pem")
 	os.Remove("ca.cert.cer")
 	os.Remove("ca.key.pem")
