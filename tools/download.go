@@ -434,7 +434,7 @@ func extractTarGz(body []byte, location string) (string, error) {
 
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
-			return location, err
+			continue
 		}
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
@@ -457,7 +457,7 @@ func (t *Tools) installDrivers(location string) error {
 		t.Logger.Println(ok)
 		if ok == OK_PRESSED {
 			os.Chdir(location)
-			oscmd := exec.Command("post_install"+extension)
+			oscmd := exec.Command("post_install" + extension)
 			if runtime.GOOS != "linux" {
 				// spawning a shell could be the only way to let the user type his password
 				TellCommandNotToSpawnShell(oscmd)
@@ -520,7 +520,8 @@ func extractBz2(body []byte, location string) (string, error) {
 
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
-			return location, err
+			continue
+			//return location, err
 		}
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
