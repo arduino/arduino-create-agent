@@ -180,6 +180,10 @@ func touchSerialPortAt1200bps(port string, l Logger) error {
 	if err != nil {
 		return errors.Wrapf(err, "Can't set DTR")
 	}
+
+	// Wait a bit to allow restart of the board
+	time.Sleep(200 * time.Millisecond)
+
 	return nil
 }
 
