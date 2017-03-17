@@ -143,11 +143,11 @@ func reset(port string, wait bool, l Logger) (string, error) {
 
 	// Get port list before reset
 	ports, err := serial.GetPortsList()
-	debug(l, "Get port list before reset")
+	info(l, "Get port list before reset")
 	if err != nil {
 		return "", errors.Wrapf(err, "Get port list before reset")
 	} else {
-		debug(l, ports)
+		info(l, ports)
 	}
 
 	// Open port
@@ -155,14 +155,14 @@ func reset(port string, wait bool, l Logger) (string, error) {
 		BaudRate: 1200,
 	}
 	p, err := serial.Open(port, mode)
-	debug(l, "Open port", port)
+	info(l, "Open port", port)
 	if err != nil {
 		return "", errors.Wrapf(err, "Open port %s", port)
 	}
 
 	// Set DTR
 	err = p.SetDTR(false)
-	debug(l, "Set DTR")
+	info(l, "Set DTR off")
 	if err != nil {
 		return "", errors.Wrapf(err, "Can't set DTR")
 	}
