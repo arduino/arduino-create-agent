@@ -150,23 +150,11 @@ func reset(port string, wait bool, l Logger) (string, error) {
 		info(l, ports)
 	}
 
-	// Open port
-	mode := &serial.Mode{
-		BaudRate: 1200,
-	}
-	p, err := serial.Open(port, mode)
-	info(l, "Open port", port)
+	// Touch port at 1200bps
+	err = touchSerialPortAt1200bps(port, l)
 	if err != nil {
-		return "", errors.Wrapf(err, "Open port %s", port)
+		return "", errors.Wrapf(err, "1200bps Touch")
 	}
-
-	// Set DTR
-	err = p.SetDTR(false)
-	info(l, "Set DTR off")
-	if err != nil {
-		return "", errors.Wrapf(err, "Can't set DTR")
-	}
-	p.Close()
 
 	// Wait for port to disappear and reappear
 	if wait {
@@ -174,6 +162,25 @@ func reset(port string, wait bool, l Logger) (string, error) {
 	}
 
 	return port, nil
+}
+
+func touchSerialPortAt1200bps(port string, l Logger) error {
+	info(l, "Touching port ", port, " at 1200bps")
+
+	// Open port
+	p, err := serial.Open(port, &serial.Mode{BaudRate: 1200})
+	if err != nil {
+		return errors.Wrapf(err, "Open port %s", port)
+	}
+	defer p.Close()
+
+	// Set DTR
+	err = p.SetDTR(false)
+	info(l, "Set DTR off")
+	if err != nil {
+		return errors.Wrapf(err, "Can't set DTR")
+	}
+	return nil
 }
 
 // waitReset is meant to be called just after a reset. It watches the ports connected
