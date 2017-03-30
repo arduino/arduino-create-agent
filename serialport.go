@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	log "github.com/Sirupsen/logrus"
-	"go.bug.st/serial.v1"
 	"io"
 	"strconv"
 	"time"
+	"unicode/utf8"
+
+	log "github.com/Sirupsen/logrus"
+	serial "go.bug.st/serial.v1"
 )
 
 type SerialConfig struct {
@@ -95,6 +97,7 @@ func (p *serport) reader() {
 	//var buf bytes.Buffer
 	ch := make([]byte, 1024)
 	timeCheckOpen := time.Now()
+	var buffered_ch bytes.Buffer
 
 	for {
 
@@ -108,11 +111,30 @@ func (p *serport) reader() {
 			break
 		}
 
+		ch = append(buffered_ch.Bytes(), ch[:n]...)
+		n += len(buffered_ch.Bytes())
+		buffered_ch.Reset()
+
 		// read can return legitimate bytes as well as an error
 		// so process the bytes if n > 0
 		if n > 0 {
 			//log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
-			data := string(ch[:n])
+
+			data := ""
+
+			for i, w := 0, 0; i < n; i += w {
+				runeValue, width := utf8.DecodeRune(ch[i:n])
+				if runeValue == utf8.RuneError {
+					buffered_ch.Write(append(ch[i:n]))
+					break
+				}
+				if i == n {
+					buffered_ch.Reset()
+				}
+				data += string(runeValue)
+				w = width
+			}
+
 			//log.Print("The data i will convert to json is:")
 			//log.Print(data)
 
