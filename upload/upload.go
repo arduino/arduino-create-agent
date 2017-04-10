@@ -41,6 +41,7 @@ type Extra struct {
 	Verbose           bool   `json:"verbose"`
 	ParamsVerbose     string `json:"params_verbose"`
 	ParamsQuiet       string `json:"params_quiet"`
+	SSH               bool   `json:"ssh", omitempty`
 }
 
 // PartiallyResolve replaces some symbols in the commandline with the appropriate values
@@ -80,7 +81,7 @@ func fixupPort(port, commandline string) string {
 }
 
 // Network performs a network upload
-func Network(port, board, file, commandline string, auth Auth, l Logger) error {
+func Network(port, board, file, commandline string, auth Auth, l Logger, SSH bool) error {
 	Busy = true
 
 	// Defaults
@@ -97,7 +98,7 @@ func Network(port, board, file, commandline string, auth Auth, l Logger) error {
 	err := form(port, board, file, auth, l)
 	if err != nil {
 		// try with ssh
-		err = ssh(port, file, commandline, auth, l)
+		err = ssh(port, file, commandline, auth, l, SSH)
 	}
 
 	Busy = false
@@ -364,7 +365,7 @@ func form(port, board, file string, auth Auth, l Logger) error {
 	return nil
 }
 
-func ssh(port, file, commandline string, auth Auth, l Logger) error {
+func ssh(port, file, commandline string, auth Auth, l Logger, SSH bool) error {
 	// Connect via ssh
 	client, err := simplessh.ConnectWithPassword(port+":22", auth.Username, auth.Password)
 	debug(l, "Connect via ssh ", client, err)
@@ -373,20 +374,23 @@ func ssh(port, file, commandline string, auth Auth, l Logger) error {
 	}
 	defer client.Close()
 
-	// Copy the sketch
-	err = scp(client, file, "/tmp/sketch"+filepath.Ext(file))
-	debug(l, "Copy the sketch ", err)
-	if err != nil {
-		return errors.Wrapf(err, "Copy sketch")
-	}
+	if !SSH {
+		// Copy the sketch
+		err = client.Upload(file, "/tmp/sketch"+filepath.Ext(file))
+		debug(l, "Copy the sketch ", err)
+		if err != nil {
+			return errors.Wrapf(err, "Copy sketch")
+		}
 
-	// very special case for Yun (remove once AVR boards.txt is fixed)
-	if commandline == "" {
-		commandline = "merge-sketch-with-bootloader.lua /tmp/sketch.hex && /usr/bin/run-avrdude /tmp/sketch.hex"
+		// very special case for Yun (remove once AVR boards.txt is fixed)
+		if commandline == "" {
+			commandline = "merge-sketch-with-bootloader.lua /tmp/sketch.hex && /usr/bin/run-avrdude /tmp/sketch.hex"
+		}
 	}
 
 	// Execute commandline
 	output, err := client.Exec(commandline)
+	info(l, output)
 	debug(l, "Execute commandline ", commandline, output, err)
 	if err != nil {
 		return errors.Wrapf(err, "Execute commandline")
