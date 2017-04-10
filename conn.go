@@ -141,7 +141,7 @@ func uploadHandler(c *gin.Context) {
 		// Upload
 		if data.Extra.Network {
 			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Network"})
-			err = upload.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l)
+			err = upload.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l, data.Extra.SSH)
 		} else {
 			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
 			err = upload.Serial(data.Port, commandline, data.Extra, l)
