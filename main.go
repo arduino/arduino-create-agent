@@ -17,7 +17,7 @@ import (
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
-	"github.com/itsjamie/gin-cors"
+	cors "github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
 	"github.com/vharitonsky/iniflags"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily

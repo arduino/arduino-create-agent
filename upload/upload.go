@@ -20,7 +20,7 @@ import (
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/sfreiberg/simplessh"
-	"go.bug.st/serial.v1"
+	serial "go.bug.st/serial.v1"
 )
 
 // Busy tells wether the programmer is doing something
@@ -81,7 +81,7 @@ func fixupPort(port, commandline string) string {
 }
 
 // Network performs a network upload
-func Network(port, board, file, commandline string, auth Auth, l Logger, SSH bool) error {
+func Network(port, board string, files []string, commandline string, auth Auth, l Logger, SSH bool) error {
 	Busy = true
 
 	// Defaults
@@ -94,11 +94,11 @@ func Network(port, board, file, commandline string, auth Auth, l Logger, SSH boo
 
 	commandline = fixupPort(port, commandline)
 
-	// try with a form
-	err := form(port, board, file, auth, l)
+	// try with ssh
+	err := ssh(port, files, commandline, auth, l, SSH)
 	if err != nil {
-		// try with ssh
-		err = ssh(port, file, commandline, auth, l, SSH)
+		// fallback on form
+		err = form(port, board, files[0], auth, l)
 	}
 
 	Busy = false
@@ -365,7 +365,7 @@ func form(port, board, file string, auth Auth, l Logger) error {
 	return nil
 }
 
-func ssh(port, file, commandline string, auth Auth, l Logger, SSH bool) error {
+func ssh(port string, files []string, commandline string, auth Auth, l Logger, SSH bool) error {
 	// Connect via ssh
 	client, err := simplessh.ConnectWithPassword(port+":22", auth.Username, auth.Password)
 	debug(l, "Connect via ssh ", client, err)
@@ -374,24 +374,29 @@ func ssh(port, file, commandline string, auth Auth, l Logger, SSH bool) error {
 	}
 	defer client.Close()
 
-	if !SSH {
-		// Copy the sketch
-		err = client.Upload(file, "/tmp/sketch"+filepath.Ext(file))
-		debug(l, "Copy the sketch ", err)
+	// Copy the sketch
+	for _, file := range files {
+		fileName := "/tmp/sketch" + filepath.Ext(file)
+		if SSH {
+			// don't rename files
+			fileName = "/tmp/" + filepath.Base(file)
+		}
+		err = client.Upload(file, fileName)
+		debug(l, "Copy "+filepath.Ext(file), err)
 		if err != nil {
 			return errors.Wrapf(err, "Copy sketch")
 		}
+	}
 
-		// very special case for Yun (remove once AVR boards.txt is fixed)
-		if commandline == "" {
-			commandline = "merge-sketch-with-bootloader.lua /tmp/sketch.hex && /usr/bin/run-avrdude /tmp/sketch.hex"
-		}
+	// very special case for Yun (remove once AVR boards.txt is fixed)
+	if commandline == "" {
+		commandline = "merge-sketch-with-bootloader.lua /tmp/sketch.hex && /usr/bin/run-avrdude /tmp/sketch.hex"
 	}
 
 	// Execute commandline
 	output, err := client.Exec(commandline)
 	info(l, output)
-	debug(l, "Execute commandline ", commandline, output, err)
+	debug(l, "Execute commandline ", commandline, string(output), err)
 	if err != nil {
 		return errors.Wrapf(err, "Execute commandline")
 	}
