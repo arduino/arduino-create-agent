@@ -21,7 +21,7 @@ import (
 	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
-	"github.com/googollee/go-socket.io"
+	socketio "github.com/googollee/go-socket.io"
 )
 
 type connection struct {
@@ -72,6 +72,7 @@ type Upload struct {
 var uploadStatusStr string = "ProgrammerStatus"
 
 func uploadHandler(c *gin.Context) {
+
 	data := new(Upload)
 	c.BindJSON(data)
 
@@ -115,8 +116,12 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
+	var filePaths []string
+	filePaths = append(filePaths, filePath)
+
 	for _, extraFile := range data.ExtraFiles {
 		path := filepath.Join(filepath.Dir(filePath), extraFile.Filename)
+		filePaths = append(filePaths, path)
 		log.Printf("Saving %s on %s", extraFile.Filename, path)
 		err := ioutil.WriteFile(path, extraFile.Hex, 0644)
 		if err != nil {
@@ -141,7 +146,7 @@ func uploadHandler(c *gin.Context) {
 		// Upload
 		if data.Extra.Network {
 			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Network"})
-			err = upload.Network(data.Port, data.Board, filePath, commandline, data.Extra.Auth, l, data.Extra.SSH)
+			err = upload.Network(data.Port, data.Board, filePaths, commandline, data.Extra.Auth, l, data.Extra.SSH)
 		} else {
 			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
 			err = upload.Serial(data.Port, commandline, data.Extra, l)
