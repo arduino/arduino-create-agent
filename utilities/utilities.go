@@ -10,7 +10,39 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
+	"strings"
 )
+
+// Prefix is the longpath prefix for Windows file paths.
+const Prefix = `\\?\`
+
+// AddPrefix will add the Windows long path prefix to the path provided if
+// it does not already have it.
+func AddPrefix(path string) string {
+	if !strings.HasPrefix(path, Prefix) {
+		if strings.HasPrefix(path, `\\`) {
+			// This is a UNC path, so we need to add 'UNC' to the path as well.
+			path = Prefix + `UNC` + path[1:]
+		} else {
+			path = Prefix + path
+		}
+	}
+	return path
+}
+
+// TempDir is the equivalent of ioutil.TempDir, except that the result is in Windows longpath format.
+func TempDir(dir, prefix string) (string, error) {
+	if runtime.GOOS == "windows" {
+		tempDir, err := ioutil.TempDir(dir, prefix)
+		if err != nil {
+			return "", err
+		}
+		return AddPrefix(tempDir), nil
+	} else {
+		return ioutil.TempDir(dir, prefix)
+	}
+}
 
 // SaveFileonTempDir creates a temp directory and saves the file data as the
 // filename in that directory.
@@ -20,7 +52,7 @@ import (
 // Note that path could be defined and still there could be an error.
 func SaveFileonTempDir(filename string, data io.Reader) (path string, err error) {
 	// Create Temp Directory
-	tmpdir, err := ioutil.TempDir("", "arduino-create-agent")
+	tmpdir, err := TempDir("", "arduino-create-agent")
 	if err != nil {
 		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
 	}
