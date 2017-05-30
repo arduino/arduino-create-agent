@@ -360,7 +360,8 @@ func form(port, board, file string, auth Auth, l Logger) error {
 
 	// Check the response
 	if res.StatusCode != http.StatusOK {
-		return errors.Wrapf(err, "Bad status: %s", res.Status)
+		body, _ := ioutil.ReadAll(res.Body)
+		return errors.New("Request error:" + string(body))
 	}
 	return nil
 }
