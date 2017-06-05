@@ -42,7 +42,7 @@ type Extra struct {
 	Verbose           bool   `json:"verbose"`
 	ParamsVerbose     string `json:"params_verbose"`
 	ParamsQuiet       string `json:"params_quiet"`
-	SSH               bool   `json:"ssh", omitempty`
+	SSH               bool   `json:"ssh,omitempty"`
 }
 
 // PartiallyResolve replaces some symbols in the commandline with the appropriate values
@@ -97,7 +97,7 @@ func Network(port, board string, files []string, commandline string, auth Auth, 
 
 	// try with ssh
 	err := ssh(port, files, commandline, auth, l, SSH)
-	if err != nil {
+	if err != nil && !SSH {
 		// fallback on form
 		err = form(port, board, files[0], auth, l)
 	}
