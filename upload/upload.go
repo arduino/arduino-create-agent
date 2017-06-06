@@ -383,8 +383,8 @@ func ssh(port string, files []string, commandline string, auth Auth, l Logger, S
 			// don't rename files
 			fileName = "/tmp/" + filepath.Base(file)
 		}
-		err = client.Upload(file, fileName)
-		debug(l, "Copy "+filepath.Ext(file), err)
+		err = scp(client, file, fileName)
+		debug(l, "Copy "+file, err)
 		if err != nil {
 			return errors.Wrapf(err, "Copy sketch")
 		}
