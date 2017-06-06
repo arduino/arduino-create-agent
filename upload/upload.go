@@ -160,7 +160,7 @@ func reset(port string, wait bool, l Logger) (string, error) {
 
 	// Wait for port to disappear and reappear
 	if wait {
-		port = waitReset(ports, l)
+		port = waitReset(ports, l, port)
 	}
 
 	return port, nil
@@ -192,7 +192,7 @@ func touchSerialPortAt1200bps(port string, l Logger) error {
 // waitReset is meant to be called just after a reset. It watches the ports connected
 // to the machine until a port disappears and reappears. The port name could be different
 // so it returns the name of the new port.
-func waitReset(beforeReset []string, l Logger) string {
+func waitReset(beforeReset []string, l Logger, originalPort string) string {
 	var port string
 	timeout := false
 
@@ -235,6 +235,11 @@ func waitReset(beforeReset []string, l Logger) string {
 			break
 		}
 		time.Sleep(time.Millisecond * 100)
+	}
+
+	// try to upload on the existing port if the touch was ineffective
+	if port == "" {
+		port = originalPort
 	}
 
 	return port
