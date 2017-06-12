@@ -104,7 +104,10 @@ func (p *serport) reader() {
 		n, err := p.portIo.Read(ch)
 
 		if err != nil {
-			ch = append(buffered_ch.Bytes(), ch[:n]...)
+			if n > len(ch) {
+				n = len(ch)
+			}
+			ch = append(buffered_ch.Bytes(), ch[:n-1]...)
 			n += len(buffered_ch.Bytes())
 			buffered_ch.Reset()
 		}
