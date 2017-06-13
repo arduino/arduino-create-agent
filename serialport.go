@@ -111,9 +111,11 @@ func (p *serport) reader() {
 			break
 		}
 
-		ch = append(buffered_ch.Bytes(), ch[:n]...)
-		n += len(buffered_ch.Bytes())
-		buffered_ch.Reset()
+		if err == nil {
+			ch = append(buffered_ch.Bytes(), ch[:n]...)
+			n += len(buffered_ch.Bytes())
+			buffered_ch.Reset()
+		}
 
 		// read can return legitimate bytes as well as an error
 		// so process the bytes if n > 0
