@@ -103,15 +103,6 @@ func (p *serport) reader() {
 
 		n, err := p.portIo.Read(ch)
 
-		if err == nil {
-			if n > len(ch) {
-				n = len(ch)
-			}
-			ch = append(buffered_ch.Bytes(), ch[:n-1]...)
-			n += len(buffered_ch.Bytes())
-			buffered_ch.Reset()
-		}
-
 		//if we detect that port is closing, break out o this for{} loop.
 		if p.isClosing {
 			strmsg := "Shutting down reader on " + p.portConf.Name
@@ -119,6 +110,10 @@ func (p *serport) reader() {
 			h.broadcastSys <- []byte(strmsg)
 			break
 		}
+
+		ch = append(buffered_ch.Bytes(), ch[:n]...)
+		n += len(buffered_ch.Bytes())
+		buffered_ch.Reset()
 
 		// read can return legitimate bytes as well as an error
 		// so process the bytes if n > 0
