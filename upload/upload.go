@@ -373,9 +373,10 @@ func form(port, board, file string, auth Auth, l Logger) error {
 }
 
 func ssh(port string, files []string, commandline string, auth Auth, l Logger, SSH bool) error {
+	debug(l, "Connect via ssh ", files, commandline)
+
 	// Connect via ssh
 	client, err := simplessh.ConnectWithPassword(port+":22", auth.Username, auth.Password)
-	debug(l, "Connect via ssh ", client, err)
 	if err != nil {
 		return errors.Wrapf(err, "Connect via ssh")
 	}
@@ -389,7 +390,7 @@ func ssh(port string, files []string, commandline string, auth Auth, l Logger, S
 			fileName = "/tmp/" + filepath.Base(file)
 		}
 		err = scp(client, file, fileName)
-		debug(l, "Copy "+file, err)
+		debug(l, "Copy "+file+" to "+fileName+" ", err)
 		if err != nil {
 			return errors.Wrapf(err, "Copy sketch")
 		}
