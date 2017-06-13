@@ -103,7 +103,7 @@ func (p *serport) reader() {
 
 		n, err := p.portIo.Read(ch)
 
-		if err != nil {
+		if err == nil {
 			if n > len(ch) {
 				n = len(ch)
 			}
