@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,8 +30,10 @@ var Busy = false
 
 // Auth contains username and password used for a network upload
 type Auth struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	PrivateKey string `json:"private_key"`
+	Port       int    `json:"port"`
 }
 
 // Extra contains some options used during the upload
@@ -375,8 +378,19 @@ func form(port, board, file string, auth Auth, l Logger) error {
 func ssh(port string, files []string, commandline string, auth Auth, l Logger, SSH bool) error {
 	debug(l, "Connect via ssh ", files, commandline)
 
+	if auth.Port == 0 {
+		auth.Port = 22
+	}
+
 	// Connect via ssh
-	client, err := simplessh.ConnectWithPassword(port+":22", auth.Username, auth.Password)
+	var client *simplessh.Client
+	var err error
+	if auth.PrivateKey != "" {
+		client, err = simplessh.ConnectWithKey(port+":"+strconv.Itoa(auth.Port), auth.Username, auth.PrivateKey)
+	} else {
+		client, err = simplessh.ConnectWithPassword(port+":"+strconv.Itoa(auth.Port), auth.Username, auth.Password)
+	}
+
 	if err != nil {
 		return errors.Wrapf(err, "Connect via ssh")
 	}
