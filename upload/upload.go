@@ -386,7 +386,7 @@ func ssh(port string, files []string, commandline string, auth Auth, l Logger, S
 	var client *simplessh.Client
 	var err error
 	if auth.PrivateKey != "" {
-		client, err = simplessh.ConnectWithKey(port+":"+strconv.Itoa(auth.Port), auth.Username, auth.PrivateKey)
+		client, err = simplessh.ConnectWithKeyFile(port+":"+strconv.Itoa(auth.Port), auth.Username, auth.PrivateKey)
 	} else {
 		client, err = simplessh.ConnectWithPassword(port+":"+strconv.Itoa(auth.Port), auth.Username, auth.Password)
 	}
