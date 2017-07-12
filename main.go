@@ -294,8 +294,6 @@ const homeTemplateHtml = `<!DOCTYPE html>
 	    var messages = [];
 
 	    function appendLog(msg) {
-	    	console.log(msg);
-	    	console.log('----');
 	        if (listenabled.checked || (typeof msg === 'string' && msg.indexOf('{') !== 0 && msg.indexOf('list') !== 0)) {
 	            messages.push(msg);
 	            if (messages.length > 2000) {
@@ -323,7 +321,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
 	    $('#export').click(function() {
 	    	var link = document.createElement('a');
 	    	link.setAttribute('download', 'agent-log.txt');
-	    	link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(log.innerHTML));
+	    	var text = log.innerHTML.replace(/<br>/g, '\n');
+	    	link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     		link.click();
     	});
 
