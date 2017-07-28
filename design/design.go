@@ -20,3 +20,10 @@ var _ = API("arduino-create-agent", func() {
 		Credentials()
 	})
 })
+
+var _ = Resource("public", func() {
+	Metadata("swagger:generate", "false")
+
+	Files("swagger.json", "swagger/swagger.json")
+	Files("docs", "templates/docs.html")
+})

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"github.com/arduino/arduino-create-agent/app"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 )
@@ -16,6 +17,10 @@ func main() {
 	service.Use(middleware.LogRequest(true))
 	service.Use(middleware.ErrorHandler(service, true))
 	service.Use(middleware.Recover())
+
+	// Mount "public" controller
+	public := NewPublicController(service)
+	app.MountPublicController(service, public)
 
 	// Start service
 	if err := service.ListenAndServe(":9000"); err != nil {

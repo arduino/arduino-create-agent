@@ -8,7 +8,10 @@
 package app
 
 import (
+	"context"
 	"github.com/goadesign/goa"
+	"github.com/goadesign/goa/cors"
+	"net/http"
 )
 
 // initService sets up the service encoders, decoders and mux.
@@ -20,4 +23,53 @@ func initService(service *goa.Service) {
 	// Setup default encoder and decoder
 	service.Encoder.Register(goa.NewJSONEncoder, "*/*")
 	service.Decoder.Register(goa.NewJSONDecoder, "*/*")
+}
+
+// PublicController is the controller interface for the Public actions.
+type PublicController interface {
+	goa.Muxer
+	goa.FileServer
+}
+
+// MountPublicController "mounts" a Public resource controller on the given service.
+func MountPublicController(service *goa.Service, ctrl PublicController) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/swagger.json", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/docs", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
+
+	h = ctrl.FileHandler("/swagger.json", "swagger/swagger.json")
+	h = handlePublicOrigin(h)
+	service.Mux.Handle("GET", "/swagger.json", ctrl.MuxHandler("serve", h, nil))
+	service.LogInfo("mount", "ctrl", "Public", "files", "swagger/swagger.json", "route", "GET /swagger.json")
+
+	h = ctrl.FileHandler("/docs", "templates/docs.html")
+	h = handlePublicOrigin(h)
+	service.Mux.Handle("GET", "/docs", ctrl.MuxHandler("serve", h, nil))
+	service.LogInfo("mount", "ctrl", "Public", "files", "templates/docs.html", "route", "GET /docs")
+}
+
+// handlePublicOrigin applies the CORS response headers corresponding to the origin.
+func handlePublicOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
+				rw.Header().Set("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
 }
