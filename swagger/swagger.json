@@ -1,0 +1,1 @@
+{"swagger":"2.0","info":{"title":"Arduino Create Agent","description":"A bridge from the user's computer and the Create platform","version":""},"host":"localhost:9000","basePath":"/","schemes":["http"],"consumes":["application/json"],"produces":["application/json"],"paths":{}}

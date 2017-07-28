@@ -1,0 +1,14 @@
+basePath: /
+consumes:
+- application/json
+host: localhost:9000
+info:
+  description: A bridge from the user's computer and the Create platform
+  title: Arduino Create Agent
+  version: ""
+paths: {}
+produces:
+- application/json
+schemes:
+- http
+swagger: "2.0"
