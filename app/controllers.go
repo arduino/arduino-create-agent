@@ -25,6 +25,60 @@ func initService(service *goa.Service) {
 	service.Decoder.Register(goa.NewJSONDecoder, "*/*")
 }
 
+// DiscoverV1Controller is the controller interface for the DiscoverV1 actions.
+type DiscoverV1Controller interface {
+	goa.Muxer
+	List(*ListDiscoverV1Context) error
+}
+
+// MountDiscoverV1Controller "mounts" a DiscoverV1 resource controller on the given service.
+func MountDiscoverV1Controller(service *goa.Service, ctrl DiscoverV1Controller) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/v1/discover", ctrl.MuxHandler("preflight", handleDiscoverV1Origin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewListDiscoverV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.List(rctx)
+	}
+	h = handleDiscoverV1Origin(h)
+	service.Mux.Handle("GET", "/v1/discover", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "DiscoverV1", "action", "List", "route", "GET /v1/discover")
+}
+
+// handleDiscoverV1Origin applies the CORS response headers corresponding to the origin.
+func handleDiscoverV1Origin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
+				rw.Header().Set("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
 // PublicController is the controller interface for the Public actions.
 type PublicController interface {
 	goa.Muxer

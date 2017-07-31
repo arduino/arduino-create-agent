@@ -1,12 +1,170 @@
 basePath: /
 consumes:
 - application/json
+definitions:
+  ArduinoAgentDiscover:
+    description: ArduinoAgentDiscover media type (default view)
+    example:
+      network:
+      - address: 192.168.1.107
+        info: board=Arduino Y\195\186n Shield distro_version=0.1
+        name: MyShield
+        port: 80
+      - address: 192.168.1.107
+        info: board=Arduino Y\195\186n Shield distro_version=0.1
+        name: MyShield
+        port: 80
+      - address: 192.168.1.107
+        info: board=Arduino Y\195\186n Shield distro_version=0.1
+        name: MyShield
+        port: 80
+      serial:
+      - pid: "0x8036"
+        port: /dev/ttyACM0
+        serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+        vid: "0x2341"
+      - pid: "0x8036"
+        port: /dev/ttyACM0
+        serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+        vid: "0x2341"
+      - pid: "0x8036"
+        port: /dev/ttyACM0
+        serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+        vid: "0x2341"
+    properties:
+      network:
+        $ref: '#/definitions/ArduinoAgentDiscoverNetworkCollection'
+      serial:
+        $ref: '#/definitions/ArduinoAgentDiscoverSerialCollection'
+    required:
+    - serial
+    - network
+    title: 'Mediatype identifier: application/vnd.arduino.agent.discover+json; view=default'
+    type: object
+  ArduinoAgentDiscoverNetwork:
+    description: ArduinoAgentDiscoverNetwork media type (default view)
+    example:
+      address: 192.168.1.107
+      info: board=Arduino Y\195\186n Shield distro_version=0.1
+      name: MyShield
+      port: 80
+    properties:
+      address:
+        description: IP Address
+        example: 192.168.1.107
+        type: string
+      info:
+        description: Informations about the device
+        example: board=Arduino Y\195\186n Shield distro_version=0.1
+        type: string
+      name:
+        description: The friendly name given to the device
+        example: MyShield
+        type: string
+      port:
+        description: IP Port
+        example: 80
+        format: int64
+        type: integer
+    required:
+    - address
+    - port
+    - info
+    - name
+    title: 'Mediatype identifier: application/vnd.arduino.agent.discover.network+json;
+      view=default'
+    type: object
+  ArduinoAgentDiscoverNetworkCollection:
+    description: ArduinoAgentDiscoverNetworkCollection is the media type for an array
+      of ArduinoAgentDiscoverNetwork (default view)
+    example:
+    - address: 192.168.1.107
+      info: board=Arduino Y\195\186n Shield distro_version=0.1
+      name: MyShield
+      port: 80
+    - address: 192.168.1.107
+      info: board=Arduino Y\195\186n Shield distro_version=0.1
+      name: MyShield
+      port: 80
+    items:
+      $ref: '#/definitions/ArduinoAgentDiscoverNetwork'
+    title: 'Mediatype identifier: application/vnd.arduino.agent.discover.network+json;
+      type=collection; view=default'
+    type: array
+  ArduinoAgentDiscoverSerial:
+    description: ArduinoAgentDiscoverSerial media type (default view)
+    example:
+      pid: "0x8036"
+      port: /dev/ttyACM0
+      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+      vid: "0x2341"
+    properties:
+      pid:
+        description: Vendor ID
+        example: "0x8036"
+        type: string
+      port:
+        description: The port through which it's connected
+        example: /dev/ttyACM0
+        type: string
+      serial:
+        description: The Serial Number
+        example: Nesciunt consequatur et dolore velit officiis dignissimos.
+        type: string
+      vid:
+        description: Vendor ID
+        example: "0x2341"
+        type: string
+    required:
+    - vid
+    - pid
+    - port
+    title: 'Mediatype identifier: application/vnd.arduino.agent.discover.serial+json;
+      view=default'
+    type: object
+  ArduinoAgentDiscoverSerialCollection:
+    description: ArduinoAgentDiscoverSerialCollection is the media type for an array
+      of ArduinoAgentDiscoverSerial (default view)
+    example:
+    - pid: "0x8036"
+      port: /dev/ttyACM0
+      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+      vid: "0x2341"
+    - pid: "0x8036"
+      port: /dev/ttyACM0
+      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+      vid: "0x2341"
+    - pid: "0x8036"
+      port: /dev/ttyACM0
+      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+      vid: "0x2341"
+    items:
+      $ref: '#/definitions/ArduinoAgentDiscoverSerial'
+    title: 'Mediatype identifier: application/vnd.arduino.agent.discover.serial+json;
+      type=collection; view=default'
+    type: array
 host: localhost:9000
 info:
   description: A bridge from the user's computer and the Create platform
   title: Arduino Create Agent
   version: ""
-paths: {}
+paths:
+  /v1/discover:
+    get:
+      description: Returns a list of devices connected to the PC
+      operationId: discover_v1#list
+      produces:
+      - application/vnd.arduino.agent.discover+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArduinoAgentDiscover'
+      schemes:
+      - http
+      summary: list discover_v1
+      tags:
+      - discover_v1
 produces:
 - application/json
 schemes:

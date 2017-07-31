@@ -6,3 +6,34 @@
 // $ main
 
 package app
+
+import (
+	"context"
+	"github.com/goadesign/goa"
+	"net/http"
+)
+
+// ListDiscoverV1Context provides the discover_v1 list action context.
+type ListDiscoverV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+}
+
+// NewListDiscoverV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the discover_v1 controller list action.
+func NewListDiscoverV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*ListDiscoverV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ListDiscoverV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ListDiscoverV1Context) OK(r *ArduinoAgentDiscover) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.discover+json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
