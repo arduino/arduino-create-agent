@@ -149,6 +149,32 @@ info:
   title: Arduino Create Agent
   version: ""
 paths:
+  /v1/connect:
+    get:
+      description: Opens a websocket connection to the device, allowing to read/write
+      operationId: websocket_v1#connect
+      parameters:
+      - default: 9600
+        description: The speed of the connection. Defaults to 9600
+        in: query
+        name: baud
+        required: true
+        type: integer
+      - description: The port where the device resides
+        in: query
+        name: port
+        required: true
+        type: string
+      responses:
+        "101":
+          description: Switching Protocols
+        "400":
+          description: Bad Request
+      schemes:
+      - ws
+      summary: connect websocket_v1
+      tags:
+      - websocket_v1
   /v1/discover:
     get:
       description: Returns a list of devices connected to the PC
@@ -167,6 +193,11 @@ paths:
       - discover_v1
 produces:
 - application/json
+responses:
+  BadRequest:
+    description: Bad Request
+  SwitchingProtocols:
+    description: Switching Protocols
 schemes:
 - http
 swagger: "2.0"

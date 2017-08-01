@@ -31,6 +31,10 @@ func main() {
 	d := NewDiscoverV1Controller(service, monitor)
 	app.MountDiscoverV1Controller(service, d)
 
+	// Mount "connect" controller
+	c := NewConnectV1Controller(service)
+	app.MountConnectV1Controller(service, c)
+
 	// Mount "public" controller
 	public := NewPublicController(service)
 	app.MountPublicController(service, public)

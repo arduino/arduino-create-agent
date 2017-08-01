@@ -1,7 +1,6 @@
 package design
 
 import (
-	. "github.com/goadesign/goa/design"
 	. "github.com/goadesign/goa/design/apidsl"
 )
 
@@ -26,4 +25,5 @@ var _ = Resource("public", func() {
 
 	Files("swagger.json", "swagger/swagger.json")
 	Files("docs", "templates/docs.html")
+	Files("debug", "templates/debug.html")
 })

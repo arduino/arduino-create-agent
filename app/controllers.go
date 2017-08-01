@@ -3,7 +3,10 @@
 // API "arduino-create-agent": Application Controllers
 //
 // Command:
-// $ main
+// $ goagen
+// --design=github.com/arduino/arduino-create-agent/design
+// --out=$(GOPATH)/src/github.com/arduino/arduino-create-agent
+// --version=v1.2.0-dirty
 
 package app
 
@@ -23,6 +26,60 @@ func initService(service *goa.Service) {
 	// Setup default encoder and decoder
 	service.Encoder.Register(goa.NewJSONEncoder, "*/*")
 	service.Decoder.Register(goa.NewJSONDecoder, "*/*")
+}
+
+// ConnectV1Controller is the controller interface for the ConnectV1 actions.
+type ConnectV1Controller interface {
+	goa.Muxer
+	Websocket(*WebsocketConnectV1Context) error
+}
+
+// MountConnectV1Controller "mounts" a ConnectV1 resource controller on the given service.
+func MountConnectV1Controller(service *goa.Service, ctrl ConnectV1Controller) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/v1/connect", ctrl.MuxHandler("preflight", handleConnectV1Origin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewWebsocketConnectV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Websocket(rctx)
+	}
+	h = handleConnectV1Origin(h)
+	service.Mux.Handle("GET", "/v1/connect", ctrl.MuxHandler("websocket", h, nil))
+	service.LogInfo("mount", "ctrl", "ConnectV1", "action", "Websocket", "route", "GET /v1/connect")
+}
+
+// handleConnectV1Origin applies the CORS response headers corresponding to the origin.
+func handleConnectV1Origin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
+				rw.Header().Set("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
 }
 
 // DiscoverV1Controller is the controller interface for the DiscoverV1 actions.
@@ -90,12 +147,18 @@ func MountPublicController(service *goa.Service, ctrl PublicController) {
 	initService(service)
 	var h goa.Handler
 	service.Mux.Handle("OPTIONS", "/swagger.json", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/debug", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/docs", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
 
 	h = ctrl.FileHandler("/swagger.json", "swagger/swagger.json")
 	h = handlePublicOrigin(h)
 	service.Mux.Handle("GET", "/swagger.json", ctrl.MuxHandler("serve", h, nil))
 	service.LogInfo("mount", "ctrl", "Public", "files", "swagger/swagger.json", "route", "GET /swagger.json")
+
+	h = ctrl.FileHandler("/debug", "templates/debug.html")
+	h = handlePublicOrigin(h)
+	service.Mux.Handle("GET", "/debug", ctrl.MuxHandler("serve", h, nil))
+	service.LogInfo("mount", "ctrl", "Public", "files", "templates/debug.html", "route", "GET /debug")
 
 	h = ctrl.FileHandler("/docs", "templates/docs.html")
 	h = handlePublicOrigin(h)
