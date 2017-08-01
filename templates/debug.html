@@ -85,6 +85,8 @@ function discovery() {
 	});
 }
 
+var ws;
+
 function connect() {
 	var port = document.getElementById('connect-port').value;
 	var baud = document.getElementById('connect-baud').value;
@@ -93,7 +95,7 @@ function connect() {
 	var codeEl = document.getElementById('connect-code');
 
 	codeEl.textContent = '';
-	var ws = new WebSocket("ws://localhost:9000/v1/connect?port=" + port + "&baud=" + baud);
+	ws = new WebSocket("ws://localhost:9000/v1/connect?port=" + port + "&baud=" + baud);
 	ws.onopen = function () {
 		formEl.removeAttribute('hidden')
 	}
@@ -102,6 +104,7 @@ function connect() {
 		codeEl.textContent = codeEl.textContent + 'DISCONNECTED\n';
 	}
 	ws.onmessage = function (event) {
+		console.debug(event.data)
 		codeEl.textContent = codeEl.textContent + event.data + '\n';
 	}
 
@@ -114,6 +117,11 @@ function connect() {
 	reqEl.textContent = ws.url + '\n';
 	reqEl.textContent = reqEl.textContent + '------------------------------------\n'
 	console.debug(port, baud)
+}
+
+function send() {
+	var msg = document.getElementById('connect-msg').value;
+	ws.send(msg)
 }
 
 	</script>
