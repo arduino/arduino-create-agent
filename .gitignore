@@ -1,1 +1,5 @@
 arduino-create-agent
+ca.key.pem
+ca.cert.pem
+key.pem
+cert.pem
