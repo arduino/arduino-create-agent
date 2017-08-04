@@ -28,6 +28,94 @@ func initService(service *goa.Service) {
 	service.Decoder.Register(goa.NewJSONDecoder, "*/*")
 }
 
+// CommandsV1Controller is the controller interface for the CommandsV1 actions.
+type CommandsV1Controller interface {
+	goa.Muxer
+	Exec(*ExecCommandsV1Context) error
+	List(*ListCommandsV1Context) error
+}
+
+// MountCommandsV1Controller "mounts" a CommandsV1 resource controller on the given service.
+func MountCommandsV1Controller(service *goa.Service, ctrl CommandsV1Controller) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/:id", ctrl.MuxHandler("preflight", handleCommandsV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/", ctrl.MuxHandler("preflight", handleCommandsV1Origin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewExecCommandsV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(ExecCommandsV1Payload)
+		} else {
+			return goa.MissingPayloadError()
+		}
+		return ctrl.Exec(rctx)
+	}
+	h = handleCommandsV1Origin(h)
+	service.Mux.Handle("POST", "/:id", ctrl.MuxHandler("exec", h, unmarshalExecCommandsV1Payload))
+	service.LogInfo("mount", "ctrl", "CommandsV1", "action", "Exec", "route", "POST /:id")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewListCommandsV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.List(rctx)
+	}
+	h = handleCommandsV1Origin(h)
+	service.Mux.Handle("GET", "/", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "CommandsV1", "action", "List", "route", "GET /")
+}
+
+// handleCommandsV1Origin applies the CORS response headers corresponding to the origin.
+func handleCommandsV1Origin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
+				rw.Header().Set("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
+// unmarshalExecCommandsV1Payload unmarshals the request body into the context request data Payload field.
+func unmarshalExecCommandsV1Payload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	var payload ExecCommandsV1Payload
+	if err := service.DecodeRequest(req, &payload); err != nil {
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload
+	return nil
+}
+
 // ConnectV1Controller is the controller interface for the ConnectV1 actions.
 type ConnectV1Controller interface {
 	goa.Muxer

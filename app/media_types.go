@@ -14,6 +14,49 @@ import (
 	"github.com/goadesign/goa"
 )
 
+// A command that the arduino-create-agent can perform on the machine (default view)
+//
+// Identifier: application/vnd.arduino.agent.command+json; view=default
+type ArduinoAgentCommand struct {
+	// A unique identifier for the command
+	ID string `form:"id" json:"id" xml:"id"`
+	// The command that will be executed
+	Params []string `form:"params" json:"params" xml:"params"`
+	// The command that will be executed
+	Pattern string `form:"pattern" json:"pattern" xml:"pattern"`
+}
+
+// Validate validates the ArduinoAgentCommand media type instance.
+func (mt *ArduinoAgentCommand) Validate() (err error) {
+	if mt.ID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "id"))
+	}
+	if mt.Pattern == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "pattern"))
+	}
+	if mt.Params == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "params"))
+	}
+	return
+}
+
+// ArduinoAgentCommandCollection is the media type for an array of ArduinoAgentCommand (default view)
+//
+// Identifier: application/vnd.arduino.agent.command+json; type=collection; view=default
+type ArduinoAgentCommandCollection []*ArduinoAgentCommand
+
+// Validate validates the ArduinoAgentCommandCollection media type instance.
+func (mt ArduinoAgentCommandCollection) Validate() (err error) {
+	for _, e := range mt {
+		if e != nil {
+			if err2 := e.Validate(); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
 // ArduinoAgentDiscover media type (default view)
 //
 // Identifier: application/vnd.arduino.agent.discover+json; view=default
@@ -128,6 +171,27 @@ func (mt ArduinoAgentDiscoverSerialCollection) Validate() (err error) {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
+	}
+	return
+}
+
+// The result of the command executed on the machine (default view)
+//
+// Identifier: application/vnd.arduino.agent.exec+json; view=default
+type ArduinoAgentExec struct {
+	// The standard error returned by the command
+	Stderr string `form:"stderr" json:"stderr" xml:"stderr"`
+	// The standard output returned by the command
+	Stdout string `form:"stdout" json:"stdout" xml:"stdout"`
+}
+
+// Validate validates the ArduinoAgentExec media type instance.
+func (mt *ArduinoAgentExec) Validate() (err error) {
+	if mt.Stdout == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "stdout"))
+	}
+	if mt.Stderr == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "stderr"))
 	}
 	return
 }

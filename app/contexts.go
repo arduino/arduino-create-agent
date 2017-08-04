@@ -17,6 +17,69 @@ import (
 	"strconv"
 )
 
+// ExecCommandsV1Context provides the commands_v1 exec action context.
+type ExecCommandsV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID      string
+	Payload ExecCommandsV1Payload
+}
+
+// NewExecCommandsV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the commands_v1 controller exec action.
+func NewExecCommandsV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*ExecCommandsV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ExecCommandsV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// ExecCommandsV1Payload is the commands_v1 exec action payload.
+type ExecCommandsV1Payload []*CommandParam
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ExecCommandsV1Context) OK(r *ArduinoAgentExec) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.exec+json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// ListCommandsV1Context provides the commands_v1 list action context.
+type ListCommandsV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+}
+
+// NewListCommandsV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the commands_v1 controller list action.
+func NewListCommandsV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*ListCommandsV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ListCommandsV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ListCommandsV1Context) OK(r ArduinoAgentCommandCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.command+json; type=collection")
+	if r == nil {
+		r = ArduinoAgentCommandCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
 // WebsocketConnectV1Context provides the connect_v1 websocket action context.
 type WebsocketConnectV1Context struct {
 	context.Context

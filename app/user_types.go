@@ -9,3 +9,31 @@
 // --version=v1.2.0-dirty
 
 package app
+
+// Option for the command to execute
+type commandParam struct {
+	// The name of the param
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// The value of the option
+	Value *string `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+}
+
+// Publicize creates CommandParam from commandParam
+func (ut *commandParam) Publicize() *CommandParam {
+	var pub CommandParam
+	if ut.Name != nil {
+		pub.Name = ut.Name
+	}
+	if ut.Value != nil {
+		pub.Value = ut.Value
+	}
+	return &pub
+}
+
+// Option for the command to execute
+type CommandParam struct {
+	// The name of the param
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// The value of the option
+	Value *string `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+}
