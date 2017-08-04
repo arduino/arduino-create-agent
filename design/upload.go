@@ -26,41 +26,35 @@
  *
  * Copyright 2017 BCMI LABS SA (http://www.arduino.cc/)
  */
-package main
+package design
 
 import (
-	"github.com/arduino/arduino-create-agent/app"
-	"github.com/goadesign/goa"
+	. "github.com/goadesign/goa/design"
+	. "github.com/goadesign/goa/design/apidsl"
 )
 
-// CommandsV1Controller implements the commands_v1 resource.
-type CommandsV1Controller struct {
-	*goa.Controller
-}
+var _ = Resource("upload_v1", func() {
+	Action("serial", func() {
+		Description("Performs an upload of a sketch over the serial port")
+		Routing(POST(""))
+		Payload(ArrayOf(UploadSerialV1))
+		Response(OK, ExecResultV1)
+	})
+})
 
-// NewCommandsV1Controller creates a commands_v1 controller.
-func NewCommandsV1Controller(service *goa.Service) *CommandsV1Controller {
-	return &CommandsV1Controller{Controller: service.NewController("CommandsV1Controller")}
-}
-
-// Exec runs the exec action.
-func (c *CommandsV1Controller) Exec(ctx *app.ExecCommandsV1Context) error {
-	// CommandsV1Controller_Exec: start_implement
-
-	// Put your logic here
-
-	// CommandsV1Controller_Exec: end_implement
-	res := &app.ArduinoAgentExec{}
-	return ctx.OK(res)
-}
-
-// List runs the list action.
-func (c *CommandsV1Controller) List(ctx *app.ListCommandsV1Context) error {
-	// CommandsV1Controller_List: start_implement
-
-	// Put your logic here
-
-	// CommandsV1Controller_List: end_implement
-	res := app.ArduinoAgentCommandCollection{}
-	return ctx.OK(res)
-}
+var UploadSerialV1 = Type("upload.serial", func() {
+	Description("The necessary info to upload a sketch over a serial port")
+	Attribute("port", String, "The serial port", func() {
+		Example("/dev/ttyACM0")
+	})
+	Attribute("command", String, "The id of the command to use (See commands#list)", func() {
+		Example("upload:arduino:avr:uno")
+	})
+	Attribute("bin", String, "Base64-encoded binary file", func() {
+		Example("QmFzZTY0IGlzIGEgZ2VuZ...")
+	})
+	Attribute("filename", String, "The name of the binary file", func() {
+		Example("QmFzZTY0IGlzIGEgZ2VuZ...")
+	})
+	Attribute("params", ArrayOf(CommandParamV1), "Params")
+})
