@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sfreiberg/simplessh"
 	serial "go.bug.st/serial.v1"
+	"go.bug.st/serial.v1/enumerator"
 )
 
 // Busy tells wether the programmer is doing something
@@ -81,6 +82,14 @@ func PartiallyResolve(board, file, commandline string, extra Extra, t Locater) (
 func fixupPort(port, commandline string) string {
 	commandline = strings.Replace(commandline, "{serial.port}", port, -1)
 	commandline = strings.Replace(commandline, "{serial.port.file}", filepath.Base(port), -1)
+	ports, err := enumerator.GetDetailedPortsList()
+	if err == nil {
+		for _, p := range ports {
+			if p.Name == port {
+				commandline = strings.Replace(commandline, "{serial.port.iserial}", p.SerialNumber, -1)
+			}
+		}
+	}
 	return commandline
 }
 
