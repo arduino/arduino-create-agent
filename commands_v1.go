@@ -50,8 +50,7 @@ func (c *CommandsV1Controller) Exec(ctx *app.ExecCommandsV1Context) error {
 	// Put your logic here
 
 	// CommandsV1Controller_Exec: end_implement
-	res := &app.ArduinoAgentExec{}
-	return ctx.OK(res)
+	return ctx.Accepted()
 }
 
 // List runs the list action.

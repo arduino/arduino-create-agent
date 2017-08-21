@@ -60,6 +60,6 @@ func (c *UploadV1Controller) Show(ctx *app.ShowUploadV1Context) error {
 	// Put your logic here
 
 	// UploadV1Controller_Show: end_implement
-	res := &app.ArduinoAgentCommand{}
+	res := &app.ArduinoAgentExec{}
 	return ctx.OK(res)
 }
