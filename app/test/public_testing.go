@@ -3,9 +3,6 @@
 // API "arduino-create-agent": public TestHelpers
 //
 // Command:
-// $ goagen
-// --design=github.com/arduino/arduino-create-agent/design
-// --out=$(GOPATH)/src/github.com/arduino/arduino-create-agent
-// --version=v1.2.0-dirty
+// $ main
 
 package test

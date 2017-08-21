@@ -26,45 +26,40 @@
  *
  * Copyright 2017 BCMI LABS SA (http://www.arduino.cc/)
  */
-package design
+package main
 
 import (
-	. "github.com/goadesign/goa/design"
-	. "github.com/goadesign/goa/design/apidsl"
+	"github.com/arduino/arduino-create-agent/app"
+	"github.com/goadesign/goa"
 )
 
-var _ = Resource("upload_v1", func() {
-	Action("show", func() {
-		Description("Retrieve the status of a running command")
-		Routing(GET("/:id"))
-		Response(OK, ExecResultV1)
-	})
-	Action("serial", func() {
-		Description("Performs an upload of a sketch over the serial port")
-		Routing(POST(""))
-		Payload(ArrayOf(UploadSerialV1))
-		Response(Accepted, func() {
-			Headers(func() {
-				Header("Location", String, "Contains the location of the show resource")
-				Required("Location")
-			})
-		})
-	})
-})
+// UploadV1Controller implements the upload_v1 resource.
+type UploadV1Controller struct {
+	*goa.Controller
+}
 
-var UploadSerialV1 = Type("upload.serial", func() {
-	Description("The necessary info to upload a sketch over a serial port")
-	Attribute("port", String, "The serial port", func() {
-		Example("/dev/ttyACM0")
-	})
-	Attribute("command", String, "The id of the command to use (See commands#list)", func() {
-		Example("upload:arduino:avr:uno")
-	})
-	Attribute("bin", String, "Base64-encoded binary file", func() {
-		Example("QmFzZTY0IGlzIGEgZ2VuZ...")
-	})
-	Attribute("filename", String, "The name of the binary file", func() {
-		Example("QmFzZTY0IGlzIGEgZ2VuZ...")
-	})
-	Attribute("params", ArrayOf(CommandParamV1), "Params")
-})
+// NewUploadV1Controller creates a upload_v1 controller.
+func NewUploadV1Controller(service *goa.Service) *UploadV1Controller {
+	return &UploadV1Controller{Controller: service.NewController("UploadV1Controller")}
+}
+
+// Serial runs the serial action.
+func (c *UploadV1Controller) Serial(ctx *app.SerialUploadV1Context) error {
+	// UploadV1Controller_Serial: start_implement
+
+	// Put your logic here
+
+	// UploadV1Controller_Serial: end_implement
+	return nil
+}
+
+// Show runs the show action.
+func (c *UploadV1Controller) Show(ctx *app.ShowUploadV1Context) error {
+	// UploadV1Controller_Show: start_implement
+
+	// Put your logic here
+
+	// UploadV1Controller_Show: end_implement
+	res := &app.ArduinoAgentCommand{}
+	return ctx.OK(res)
+}

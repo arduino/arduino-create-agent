@@ -26,45 +26,22 @@
  *
  * Copyright 2017 BCMI LABS SA (http://www.arduino.cc/)
  */
-package design
+package upload
 
-import (
-	. "github.com/goadesign/goa/design"
-	. "github.com/goadesign/goa/design/apidsl"
-)
+import "github.com/arduino/arduino-create-agent/exec"
 
-var _ = Resource("upload_v1", func() {
-	Action("show", func() {
-		Description("Retrieve the status of a running command")
-		Routing(GET("/:id"))
-		Response(OK, ExecResultV1)
-	})
-	Action("serial", func() {
-		Description("Performs an upload of a sketch over the serial port")
-		Routing(POST(""))
-		Payload(ArrayOf(UploadSerialV1))
-		Response(Accepted, func() {
-			Headers(func() {
-				Header("Location", String, "Contains the location of the show resource")
-				Required("Location")
-			})
-		})
-	})
-})
+type Command struct {
+	exec.Command
+	// Tool that needs to be installed. Eg avrdude:
+	Tool string
+	// Whether the board needs to be resetted
+	Use1200bpsTouch bool
+	// Whether we need to wait for the board to reconnect
+	WaitForUploadPort bool
+}
 
-var UploadSerialV1 = Type("upload.serial", func() {
-	Description("The necessary info to upload a sketch over a serial port")
-	Attribute("port", String, "The serial port", func() {
-		Example("/dev/ttyACM0")
-	})
-	Attribute("command", String, "The id of the command to use (See commands#list)", func() {
-		Example("upload:arduino:avr:uno")
-	})
-	Attribute("bin", String, "Base64-encoded binary file", func() {
-		Example("QmFzZTY0IGlzIGEgZ2VuZ...")
-	})
-	Attribute("filename", String, "The name of the binary file", func() {
-		Example("QmFzZTY0IGlzIGEgZ2VuZ...")
-	})
-	Attribute("params", ArrayOf(CommandParamV1), "Params")
-})
+func Serial() {
+	// Reset
+
+	// Run Command
+}

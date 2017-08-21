@@ -3,10 +3,7 @@
 // API "arduino-create-agent": Application Media Types
 //
 // Command:
-// $ goagen
-// --design=github.com/arduino/arduino-create-agent/design
-// --out=$(GOPATH)/src/github.com/arduino/arduino-create-agent
-// --version=v1.2.0-dirty
+// $ main
 
 package app
 
@@ -179,6 +176,8 @@ func (mt ArduinoAgentDiscoverSerialCollection) Validate() (err error) {
 //
 // Identifier: application/vnd.arduino.agent.exec+json; view=default
 type ArduinoAgentExec struct {
+	// The status of the command
+	Status string `form:"status" json:"status" xml:"status"`
 	// The standard error returned by the command
 	Stderr string `form:"stderr" json:"stderr" xml:"stderr"`
 	// The standard output returned by the command
@@ -187,11 +186,17 @@ type ArduinoAgentExec struct {
 
 // Validate validates the ArduinoAgentExec media type instance.
 func (mt *ArduinoAgentExec) Validate() (err error) {
+	if mt.Status == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "status"))
+	}
 	if mt.Stdout == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "stdout"))
 	}
 	if mt.Stderr == "" {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "stderr"))
+	}
+	if !(mt.Status == "pending" || mt.Status == "done") {
+		err = goa.MergeErrors(err, goa.InvalidEnumValueError(`response.status`, mt.Status, []interface{}{"pending", "done"}))
 	}
 	return
 }

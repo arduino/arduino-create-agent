@@ -3,10 +3,7 @@
 // API "arduino-create-agent": Application User Types
 //
 // Command:
-// $ goagen
-// --design=github.com/arduino/arduino-create-agent/design
-// --out=$(GOPATH)/src/github.com/arduino/arduino-create-agent
-// --version=v1.2.0-dirty
+// $ main
 
 package app
 
@@ -36,4 +33,56 @@ type CommandParam struct {
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// The value of the option
 	Value *string `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+}
+
+// The necessary info to upload a sketch over a serial port
+type uploadSerial struct {
+	// Base64-encoded binary file
+	Bin *string `form:"bin,omitempty" json:"bin,omitempty" xml:"bin,omitempty"`
+	// The id of the command to use (See commands#list)
+	Command *string `form:"command,omitempty" json:"command,omitempty" xml:"command,omitempty"`
+	// The name of the binary file
+	Filename *string `form:"filename,omitempty" json:"filename,omitempty" xml:"filename,omitempty"`
+	// Params
+	Params []*commandParam `form:"params,omitempty" json:"params,omitempty" xml:"params,omitempty"`
+	// The serial port
+	Port *string `form:"port,omitempty" json:"port,omitempty" xml:"port,omitempty"`
+}
+
+// Publicize creates UploadSerial from uploadSerial
+func (ut *uploadSerial) Publicize() *UploadSerial {
+	var pub UploadSerial
+	if ut.Bin != nil {
+		pub.Bin = ut.Bin
+	}
+	if ut.Command != nil {
+		pub.Command = ut.Command
+	}
+	if ut.Filename != nil {
+		pub.Filename = ut.Filename
+	}
+	if ut.Params != nil {
+		pub.Params = make([]*CommandParam, len(ut.Params))
+		for i2, elem2 := range ut.Params {
+			pub.Params[i2] = elem2.Publicize()
+		}
+	}
+	if ut.Port != nil {
+		pub.Port = ut.Port
+	}
+	return &pub
+}
+
+// The necessary info to upload a sketch over a serial port
+type UploadSerial struct {
+	// Base64-encoded binary file
+	Bin *string `form:"bin,omitempty" json:"bin,omitempty" xml:"bin,omitempty"`
+	// The id of the command to use (See commands#list)
+	Command *string `form:"command,omitempty" json:"command,omitempty" xml:"command,omitempty"`
+	// The name of the binary file
+	Filename *string `form:"filename,omitempty" json:"filename,omitempty" xml:"filename,omitempty"`
+	// Params
+	Params []*CommandParam `form:"params,omitempty" json:"params,omitempty" xml:"params,omitempty"`
+	// The serial port
+	Port *string `form:"port,omitempty" json:"port,omitempty" xml:"port,omitempty"`
 }

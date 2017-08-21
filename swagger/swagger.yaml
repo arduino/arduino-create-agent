@@ -2,6 +2,70 @@ basePath: /
 consumes:
 - application/json
 definitions:
+  ArduinoAgentCommand:
+    description: A command that the arduino-create-agent can perform on the machine
+      (default view)
+    example:
+      id: upload:arduino:avr:uno
+      params:
+      - upload.verbose
+      - serial.port
+      - build.path
+      - build.project_name
+      pattern: '"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"
+        {upload.verbose}  -patmega328p -carduino -P{serial.port} -b115200 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"'
+    properties:
+      id:
+        description: A unique identifier for the command
+        example: upload:arduino:avr:uno
+        type: string
+      params:
+        description: The command that will be executed
+        example:
+        - upload.verbose
+        - serial.port
+        - build.path
+        - build.project_name
+        items:
+          example: Mollitia aut iusto.
+          type: string
+        type: array
+      pattern:
+        description: The command that will be executed
+        example: '"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"
+          {upload.verbose}  -patmega328p -carduino -P{serial.port} -b115200 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"'
+        type: string
+    required:
+    - id
+    - pattern
+    - params
+    title: 'Mediatype identifier: application/vnd.arduino.agent.command+json; view=default'
+    type: object
+  ArduinoAgentCommandCollection:
+    description: ArduinoAgentCommandCollection is the media type for an array of ArduinoAgentCommand
+      (default view)
+    example:
+    - id: upload:arduino:avr:uno
+      params:
+      - upload.verbose
+      - serial.port
+      - build.path
+      - build.project_name
+      pattern: '"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"
+        {upload.verbose}  -patmega328p -carduino -P{serial.port} -b115200 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"'
+    - id: upload:arduino:avr:uno
+      params:
+      - upload.verbose
+      - serial.port
+      - build.path
+      - build.project_name
+      pattern: '"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"
+        {upload.verbose}  -patmega328p -carduino -P{serial.port} -b115200 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"'
+    items:
+      $ref: '#/definitions/ArduinoAgentCommand'
+    title: 'Mediatype identifier: application/vnd.arduino.agent.command+json; type=collection;
+      view=default'
+    type: array
   ArduinoAgentDiscover:
     description: ArduinoAgentDiscover media type (default view)
     example:
@@ -21,15 +85,11 @@ definitions:
       serial:
       - pid: "0x8036"
         port: /dev/ttyACM0
-        serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+        serial: Consequatur et.
         vid: "0x2341"
       - pid: "0x8036"
         port: /dev/ttyACM0
-        serial: Nesciunt consequatur et dolore velit officiis dignissimos.
-        vid: "0x2341"
-      - pid: "0x8036"
-        port: /dev/ttyACM0
-        serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+        serial: Consequatur et.
         vid: "0x2341"
     properties:
       network:
@@ -86,6 +146,10 @@ definitions:
       info: board=Arduino Y\195\186n Shield distro_version=0.1
       name: MyShield
       port: 80
+    - address: 192.168.1.107
+      info: board=Arduino Y\195\186n Shield distro_version=0.1
+      name: MyShield
+      port: 80
     items:
       $ref: '#/definitions/ArduinoAgentDiscoverNetwork'
     title: 'Mediatype identifier: application/vnd.arduino.agent.discover.network+json;
@@ -96,7 +160,7 @@ definitions:
     example:
       pid: "0x8036"
       port: /dev/ttyACM0
-      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+      serial: Consequatur et.
       vid: "0x2341"
     properties:
       pid:
@@ -109,7 +173,7 @@ definitions:
         type: string
       serial:
         description: The Serial Number
-        example: Nesciunt consequatur et dolore velit officiis dignissimos.
+        example: Consequatur et.
         type: string
       vid:
         description: Vendor ID
@@ -128,31 +192,226 @@ definitions:
     example:
     - pid: "0x8036"
       port: /dev/ttyACM0
-      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+      serial: Consequatur et.
       vid: "0x2341"
     - pid: "0x8036"
       port: /dev/ttyACM0
-      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
-      vid: "0x2341"
-    - pid: "0x8036"
-      port: /dev/ttyACM0
-      serial: Nesciunt consequatur et dolore velit officiis dignissimos.
+      serial: Consequatur et.
       vid: "0x2341"
     items:
       $ref: '#/definitions/ArduinoAgentDiscoverSerial'
     title: 'Mediatype identifier: application/vnd.arduino.agent.discover.serial+json;
       type=collection; view=default'
     type: array
+  ArduinoAgentExec:
+    description: The result of the command executed on the machine (default view)
+    example:
+      status: done
+      stderr: Incidunt qui sint voluptatem impedit fuga.
+      stdout: Molestiae nisi enim.
+    properties:
+      status:
+        description: The status of the command
+        enum:
+        - pending
+        - done
+        example: done
+        type: string
+      stderr:
+        description: The standard error returned by the command
+        example: Incidunt qui sint voluptatem impedit fuga.
+        type: string
+      stdout:
+        description: The standard output returned by the command
+        example: Molestiae nisi enim.
+        type: string
+    required:
+    - status
+    - stdout
+    - stderr
+    title: 'Mediatype identifier: application/vnd.arduino.agent.exec+json; view=default'
+    type: object
+  ExecCommandsV1Payload:
+    example:
+    - name: serial.port
+      value: /dev/ttyACM0
+    - name: serial.port
+      value: /dev/ttyACM0
+    - name: serial.port
+      value: /dev/ttyACM0
+    items:
+      $ref: '#/definitions/command.param'
+    title: ExecCommandsV1Payload
+    type: array
+  SerialUploadV1Payload:
+    example:
+    - bin: QmFzZTY0IGlzIGEgZ2VuZ...
+      command: upload:arduino:avr:uno
+      filename: QmFzZTY0IGlzIGEgZ2VuZ...
+      params:
+      - name: serial.port
+        value: /dev/ttyACM0
+      port: /dev/ttyACM0
+    - bin: QmFzZTY0IGlzIGEgZ2VuZ...
+      command: upload:arduino:avr:uno
+      filename: QmFzZTY0IGlzIGEgZ2VuZ...
+      params:
+      - name: serial.port
+        value: /dev/ttyACM0
+      port: /dev/ttyACM0
+    items:
+      $ref: '#/definitions/upload.serial'
+    title: SerialUploadV1Payload
+    type: array
+  command.param:
+    description: Option for the command to execute
+    example:
+      name: serial.port
+      value: /dev/ttyACM0
+    properties:
+      name:
+        description: The name of the param
+        example: serial.port
+        type: string
+      value:
+        description: The value of the option
+        example: /dev/ttyACM0
+        type: string
+    title: command.param
+    type: object
+  upload.serial:
+    description: The necessary info to upload a sketch over a serial port
+    example:
+      bin: QmFzZTY0IGlzIGEgZ2VuZ...
+      command: upload:arduino:avr:uno
+      filename: QmFzZTY0IGlzIGEgZ2VuZ...
+      params:
+      - name: serial.port
+        value: /dev/ttyACM0
+      port: /dev/ttyACM0
+    properties:
+      bin:
+        description: Base64-encoded binary file
+        example: QmFzZTY0IGlzIGEgZ2VuZ...
+        type: string
+      command:
+        description: The id of the command to use (See commands#list)
+        example: upload:arduino:avr:uno
+        type: string
+      filename:
+        description: The name of the binary file
+        example: QmFzZTY0IGlzIGEgZ2VuZ...
+        type: string
+      params:
+        description: Params
+        example:
+        - name: serial.port
+          value: /dev/ttyACM0
+        items:
+          $ref: '#/definitions/command.param'
+        type: array
+      port:
+        description: The serial port
+        example: /dev/ttyACM0
+        type: string
+    title: upload.serial
+    type: object
 host: localhost:9000
 info:
   description: A bridge from the user's computer and the Create platform
   title: Arduino Create Agent
   version: ""
 paths:
+  /:
+    get:
+      description: List the commands that the arduino-create-agent can perform on
+        the machine
+      operationId: commands_v1#list
+      produces:
+      - application/vnd.arduino.agent.command+json; type=collection
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArduinoAgentCommandCollection'
+      schemes:
+      - http
+      summary: list commands_v1
+      tags:
+      - commands_v1
+    post:
+      description: Performs an upload of a sketch over the serial port
+      operationId: upload_v1#serial
+      parameters:
+      - in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/SerialUploadV1Payload'
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            Location:
+              description: Contains the location of the show resource
+              type: string
+      schemes:
+      - http
+      summary: serial upload_v1
+      tags:
+      - upload_v1
+  /{id}:
+    get:
+      description: Retrieve the status of a running command
+      operationId: upload_v1#show
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/vnd.arduino.agent.exec+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArduinoAgentExec'
+      schemes:
+      - http
+      summary: show upload_v1
+      tags:
+      - upload_v1
+    post:
+      description: Execute a command. Note that if you want to upload a sketch you'll
+        probably be better off with the upload api. This one is very low-level
+      operationId: commands_v1#exec
+      parameters:
+      - description: The id of the command
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/ExecCommandsV1Payload'
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            Location:
+              description: Contains the location of the show resource
+              type: string
+      schemes:
+      - http
+      summary: exec commands_v1
+      tags:
+      - commands_v1
   /v1/connect:
     get:
       description: Opens a websocket connection to the device, allowing to read/write
-      operationId: websocket_v1#connect
+      operationId: connect_v1#websocket
       parameters:
       - default: 9600
         description: The speed of the connection. Defaults to 9600
@@ -172,9 +431,9 @@ paths:
           description: Bad Request
       schemes:
       - ws
-      summary: connect websocket_v1
+      summary: websocket connect_v1
       tags:
-      - websocket_v1
+      - connect_v1
   /v1/discover:
     get:
       description: Returns a list of devices connected to the PC

@@ -3,10 +3,7 @@
 // API "arduino-create-agent": Application Contexts
 //
 // Command:
-// $ goagen
-// --design=github.com/arduino/arduino-create-agent/design
-// --out=$(GOPATH)/src/github.com/arduino/arduino-create-agent
-// --version=v1.2.0-dirty
+// $ main
 
 package app
 
@@ -46,10 +43,10 @@ func NewExecCommandsV1Context(ctx context.Context, r *http.Request, service *goa
 // ExecCommandsV1Payload is the commands_v1 exec action payload.
 type ExecCommandsV1Payload []*CommandParam
 
-// OK sends a HTTP response with status code 200.
-func (ctx *ExecCommandsV1Context) OK(r *ArduinoAgentExec) error {
-	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.exec+json")
-	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+// Accepted sends a HTTP response with status code 202.
+func (ctx *ExecCommandsV1Context) Accepted() error {
+	ctx.ResponseData.WriteHeader(202)
+	return nil
 }
 
 // ListCommandsV1Context provides the commands_v1 list action context.
@@ -77,6 +74,37 @@ func (ctx *ListCommandsV1Context) OK(r ArduinoAgentCommandCollection) error {
 	if r == nil {
 		r = ArduinoAgentCommandCollection{}
 	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// ShowCommandsV1Context provides the commands_v1 show action context.
+type ShowCommandsV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID string
+}
+
+// NewShowCommandsV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the commands_v1 controller show action.
+func NewShowCommandsV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*ShowCommandsV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ShowCommandsV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ShowCommandsV1Context) OK(r *ArduinoAgentExec) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.exec+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
@@ -147,5 +175,65 @@ func NewListDiscoverV1Context(ctx context.Context, r *http.Request, service *goa
 // OK sends a HTTP response with status code 200.
 func (ctx *ListDiscoverV1Context) OK(r *ArduinoAgentDiscover) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.discover+json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// SerialUploadV1Context provides the upload_v1 serial action context.
+type SerialUploadV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	Payload SerialUploadV1Payload
+}
+
+// NewSerialUploadV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the upload_v1 controller serial action.
+func NewSerialUploadV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*SerialUploadV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := SerialUploadV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// SerialUploadV1Payload is the upload_v1 serial action payload.
+type SerialUploadV1Payload []*UploadSerial
+
+// Accepted sends a HTTP response with status code 202.
+func (ctx *SerialUploadV1Context) Accepted() error {
+	ctx.ResponseData.WriteHeader(202)
+	return nil
+}
+
+// ShowUploadV1Context provides the upload_v1 show action context.
+type ShowUploadV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	ID string
+}
+
+// NewShowUploadV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the upload_v1 controller show action.
+func NewShowUploadV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*ShowUploadV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ShowUploadV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	paramID := req.Params["id"]
+	if len(paramID) > 0 {
+		rawID := paramID[0]
+		rctx.ID = rawID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ShowUploadV1Context) OK(r *ArduinoAgentExec) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.exec+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }

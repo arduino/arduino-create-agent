@@ -39,6 +39,11 @@ var _ = Resource("commands_v1", func() {
 		Routing(GET(""))
 		Response(OK, CollectionOf(CommandV1))
 	})
+	Action("show", func() {
+		Description("Retrieve the status of a running command")
+		Routing(GET("/:id"))
+		Response(OK, ExecResultV1)
+	})
 	Action("exec", func() {
 		Description("Execute a command. Note that if you want to upload a sketch you'll probably be better off with the upload api. This one is very low-level")
 		Routing(POST("/:id"))
@@ -46,7 +51,12 @@ var _ = Resource("commands_v1", func() {
 			Param("id", String, "The id of the command")
 		})
 		Payload(ArrayOf(CommandParamV1))
-		Response(OK, ExecResultV1)
+		Response(Accepted, func() {
+			Headers(func() {
+				Header("Location", String, "Contains the location of the show resource")
+				Required("Location")
+			})
+		})
 	})
 })
 
@@ -86,13 +96,17 @@ var CommandParamV1 = Type("command.param", func() {
 var ExecResultV1 = MediaType("application/vnd.arduino.agent.exec+json", func() {
 	Description("The result of the command executed on the machine")
 	Attributes(func() {
+		Attribute("status", String, "The status of the command", func() {
+			Enum("pending", "done")
+		})
 		Attribute("stdout", String, "The standard output returned by the command")
 		Attribute("stderr", String, "The standard error returned by the command")
 	})
 
-	Required("stdout", "stderr")
+	Required("status", "stdout", "stderr")
 
 	View("default", func() {
+		Attribute("status")
 		Attribute("stdout")
 		Attribute("stderr")
 	})

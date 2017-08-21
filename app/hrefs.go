@@ -3,9 +3,23 @@
 // API "arduino-create-agent": Application Resource Href Factories
 //
 // Command:
-// $ goagen
-// --design=github.com/arduino/arduino-create-agent/design
-// --out=$(GOPATH)/src/github.com/arduino/arduino-create-agent
-// --version=v1.2.0-dirty
+// $ main
 
 package app
+
+import (
+	"fmt"
+	"strings"
+)
+
+// CommandsV1Href returns the resource href.
+func CommandsV1Href(id interface{}) string {
+	paramid := strings.TrimLeftFunc(fmt.Sprintf("%v", id), func(r rune) bool { return r == '/' })
+	return fmt.Sprintf("/%v", paramid)
+}
+
+// UploadV1Href returns the resource href.
+func UploadV1Href(id interface{}) string {
+	paramid := strings.TrimLeftFunc(fmt.Sprintf("%v", id), func(r rune) bool { return r == '/' })
+	return fmt.Sprintf("/%v", paramid)
+}

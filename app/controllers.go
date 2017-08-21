@@ -3,10 +3,7 @@
 // API "arduino-create-agent": Application Controllers
 //
 // Command:
-// $ goagen
-// --design=github.com/arduino/arduino-create-agent/design
-// --out=$(GOPATH)/src/github.com/arduino/arduino-create-agent
-// --version=v1.2.0-dirty
+// $ main
 
 package app
 
@@ -33,6 +30,7 @@ type CommandsV1Controller interface {
 	goa.Muxer
 	Exec(*ExecCommandsV1Context) error
 	List(*ListCommandsV1Context) error
+	Show(*ShowCommandsV1Context) error
 }
 
 // MountCommandsV1Controller "mounts" a CommandsV1 resource controller on the given service.
@@ -79,6 +77,22 @@ func MountCommandsV1Controller(service *goa.Service, ctrl CommandsV1Controller) 
 	h = handleCommandsV1Origin(h)
 	service.Mux.Handle("GET", "/", ctrl.MuxHandler("list", h, nil))
 	service.LogInfo("mount", "ctrl", "CommandsV1", "action", "List", "route", "GET /")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewShowCommandsV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Show(rctx)
+	}
+	h = handleCommandsV1Origin(h)
+	service.Mux.Handle("GET", "/:id", ctrl.MuxHandler("show", h, nil))
+	service.LogInfo("mount", "ctrl", "CommandsV1", "action", "Show", "route", "GET /:id")
 }
 
 // handleCommandsV1Origin applies the CORS response headers corresponding to the origin.
@@ -277,4 +291,92 @@ func handlePublicOrigin(h goa.Handler) goa.Handler {
 
 		return h(ctx, rw, req)
 	}
+}
+
+// UploadV1Controller is the controller interface for the UploadV1 actions.
+type UploadV1Controller interface {
+	goa.Muxer
+	Serial(*SerialUploadV1Context) error
+	Show(*ShowUploadV1Context) error
+}
+
+// MountUploadV1Controller "mounts" a UploadV1 resource controller on the given service.
+func MountUploadV1Controller(service *goa.Service, ctrl UploadV1Controller) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/", ctrl.MuxHandler("preflight", handleUploadV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/:id", ctrl.MuxHandler("preflight", handleUploadV1Origin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewSerialUploadV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(SerialUploadV1Payload)
+		} else {
+			return goa.MissingPayloadError()
+		}
+		return ctrl.Serial(rctx)
+	}
+	h = handleUploadV1Origin(h)
+	service.Mux.Handle("POST", "/", ctrl.MuxHandler("serial", h, unmarshalSerialUploadV1Payload))
+	service.LogInfo("mount", "ctrl", "UploadV1", "action", "Serial", "route", "POST /")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewShowUploadV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Show(rctx)
+	}
+	h = handleUploadV1Origin(h)
+	service.Mux.Handle("GET", "/:id", ctrl.MuxHandler("show", h, nil))
+	service.LogInfo("mount", "ctrl", "UploadV1", "action", "Show", "route", "GET /:id")
+}
+
+// handleUploadV1Origin applies the CORS response headers corresponding to the origin.
+func handleUploadV1Origin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
+				rw.Header().Set("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
+// unmarshalSerialUploadV1Payload unmarshals the request body into the context request data Payload field.
+func unmarshalSerialUploadV1Payload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	var payload SerialUploadV1Payload
+	if err := service.DecodeRequest(req, &payload); err != nil {
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload
+	return nil
 }
