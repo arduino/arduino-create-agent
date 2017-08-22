@@ -62,6 +62,60 @@
 			</div>
 		</div>
 	</div>
+	<hr>
+	<!-- Tools -->
+	<div class="container">
+		<div class="row">
+			<div class="col">
+				<p><button class="btn btn-primary" onclick="tools()">Installed Tools</button></p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<pre id="tools-req"></pre>
+				</div>
+			</div>
+			<div class="col">
+				<pre id="tools-code"></pre>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<label for="install-packager">Packager</label>
+					<input type="text" class="form-control" id="install-packager" required value="arduino">
+				</div>
+			</div>
+			<div class="col">
+				<div class="form-group">
+					<label for="install-name">Name</label>
+					<input type="text" class="form-control" id="install-name" required value="avrdude">
+				</div>
+			</div>
+			<div class="col">
+				<div class="form-group">
+					<label for="install-version">Version</label>
+					<input type="text" class="form-control" id="install-version"value="latest">
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<p><button class="btn btn-primary" onclick="install()">Install</button></p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<pre id="install-req"></pre>
+				</div>
+			</div>
+			<div class="col">
+				<pre id="install-code"></pre>
+			</div>
+		</div>
+	</div>
 
 
 	<script>
@@ -127,6 +181,50 @@ function connect() {
 function send() {
 	var msg = document.getElementById('connect-msg').value;
 	ws.send(msg)
+}
+
+function tools() {
+	var req = new Request('/v1/tools', {
+		method: 'GET'
+	});
+
+	var reqEl = document.getElementById('tools-req');
+	reqEl.textContent = req.method + ' ' + req.url + '\n';
+	reqEl.textContent = reqEl.textContent + '------------------------------------\n'
+
+	fetch(req).then(function(response) {
+		reqEl.textContent = reqEl.textContent + 'STATUS ' + response.status + '\n';
+		reqEl.textContent = reqEl.textContent + '------------------------------------\n\n'
+		return response.json();
+	}).then(function (response) {
+		var codeEl = document.getElementById('tools-code');
+
+		codeEl.textContent = JSON.stringify(response, null, 2) + '\n';
+	});
+}
+
+function install() {
+	var packager = document.getElementById('install-packager').value;
+	var name = document.getElementById('install-name').value;
+	var version = document.getElementById('install-version').value;
+
+	var req = new Request('/v1/tools/' + packager + '/' + name + '/' + version, {
+		method: 'POST'
+	});
+
+	var reqEl = document.getElementById('install-req');
+	reqEl.textContent = req.method + ' ' + req.url + '\n';
+	reqEl.textContent = reqEl.textContent + '------------------------------------\n'
+
+	fetch(req).then(function(response) {
+		reqEl.textContent = reqEl.textContent + 'STATUS ' + response.status + '\n';
+		reqEl.textContent = reqEl.textContent + '------------------------------------\n\n'
+		return response.json();
+	}).then(function (response) {
+		var codeEl = document.getElementById('install-code');
+
+		codeEl.textContent = JSON.stringify(response, null, 2) + '\n';
+	});
 }
 
 	</script>

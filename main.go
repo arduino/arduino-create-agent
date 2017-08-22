@@ -80,6 +80,10 @@ func main() {
 	c := NewConnectV1Controller(service)
 	app.MountConnectV1Controller(service, c)
 
+	// Mount "tools" controller
+	t := NewToolsV1Controller(service)
+	app.MountToolsV1Controller(service, t)
+
 	// Mount "public" controller
 	public := NewPublicController(service)
 	app.MountPublicController(service, public)

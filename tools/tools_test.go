@@ -61,3 +61,8 @@ func TestUsage(t *testing.T) {
 		})
 	}
 }
+
+func TestInstalled(t *testing.T) {
+	list, err := tools.Installed(nil)
+	fmt.Println(list, err)
+}

@@ -200,3 +200,51 @@ func (mt *ArduinoAgentExec) Validate() (err error) {
 	}
 	return
 }
+
+// ArduinoAgentToolsTool media type (default view)
+//
+// Identifier: application/vnd.arduino.agent.tools.tool+json; view=default
+type ArduinoAgentToolsTool struct {
+	// Name of the installed tool
+	Name string `form:"name" json:"name" xml:"name"`
+	// Packager of the installed tool
+	Packager string `form:"packager" json:"packager" xml:"packager"`
+	// Path of the installed tool
+	Path string `form:"path" json:"path" xml:"path"`
+	// Version of the installed tool
+	Version string `form:"version" json:"version" xml:"version"`
+}
+
+// Validate validates the ArduinoAgentToolsTool media type instance.
+func (mt *ArduinoAgentToolsTool) Validate() (err error) {
+	if mt.Path == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "path"))
+	}
+	if mt.Name == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "name"))
+	}
+	if mt.Version == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "version"))
+	}
+	if mt.Packager == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "packager"))
+	}
+	return
+}
+
+// ArduinoAgentToolsToolCollection is the media type for an array of ArduinoAgentToolsTool (default view)
+//
+// Identifier: application/vnd.arduino.agent.tools.tool+json; type=collection; view=default
+type ArduinoAgentToolsToolCollection []*ArduinoAgentToolsTool
+
+// Validate validates the ArduinoAgentToolsToolCollection media type instance.
+func (mt ArduinoAgentToolsToolCollection) Validate() (err error) {
+	for _, e := range mt {
+		if e != nil {
+			if err2 := e.Validate(); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}

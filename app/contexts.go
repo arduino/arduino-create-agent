@@ -178,6 +178,77 @@ func (ctx *ListDiscoverV1Context) OK(r *ArduinoAgentDiscover) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
+// DownloadToolsV1Context provides the tools_v1 download action context.
+type DownloadToolsV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	Name     string
+	Packager string
+	Version  string
+}
+
+// NewDownloadToolsV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the tools_v1 controller download action.
+func NewDownloadToolsV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*DownloadToolsV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := DownloadToolsV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	paramName := req.Params["name"]
+	if len(paramName) > 0 {
+		rawName := paramName[0]
+		rctx.Name = rawName
+	}
+	paramPackager := req.Params["packager"]
+	if len(paramPackager) > 0 {
+		rawPackager := paramPackager[0]
+		rctx.Packager = rawPackager
+	}
+	paramVersion := req.Params["version"]
+	if len(paramVersion) > 0 {
+		rawVersion := paramVersion[0]
+		rctx.Version = rawVersion
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *DownloadToolsV1Context) OK(r *ArduinoAgentToolsTool) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.tools.tool+json")
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// ListToolsV1Context provides the tools_v1 list action context.
+type ListToolsV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+}
+
+// NewListToolsV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the tools_v1 controller list action.
+func NewListToolsV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*ListToolsV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := ListToolsV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *ListToolsV1Context) OK(r ArduinoAgentToolsToolCollection) error {
+	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.tools.tool+json; type=collection")
+	if r == nil {
+		r = ArduinoAgentToolsToolCollection{}
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
 // SerialUploadV1Context provides the upload_v1 serial action context.
 type SerialUploadV1Context struct {
 	context.Context

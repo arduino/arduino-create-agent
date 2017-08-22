@@ -27,7 +27,7 @@ definitions:
         - build.path
         - build.project_name
         items:
-          example: Mollitia aut iusto.
+          example: Aut iusto quis quasi a itaque.
           type: string
         type: array
       pattern:
@@ -70,10 +70,6 @@ definitions:
     description: ArduinoAgentDiscover media type (default view)
     example:
       network:
-      - address: 192.168.1.107
-        info: board=Arduino Y\195\186n Shield distro_version=0.1
-        name: MyShield
-        port: 80
       - address: 192.168.1.107
         info: board=Arduino Y\195\186n Shield distro_version=0.1
         name: MyShield
@@ -231,10 +227,60 @@ definitions:
     - stderr
     title: 'Mediatype identifier: application/vnd.arduino.agent.exec+json; view=default'
     type: object
+  ArduinoAgentToolsTool:
+    description: ArduinoAgentToolsTool media type (default view)
+    example:
+      name: avrdude
+      packager: packager
+      path: ~/.arduino/create/avrdude/latest
+      version: latest
+    properties:
+      name:
+        description: Name of the installed tool
+        example: avrdude
+        type: string
+      packager:
+        description: Packager of the installed tool
+        example: packager
+        type: string
+      path:
+        description: Path of the installed tool
+        example: ~/.arduino/create/avrdude/latest
+        type: string
+      version:
+        description: Version of the installed tool
+        example: latest
+        type: string
+    required:
+    - path
+    - name
+    - version
+    - packager
+    title: 'Mediatype identifier: application/vnd.arduino.agent.tools.tool+json; view=default'
+    type: object
+  ArduinoAgentToolsToolCollection:
+    description: ArduinoAgentToolsToolCollection is the media type for an array of
+      ArduinoAgentToolsTool (default view)
+    example:
+    - name: avrdude
+      packager: packager
+      path: ~/.arduino/create/avrdude/latest
+      version: latest
+    - name: avrdude
+      packager: packager
+      path: ~/.arduino/create/avrdude/latest
+      version: latest
+    - name: avrdude
+      packager: packager
+      path: ~/.arduino/create/avrdude/latest
+      version: latest
+    items:
+      $ref: '#/definitions/ArduinoAgentToolsTool'
+    title: 'Mediatype identifier: application/vnd.arduino.agent.tools.tool+json; type=collection;
+      view=default'
+    type: array
   ExecCommandsV1Payload:
     example:
-    - name: serial.port
-      value: /dev/ttyACM0
     - name: serial.port
       value: /dev/ttyACM0
     - name: serial.port
@@ -245,13 +291,6 @@ definitions:
     type: array
   SerialUploadV1Payload:
     example:
-    - bin: QmFzZTY0IGlzIGEgZ2VuZ...
-      command: upload:arduino:avr:uno
-      filename: QmFzZTY0IGlzIGEgZ2VuZ...
-      params:
-      - name: serial.port
-        value: /dev/ttyACM0
-      port: /dev/ttyACM0
     - bin: QmFzZTY0IGlzIGEgZ2VuZ...
       command: upload:arduino:avr:uno
       filename: QmFzZTY0IGlzIGEgZ2VuZ...
@@ -450,6 +489,54 @@ paths:
       summary: list discover_v1
       tags:
       - discover_v1
+  /v1/tools:
+    get:
+      description: Show the installed tools
+      operationId: tools_v1#list
+      produces:
+      - application/vnd.arduino.agent.tools.tool+json; type=collection
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArduinoAgentToolsToolCollection'
+      schemes:
+      - http
+      summary: list tools_v1
+      tags:
+      - tools_v1
+  /v1/tools/{packager}/{name}/{version}:
+    post:
+      description: Downloads a tool in the system
+      operationId: tools_v1#download
+      parameters:
+      - description: The name of the tool
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: The packager of the tool
+        in: path
+        name: packager
+        required: true
+        type: string
+      - description: The version of the tool
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/vnd.arduino.agent.tools.tool+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArduinoAgentToolsTool'
+      schemes:
+      - http
+      summary: download tools_v1
+      tags:
+      - tools_v1
 produces:
 - application/json
 responses:

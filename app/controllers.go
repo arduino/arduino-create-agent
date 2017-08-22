@@ -293,6 +293,78 @@ func handlePublicOrigin(h goa.Handler) goa.Handler {
 	}
 }
 
+// ToolsV1Controller is the controller interface for the ToolsV1 actions.
+type ToolsV1Controller interface {
+	goa.Muxer
+	Download(*DownloadToolsV1Context) error
+	List(*ListToolsV1Context) error
+}
+
+// MountToolsV1Controller "mounts" a ToolsV1 resource controller on the given service.
+func MountToolsV1Controller(service *goa.Service, ctrl ToolsV1Controller) {
+	initService(service)
+	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/v1/tools/:packager/:name/:version", ctrl.MuxHandler("preflight", handleToolsV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/v1/tools", ctrl.MuxHandler("preflight", handleToolsV1Origin(cors.HandlePreflight()), nil))
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewDownloadToolsV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Download(rctx)
+	}
+	h = handleToolsV1Origin(h)
+	service.Mux.Handle("POST", "/v1/tools/:packager/:name/:version", ctrl.MuxHandler("download", h, nil))
+	service.LogInfo("mount", "ctrl", "ToolsV1", "action", "Download", "route", "POST /v1/tools/:packager/:name/:version")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewListToolsV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.List(rctx)
+	}
+	h = handleToolsV1Origin(h)
+	service.Mux.Handle("GET", "/v1/tools", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "ToolsV1", "action", "List", "route", "GET /v1/tools")
+}
+
+// handleToolsV1Origin applies the CORS response headers corresponding to the origin.
+func handleToolsV1Origin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "true")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE")
+				rw.Header().Set("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
+}
+
 // UploadV1Controller is the controller interface for the UploadV1 actions.
 type UploadV1Controller interface {
 	goa.Muxer

@@ -36,6 +36,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -71,6 +72,11 @@ func (o *Opts) fill() *Opts {
 		o.Key = gpgpHex
 	}
 
+	if o.Location == "" {
+		usr, _ := user.Current()
+		o.Location = filepath.Join(usr.HomeDir, ".arduino-create")
+	}
+
 	return o
 }
 
@@ -79,44 +85,44 @@ func (o *Opts) fill() *Opts {
 // for a suitable download for the user OS and unpacks it in the ~/.arduino-create folder
 // replacing the existing files if existing
 // version can be a valid version or the string "latest"
-func Download(packager, name, version string, opts *Opts) error {
+func Download(packager, name, version string, opts *Opts) (*Tool, error) {
 	opts = opts.fill()
 
 	// download index
 	err := downloadIndex(opts.IndexURL, opts.Location, opts.Key, opts.Client)
 	if err != nil {
-		return errors.Wrap(err, "download index")
+		return nil, errors.Wrap(err, "download index")
 	}
 
 	// parse index
 	data, err := ioutil.ReadFile(filepath.Join(opts.Location, filepath.Base(opts.IndexURL)))
 	if err != nil {
-		return errors.Wrap(err, "parse index")
+		return nil, errors.Wrap(err, "parse index")
 	}
 
 	var i index
 	err = json.Unmarshal(data, &i)
 	if err != nil {
-		return errors.Wrap(err, "parse index")
+		return nil, errors.Wrap(err, "parse index")
 	}
 
 	tool, system := i.find(packager, name, version)
 	if tool.Name == "" || system.URL == "" {
-		return errors.New("tool not found")
+		return nil, errors.New("tool not found")
 	}
 
 	// Download
 	resp, err := http.Get(system.URL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	// Remove folder
-	path := filepath.Join(opts.Location, tool.Name, tool.Version)
+	path := filepath.Join(opts.Location, packager, tool.Name, tool.Version)
 	err = os.RemoveAll(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Extract
@@ -131,15 +137,65 @@ func Download(packager, name, version string, opts *Opts) error {
 		return file
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &Tool{
+		Packager: packager,
+		Name:     name,
+		Version:  version,
+		Path:     filepath.Join(opts.Location, packager, name, version),
+	}, nil
 }
 
-// List returns a list of the installed tools
-func List() {
+// Installed returns a list of the installed tools
+func Installed(opts *Opts) ([]Tool, error) {
+	opts = opts.fill()
 
+	packagers, err := ioutil.ReadDir(opts.Location)
+	if err != nil {
+		return nil, err
+	}
+
+	installed := []Tool{}
+
+	for _, packager := range packagers {
+		if !packager.IsDir() {
+			continue
+		}
+
+		path := filepath.Join(opts.Location, packager.Name())
+		tools, err := ioutil.ReadDir(path)
+		if err != nil {
+			return nil, err
+		}
+		for _, tool := range tools {
+			if !tool.IsDir() {
+				continue
+			}
+
+			path := filepath.Join(opts.Location, packager.Name(), tool.Name())
+			versions, err := ioutil.ReadDir(path)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, version := range versions {
+				if !version.IsDir() {
+					continue
+				}
+
+				installed = append(installed, Tool{
+					Name:     tool.Name(),
+					Packager: packager.Name(),
+					Version:  version.Name(),
+					Path:     path,
+				})
+			}
+		}
+	}
+
+	return installed, nil
 }
 
 // downloadIndex parses https://downloads.arduino.cc/packages/package_index.json checking the signature and saving both files into location
@@ -261,6 +317,13 @@ func (i index) find(packager, name, version string) (correctTool tool, correctSy
 	}
 
 	return correctTool, correctSystem
+}
+
+type Tool struct {
+	Name     string
+	Version  string
+	Packager string
+	Path     string
 }
 
 type tool struct {
