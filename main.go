@@ -33,8 +33,10 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -88,16 +90,52 @@ func main() {
 		os.Exit(0)
 	}
 
+	http, https := findPorts()
+	address := "http://localhost:" + strconv.Itoa(http)
 	if !*hibernate {
+		// Start http service
 		go func() {
-			// Start service
-			if err := service.ListenAndServe(":9000"); err != nil {
+			if err := service.ListenAndServe(":" + strconv.Itoa(http)); err != nil {
+				service.LogError("startup", "err", err)
+			}
+		}()
+		// Start https service
+		go func() {
+			if err := service.ListenAndServeTLS(":"+strconv.Itoa(https), "cert.pem", "key.pem"); err != nil {
 				service.LogError("startup", "err", err)
 			}
 		}()
 	}
 
-	setupSystray(*hibernate, version, revision, restart, shutdown)
+	setupSystray(*hibernate, version, revision, address, restart, shutdown)
+}
+
+// findPorts returns the first two available ports for http and https listening
+func findPorts() (http, https int) {
+	start := 8990
+	end := 9000
+
+	// http
+	for i := start; i < end; i++ {
+		ln, err := net.Listen("tcp", ":"+strconv.Itoa(i))
+		if err == nil {
+			ln.Close()
+			http = i
+			break
+		}
+	}
+
+	// https
+	for j := http + 1; j < end; j++ {
+		ln, err := net.Listen("tcp", ":"+strconv.Itoa(j))
+		if err == nil {
+			ln.Close()
+			https = j
+			break
+		}
+	}
+
+	return http, https
 }
 
 // RestartFunc launches itself before exiting. It works because we pass an option to tell it to wait for 5 seconds, which gives us time to exit and unbind from serial ports and TCP/IP

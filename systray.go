@@ -37,16 +37,16 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-func setupSystray(hibernate bool, version, revision string, restart, shutdown func()) {
+func setupSystray(hibernate bool, version, revision, address string, restart, shutdown func()) {
 	runtime.LockOSThread()
 	if !hibernate {
-		systray.Run(setupSystrayReal(version, revision, restart))
+		systray.Run(setupSystrayReal(version, revision, address, restart))
 	} else {
 		systray.Run(setupSysTrayHibernate(restart, shutdown))
 	}
 }
 
-func setupSystrayReal(version, revision string, restart func()) func() {
+func setupSystrayReal(version, revision, address string, restart func()) func() {
 	return func() {
 		systray.SetIcon(icon.GetIcon())
 		mURL := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
@@ -64,7 +64,7 @@ func setupSystrayReal(version, revision string, restart func()) func() {
 					systray.Quit()
 					restart()
 				case <-mDebug.ClickedCh:
-					open.Start("http://localhost:9000/debug")
+					open.Start(address + "/debug")
 				case <-mURL.ClickedCh:
 					open.Start("https://create.arduino.cc")
 				}
