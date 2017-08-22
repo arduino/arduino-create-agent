@@ -51,6 +51,8 @@ import (
 func main() {
 	var (
 		hibernate = flag.Bool("hibernate", false, "start hibernated")
+		version   = "x.x.x-dev" //don't modify it, Jenkins will take care
+		revision  = "xxxxxxxx"  //don't modify it, Jenkins will take care
 	)
 
 	flag.Parse()
@@ -85,12 +87,17 @@ func main() {
 	shutdown := func() {
 		os.Exit(0)
 	}
-	go setupSystray(*hibernate, "XXX", "YYY", restart, shutdown)
 
-	// Start service
-	if err := service.ListenAndServe(":9000"); err != nil {
-		service.LogError("startup", "err", err)
+	if !*hibernate {
+		go func() {
+			// Start service
+			if err := service.ListenAndServe(":9000"); err != nil {
+				service.LogError("startup", "err", err)
+			}
+		}()
 	}
+
+	setupSystray(*hibernate, version, revision, restart, shutdown)
 }
 
 // RestartFunc launches itself before exiting. It works because we pass an option to tell it to wait for 5 seconds, which gives us time to exit and unbind from serial ports and TCP/IP
