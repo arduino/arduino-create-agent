@@ -94,6 +94,11 @@ function connect() {
 	var formEl = document.getElementById('connect-form');
 	var codeEl = document.getElementById('connect-code');
 
+	if (ws) {
+		ws.onclose = function () {};
+		ws.close();
+	}
+
 	codeEl.textContent = '';
 	ws = new WebSocket("ws://localhost:9000/v1/connect?port=" + port + "&baud=" + baud);
 	ws.onopen = function () {

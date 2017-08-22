@@ -29,40 +29,43 @@
 package main
 
 import (
-	"log"
+	"bytes"
+
+	"golang.org/x/net/context"
+
+	serial "go.bug.st/serial.v1"
 
 	"github.com/arduino/arduino-create-agent/app"
-	"github.com/arduino/arduino-create-agent/connect"
+	"github.com/codeclysm/cc"
 	"github.com/goadesign/goa"
 	"github.com/gorilla/websocket"
-	"golang.org/x/net/context"
 )
 
-type device struct {
-	input  chan []byte
-	output chan []byte
-	cancel func()
-}
+type conns map[*websocket.Conn]*cc.Stoppable
 
 // ConnectV1Controller implements the connect_v1 resource.
 type ConnectV1Controller struct {
 	*goa.Controller
-	devices map[string]device
+	sockets conns
 }
 
 // NewConnectV1Controller creates a connect_v1 controller.
 func NewConnectV1Controller(service *goa.Service) *ConnectV1Controller {
 	return &ConnectV1Controller{
 		Controller: service.NewController("ConnectV1Controller"),
-		devices:    make(map[string]device),
+		sockets:    make(conns),
 	}
 }
 
 // Websocket runs the websocket action.
 func (c *ConnectV1Controller) Websocket(ctx *app.WebsocketConnectV1Context) error {
-	cont, cancel := context.WithCancel(context.Background())
-	input, output, err := connect.Open(cont, ctx.Port, ctx.Baud)
+	// Open port
+	mode := &serial.Mode{
+		BaudRate: ctx.Baud,
+	}
+	port, err := serial.Open(ctx.Port, mode)
 	if err != nil {
+		goa.LogError(ctx, err.Error())
 		return ctx.BadRequest()
 	}
 
@@ -73,28 +76,74 @@ func (c *ConnectV1Controller) Websocket(ctx *app.WebsocketConnectV1Context) erro
 
 	conn, err := upgrader.Upgrade(ctx.ResponseWriter, ctx.Request, nil)
 	if err != nil {
+		goa.LogError(ctx, err.Error())
 		return ctx.BadRequest()
 	}
 
-	go func() {
-		for msg := range output {
-			log.Println(len(msg))
+	c.sockets[conn] = cc.Run(listen(ctx, conn, port))
 
-			conn.WriteMessage(websocket.TextMessage, msg)
-		}
-		conn.Close()
-	}()
+	<-c.sockets[conn].Stopped
+	delete(c.sockets, conn)
 
-	for {
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			break
-		}
-
-		input <- msg
-	}
-
-	cancel()
+	conn.Close()
 
 	return nil
+}
+
+// StopAll stops all websocket connections
+func (c *ConnectV1Controller) StopAll() {
+	for conn, stoppable := range c.sockets {
+		conn.Close()
+		stoppable.Stop()
+		<-stoppable.Stopped
+	}
+}
+
+func listen(ctx context.Context, conn *websocket.Conn, port serial.Port) (reader, writer cc.StoppableFunc) {
+	reader = func(done chan struct{}) {
+	L:
+		for {
+			select {
+			case <-done:
+				break L
+
+			default:
+				msg := make([]byte, 1024)
+				n, err := port.Read(msg)
+				if err != nil {
+					goa.LogError(ctx, err.Error(), "when", "read from port")
+					break L
+				}
+				if n > 0 {
+					conn.WriteMessage(websocket.TextMessage, bytes.Trim(msg, "\x00"))
+				}
+			}
+		}
+	}
+
+	writer = func(done chan struct{}) {
+	L:
+		for {
+			select {
+			case <-done:
+				break L
+
+			default:
+				_, msg, err := conn.ReadMessage()
+				if err != nil {
+					goa.LogError(ctx, err.Error(), "when", "read from websocket")
+					break L
+				}
+				_, err = port.Write(msg)
+				if err != nil {
+					goa.LogError(ctx, err.Error(), "when", "write on port")
+					break L
+				}
+			}
+		}
+		port.Close()
+		conn.Close()
+	}
+
+	return reader, writer
 }

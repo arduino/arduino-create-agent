@@ -31,17 +31,30 @@
 package main
 
 import (
+	"flag"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
 	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/arduino/arduino-create-agent/app"
 	"github.com/arduino/arduino-create-agent/discovery"
+	"github.com/getlantern/systray"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
+	"github.com/kardianos/osext"
 )
 
 func main() {
+	var (
+		hibernate = flag.Bool("hibernate", false, "start hibernated")
+	)
+
+	flag.Parse()
+
 	// Create service
 	service := goa.New("arduino-create-agent")
 
@@ -67,9 +80,50 @@ func main() {
 	public := NewPublicController(service)
 	app.MountPublicController(service, public)
 
+	// Mount systray
+	restart := restartFunc("", !*hibernate)
+	shutdown := func() {
+		os.Exit(0)
+	}
+	go setupSystray(*hibernate, "XXX", "YYY", restart, shutdown)
+
 	// Start service
 	if err := service.ListenAndServe(":9000"); err != nil {
 		service.LogError("startup", "err", err)
 	}
+}
 
+// RestartFunc launches itself before exiting. It works because we pass an option to tell it to wait for 5 seconds, which gives us time to exit and unbind from serial ports and TCP/IP
+// sockets like :8989
+func restartFunc(path string, hibernate bool) func() {
+	return func() {
+		// Quit systray
+		systray.Quit()
+
+		// figure out current path of executable so we know how to restart
+		// this process using osext
+		exePath, err := osext.Executable()
+		if err != nil {
+			log.Fatalf("Error getting exe path using osext lib. err: %v\n", err)
+		}
+
+		if path == "" {
+			log.Printf("exePath using osext: %v\n", exePath)
+		} else {
+			exePath = path
+		}
+		exePath = strings.Trim(exePath, "\n")
+		hiberString := ""
+		if hibernate {
+			hiberString = "-hibernate"
+		}
+
+		// Execute command
+		cmd := exec.Command(exePath, hiberString)
+		err = cmd.Start()
+		if err != nil {
+			log.Fatalf("Got err restarting spjs: %v\n", err)
+		}
+		os.Exit(0)
+	}
 }

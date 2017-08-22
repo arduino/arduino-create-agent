@@ -29,6 +29,7 @@
 package main
 
 import (
+	"os"
 	"runtime"
 
 	"github.com/arduino/arduino-create-agent/icon"
@@ -36,14 +37,16 @@ import (
 	"github.com/skratchdot/open-golang/open"
 )
 
-func setupSystray(hybernate bool, version, revision string, shutdown func()) {
+func setupSystray(hibernate bool, version, revision string, restart, shutdown func()) {
 	runtime.LockOSThread()
-	if !hybernate {
-		systray.Run(setupSystrayReal(version, revision, shutdown))
+	if !hibernate {
+		systray.Run(setupSystrayReal(version, revision, restart))
+	} else {
+		systray.Run(setupSysTrayHibernate(restart, shutdown))
 	}
 }
 
-func setupSystrayReal(version, revision string, shutdown func()) func() {
+func setupSystrayReal(version, revision string, restart func()) func() {
 	return func() {
 		systray.SetIcon(icon.GetIcon())
 		mURL := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
@@ -58,12 +61,34 @@ func setupSystrayReal(version, revision string, shutdown func()) func() {
 			for {
 				select {
 				case <-mPause.ClickedCh:
-					shutdown()
-				// TODO: Restart ?
+					systray.Quit()
+					restart()
 				case <-mDebug.ClickedCh:
-					open.Start("http://localhost:9000")
+					open.Start("http://localhost:9000/debug")
 				case <-mURL.ClickedCh:
 					open.Start("https://create.arduino.cc")
+				}
+			}
+		}()
+	}
+}
+
+func setupSysTrayHibernate(restart, shutdown func()) func() {
+	return func() {
+		systray.SetIcon(icon.GetIconHiber())
+		mOpen := systray.AddMenuItem("Open Plugin", "")
+		mQuit := systray.AddMenuItem("Kill Plugin", "")
+
+		// Listen for events
+		go func() {
+			for {
+				select {
+				case <-mOpen.ClickedCh:
+					systray.Quit()
+					restart()
+				case <-mQuit.ClickedCh:
+					systray.Quit()
+					os.Exit(0)
 				}
 			}
 		}()
