@@ -62,7 +62,6 @@ type Upload struct {
 	Board       string           `json:"board"`
 	Rewrite     string           `json:"rewrite"`
 	Commandline string           `json:"commandline"`
-	Signature   string           `json:"signature"`
 	Extra       upload.Extra     `json:"extra"`
 	Hex         []byte           `json:"hex"`
 	Filename    string           `json:"filename"`
@@ -90,20 +89,10 @@ func uploadHandler(c *gin.Context) {
 	}
 
 	if data.Extra.Network == false {
-		if data.Signature == "" {
-			c.String(http.StatusBadRequest, "signature is required")
-			return
-		}
+		data.Commandline = commands[data.Commandline]
 
 		if data.Commandline == "" {
 			c.String(http.StatusBadRequest, "commandline is required for local board")
-			return
-		}
-
-		err := verifyCommandLine(data.Commandline, data.Signature)
-
-		if err != nil {
-			c.String(http.StatusBadRequest, "signature is invalid")
 			return
 		}
 	}
