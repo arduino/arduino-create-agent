@@ -116,29 +116,40 @@
 			</div>
 		</div>
 	</div>
-
+	<!-- Upload -->
+	<div class="container">
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<label for="upload-board">Board</label>
+					<input type="text" class="form-control" id="upload-board" required value="arduino:avr:uno">
+				</div>
+			</div>
+			<div class="col">
+				<div class="form-group">
+					<label for="upload-sketch">Sketch</label>
+					<input type="text" class="form-control" id="upload-sketch" required value="/tmp/sketch">
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<p><button class="btn btn-primary" onclick="upload()">Upload</button></p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<pre id="upload-req"></pre>
+				</div>
+			</div>
+			<div class="col">
+				<pre id="upload-code"></pre>
+			</div>
+		</div>
+	</div>
 
 	<script>
-function discovery() {
-	var req = new Request('/v1/discover', {
-		method: 'GET'
-	});
-
-	var reqEl = document.getElementById('discovery-req');
-	reqEl.textContent = req.method + ' ' + req.url + '\n';
-	reqEl.textContent = reqEl.textContent + '------------------------------------\n'
-
-	fetch(req).then(function(response) {
-		reqEl.textContent = reqEl.textContent + 'STATUS ' + response.status + '\n';
-		reqEl.textContent = reqEl.textContent + '------------------------------------\n\n'
-		return response.json();
-	}).then(function (response) {
-		var codeEl = document.getElementById('discovery-code');
-
-		codeEl.textContent = JSON.stringify(response, null, 2) + '\n';
-	});
-}
-
 var ws;
 
 function connect() {
@@ -154,7 +165,7 @@ function connect() {
 	}
 
 	codeEl.textContent = '';
-	ws = new WebSocket("ws://localhost:9000/v1/connect?port=" + port + "&baud=" + baud);
+	ws = new WebSocket("ws://"+ window.location.host +"/v1/connect?port=" + port + "&baud=" + baud);
 	ws.onopen = function () {
 		formEl.removeAttribute('hidden')
 	}
@@ -183,24 +194,12 @@ function send() {
 	ws.send(msg)
 }
 
+function discovery() {
+	req('GET', '/v1/discover', 'discovery')
+}
+
 function tools() {
-	var req = new Request('/v1/tools', {
-		method: 'GET'
-	});
-
-	var reqEl = document.getElementById('tools-req');
-	reqEl.textContent = req.method + ' ' + req.url + '\n';
-	reqEl.textContent = reqEl.textContent + '------------------------------------\n'
-
-	fetch(req).then(function(response) {
-		reqEl.textContent = reqEl.textContent + 'STATUS ' + response.status + '\n';
-		reqEl.textContent = reqEl.textContent + '------------------------------------\n\n'
-		return response.json();
-	}).then(function (response) {
-		var codeEl = document.getElementById('tools-code');
-
-		codeEl.textContent = JSON.stringify(response, null, 2) + '\n';
-	});
+	req('GET', '/v1/tools', 'tools');
 }
 
 function install() {
@@ -208,11 +207,15 @@ function install() {
 	var name = document.getElementById('install-name').value;
 	var version = document.getElementById('install-version').value;
 
-	var req = new Request('/v1/tools/' + packager + '/' + name + '/' + version, {
-		method: 'POST'
+	req('POST', '/v1/tools/' + packager + '/' + name + '/' + version, 'install');
+}
+
+function req(method, url, el) {
+	var req = new Request(url, {
+		method: method
 	});
 
-	var reqEl = document.getElementById('install-req');
+	var reqEl = document.getElementById(el + '-req');
 	reqEl.textContent = req.method + ' ' + req.url + '\n';
 	reqEl.textContent = reqEl.textContent + '------------------------------------\n'
 
@@ -221,11 +224,9 @@ function install() {
 		reqEl.textContent = reqEl.textContent + '------------------------------------\n\n'
 		return response.json();
 	}).then(function (response) {
-		var codeEl = document.getElementById('install-code');
-
+		var codeEl = document.getElementById(el + '-code');
 		codeEl.textContent = JSON.stringify(response, null, 2) + '\n';
 	});
 }
-
 	</script>
 </body>
