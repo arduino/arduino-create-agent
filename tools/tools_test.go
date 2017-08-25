@@ -29,40 +29,60 @@
 package tools_test
 
 import (
-	"fmt"
 	"io/ioutil"
-	"log"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/arduino/arduino-create-agent/tools"
 )
 
-func TestUsage(t *testing.T) {
-	cases := []struct {
-		Packager    string
-		Name        string
-		Version     string
-		ExpectedErr string
-	}{
-		{"arduino", "avrdude", "latest", "nil"},
+func TestDownload(t *testing.T) {
+	tmp, _ := ioutil.TempDir("", "")
+	defer os.RemoveAll(tmp)
+
+	opts := tools.Opts{
+		Location: tmp,
 	}
 
-	for _, tc := range cases {
-		t.Run(fmt.Sprintf("%s:%s:%s", tc.Packager, tc.Name, tc.Version), func(t *testing.T) {
+	tool, err := tools.Download("arduino", "avrdude", "latest", &opts)
+	if err != nil {
+		t.Error(err.Error())
+	}
 
-			tmp, _ := ioutil.TempDir("", "")
-
-			opts := tools.Opts{
-				Location: tmp,
-			}
-
-			err := tools.Download(tc.Packager, tc.Name, tc.Version, &opts)
-			log.Println(err)
-		})
+	_, err = os.Open(filepath.Join(tool.Path, "bin", "avrdude"))
+	if err != nil {
+		t.Error(err.Error())
 	}
 }
-
 func TestInstalled(t *testing.T) {
-	list, err := tools.Installed(nil)
-	fmt.Println(list, err)
+	tmp, _ := ioutil.TempDir("", "")
+	defer os.RemoveAll(tmp)
+
+	opts := tools.Opts{
+		Location: tmp,
+	}
+
+	list, err := tools.Installed(&opts)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if len(list) != 0 {
+		t.Error("Expected len(list) to be 0, got", len(list))
+	}
+
+	_, err = tools.Download("arduino", "avrdude", "latest", &opts)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	list, err = tools.Installed(&opts)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if len(list) != 1 {
+		t.Error("Expected len(list) to be 1, got", len(list))
+	}
 }

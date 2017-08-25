@@ -142,9 +142,9 @@ func Download(packager, name, version string, opts *Opts) (*Tool, error) {
 
 	return &Tool{
 		Packager: packager,
-		Name:     name,
-		Version:  version,
-		Path:     filepath.Join(opts.Location, packager, name, version),
+		Name:     tool.Name,
+		Version:  tool.Version,
+		Path:     path,
 	}, nil
 }
 
