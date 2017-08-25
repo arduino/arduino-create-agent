@@ -26,18 +26,20 @@
  *
  * Copyright 2017 ARDUINO AG (http://www.arduino.cc/)
  */
-package agent
+package main
 
 import (
-	"github.com/goadesign/goa"
+	"flag"
+
+	"github.com/arduino/arduino-create-agent"
 )
 
-// PublicController implements the public resource.
-type PublicController struct {
-	*goa.Controller
-}
-
-// NewPublicController creates a public controller.
-func NewPublicController(service *goa.Service) *PublicController {
-	return &PublicController{Controller: service.NewController("PublicController")}
+func main() {
+	var (
+		hibernate = flag.Bool("hibernate", false, "start hibernated")
+	)
+	opts := agent.Opts{
+		Hibernate: *hibernate,
+	}
+	agent.Start(opts)
 }

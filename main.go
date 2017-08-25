@@ -28,7 +28,7 @@
  */
 //go:generate go run cli/gen/main.go
 
-package main
+package agent
 
 import (
 	"flag"
@@ -50,11 +50,22 @@ import (
 	"github.com/kardianos/osext"
 )
 
-func main() {
+// Opts is a configuration struct used to change the behaviour of the agent
+type Opts struct {
+	// If Hibernate is true the agent will display a grey trayicon and won't answer
+	// to any request
+	Hibernate bool
+
+	// HTTPPort and HTTPSPort are the ports over which the agent will listen
+	// If they are not provided the agent will choose a free port in the range 8990-8999
+	HTTPPort, HTTPSPort int
+}
+
+// Start a webserver listening on the provided ports
+func Start(opts Opts) {
 	var (
-		hibernate = flag.Bool("hibernate", false, "start hibernated")
-		version   = "x.x.x-dev" //don't modify it, Jenkins will take care
-		revision  = "xxxxxxxx"  //don't modify it, Jenkins will take care
+		version  = "x.x.x-dev" //don't modify it, Jenkins will take care
+		revision = "xxxxxxxx"  //don't modify it, Jenkins will take care
 	)
 
 	flag.Parse()
@@ -89,14 +100,22 @@ func main() {
 	app.MountPublicController(service, public)
 
 	// Mount systray
-	restart := restartFunc("", !*hibernate)
+	restart := restartFunc("", !opts.Hibernate)
 	shutdown := func() {
 		os.Exit(0)
 	}
 
+	// Find boards
 	http, https := findPorts()
+	if opts.HTTPPort != 0 {
+		http = opts.HTTPPort
+	}
+	if opts.HTTPSPort != 0 {
+		http = opts.HTTPSPort
+	}
+
 	address := "http://localhost:" + strconv.Itoa(http)
-	if !*hibernate {
+	if !opts.Hibernate {
 		// Start http service
 		go func() {
 			if err := service.ListenAndServe(":" + strconv.Itoa(http)); err != nil {
@@ -111,7 +130,7 @@ func main() {
 		}()
 	}
 
-	setupSystray(*hibernate, version, revision, address, restart, shutdown)
+	setupSystray(opts.Hibernate, version, revision, address, restart, shutdown)
 }
 
 // findPorts returns the first two available ports for http and https listening

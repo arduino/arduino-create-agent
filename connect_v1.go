@@ -26,7 +26,7 @@
  *
  * Copyright 2017 ARDUINO AG (http://www.arduino.cc/)
  */
-package main
+package agent
 
 import (
 	"bytes"

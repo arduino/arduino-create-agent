@@ -1,4 +1,4 @@
-package main
+package agent
 
 import exec "github.com/arduino/arduino-create-agent/exec"
 
