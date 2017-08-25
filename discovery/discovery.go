@@ -24,7 +24,7 @@
  * invalidate any other reasons why the executable file might be covered by
  * the GNU General Public License.
  *
- * Copyright 2017 BCMI LABS SA (http://www.arduino.cc/)
+ * Copyright 2017 ARDUINO AG (http://www.arduino.cc/)
  */
 // Package discovery keeps an updated list of the devices connected to the
 // computer, via serial ports or found in the network
