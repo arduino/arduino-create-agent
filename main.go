@@ -95,6 +95,10 @@ func Start(opts Opts) {
 	t := NewToolsV1Controller(service)
 	app.MountToolsV1Controller(service, t)
 
+	// Mount "upload" controller
+	u := NewUploadV1Controller(service)
+	app.MountUploadV1Controller(service, u)
+
 	// Mount "public" controller
 	public := NewPublicController(service)
 	app.MountPublicController(service, public)

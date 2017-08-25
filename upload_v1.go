@@ -29,37 +29,58 @@
 package agent
 
 import (
+	"time"
+
 	"github.com/arduino/arduino-create-agent/app"
 	"github.com/goadesign/goa"
+	"github.com/goadesign/goa/uuid"
 )
 
 // UploadV1Controller implements the upload_v1 resource.
 type UploadV1Controller struct {
 	*goa.Controller
+	results map[string]*app.ArduinoAgentExec
 }
 
 // NewUploadV1Controller creates a upload_v1 controller.
 func NewUploadV1Controller(service *goa.Service) *UploadV1Controller {
-	return &UploadV1Controller{Controller: service.NewController("UploadV1Controller")}
+	return &UploadV1Controller{
+		Controller: service.NewController("UploadV1Controller"),
+		results:    make(map[string]*app.ArduinoAgentExec),
+	}
 }
 
 // Serial runs the serial action.
 func (c *UploadV1Controller) Serial(ctx *app.SerialUploadV1Context) error {
-	// UploadV1Controller_Serial: start_implement
+	// generate random id
+	id := uuid.NewV4().String()
 
-	// Put your logic here
+	// create result
+	res := app.ArduinoAgentExec{Status: "pending"}
+	c.results[id] = &res
 
-	// UploadV1Controller_Serial: end_implement
-	return nil
+	// cleanup
+	go func() {
+		time.Sleep(5 * time.Minute)
+		delete(c.results, id)
+	}()
+
+	// Return 202
+	ctx.ResponseWriter.Header().Add("Location", app.UploadV1Href(id))
+	return ctx.Accepted()
 }
 
 // Show runs the show action.
 func (c *UploadV1Controller) Show(ctx *app.ShowUploadV1Context) error {
-	// UploadV1Controller_Show: start_implement
+	result, ok := c.results[ctx.ID]
+	if !ok {
+		return ctx.NotFound()
+	}
 
-	// Put your logic here
-
-	// UploadV1Controller_Show: end_implement
-	res := &app.ArduinoAgentExec{}
+	res := &app.ArduinoAgentExec{
+		Status: result.Status,
+		Stderr: result.Stderr,
+		Stdout: result.Stdout,
+	}
 	return ctx.OK(res)
 }

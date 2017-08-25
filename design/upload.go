@@ -34,15 +34,18 @@ import (
 )
 
 var _ = Resource("upload_v1", func() {
+	BasePath("/v1/upload")
+
 	Action("show", func() {
 		Description("Retrieve the status of a running command")
 		Routing(GET("/:id"))
 		Response(OK, ExecResultV1)
+		Response(NotFound)
 	})
 	Action("serial", func() {
 		Description("Performs an upload of a sketch over the serial port")
 		Routing(POST(""))
-		Payload(ArrayOf(UploadSerialV1))
+		Payload(UploadSerialV1)
 		Response(Accepted, func() {
 			Headers(func() {
 				Header("Location", String, "Contains the location of the show resource")

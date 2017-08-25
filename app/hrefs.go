@@ -21,5 +21,5 @@ func CommandsV1Href(id interface{}) string {
 // UploadV1Href returns the resource href.
 func UploadV1Href(id interface{}) string {
 	paramid := strings.TrimLeftFunc(fmt.Sprintf("%v", id), func(r rune) bool { return r == '/' })
-	return fmt.Sprintf("/%v", paramid)
+	return fmt.Sprintf("/v1/upload/%v", paramid)
 }

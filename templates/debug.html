@@ -6,11 +6,11 @@
 	</head>
 </html>
 <body>
-	<div class="container">
+	<div class="container-fluid">
 		<h1>Arduino Create Agent - Debug</h1>
 	</div>
 	<!-- Discovery -->
-	<div class="container">
+	<div class="container-fluid">
 		<div class="row">
 			<div class="col">
 				<p><button class="btn btn-primary" onclick="discovery()">Discovery</button></p>
@@ -29,7 +29,7 @@
 	</div>
 	<hr>
 	<!-- Connect -->
-	<div class="container">
+	<div class="container-fluid">
 		<div class="row">
 			<div class="col">
 				<div class="form-group">
@@ -64,7 +64,7 @@
 	</div>
 	<hr>
 	<!-- Tools -->
-	<div class="container">
+	<div class="container-fluid">
 		<div class="row">
 			<div class="col">
 				<p><button class="btn btn-primary" onclick="tools()">Installed Tools</button></p>
@@ -116,19 +116,26 @@
 			</div>
 		</div>
 	</div>
+	<hr>
 	<!-- Upload -->
-	<div class="container">
+	<div class="container-fluid">
 		<div class="row">
 			<div class="col">
 				<div class="form-group">
-					<label for="upload-board">Board</label>
-					<input type="text" class="form-control" id="upload-board" required value="arduino:avr:uno">
+					<label for="upload-command">Command</label>
+					<input type="text" class="form-control" id="upload-command" required value="upload:arduino:avr:leonardo">
+				</div>
+			</div>
+			<div class="col">
+				<div class="form-group">
+					<label for="upload-port">Port</label>
+					<input type="text" class="form-control" id="upload-port" required value="/dev/tty/ACM0">
 				</div>
 			</div>
 			<div class="col">
 				<div class="form-group">
 					<label for="upload-sketch">Sketch</label>
-					<input type="text" class="form-control" id="upload-sketch" required value="/tmp/sketch">
+					<input type="file" class="form-control" id="upload-sketch" required>
 				</div>
 			</div>
 		</div>
@@ -143,8 +150,31 @@
 					<pre id="upload-req"></pre>
 				</div>
 			</div>
+		</div>
+		<div class="row">
 			<div class="col">
-				<pre id="upload-code"></pre>
+				<div class="form-group">
+					<label for="showupload-id">ID</label>
+					<input type="text" class="form-control" id="showupload-id" required value="">
+				</div>
+			</div>
+
+		</div>
+		<div class="row">
+			<div class="col">
+				<p><button class="btn btn-primary" onclick="showupload()">Show Upload Result</button></p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<pre id="showupload-req"></pre>
+				</div>
+			</div>
+			<div class="col">
+				<div class="form-group">
+					<pre id="showupload-code"></pre>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -177,7 +207,6 @@ function connect() {
 		console.debug(event.data)
 		codeEl.textContent = codeEl.textContent + event.data + '\n';
 	}
-
 	ws.onerror = function (error) {
 		console.error(error)
 		codeEl.textContent = codeEl.textContent + 'ERROR\n';
@@ -210,23 +239,60 @@ function install() {
 	req('POST', '/v1/tools/' + packager + '/' + name + '/' + version, 'install');
 }
 
-function req(method, url, el) {
+function upload() {
+	var sketch = document.getElementById('upload-sketch').files[0];
+	var reader = new FileReader();
+	reader.addEventListener("load", function () {
+		var body = {
+			command: document.getElementById('upload-command').value,
+			port: document.getElementById('upload-port').value,
+			filename: sketch.name,
+			bin: reader.result
+		}
+
+		req('POST', '/v1/upload', 'upload', JSON.stringify(body))
+			.then(function (response) {
+				var id = response.headers.get('Location');
+				var parts = id.split('/');
+				document.getElementById('showupload-id').value = parts[parts.length-1];
+			});
+	}, false);
+
+	reader.readAsDataURL(sketch);
+}
+
+function showupload() {
+	var id = document.getElementById('showupload-id').value;
+	req('GET', '/v1/upload/' + id, 'showupload');
+
+}
+
+function req(method, url, el, body) {
 	var req = new Request(url, {
-		method: method
+		method: method,
+		body: body,
 	});
 
 	var reqEl = document.getElementById(el + '-req');
 	reqEl.textContent = req.method + ' ' + req.url + '\n';
 	reqEl.textContent = reqEl.textContent + '------------------------------------\n'
 
-	fetch(req).then(function(response) {
+	var promise = fetch(req);
+
+	promise.then(function(response) {
 		reqEl.textContent = reqEl.textContent + 'STATUS ' + response.status + '\n';
 		reqEl.textContent = reqEl.textContent + '------------------------------------\n\n'
+
+		response.headers.forEach(function (value, name) {
+			reqEl.textContent = reqEl.textContent + name + ': ' + value + '\n';
+		})
 		return response.json();
 	}).then(function (response) {
 		var codeEl = document.getElementById(el + '-code');
 		codeEl.textContent = JSON.stringify(response, null, 2) + '\n';
 	});
+
+	return promise;
 }
 	</script>
 </body>

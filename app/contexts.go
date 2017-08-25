@@ -254,7 +254,7 @@ type SerialUploadV1Context struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
-	Payload SerialUploadV1Payload
+	Payload *UploadSerial
 }
 
 // NewSerialUploadV1Context parses the incoming request URL and body, performs validations and creates the
@@ -268,9 +268,6 @@ func NewSerialUploadV1Context(ctx context.Context, r *http.Request, service *goa
 	rctx := SerialUploadV1Context{Context: ctx, ResponseData: resp, RequestData: req}
 	return &rctx, err
 }
-
-// SerialUploadV1Payload is the upload_v1 serial action payload.
-type SerialUploadV1Payload []*UploadSerial
 
 // Accepted sends a HTTP response with status code 202.
 func (ctx *SerialUploadV1Context) Accepted() error {
@@ -307,4 +304,10 @@ func NewShowUploadV1Context(ctx context.Context, r *http.Request, service *goa.S
 func (ctx *ShowUploadV1Context) OK(r *ArduinoAgentExec) error {
 	ctx.ResponseData.Header().Set("Content-Type", "application/vnd.arduino.agent.exec+json")
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *ShowUploadV1Context) NotFound() error {
+	ctx.ResponseData.WriteHeader(404)
+	return nil
 }

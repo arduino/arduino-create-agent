@@ -27,7 +27,7 @@ definitions:
         - build.path
         - build.project_name
         items:
-          example: Aut iusto quis quasi a itaque.
+          example: Mollitia aut iusto.
           type: string
         type: array
       pattern:
@@ -70,6 +70,10 @@ definitions:
     description: ArduinoAgentDiscover media type (default view)
     example:
       network:
+      - address: 192.168.1.107
+        info: board=Arduino Y\195\186n Shield distro_version=0.1
+        name: MyShield
+        port: 80
       - address: 192.168.1.107
         info: board=Arduino Y\195\186n Shield distro_version=0.1
         name: MyShield
@@ -289,19 +293,6 @@ definitions:
       $ref: '#/definitions/command.param'
     title: ExecCommandsV1Payload
     type: array
-  SerialUploadV1Payload:
-    example:
-    - bin: QmFzZTY0IGlzIGEgZ2VuZ...
-      command: upload:arduino:avr:uno
-      filename: QmFzZTY0IGlzIGEgZ2VuZ...
-      params:
-      - name: serial.port
-        value: /dev/ttyACM0
-      port: /dev/ttyACM0
-    items:
-      $ref: '#/definitions/upload.serial'
-    title: SerialUploadV1Payload
-    type: array
   command.param:
     description: Option for the command to execute
     example:
@@ -378,31 +369,10 @@ paths:
       summary: list commands_v1
       tags:
       - commands_v1
-    post:
-      description: Performs an upload of a sketch over the serial port
-      operationId: upload_v1#serial
-      parameters:
-      - in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/SerialUploadV1Payload'
-      responses:
-        "202":
-          description: Accepted
-          headers:
-            Location:
-              description: Contains the location of the show resource
-              type: string
-      schemes:
-      - http
-      summary: serial upload_v1
-      tags:
-      - upload_v1
   /{id}:
     get:
       description: Retrieve the status of a running command
-      operationId: upload_v1#show
+      operationId: commands_v1#show
       parameters:
       - in: path
         name: id
@@ -417,9 +387,9 @@ paths:
             $ref: '#/definitions/ArduinoAgentExec'
       schemes:
       - http
-      summary: show upload_v1
+      summary: show commands_v1
       tags:
-      - upload_v1
+      - commands_v1
     post:
       description: Execute a command. Note that if you want to upload a sketch you'll
         probably be better off with the upload api. This one is very low-level
@@ -537,11 +507,59 @@ paths:
       summary: download tools_v1
       tags:
       - tools_v1
+  /v1/upload:
+    post:
+      description: Performs an upload of a sketch over the serial port
+      operationId: upload_v1#serial
+      parameters:
+      - description: The necessary info to upload a sketch over a serial port
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/upload.serial'
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            Location:
+              description: Contains the location of the show resource
+              type: string
+      schemes:
+      - http
+      summary: serial upload_v1
+      tags:
+      - upload_v1
+  /v1/upload/{id}:
+    get:
+      description: Retrieve the status of a running command
+      operationId: upload_v1#show
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/vnd.arduino.agent.exec+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArduinoAgentExec'
+        "404":
+          description: Not Found
+      schemes:
+      - http
+      summary: show upload_v1
+      tags:
+      - upload_v1
 produces:
 - application/json
 responses:
   BadRequest:
     description: Bad Request
+  NotFound:
+    description: Not Found
   SwitchingProtocols:
     description: Switching Protocols
 schemes:

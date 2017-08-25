@@ -376,8 +376,8 @@ type UploadV1Controller interface {
 func MountUploadV1Controller(service *goa.Service, ctrl UploadV1Controller) {
 	initService(service)
 	var h goa.Handler
-	service.Mux.Handle("OPTIONS", "/", ctrl.MuxHandler("preflight", handleUploadV1Origin(cors.HandlePreflight()), nil))
-	service.Mux.Handle("OPTIONS", "/:id", ctrl.MuxHandler("preflight", handleUploadV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/v1/upload", ctrl.MuxHandler("preflight", handleUploadV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/v1/upload/:id", ctrl.MuxHandler("preflight", handleUploadV1Origin(cors.HandlePreflight()), nil))
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -391,15 +391,15 @@ func MountUploadV1Controller(service *goa.Service, ctrl UploadV1Controller) {
 		}
 		// Build the payload
 		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
-			rctx.Payload = rawPayload.(SerialUploadV1Payload)
+			rctx.Payload = rawPayload.(*UploadSerial)
 		} else {
 			return goa.MissingPayloadError()
 		}
 		return ctrl.Serial(rctx)
 	}
 	h = handleUploadV1Origin(h)
-	service.Mux.Handle("POST", "/", ctrl.MuxHandler("serial", h, unmarshalSerialUploadV1Payload))
-	service.LogInfo("mount", "ctrl", "UploadV1", "action", "Serial", "route", "POST /")
+	service.Mux.Handle("POST", "/v1/upload", ctrl.MuxHandler("serial", h, unmarshalSerialUploadV1Payload))
+	service.LogInfo("mount", "ctrl", "UploadV1", "action", "Serial", "route", "POST /v1/upload")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -414,8 +414,8 @@ func MountUploadV1Controller(service *goa.Service, ctrl UploadV1Controller) {
 		return ctrl.Show(rctx)
 	}
 	h = handleUploadV1Origin(h)
-	service.Mux.Handle("GET", "/:id", ctrl.MuxHandler("show", h, nil))
-	service.LogInfo("mount", "ctrl", "UploadV1", "action", "Show", "route", "GET /:id")
+	service.Mux.Handle("GET", "/v1/upload/:id", ctrl.MuxHandler("show", h, nil))
+	service.LogInfo("mount", "ctrl", "UploadV1", "action", "Show", "route", "GET /v1/upload/:id")
 }
 
 // handleUploadV1Origin applies the CORS response headers corresponding to the origin.
@@ -445,10 +445,10 @@ func handleUploadV1Origin(h goa.Handler) goa.Handler {
 
 // unmarshalSerialUploadV1Payload unmarshals the request body into the context request data Payload field.
 func unmarshalSerialUploadV1Payload(ctx context.Context, service *goa.Service, req *http.Request) error {
-	var payload SerialUploadV1Payload
-	if err := service.DecodeRequest(req, &payload); err != nil {
+	payload := &uploadSerial{}
+	if err := service.DecodeRequest(req, payload); err != nil {
 		return err
 	}
-	goa.ContextRequest(ctx).Payload = payload
+	goa.ContextRequest(ctx).Payload = payload.Publicize()
 	return nil
 }
