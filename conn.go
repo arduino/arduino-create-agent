@@ -82,6 +82,28 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
+	// Check that the port is available
+	found := false
+	for i := range SerialPorts.Ports {
+		if data.Port == SerialPorts.Ports[i].Name {
+			found = true
+			break
+		}
+	}
+
+	for i := range NetworkPorts.Ports {
+		if data.Port == NetworkPorts.Ports[i].Name {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		c.String(http.StatusBadRequest, "port is not available")
+		log.Error("port is not available")
+		return
+	}
+
 	if data.Board == "" {
 		c.String(http.StatusBadRequest, "board is required")
 		log.Error("board is required")
