@@ -111,7 +111,15 @@ func uploadHandler(c *gin.Context) {
 	}
 
 	if data.Extra.Network == false {
-		data.Commandline = commands[data.Commandline]
+		log.Println(data.Commandline)
+
+		if data.Extra.Verbose {
+			data.Commandline = commands["verbose"+data.Commandline]
+		} else {
+			data.Commandline = commands["quiet"+data.Commandline]
+		}
+
+		log.Println(data.Commandline)
 
 		if data.Commandline == "" {
 			c.String(http.StatusBadRequest, "commandline is required for local board")

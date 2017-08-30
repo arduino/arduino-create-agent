@@ -39,14 +39,12 @@ type Auth struct {
 
 // Extra contains some options used during the upload
 type Extra struct {
-	Use1200bpsTouch   bool   `json:"use_1200bps_touch"`
-	WaitForUploadPort bool   `json:"wait_for_upload_port"`
-	Network           bool   `json:"network"`
-	Auth              Auth   `json:"auth"`
-	Verbose           bool   `json:"verbose"`
-	ParamsVerbose     string `json:"params_verbose"`
-	ParamsQuiet       string `json:"params_quiet"`
-	SSH               bool   `json:"ssh,omitempty"`
+	Use1200bpsTouch   bool `json:"use_1200bps_touch"`
+	WaitForUploadPort bool `json:"wait_for_upload_port"`
+	Network           bool `json:"network"`
+	Auth              Auth `json:"auth"`
+	Verbose           bool `json:"verbose"`
+	SSH               bool `json:"ssh,omitempty"`
 }
 
 // PartiallyResolve replaces some symbols in the commandline with the appropriate values
@@ -54,12 +52,6 @@ type Extra struct {
 func PartiallyResolve(board, file, commandline string, extra Extra, t Locater) (string, error) {
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
-
-	if extra.Verbose == true {
-		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsVerbose, -1)
-	} else {
-		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsQuiet, -1)
-	}
 
 	// search for runtime variables and replace with values from Locater
 	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
