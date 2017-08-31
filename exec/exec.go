@@ -52,17 +52,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Command is a parametric command that can executed on the machine
-type Command struct {
-	// Pattern is the commandline that will be safely interpolated with the parameters
-	Pattern string
-	// Params contains a list of parameters that can be safely interpolated in the pattern
-	Params []string
-}
-
 // Interpolate substitutes the params with the corresponding options
-func (cmd Command) Interpolate(opts map[string]string) (interpolated []string, err error) {
-	pattern := cmd.Pattern
+func Interpolate(pattern string, opts map[string]string) (interpolated []string, err error) {
 	for key, value := range opts {
 		pattern = strings.Replace(pattern, "{"+key+"}", value, -1)
 	}
@@ -76,9 +67,9 @@ func (cmd Command) Interpolate(opts map[string]string) (interpolated []string, e
 
 // Local executes a command on the local machine, interpolating the command with the
 // given options
-func Local(c Command, opts map[string]string) (stdout, stderr io.ReadCloser, err error) {
+func Local(pattern string, opts map[string]string) (stdout, stderr io.ReadCloser, err error) {
 	// interpolate
-	inter, err := c.Interpolate(opts)
+	inter, err := Interpolate(pattern, opts)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "interpolate")
 	}

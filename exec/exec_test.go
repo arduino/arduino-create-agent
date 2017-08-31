@@ -39,12 +39,8 @@ import (
 )
 
 func Example() {
-	cmd := exec.Command{
-		Pattern: "echo {interpolate.string}",
-		Params:  []string{"interpolate.string"},
-	}
 	opts := map[string]string{"interpolate.string": "hello world"}
-	stdout, stderr, err := exec.Local(cmd, opts)
+	stdout, stderr, err := exec.Local("echo {interpolate.string}", opts)
 	fmt.Println(err) // nil
 	out, _ := ioutil.ReadAll(stdout)
 	stdout.Close()
@@ -59,7 +55,6 @@ func TestLocal(t *testing.T) {
 	cases := []struct {
 		ID        string
 		Pattern   string
-		Params    []string
 		Options   map[string]string
 		ExpStdout string
 		ExpStderr string
@@ -69,7 +64,6 @@ func TestLocal(t *testing.T) {
 			"command not found",
 			"foo",
 			nil,
-			nil,
 			"",
 			"",
 			errors.New(`exec: "foo": executable file not found in $PATH`),
@@ -78,7 +72,6 @@ func TestLocal(t *testing.T) {
 			"error",
 			"foo '",
 			nil,
-			nil,
 			"",
 			"",
 			errors.New("interpolate: invalid command line string"),
@@ -86,7 +79,6 @@ func TestLocal(t *testing.T) {
 		{
 			"hello world",
 			"echo {interpolate.string}",
-			[]string{"interpolate.string"},
 			map[string]string{
 				"interpolate.string": "hello world",
 				"ignored":            "ignored",
@@ -98,7 +90,6 @@ func TestLocal(t *testing.T) {
 		{
 			"inject ; to perform other commands has no effect",
 			"echo {interpolate.string}",
-			[]string{"interpolate.string"},
 			map[string]string{
 				"interpolate.string": "hello world; ls",
 				"ignored":            "ignored",
@@ -110,7 +101,6 @@ func TestLocal(t *testing.T) {
 		{
 			"bash expansion do not work",
 			"echo {interpolate.string}",
-			[]string{"interpolate.string"},
 			map[string]string{
 				"interpolate.string": "`date`",
 				"ignored":            "ignored",
@@ -122,7 +112,6 @@ func TestLocal(t *testing.T) {
 		{
 			"env vars do not work",
 			"echo {interpolate.string}",
-			[]string{"interpolate.string"},
 			map[string]string{
 				"interpolate.string": "$USER",
 				"ignored":            "ignored",
@@ -134,7 +123,6 @@ func TestLocal(t *testing.T) {
 		{
 			"return stderr",
 			"ls /notexist",
-			[]string{"interpolate.string"},
 			map[string]string{
 				"interpolate.string": "$USER",
 				"ignored":            "ignored",
@@ -147,11 +135,7 @@ func TestLocal(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("%s", tc.ID), func(t *testing.T) {
-			command := exec.Command{
-				Pattern: tc.Pattern,
-				Params:  tc.Params,
-			}
-			stdout, stderr, e := exec.Local(command, tc.Options)
+			stdout, stderr, e := exec.Local(tc.Pattern, tc.Options)
 			if !errEq(e, tc.ExpErr) {
 				t.Errorf("expected e to be '%s', was '%s'", tc.ExpErr, e)
 				return
