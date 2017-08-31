@@ -88,6 +88,18 @@ func TestLocal(t *testing.T) {
 			nil,
 		},
 		{
+			"nested interpolation",
+			"echo {interpolate.string}",
+			map[string]string{
+				"greeting":           "hello",
+				"target":             "world",
+				"interpolate.string": "{greeting} {target}",
+			},
+			"hello world",
+			"",
+			nil,
+		},
+		{
 			"inject ; to perform other commands has no effect",
 			"echo {interpolate.string}",
 			map[string]string{

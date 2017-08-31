@@ -54,8 +54,12 @@ import (
 
 // Interpolate substitutes the params with the corresponding options
 func Interpolate(pattern string, opts map[string]string) (interpolated []string, err error) {
-	for key, value := range opts {
-		pattern = strings.Replace(pattern, "{"+key+"}", value, -1)
+	oldPattern := ""
+	for pattern != oldPattern {
+		oldPattern = pattern
+		for key, value := range opts {
+			pattern = strings.Replace(pattern, "{"+key+"}", value, -1)
+		}
 	}
 
 	z, err := shellwords.Parse(pattern)
