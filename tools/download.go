@@ -448,8 +448,11 @@ func extractTarGz(body []byte, location string) (string, error) {
 func (t *Tools) installDrivers(location string) error {
 	OK_PRESSED := 6
 	extension := ".bat"
+	preamble := ""
 	if runtime.GOOS != "windows" {
 		extension = ".sh"
+		// add ./ to force locality
+		preamble = "./"
 	}
 	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
 		t.Logger.Println("Installing drivers")
@@ -457,7 +460,7 @@ func (t *Tools) installDrivers(location string) error {
 		t.Logger.Println(ok)
 		if ok == OK_PRESSED {
 			os.Chdir(location)
-			oscmd := exec.Command("post_install" + extension)
+			oscmd := exec.Command(preamble + "post_install" + extension)
 			if runtime.GOOS != "linux" {
 				// spawning a shell could be the only way to let the user type his password
 				TellCommandNotToSpawnShell(oscmd)
