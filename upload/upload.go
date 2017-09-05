@@ -142,11 +142,14 @@ func Serial(port, commandline string, extra Extra, l Logger) error {
 	return program(z[0], z[1:], l)
 }
 
+var cmds = map[*exec.Cmd]bool{}
+
 // Kill stops any upload process as soon as possible
 func Kill() {
-	log.Println(cmd)
-	if cmd != nil && cmd.Process.Pid > 0 {
-		cmd.Process.Kill()
+	for cmd := range cmds {
+		if cmd.Process.Pid > 0 {
+			cmd.Process.Kill()
+		}
 	}
 }
 
@@ -257,14 +260,9 @@ func waitReset(beforeReset []string, l Logger, originalPort string) string {
 	return port
 }
 
-// cmd is the upload command
-var cmd *exec.Cmd
-
 // program spawns the given binary with the given args, logging the sdtout and stderr
 // through the Logger
 func program(binary string, args []string, l Logger) error {
-	defer func() { cmd = nil }()
-
 	// remove quotes form binary command and args
 	binary = strings.Replace(binary, "\"", "", -1)
 
@@ -278,7 +276,13 @@ func program(binary string, args []string, l Logger) error {
 		extension = ".exe"
 	}
 
-	cmd = exec.Command(binary, args...)
+	cmd := exec.Command(binary, args...)
+
+	// Add the command to the map of running commands
+	cmds[cmd] = true
+	defer func() {
+		delete(cmds, cmd)
+	}()
 
 	utilities.TellCommandNotToSpawnShell(cmd)
 
