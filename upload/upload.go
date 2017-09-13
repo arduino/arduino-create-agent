@@ -430,7 +430,7 @@ func ssh(port string, files []string, commandline string, auth Auth, l Logger, S
 
 	// Execute commandline
 	output, err := client.Exec(commandline)
-	info(l, output)
+	info(l, string(output))
 	debug(l, "Execute commandline ", commandline, string(output), err)
 	if err != nil {
 		return errors.Wrapf(err, "Execute commandline")
