@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"os"
 	"os/user"
@@ -94,7 +95,11 @@ func main() {
 			Tools = tools.Tools{
 				Directory: directory,
 				IndexURL:  *indexURL,
-				Logger:    log.New(),
+				Logger: func(msg string) {
+					mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+					mapB, _ := json.Marshal(mapD)
+					h.broadcastSys <- mapB
+				},
 			}
 			Tools.Init(requiredToolsAPILevel)
 

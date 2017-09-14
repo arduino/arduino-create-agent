@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/xrash/smetrics"
 )
 
@@ -33,7 +32,7 @@ type Tools struct {
 	Directory   string
 	IndexURL    string
 	LastRefresh time.Time
-	Logger      log.StdLogger
+	Logger      func(msg string)
 	installed   map[string]string
 }
 
@@ -51,7 +50,6 @@ func (t *Tools) Init(APIlevel string) {
 		t.writeMap()
 		t.readMap()
 	}
-	t.Logger.Println(t.installed)
 }
 
 // GetLocation extracts the toolname from a command like

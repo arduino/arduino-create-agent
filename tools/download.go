@@ -178,14 +178,11 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	var data index
 	json.Unmarshal(body, &data)
 
-	t.Logger.Println(string(body))
-
 	// Find the tool by name
 	correctTool, correctSystem := findTool(pack, name, version, data)
 
 	if correctTool.Name == "" || correctSystem.URL == "" {
-		t.Logger.Println("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
-		return nil
+		return errors.New("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
 	}
 
 	key := correctTool.Name + "-" + correctTool.Version
@@ -196,13 +193,13 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 		if ok && pathExists(location) {
 			// overwrite the default tool with this one
 			t.installed[correctTool.Name] = location
-			t.Logger.Println("The tool is already present on the system")
+			t.Logger("The tool is already present on the system")
 			return t.writeMap()
 		}
 	}
 
 	// Download the tool
-	t.Logger.Println("Downloading tool " + name + " from " + correctSystem.URL)
+	t.Logger("Downloading tool " + name + " from " + correctSystem.URL)
 	resp, err := http.Get(correctSystem.URL)
 	if err != nil {
 		return err
@@ -224,7 +221,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	}
 
 	// Decompress
-	t.Logger.Println("Unpacking tool " + name)
+	t.Logger("Unpacking tool " + name)
 
 	location := path.Join(dir(), pack, correctTool.Name, correctTool.Version)
 	err = os.RemoveAll(location)
@@ -251,7 +248,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	}
 
 	if err != nil {
-		t.Logger.Println("Error extracting the archive: ", err.Error())
+		t.Logger("Error extracting the archive: " + err.Error())
 		return err
 	}
 
@@ -261,10 +258,10 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	}
 
 	// Ensure that the files are executable
-	t.Logger.Println("Ensure that the files are executable")
+	t.Logger("Ensure that the files are executable")
 
 	// Update the tool map
-	t.Logger.Println("Updating map with location " + location)
+	t.Logger("Updating map with location " + location)
 
 	t.installed[name] = location
 	t.installed[name+"-"+correctTool.Version] = location
@@ -455,19 +452,17 @@ func (t *Tools) installDrivers(location string) error {
 		preamble = "./"
 	}
 	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
-		t.Logger.Println("Installing drivers")
+		t.Logger("Installing drivers")
 		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
-		t.Logger.Println(ok)
 		if ok == OK_PRESSED {
 			os.Chdir(location)
+			t.Logger(preamble + "post_install" + extension)
 			oscmd := exec.Command(preamble + "post_install" + extension)
 			if runtime.GOOS != "linux" {
 				// spawning a shell could be the only way to let the user type his password
 				TellCommandNotToSpawnShell(oscmd)
 			}
-			t.Logger.Println(oscmd)
 			err = oscmd.Run()
-			t.Logger.Println(err)
 			return err
 		} else {
 			return errors.New("Could not install drivers")
