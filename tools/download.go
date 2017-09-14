@@ -182,7 +182,8 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	correctTool, correctSystem := findTool(pack, name, version, data)
 
 	if correctTool.Name == "" || correctSystem.URL == "" {
-		return errors.New("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
+		t.Logger("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
+		return nil
 	}
 
 	key := correctTool.Name + "-" + correctTool.Version
