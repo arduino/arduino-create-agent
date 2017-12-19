@@ -4,10 +4,11 @@ package main
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"go.bug.st/serial.v1/enumerator"
 	"regexp"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+	"go.bug.st/serial.v1/enumerator"
 )
 
 type OsSerialPort struct {

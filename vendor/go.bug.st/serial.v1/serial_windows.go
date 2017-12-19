@@ -62,7 +62,7 @@ func (port *windowsPort) Close() error {
 
 func (port *windowsPort) Read(p []byte) (int, error) {
 	var readed uint32
-	params := &dcb{}
+	//params := &dcb{}
 	ev, err := createOverlappedEvent()
 	if err != nil {
 		return 0, err
@@ -94,11 +94,14 @@ func (port *windowsPort) Read(p []byte) (int, error) {
 		// a serial port is alive in Windows is to check if the SetCommState
 		// function fails.
 
-		getCommState(port.handle, params)
-		if err := setCommState(port.handle, params); err != nil {
-			port.Close()
-			return 0, err
-		}
+		// XXX: this function was causing spurious USB transactions;
+		// the 16u2 on an Arduino UNO/Mega interprets these data and sends a \0 to the main processor
+
+		//getCommState(port.handle, params)
+		//if err := setCommState(port.handle, params); err != nil {
+		//	port.Close()
+		//	return 0, err
+		//}
 	}
 }
 

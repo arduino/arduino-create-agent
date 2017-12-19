@@ -230,6 +230,7 @@ func (dev *deviceInfo) openDevRegKey(scope dicsScope, hwProfile uint32, keyType 
 }
 
 func nativeGetDetailedPortsList() ([]*PortDetails, error) {
+
 	guids, err := classGuidsFromName("Ports")
 	if err != nil {
 		return nil, &PortEnumerationError{causedBy: err}
