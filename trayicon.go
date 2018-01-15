@@ -31,12 +31,17 @@
 package main
 
 import (
+	"flag"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/getlantern/systray"
+	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/vharitonsky/iniflags"
 	"go.bug.st/serial.v1"
 )
 
@@ -61,6 +66,31 @@ func addRebootTrayElement() {
 	}()
 }
 
+type ConfigIni struct {
+	Name      string
+	Localtion string
+}
+
+func getConfigs() []ConfigIni {
+	// parse all configs in executable folder
+	// config.ini must be there, so call it Default
+	src, _ := osext.Executable()
+	dest := filepath.Dir(src)
+
+	var configs []ConfigIni
+
+	filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
+		if !f.IsDir() {
+			if filepath.Ext(path) == ".ini" {
+				conf := ConfigIni{Name: f.Name(), Localtion: filepath.Join(dest, f.Name())}
+				configs = append(configs, conf)
+			}
+		}
+		return nil
+	})
+	return configs
+}
+
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.GetIcon())
@@ -68,9 +98,34 @@ func setupSysTrayReal() {
 	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
 	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
 	mPause := systray.AddMenuItem("Pause Plugin", "")
+	var mConfigCheckbox []*systray.MenuItem
+
+	configs := getConfigs()
+
+	for _, config := range configs {
+		log.Println("Adding " + config.Name)
+		mConfigCheckbox = append(mConfigCheckbox, systray.AddMenuItem(config.Name, ""))
+	}
 	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
 	menuVer.Disable()
+
+	for i, _ := range mConfigCheckbox {
+		go func(v int) {
+			for {
+				<-mConfigCheckbox[v].ClickedCh
+				flag.Set("config", configs[v].Localtion)
+				iniflags.UpdateConfig()
+				mConfigCheckbox[v].SetTitle(" ✓ " + configs[v].Name)
+				//mConfigCheckbox[v].Check()
+				for j, _ := range mConfigCheckbox {
+					if j != v {
+						mConfigCheckbox[j].SetTitle("   " + configs[j].Name)
+					}
+				}
+			}
+		}(i)
+	}
 
 	go func() {
 		<-mPause.ClickedCh
