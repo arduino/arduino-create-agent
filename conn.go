@@ -76,7 +76,7 @@ func uploadHandler(c *gin.Context) {
 	data := new(Upload)
 	c.BindJSON(data)
 
-	log.Printf("%+v", data)
+	log.Printf("%+v %+v %+v %+v %+v %+v", data.Port, data.Board, data.Rewrite, data.Commandline, data.Extra, data.Filename)
 
 	if data.Port == "" {
 		c.String(http.StatusBadRequest, "port is required")
