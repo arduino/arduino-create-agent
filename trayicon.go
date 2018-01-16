@@ -39,6 +39,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/getlantern/systray"
+	"github.com/go-ini/ini"
 	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/vharitonsky/iniflags"
@@ -82,13 +83,34 @@ func getConfigs() []ConfigIni {
 	filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
 		if !f.IsDir() {
 			if filepath.Ext(path) == ".ini" {
-				conf := ConfigIni{Name: f.Name(), Localtion: filepath.Join(dest, f.Name())}
+				cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, f.Name()))
+				defaultSection, err := cfg.GetSection("")
+				name := defaultSection.Key("name").String()
+				if name == "" || err != nil {
+					name = "Default config"
+				}
+				conf := ConfigIni{Name: name, Localtion: f.Name()}
 				configs = append(configs, conf)
 			}
 		}
 		return nil
 	})
 	return configs
+}
+
+func applyEnvironment(filename string) {
+	src, _ := osext.Executable()
+	dest := filepath.Dir(src)
+	cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, filename))
+	defaultSection, err := cfg.GetSection("env")
+	if err != nil {
+		return
+	}
+	for _, env := range defaultSection.KeyStrings() {
+		val := defaultSection.Key(env).String()
+		log.Info("Applying env setting: " + env + "=" + val)
+		os.Setenv(env, val)
+	}
 }
 
 func setupSysTrayReal() {
@@ -103,8 +125,14 @@ func setupSysTrayReal() {
 	configs := getConfigs()
 
 	for _, config := range configs {
-		log.Println("Adding " + config.Name)
-		mConfigCheckbox = append(mConfigCheckbox, systray.AddMenuItem(config.Name, ""))
+		entry := systray.AddMenuItem(config.Name, "")
+		mConfigCheckbox = append(mConfigCheckbox, entry)
+		// decorate configs
+		gliph := " ☐ "
+		if *configIni == config.Localtion {
+			gliph = " 🗹 "
+		}
+		entry.SetTitle(gliph + config.Name)
 	}
 	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
@@ -116,11 +144,12 @@ func setupSysTrayReal() {
 				<-mConfigCheckbox[v].ClickedCh
 				flag.Set("config", configs[v].Localtion)
 				iniflags.UpdateConfig()
-				mConfigCheckbox[v].SetTitle(" ✓ " + configs[v].Name)
+				applyEnvironment(configs[v].Localtion)
+				mConfigCheckbox[v].SetTitle(" 🗹 " + configs[v].Name)
 				//mConfigCheckbox[v].Check()
 				for j, _ := range mConfigCheckbox {
 					if j != v {
-						mConfigCheckbox[j].SetTitle("   " + configs[j].Name)
+						mConfigCheckbox[j].SetTitle(" ☐ " + configs[j].Name)
 					}
 				}
 			}
