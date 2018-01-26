@@ -47,6 +47,7 @@ var (
 	Tools                 tools.Tools
 	indexURL              = flag.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
 	requiredToolsAPILevel = "v1"
+	httpProxy             = flag.String("httpProxy", "", "Proxy server for HTTP requests")
 )
 
 type NullWriter int
@@ -122,6 +123,21 @@ func main() {
 			} else {
 				flag.Set("config", dest+"/"+*configIni)
 				iniflags.Parse()
+			}
+
+			// If the httpProxy setting is set, use its value to override the
+			// HTTP_PROXY environment variable. Setting this environment
+			// variable ensures that all HTTP requests using net/http use this
+			// proxy server.
+			if *httpProxy != "" {
+				log.Printf("Setting HTTP_PROXY variable to %v", *httpProxy)
+				err := os.Setenv("HTTP_PROXY", *httpProxy)
+				if err != nil {
+					// The os.Setenv documentation doesn't specify how it can
+					// fail, so I don't know how to handle this error
+					// appropriately.
+					panic(err)
+				}
 			}
 
 			// move CORS to config file compatibility, Vagrant version
