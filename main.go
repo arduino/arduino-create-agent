@@ -238,6 +238,7 @@ func main() {
 			go func() {
 				// check if certificates exist; if not, use plain http
 				if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
+					log.Error("Could not find HTTPS certificate. Using plain HTTP only.")
 					return
 				}
 
