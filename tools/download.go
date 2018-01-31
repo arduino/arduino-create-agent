@@ -51,10 +51,11 @@ type index struct {
 }
 
 var systems = map[string]string{
-	"linuxamd64":  "x86_64-linux-gnu",
-	"linux386":    "i686-linux-gnu",
-	"darwinamd64": "apple-darwin",
-	"windows386":  "i686-mingw32",
+	"linuxamd64":   "x86_64-linux-gnu",
+	"linux386":     "i686-linux-gnu",
+	"darwinamd64":  "apple-darwin",
+	"windows386":   "i686-mingw32",
+	"windowsamd64": "i686-mingw32",
 }
 
 func mimeType(data []byte) (string, error) {
