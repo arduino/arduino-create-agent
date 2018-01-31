@@ -124,15 +124,20 @@ func setupSysTrayReal() {
 
 	configs := getConfigs()
 
-	for _, config := range configs {
-		entry := systray.AddMenuItem(config.Name, "")
-		mConfigCheckbox = append(mConfigCheckbox, entry)
-		// decorate configs
-		gliph := " ☐ "
-		if *configIni == config.Localtion {
-			gliph = " 🗹 "
+	if len(configs) > 1 {
+		for _, config := range configs {
+			entry := systray.AddMenuItem(config.Name, "")
+			mConfigCheckbox = append(mConfigCheckbox, entry)
+			// decorate configs
+			gliph := " ☐ "
+			if *configIni == config.Localtion {
+				gliph = " 🗹 "
+			}
+			entry.SetTitle(gliph + config.Name)
 		}
-		entry.SetTitle(gliph + config.Name)
+	} else {
+		// apply env setting from first config immediately
+		// applyEnvironment(configs[0].Localtion)
 	}
 	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
