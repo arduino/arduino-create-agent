@@ -83,7 +83,12 @@ func getConfigs() []ConfigIni {
 	filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
 		if !f.IsDir() {
 			if filepath.Ext(path) == ".ini" {
-				cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, f.Name()))
+				file := filepath.Join(dest, f.Name())
+				cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, file)
+				if err != nil {
+					log.Printf("Error loading file %v: %v", file, err)
+					return err
+				}
 				defaultSection, err := cfg.GetSection("")
 				name := defaultSection.Key("name").String()
 				if name == "" || err != nil {
