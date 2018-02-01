@@ -107,9 +107,9 @@ Once you have the websocket endpoint you need you can:
 ```javascript
 var socket = io(endpoint);
 socket.on('connect', function () {
-    socket.emit('message', yourCommand);
+    socket.emit('command', yourCommand);
 
-    socket.on('message', function () {
+    socket.on('command', function () {
         // Your code to handle messages
     })
 }
