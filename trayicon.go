@@ -32,6 +32,7 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -80,21 +81,21 @@ func getConfigs() []ConfigIni {
 
 	var configs []ConfigIni
 
-	filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
-		if !f.IsDir() {
-			if filepath.Ext(path) == ".ini" {
-				cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, f.Name()))
-				defaultSection, err := cfg.GetSection("")
-				name := defaultSection.Key("name").String()
-				if name == "" || err != nil {
-					name = "Default config"
-				}
-				conf := ConfigIni{Name: name, Localtion: f.Name()}
-				configs = append(configs, conf)
+	files, _ := ioutil.ReadDir(dest)
+
+	for _, file := range files {
+		if filepath.Ext(file.Name()) == ".ini" {
+			cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, file.Name()))
+			defaultSection, err := cfg.GetSection("")
+			name := defaultSection.Key("name").String()
+			if name == "" || err != nil {
+				name = "Default config"
 			}
+			conf := ConfigIni{Name: name, Localtion: file.Name()}
+			configs = append(configs, conf)
 		}
-		return nil
-	})
+	}
+
 	return configs
 }
 
