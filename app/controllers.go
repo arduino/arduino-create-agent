@@ -242,13 +242,17 @@ func handleDiscoverV1Origin(h goa.Handler) goa.Handler {
 type ManageV1Controller interface {
 	goa.Muxer
 	Info(*InfoManageV1Context) error
+	Pause(*PauseManageV1Context) error
+	Update(*UpdateManageV1Context) error
 }
 
 // MountManageV1Controller "mounts" a ManageV1 resource controller on the given service.
 func MountManageV1Controller(service *goa.Service, ctrl ManageV1Controller) {
 	initService(service)
 	var h goa.Handler
-	service.Mux.Handle("OPTIONS", "/v1/manage", ctrl.MuxHandler("preflight", handleManageV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/v1/manage/info", ctrl.MuxHandler("preflight", handleManageV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/v1/manage/pause", ctrl.MuxHandler("preflight", handleManageV1Origin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/v1/manage/update", ctrl.MuxHandler("preflight", handleManageV1Origin(cors.HandlePreflight()), nil))
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -263,8 +267,40 @@ func MountManageV1Controller(service *goa.Service, ctrl ManageV1Controller) {
 		return ctrl.Info(rctx)
 	}
 	h = handleManageV1Origin(h)
-	service.Mux.Handle("GET", "/v1/manage", ctrl.MuxHandler("info", h, nil))
-	service.LogInfo("mount", "ctrl", "ManageV1", "action", "Info", "route", "GET /v1/manage")
+	service.Mux.Handle("GET", "/v1/manage/info", ctrl.MuxHandler("info", h, nil))
+	service.LogInfo("mount", "ctrl", "ManageV1", "action", "Info", "route", "GET /v1/manage/info")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewPauseManageV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Pause(rctx)
+	}
+	h = handleManageV1Origin(h)
+	service.Mux.Handle("POST", "/v1/manage/pause", ctrl.MuxHandler("pause", h, nil))
+	service.LogInfo("mount", "ctrl", "ManageV1", "action", "Pause", "route", "POST /v1/manage/pause")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewUpdateManageV1Context(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		return ctrl.Update(rctx)
+	}
+	h = handleManageV1Origin(h)
+	service.Mux.Handle("POST", "/v1/manage/update", ctrl.MuxHandler("update", h, nil))
+	service.LogInfo("mount", "ctrl", "ManageV1", "action", "Update", "route", "POST /v1/manage/update")
 }
 
 // handleManageV1Origin applies the CORS response headers corresponding to the origin.
@@ -302,9 +338,15 @@ type PublicController interface {
 func MountPublicController(service *goa.Service, ctrl PublicController) {
 	initService(service)
 	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/ca", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/swagger.json", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/debug", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/docs", ctrl.MuxHandler("preflight", handlePublicOrigin(cors.HandlePreflight()), nil))
+
+	h = ctrl.FileHandler("/ca", "ca.cert.pem")
+	h = handlePublicOrigin(h)
+	service.Mux.Handle("GET", "/ca", ctrl.MuxHandler("serve", h, nil))
+	service.LogInfo("mount", "ctrl", "Public", "files", "ca.cert.pem", "route", "GET /ca")
 
 	h = ctrl.FileHandler("/swagger.json", "swagger/swagger.json")
 	h = handlePublicOrigin(h)

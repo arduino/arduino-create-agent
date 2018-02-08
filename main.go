@@ -77,6 +77,12 @@ func Start(opts Opts) {
 	monitor := discovery.New(1 * time.Second)
 	monitor.Start(context.Background())
 
+	// Setup helper functions
+	restart := restartFunc("", !opts.Hibernate)
+	shutdown := func() {
+		os.Exit(0)
+	}
+
 	// Mount middleware
 	service.Use(middleware.RequestID())
 	service.Use(middleware.LogRequest(true))
@@ -92,7 +98,7 @@ func Start(opts Opts) {
 	app.MountDiscoverV1Controller(service, d)
 
 	// Mount "manage" controller
-	m := NewManageV1Controller(service, version, revision)
+	m := NewManageV1Controller(service, version, revision, restart)
 	app.MountManageV1Controller(service, m)
 
 	// Mount "tools" controller
@@ -106,12 +112,6 @@ func Start(opts Opts) {
 	// Mount "public" controller
 	public := NewPublicController(service)
 	app.MountPublicController(service, public)
-
-	// Mount systray
-	restart := restartFunc("", !opts.Hibernate)
-	shutdown := func() {
-		os.Exit(0)
-	}
 
 	// Find boards
 	http, https := findPorts()

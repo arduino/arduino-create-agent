@@ -61,7 +61,6 @@ func setupSystrayReal(version, revision, address string, restart func()) func() 
 			for {
 				select {
 				case <-mPause.ClickedCh:
-					systray.Quit()
 					restart()
 				case <-mDebug.ClickedCh:
 					open.Start(address + "/debug")

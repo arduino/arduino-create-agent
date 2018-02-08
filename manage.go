@@ -38,14 +38,16 @@ type ManageV1Controller struct {
 	*goa.Controller
 	Version  string
 	Revision string
+	Restart  func()
 }
 
 // NewManageV1Controller creates a Manage_v1 controller.
-func NewManageV1Controller(service *goa.Service, version, revision string) *ManageV1Controller {
+func NewManageV1Controller(service *goa.Service, version, revision string, restart func()) *ManageV1Controller {
 	return &ManageV1Controller{
 		Controller: service.NewController("ManageV1Controller"),
 		Version:    version,
 		Revision:   revision,
+		Restart:    restart,
 	}
 }
 
@@ -55,4 +57,15 @@ func (c *ManageV1Controller) Info(ctx *app.InfoManageV1Context) error {
 		Version:  c.Version,
 		Revision: c.Revision,
 	})
+}
+
+// Pause runs the Pause action.
+func (c *ManageV1Controller) Pause(ctx *app.PauseManageV1Context) error {
+	c.Restart()
+	return ctx.OK(nil)
+}
+
+// Update runs the Update action.
+func (c *ManageV1Controller) Update(ctx *app.UpdateManageV1Context) error {
+	return ctx.OK(nil)
 }

@@ -467,7 +467,7 @@ paths:
       summary: list discover_v1
       tags:
       - discover_v1
-  /v1/manage:
+  /v1/manage/info:
     get:
       description: Returns the info about the agent
       operationId: manage_v1#info
@@ -481,6 +481,34 @@ paths:
       schemes:
       - http
       summary: info manage_v1
+      tags:
+      - manage_v1
+  /v1/manage/pause:
+    post:
+      description: Restarts the agent in hibernation mode
+      operationId: manage_v1#pause
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+      schemes:
+      - http
+      summary: pause manage_v1
+      tags:
+      - manage_v1
+  /v1/manage/update:
+    post:
+      description: Search for a new version, updates and restarts itself
+      operationId: manage_v1#update
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+      schemes:
+      - http
+      summary: update manage_v1
       tags:
       - manage_v1
   /v1/tools/:
@@ -584,6 +612,8 @@ responses:
     description: Bad Request
   NotFound:
     description: Not Found
+  OK:
+    description: OK
   SwitchingProtocols:
     description: Switching Protocols
 schemes:

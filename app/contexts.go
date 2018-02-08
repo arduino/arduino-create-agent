@@ -211,6 +211,64 @@ func (ctx *InfoManageV1Context) OK(r *ArduinoAgentManageInfo) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
+// PauseManageV1Context provides the manage_v1 pause action context.
+type PauseManageV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+}
+
+// NewPauseManageV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the manage_v1 controller pause action.
+func NewPauseManageV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*PauseManageV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := PauseManageV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *PauseManageV1Context) OK(resp []byte) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "text/plain")
+	}
+	ctx.ResponseData.WriteHeader(200)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// UpdateManageV1Context provides the manage_v1 update action context.
+type UpdateManageV1Context struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+}
+
+// NewUpdateManageV1Context parses the incoming request URL and body, performs validations and creates the
+// context used by the manage_v1 controller update action.
+func NewUpdateManageV1Context(ctx context.Context, r *http.Request, service *goa.Service) (*UpdateManageV1Context, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := UpdateManageV1Context{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *UpdateManageV1Context) OK(resp []byte) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "text/plain")
+	}
+	ctx.ResponseData.WriteHeader(200)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
 // DownloadToolsV1Context provides the tools_v1 download action context.
 type DownloadToolsV1Context struct {
 	context.Context

@@ -38,8 +38,18 @@ var _ = Resource("manage_v1", func() {
 
 	Action("info", func() {
 		Description("Returns the info about the agent")
-		Routing(GET(""))
+		Routing(GET("/info"))
 		Response(OK, ManageInfoV1)
+	})
+	Action("pause", func() {
+		Description("Restarts the agent in hibernation mode")
+		Routing(POST("/pause"))
+		Response(OK)
+	})
+	Action("update", func() {
+		Description("Search for a new version, updates and restarts itself")
+		Routing(POST("/update"))
+		Response(OK)
 	})
 })
 

@@ -38,8 +38,12 @@ func main() {
 	var (
 		hibernate = flag.Bool("hibernate", false, "start hibernated")
 	)
+
+	flag.Parse()
+
 	opts := agent.Opts{
 		Hibernate: *hibernate,
 	}
+
 	agent.Start(opts)
 }
