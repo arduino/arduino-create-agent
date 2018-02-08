@@ -21,11 +21,11 @@ import (
 	"net/url"
 )
 
-// DownloadToolsV1OK runs the method Download of the given controller with the given parameters.
+// DownloadToolsV1OK runs the method Download of the given controller with the given parameters and payload.
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func DownloadToolsV1OK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.ToolsV1Controller, packager string, name string, version string) (http.ResponseWriter, *app.ArduinoAgentToolsTool) {
+func DownloadToolsV1OK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.ToolsV1Controller, payload *app.ToolDownload) (http.ResponseWriter, *app.ArduinoAgentToolsTool) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -43,53 +43,62 @@ func DownloadToolsV1OK(t goatest.TInterface, ctx context.Context, service *goa.S
 		service.Encoder.Register(newEncoder, "*/*")
 	}
 
+	// Validate payload
+	err := payload.Validate()
+	if err != nil {
+		e, ok := err.(goa.ServiceError)
+		if !ok {
+			panic(err) // bug
+		}
+		t.Errorf("unexpected payload validation error: %+v", e)
+		return nil, nil
+	}
+
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/v1/tools/%v/%v/%v", packager, name, version),
+		Path: fmt.Sprintf("/v1/tools/"),
 	}
-	req, err := http.NewRequest("POST", u.String(), nil)
-	if err != nil {
-		panic("invalid test " + err.Error()) // bug
+	req, _err := http.NewRequest("POST", u.String(), nil)
+	if _err != nil {
+		panic("invalid test " + _err.Error()) // bug
 	}
 	prms := url.Values{}
-	prms["packager"] = []string{fmt.Sprintf("%v", packager)}
-	prms["name"] = []string{fmt.Sprintf("%v", name)}
-	prms["version"] = []string{fmt.Sprintf("%v", version)}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "ToolsV1Test"), rw, req, prms)
-	downloadCtx, _err := app.NewDownloadToolsV1Context(goaCtx, req, service)
-	if _err != nil {
-		e, ok := _err.(goa.ServiceError)
-		if !ok {
-			panic("invalid test data " + _err.Error()) // bug
+	downloadCtx, __err := app.NewDownloadToolsV1Context(goaCtx, req, service)
+	if __err != nil {
+		_e, _ok := __err.(goa.ServiceError)
+		if !_ok {
+			panic("invalid test data " + __err.Error()) // bug
 		}
-		t.Errorf("unexpected parameter validation error: %+v", e)
+		t.Errorf("unexpected parameter validation error: %+v", _e)
 		return nil, nil
 	}
+	downloadCtx.Payload = payload
 
 	// Perform action
-	_err = ctrl.Download(downloadCtx)
+	__err = ctrl.Download(downloadCtx)
 
 	// Validate response
-	if _err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	if __err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
 	}
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
 	var mt *app.ArduinoAgentToolsTool
 	if resp != nil {
-		var _ok bool
-		mt, _ok = resp.(*app.ArduinoAgentToolsTool)
-		if !_ok {
+		var __ok bool
+		mt, __ok = resp.(*app.ArduinoAgentToolsTool)
+		if !__ok {
 			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of app.ArduinoAgentToolsTool", resp, resp)
 		}
-		_err = mt.Validate()
-		if _err != nil {
-			t.Errorf("invalid response media type: %s", _err)
+		__err = mt.Validate()
+		if __err != nil {
+			t.Errorf("invalid response media type: %s", __err)
 		}
 	}
 

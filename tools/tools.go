@@ -30,30 +30,85 @@ package tools
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
-	"io"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
 	"github.com/codeclysm/extract"
-	"github.com/pkg/errors"
-	"github.com/xrash/smetrics"
-
-	"golang.org/x/crypto/openpgp"
 )
+
+type Tool struct {
+	Name     string
+	Version  string
+	Packager string
+	Path     string
+}
+
+func (t *Tool) Download(url, signature string, opts *Opts) error {
+	opts = opts.fill()
+
+	// Download
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := opts.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Checksum
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	h := sha256.New()
+	h.Write(body)
+	sum := h.Sum(nil)
+	signature = strings.Split(signature, ":")[1]
+
+	if string(hex.EncodeToString(sum)) != signature {
+		return errors.New("signature doesn't match")
+	}
+
+	// Remove folder
+	path := filepath.Join(opts.Location, t.Packager, t.Name, t.Version)
+	err = os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+
+	// Extract
+	err = extract.Archive(bytes.NewReader(body), path, func(file string) string {
+		// Remove the first part of the path if it matches the name
+		parts := strings.Split(file, string(filepath.Separator))
+		if len(parts) > 0 && strings.HasPrefix(parts[0], t.Name) {
+			parts = parts[1:]
+			file = strings.Join(parts, string(filepath.Separator))
+		}
+
+		return file
+	})
+	if err != nil {
+		return err
+	}
+	t.Path = path
+
+	return nil
+}
 
 // Opts contain options to pass to the Download function
 type Opts struct {
-	IndexURL string
-	Key      string
 	Location string
 	Client   *http.Client
 }
@@ -64,88 +119,20 @@ func (o *Opts) fill() *Opts {
 		o = &Opts{}
 	}
 
-	if o.IndexURL == "" {
-		o.IndexURL = "https://downloads.arduino.cc/packages/package_index.json"
-	}
-
-	if o.Key == "" {
-		o.Key = gpgpHex
-	}
-
 	if o.Location == "" {
 		usr, _ := user.Current()
 		o.Location = filepath.Join(usr.HomeDir, ".arduino-create")
 	}
 
-	return o
-}
-
-// Download by default parses a cached version (refreshed every hour) of
-// https://downloads.arduino.cc/packages/package_index.json
-// for a suitable download for the user OS and unpacks it in the ~/.arduino-create folder
-// replacing the existing files if existing
-// version can be a valid version or the string "latest"
-func Download(packager, name, version string, opts *Opts) (*Tool, error) {
-	opts = opts.fill()
-
-	// download index
-	err := downloadIndex(opts.IndexURL, opts.Location, opts.Key, opts.Client)
-	if err != nil {
-		return nil, errors.Wrap(err, "download index")
-	}
-
-	// parse index
-	data, err := ioutil.ReadFile(filepath.Join(opts.Location, filepath.Base(opts.IndexURL)))
-	if err != nil {
-		return nil, errors.Wrap(err, "parse index")
-	}
-
-	var i index
-	err = json.Unmarshal(data, &i)
-	if err != nil {
-		return nil, errors.Wrap(err, "parse index")
-	}
-
-	tool, system := i.find(packager, name, version)
-	if tool.Name == "" || system.URL == "" {
-		return nil, errors.New("tool not found")
-	}
-
-	// Download
-	resp, err := http.Get(system.URL)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// Remove folder
-	path := filepath.Join(opts.Location, packager, tool.Name, tool.Version)
-	err = os.RemoveAll(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// Extract
-	err = extract.Archive(resp.Body, path, func(file string) string {
-		// Remove the first part of the path if it matches the name
-		parts := strings.Split(file, string(filepath.Separator))
-		if len(parts) > 0 && parts[0] == tool.Name {
-			parts = parts[1:]
-			file = strings.Join(parts, string(filepath.Separator))
+	if o.Client == nil {
+		o.Client = &http.Client{
+			Timeout: 10 * time.Second,
 		}
-
-		return file
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	return &Tool{
-		Packager: packager,
-		Name:     tool.Name,
-		Version:  tool.Version,
-		Path:     path,
-	}, nil
+	fmt.Println(o)
+
+	return o
 }
 
 // Installed returns a list of the installed tools
@@ -196,153 +183,4 @@ func Installed(opts *Opts) ([]Tool, error) {
 	}
 
 	return installed, nil
-}
-
-// downloadIndex parses https://downloads.arduino.cc/packages/package_index.json checking the signature and saving both files into location
-func downloadIndex(url, location, keyString string, client *http.Client) error {
-	if client == nil {
-		client = &http.Client{}
-		client.Timeout = 30 * time.Second
-	}
-	// Fetch the index
-	index, err := client.Get(url)
-	if err != nil {
-		return err
-	}
-	defer index.Body.Close()
-
-	// Fetch the signature
-	sig, err := client.Get(url + ".sig")
-	if err != nil {
-		return err
-	}
-	defer sig.Body.Close()
-
-	var bodyBuf, sigBuf bytes.Buffer
-	body := io.TeeReader(index.Body, &bodyBuf)
-	sigBody := io.TeeReader(sig.Body, &sigBuf)
-
-	// Check signature
-	key, err := hex.DecodeString(keyString)
-	if err != nil {
-		return err
-	}
-
-	err = checkGPGSig(body, sigBody, key)
-	if err != nil {
-		return err
-	}
-
-	filename := filepath.Join(location, filepath.Base(url))
-
-	bodyFile, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer bodyFile.Close()
-
-	_, err = io.Copy(bodyFile, &bodyBuf)
-	if err != nil {
-		return err
-	}
-
-	sigFile, err := os.Create(filename + ".sig")
-	if err != nil {
-		return err
-	}
-	defer sigFile.Close()
-
-	_, err = io.Copy(sigFile, &sigBuf)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// checkGPGSig validates the signature (sig) of the body with the given key
-func checkGPGSig(body, sig io.Reader, key []byte) error {
-	keyring, err := openpgp.ReadKeyRing(bytes.NewReader(key))
-	if err != nil {
-		return err
-	}
-
-	_, err = openpgp.CheckDetachedSignature(keyring, body, sig)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type index struct {
-	Packages []struct {
-		Name  string `json:"name"`
-		Tools []tool `json:"tools"`
-	} `json:"packages"`
-}
-
-func (i index) find(packager, name, version string) (correctTool tool, correctSystem system) {
-	correctTool.Version = "0.0"
-
-	for _, p := range i.Packages {
-		if p.Name != packager {
-			continue
-		}
-		for _, t := range p.Tools {
-			if version != "latest" {
-				if t.Name == name && t.Version == version {
-					correctTool = t
-				}
-			} else {
-				// Find latest
-				v1, _ := semver.Make(t.Version)
-				v2, _ := semver.Make(correctTool.Version)
-				if t.Name == name && v1.Compare(v2) > 0 {
-					correctTool = t
-				}
-			}
-		}
-	}
-
-	// Find the url based on system
-	maxSimilarity := 0.7
-
-	for _, s := range correctTool.Systems {
-		similarity := smetrics.Jaro(s.Host, systems[runtime.GOOS+runtime.GOARCH])
-		if similarity > maxSimilarity {
-			correctSystem = s
-			maxSimilarity = similarity
-		}
-	}
-
-	return correctTool, correctSystem
-}
-
-type Tool struct {
-	Name     string
-	Version  string
-	Packager string
-	Path     string
-}
-
-type tool struct {
-	Name        string   `json:"name"`
-	Version     string   `json:"version"`
-	Systems     []system `json:"systems"`
-	url         string
-	destination string
-}
-type system struct {
-	Host     string `json:"host"`
-	URL      string `json:"url"`
-	Name     string `json:"archiveFileName"`
-	CheckSum string `json:"checksum"`
-}
-
-var systems = map[string]string{
-	"linuxamd64":  "x86_64-linux-gnu",
-	"linux386":    "i686-linux-gnu",
-	"darwinamd64": "apple-darwin",
-	"windows386":  "i686-mingw32",
 }

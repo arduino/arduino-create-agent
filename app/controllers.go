@@ -400,7 +400,6 @@ type ToolsV1Controller interface {
 func MountToolsV1Controller(service *goa.Service, ctrl ToolsV1Controller) {
 	initService(service)
 	var h goa.Handler
-	service.Mux.Handle("OPTIONS", "/v1/tools/:packager/:name/:version", ctrl.MuxHandler("preflight", handleToolsV1Origin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/v1/tools/", ctrl.MuxHandler("preflight", handleToolsV1Origin(cors.HandlePreflight()), nil))
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
@@ -413,11 +412,17 @@ func MountToolsV1Controller(service *goa.Service, ctrl ToolsV1Controller) {
 		if err != nil {
 			return err
 		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(*ToolDownload)
+		} else {
+			return goa.MissingPayloadError()
+		}
 		return ctrl.Download(rctx)
 	}
 	h = handleToolsV1Origin(h)
-	service.Mux.Handle("POST", "/v1/tools/:packager/:name/:version", ctrl.MuxHandler("download", h, nil))
-	service.LogInfo("mount", "ctrl", "ToolsV1", "action", "Download", "route", "POST /v1/tools/:packager/:name/:version")
+	service.Mux.Handle("POST", "/v1/tools/", ctrl.MuxHandler("download", h, unmarshalDownloadToolsV1Payload))
+	service.LogInfo("mount", "ctrl", "ToolsV1", "action", "Download", "route", "POST /v1/tools/")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -459,6 +464,21 @@ func handleToolsV1Origin(h goa.Handler) goa.Handler {
 
 		return h(ctx, rw, req)
 	}
+}
+
+// unmarshalDownloadToolsV1Payload unmarshals the request body into the context request data Payload field.
+func unmarshalDownloadToolsV1Payload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	payload := &toolDownload{}
+	if err := service.DecodeRequest(req, payload); err != nil {
+		return err
+	}
+	if err := payload.Validate(); err != nil {
+		// Initialize payload with private data structure so it can be logged
+		goa.ContextRequest(ctx).Payload = payload
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload.Publicize()
+	return nil
 }
 
 // UploadV1Controller is the controller interface for the UploadV1 actions.

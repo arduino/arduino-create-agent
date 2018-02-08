@@ -142,6 +142,10 @@ definitions:
       info: board=Arduino Y\195\186n Shield distro_version=0.1
       name: MyShield
       port: 80
+    - address: 192.168.1.107
+      info: board=Arduino Y\195\186n Shield distro_version=0.1
+      name: MyShield
+      port: 80
     items:
       $ref: '#/definitions/ArduinoAgentDiscoverNetwork'
     title: 'Mediatype identifier: application/vnd.arduino.agent.discover.network+json;
@@ -182,10 +186,6 @@ definitions:
     description: ArduinoAgentDiscoverSerialCollection is the media type for an array
       of ArduinoAgentDiscoverSerial (default view)
     example:
-    - pid: "0x8036"
-      port: /dev/ttyACM0
-      serial: Consequatur et.
-      vid: "0x2341"
     - pid: "0x8036"
       port: /dev/ttyACM0
       serial: Consequatur et.
@@ -316,6 +316,48 @@ definitions:
         example: /dev/ttyACM0
         type: string
     title: command.param
+    type: object
+  tool.download:
+    example:
+      checksum: SHA-256:71117cce0096dad6c091e2c34eb0b9a3386d3aec7d863d2da733d9e5eac3a6b1
+      name: avrdude
+      packager: arduino
+      signature: 2d701b4efbc8cec62dc299cde01730c5eebcf23d7e4393db8cf7744a9bf1d3de
+      url: http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2
+      version: 6.0.1-arduino2
+    properties:
+      checksum:
+        description: The checksum of the tool to download
+        example: SHA-256:71117cce0096dad6c091e2c34eb0b9a3386d3aec7d863d2da733d9e5eac3a6b1
+        type: string
+      name:
+        description: Name of the tool
+        example: avrdude
+        type: string
+      packager:
+        description: Packager of the tool
+        example: arduino
+        type: string
+      signature:
+        description: The signature of the url of the tool
+        example: 2d701b4efbc8cec62dc299cde01730c5eebcf23d7e4393db8cf7744a9bf1d3de
+        type: string
+      url:
+        description: Url of the tool to download
+        example: http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2
+        type: string
+      version:
+        description: Version of the tool
+        example: 6.0.1-arduino2
+        type: string
+    required:
+    - packager
+    - name
+    - version
+    - url
+    - checksum
+    - signature
+    title: tool.download
     type: object
   upload.serial:
     description: The necessary info to upload a sketch over a serial port
@@ -527,26 +569,15 @@ paths:
       summary: list tools_v1
       tags:
       - tools_v1
-  /v1/tools/{packager}/{name}/{version}:
     post:
       description: Downloads a tool in the system
       operationId: tools_v1#download
       parameters:
-      - description: The name of the tool
-        in: path
-        name: name
+      - in: body
+        name: payload
         required: true
-        type: string
-      - description: The packager of the tool
-        in: path
-        name: packager
-        required: true
-        type: string
-      - description: The version of the tool
-        in: path
-        name: version
-        required: true
-        type: string
+        schema:
+          $ref: '#/definitions/tool.download'
       produces:
       - application/vnd.arduino.agent.tools.tool+json
       responses:

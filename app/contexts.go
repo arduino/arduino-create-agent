@@ -274,9 +274,7 @@ type DownloadToolsV1Context struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
-	Name     string
-	Packager string
-	Version  string
+	Payload *ToolDownload
 }
 
 // NewDownloadToolsV1Context parses the incoming request URL and body, performs validations and creates the
@@ -288,21 +286,6 @@ func NewDownloadToolsV1Context(ctx context.Context, r *http.Request, service *go
 	req := goa.ContextRequest(ctx)
 	req.Request = r
 	rctx := DownloadToolsV1Context{Context: ctx, ResponseData: resp, RequestData: req}
-	paramName := req.Params["name"]
-	if len(paramName) > 0 {
-		rawName := paramName[0]
-		rctx.Name = rawName
-	}
-	paramPackager := req.Params["packager"]
-	if len(paramPackager) > 0 {
-		rawPackager := paramPackager[0]
-		rctx.Packager = rawPackager
-	}
-	paramVersion := req.Params["version"]
-	if len(paramVersion) > 0 {
-		rawVersion := paramVersion[0]
-		rctx.Version = rawVersion
-	}
 	return &rctx, err
 }
 

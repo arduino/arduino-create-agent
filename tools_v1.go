@@ -26,7 +26,7 @@
  *
  * Copyright 2017 ARDUINO AG (http://www.arduino.cc/)
  */
- package agent
+package agent
 
 import (
 	"github.com/arduino/arduino-create-agent/app"
@@ -46,7 +46,16 @@ func NewToolsV1Controller(service *goa.Service) *ToolsV1Controller {
 
 // Download runs the download action.
 func (c *ToolsV1Controller) Download(ctx *app.DownloadToolsV1Context) error {
-	tool, err := tools.Download(ctx.Packager, ctx.Name, ctx.Version, nil)
+	// Verify signature
+
+	// Download tool
+	tool := tools.Tool{
+		Packager: ctx.Payload.Packager,
+		Name:     ctx.Payload.Name,
+		Version:  ctx.Payload.Version,
+	}
+
+	err := tool.Download(ctx.Payload.URL, ctx.Payload.Checksum, nil)
 	if err != nil {
 		return err
 	}

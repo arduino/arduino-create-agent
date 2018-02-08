@@ -43,18 +43,8 @@ var _ = Resource("tools_v1", func() {
 	})
 	Action("download", func() {
 		Description("Downloads a tool in the system")
-		Routing(POST("/:packager/:name/:version"))
-		Params(func() {
-			Param("packager", String, "The packager of the tool", func() {
-				Example("arduino")
-			})
-			Param("name", String, "The name of the tool", func() {
-				Example("avrdude")
-			})
-			Param("version", String, "The version of the tool", func() {
-				Example("latest")
-			})
-		})
+		Routing(POST("/"))
+		Payload(ToolDownloadV1)
 		Response(OK, ToolV1)
 	})
 })
@@ -83,4 +73,27 @@ var ToolV1 = MediaType("application/vnd.arduino.agent.tools.tool+json", func() {
 		Attribute("name")
 		Attribute("version")
 	})
+})
+
+var ToolDownloadV1 = Type("tool.download", func() {
+	Attribute("name", String, "Name of the tool", func() {
+		Example("avrdude")
+	})
+	Attribute("packager", String, "Packager of the tool", func() {
+		Example("arduino")
+	})
+	Attribute("version", String, "Version of the tool", func() {
+		Example("6.0.1-arduino2")
+	})
+	Attribute("url", String, "Url of the tool to download", func() {
+		Example("http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2")
+	})
+	Attribute("checksum", String, "The checksum of the tool to download", func() {
+		Example("SHA-256:71117cce0096dad6c091e2c34eb0b9a3386d3aec7d863d2da733d9e5eac3a6b1")
+	})
+	Attribute("signature", String, "The signature of the url of the tool", func() {
+		Example("2d701b4efbc8cec62dc299cde01730c5eebcf23d7e4393db8cf7744a9bf1d3de")
+	})
+
+	Required("packager", "name", "version", "url", "checksum", "signature")
 })

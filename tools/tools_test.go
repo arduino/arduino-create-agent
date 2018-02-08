@@ -45,7 +45,13 @@ func TestDownload(t *testing.T) {
 		Location: tmp,
 	}
 
-	tool, err := tools.Download("arduino", "avrdude", "latest", &opts)
+	tool := tools.Tool{
+		Name:     "avrdude",
+		Version:  "6.0.1-arduino2",
+		Packager: "arduino",
+	}
+
+	err := tool.Download("http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2", "SHA-256:2489004d1d98177eaf69796760451f89224007c98b39ebb5577a9a34f51425f1", &opts)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -72,7 +78,13 @@ func TestInstalled(t *testing.T) {
 		t.Error("Expected len(list) to be 0, got", len(list))
 	}
 
-	_, err = tools.Download("arduino", "avrdude", "latest", &opts)
+	tool := tools.Tool{
+		Name:     "avrdude",
+		Version:  "6.0.1-arduino2",
+		Packager: "arduino",
+	}
+
+	err = tool.Download("http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2", "SHA-256:2489004d1d98177eaf69796760451f89224007c98b39ebb5577a9a34f51425f1", &opts)
 	if err != nil {
 		t.Error(err.Error())
 	}

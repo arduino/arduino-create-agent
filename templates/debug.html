@@ -96,7 +96,27 @@
 			<div class="col">
 				<div class="form-group">
 					<label for="install-version">Version</label>
-					<input type="text" class="form-control" id="install-version"value="latest">
+					<input type="text" class="form-control" id="install-version"value="6.0.1-arduino2">
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<label for="install-url">URL</label>
+					<input type="text" class="form-control" id="install-url"value="http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2">
+				</div>
+			</div>
+			<div class="col">
+				<div class="form-group">
+					<label for="install-checksum">checksum</label>
+					<input type="text" class="form-control" id="install-checksum"value="SHA-256:2489004d1d98177eaf69796760451f89224007c98b39ebb5577a9a34f51425f1">
+				</div>
+			</div>
+			<div class="col">
+				<div class="form-group">
+					<label for="install-signature">signature</label>
+					<input type="text" class="form-control" id="install-signature"value="TODO">
 				</div>
 			</div>
 		</div>
@@ -235,8 +255,18 @@ function install() {
 	var packager = document.getElementById('install-packager').value;
 	var name = document.getElementById('install-name').value;
 	var version = document.getElementById('install-version').value;
+	var url = document.getElementById('install-url').value;
+	var checksum = document.getElementById('install-checksum').value;
+	var signature = document.getElementById('install-signature').value;
 
-	req('POST', '/v1/tools/' + packager + '/' + name + '/' + version, 'install');
+	req('POST', '/v1/tools/', 'install', {
+		packager: packager,
+		name: name,
+		version: version,
+		url: url,
+		checksum: checksum,
+		signature: signature
+	});
 }
 
 function upload() {
@@ -270,7 +300,7 @@ function showupload() {
 function req(method, url, el, body) {
 	var req = new Request(url, {
 		method: method,
-		body: body,
+		body: JSON.stringify(body),
 	});
 
 	var reqEl = document.getElementById(el + '-req');

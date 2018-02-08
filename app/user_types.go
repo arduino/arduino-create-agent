@@ -7,6 +7,10 @@
 
 package app
 
+import (
+	"github.com/goadesign/goa"
+)
+
 // Option for the command to execute
 type commandParam struct {
 	// The name of the param
@@ -33,6 +37,108 @@ type CommandParam struct {
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// The value of the option
 	Value *string `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+}
+
+// toolDownload user type.
+type toolDownload struct {
+	// The checksum of the tool to download
+	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
+	// Name of the tool
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Packager of the tool
+	Packager *string `form:"packager,omitempty" json:"packager,omitempty" xml:"packager,omitempty"`
+	// The signature of the url of the tool
+	Signature *string `form:"signature,omitempty" json:"signature,omitempty" xml:"signature,omitempty"`
+	// Url of the tool to download
+	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+	// Version of the tool
+	Version *string `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
+}
+
+// Validate validates the toolDownload type instance.
+func (ut *toolDownload) Validate() (err error) {
+	if ut.Packager == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "packager"))
+	}
+	if ut.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "name"))
+	}
+	if ut.Version == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "version"))
+	}
+	if ut.URL == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "url"))
+	}
+	if ut.Checksum == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "checksum"))
+	}
+	if ut.Signature == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "signature"))
+	}
+	return
+}
+
+// Publicize creates ToolDownload from toolDownload
+func (ut *toolDownload) Publicize() *ToolDownload {
+	var pub ToolDownload
+	if ut.Checksum != nil {
+		pub.Checksum = *ut.Checksum
+	}
+	if ut.Name != nil {
+		pub.Name = *ut.Name
+	}
+	if ut.Packager != nil {
+		pub.Packager = *ut.Packager
+	}
+	if ut.Signature != nil {
+		pub.Signature = *ut.Signature
+	}
+	if ut.URL != nil {
+		pub.URL = *ut.URL
+	}
+	if ut.Version != nil {
+		pub.Version = *ut.Version
+	}
+	return &pub
+}
+
+// ToolDownload user type.
+type ToolDownload struct {
+	// The checksum of the tool to download
+	Checksum string `form:"checksum" json:"checksum" xml:"checksum"`
+	// Name of the tool
+	Name string `form:"name" json:"name" xml:"name"`
+	// Packager of the tool
+	Packager string `form:"packager" json:"packager" xml:"packager"`
+	// The signature of the url of the tool
+	Signature string `form:"signature" json:"signature" xml:"signature"`
+	// Url of the tool to download
+	URL string `form:"url" json:"url" xml:"url"`
+	// Version of the tool
+	Version string `form:"version" json:"version" xml:"version"`
+}
+
+// Validate validates the ToolDownload type instance.
+func (ut *ToolDownload) Validate() (err error) {
+	if ut.Packager == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "packager"))
+	}
+	if ut.Name == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "name"))
+	}
+	if ut.Version == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "version"))
+	}
+	if ut.URL == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "url"))
+	}
+	if ut.Checksum == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "checksum"))
+	}
+	if ut.Signature == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "signature"))
+	}
+	return
 }
 
 // The necessary info to upload a sketch over a serial port
