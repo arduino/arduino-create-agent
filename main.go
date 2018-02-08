@@ -83,13 +83,17 @@ func Start(opts Opts) {
 	service.Use(middleware.ErrorHandler(service, true))
 	service.Use(middleware.Recover())
 
+	// Mount "connect" controller
+	c := NewConnectV1Controller(service)
+	app.MountConnectV1Controller(service, c)
+
 	// Mount "discovery" controller
 	d := NewDiscoverV1Controller(service, monitor)
 	app.MountDiscoverV1Controller(service, d)
 
-	// Mount "connect" controller
-	c := NewConnectV1Controller(service)
-	app.MountConnectV1Controller(service, c)
+	// Mount "manage" controller
+	m := NewManageV1Controller(service, version, revision)
+	app.MountManageV1Controller(service, m)
 
 	// Mount "tools" controller
 	t := NewToolsV1Controller(service)

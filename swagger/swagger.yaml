@@ -61,6 +61,14 @@ definitions:
       - build.project_name
       pattern: '"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"
         {upload.verbose}  -patmega328p -carduino -P{serial.port} -b115200 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"'
+    - id: upload:arduino:avr:uno
+      params:
+      - upload.verbose
+      - serial.port
+      - build.path
+      - build.project_name
+      pattern: '"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"
+        {upload.verbose}  -patmega328p -carduino -P{serial.port} -b115200 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"'
     items:
       $ref: '#/definitions/ArduinoAgentCommand'
     title: 'Mediatype identifier: application/vnd.arduino.agent.command+json; type=collection;
@@ -70,14 +78,6 @@ definitions:
     description: ArduinoAgentDiscover media type (default view)
     example:
       network:
-      - address: 192.168.1.107
-        info: board=Arduino Y\195\186n Shield distro_version=0.1
-        name: MyShield
-        port: 80
-      - address: 192.168.1.107
-        info: board=Arduino Y\195\186n Shield distro_version=0.1
-        name: MyShield
-        port: 80
       - address: 192.168.1.107
         info: board=Arduino Y\195\186n Shield distro_version=0.1
         name: MyShield
@@ -138,14 +138,6 @@ definitions:
     description: ArduinoAgentDiscoverNetworkCollection is the media type for an array
       of ArduinoAgentDiscoverNetwork (default view)
     example:
-    - address: 192.168.1.107
-      info: board=Arduino Y\195\186n Shield distro_version=0.1
-      name: MyShield
-      port: 80
-    - address: 192.168.1.107
-      info: board=Arduino Y\195\186n Shield distro_version=0.1
-      name: MyShield
-      port: 80
     - address: 192.168.1.107
       info: board=Arduino Y\195\186n Shield distro_version=0.1
       name: MyShield
@@ -231,6 +223,26 @@ definitions:
     - stderr
     title: 'Mediatype identifier: application/vnd.arduino.agent.exec+json; view=default'
     type: object
+  ArduinoAgentManageInfo:
+    description: ArduinoAgentManageInfo media type (default view)
+    example:
+      revision: 4e498c5afc6304b6dc7a74534dbff96015954d48
+      version: v1.0.0
+    properties:
+      revision:
+        description: Revision
+        example: 4e498c5afc6304b6dc7a74534dbff96015954d48
+        type: string
+      version:
+        description: Version
+        example: v1.0.0
+        type: string
+    required:
+    - version
+    - revision
+    title: 'Mediatype identifier: application/vnd.arduino.agent.manage.info+json;
+      view=default'
+    type: object
   ArduinoAgentToolsTool:
     description: ArduinoAgentToolsTool media type (default view)
     example:
@@ -266,10 +278,6 @@ definitions:
     description: ArduinoAgentToolsToolCollection is the media type for an array of
       ArduinoAgentToolsTool (default view)
     example:
-    - name: avrdude
-      packager: packager
-      path: ~/.arduino/create/avrdude/latest
-      version: latest
     - name: avrdude
       packager: packager
       path: ~/.arduino/create/avrdude/latest
@@ -459,7 +467,23 @@ paths:
       summary: list discover_v1
       tags:
       - discover_v1
-  /v1/tools:
+  /v1/manage:
+    get:
+      description: Returns the info about the agent
+      operationId: manage_v1#info
+      produces:
+      - application/vnd.arduino.agent.manage.info+json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ArduinoAgentManageInfo'
+      schemes:
+      - http
+      summary: info manage_v1
+      tags:
+      - manage_v1
+  /v1/tools/:
     get:
       description: Show the installed tools
       operationId: tools_v1#list
