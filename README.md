@@ -18,8 +18,6 @@ Arduino Create exposes a set of rest api hosted on a variable port on localhost 
 
 It also allows to open a websocket connection to a board connected through the serial port.
 
-
-
 ## Security
 A web server running on localhost makes a lot of people nervous. That's why we thought hard about security:
 
@@ -27,6 +25,9 @@ A web server running on localhost makes a lot of people nervous. That's why we t
 - To prevent malicious websites to perform request on the Agent through your browser, we use [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS). You can control who has access through the `origin` field on the configuration file: see [Configure](#configure)
 - Every url that needs to be downloaded, or command that needs to be ran has to be signed by a trusted party. You can control who is trusted through the `trusted` folder: see [Configure](#configure)
 - Commands are whitelisted, so even a trusted party can't execute a malicious command. You can control which commands are whitelisted through the `whitelist` field of the configuration file: see [Configure](#configure)
+
+## SSL Certificates
+The agent creates is available in https thanks to a certificate created by a self-signed certification authority. This doesn't improve directly security, but allows the Agent to be contacted by website running in https.
 
 # Configure
 ## config.ini
@@ -42,3 +43,26 @@ whitelist: avrdude,bossac
 
 ## trusted folder
 The trusted folder contains the public keys of the trusted origins. So if you have `https://create.arduino.cc` you should have its public key on the trusted folder.
+
+# Development
+You need to clone this repository in your workspace according to [Go Specifications](https://golang.org/doc/code.html#Workspaces)
+
+Then note that the main binary is in `cli/agent/main.go`. That's because the whole agent is packaged as a library, and so can be extended and reused.
+
+Before compiling and running the agent you need to:
+
+- Install go: https://golang.org/
+- Generate the certificates:
+
+	$ go run cli/certificates/main.go
+
+Finally you can run the Agent:
+
+	$ go run cli/agent/main.go
+
+## Tips
+- Arduino Create Agent uses Goa, so if you want to contribute you'll better get familiar with it: https://goa.design/
+
+- Use gofmt and gometalinter to produce good code
+
+- Vendor dependencies with dep: https://golang.github.io/dep/ . Yes, they need to be committed in the repository. Our continuous integration tools depend on it.
