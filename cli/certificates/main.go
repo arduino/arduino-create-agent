@@ -120,6 +120,14 @@ func main() {
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
 	fmt.Println("OK")
+
+	// Remove ca.key.pem
+	fmt.Print("Remove ca.key.pem... ")
+	err = os.Remove("ca.key.pem")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("OK")
 }
 
 func generateKey(ecdsaCurve string) (interface{}, error) {

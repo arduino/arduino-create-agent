@@ -54,4 +54,5 @@ var _ = Resource("public", func() {
 	Files("swagger.json", "swagger/swagger.json")
 	Files("docs", "templates/docs.html")
 	Files("debug", "templates/debug.html")
+	Files("ca", "ca.cert.pem")
 })
