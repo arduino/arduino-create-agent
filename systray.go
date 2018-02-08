@@ -40,9 +40,9 @@ import (
 func setupSystray(hibernate bool, version, revision, address string, restart, shutdown func()) {
 	runtime.LockOSThread()
 	if !hibernate {
-		systray.Run(setupSystrayReal(version, revision, address, restart))
+		systray.Run(setupSystrayReal(version, revision, address, restart), nil)
 	} else {
-		systray.Run(setupSysTrayHibernate(restart, shutdown))
+		systray.Run(setupSysTrayHibernate(restart, shutdown), nil)
 	}
 }
 
