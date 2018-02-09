@@ -315,7 +315,7 @@ export GOPATH=$PWD
 go get
 go build
 ```
-will build the `arduino-create-agent` binary.
+will build the `arduino-create-agent` binary. Note that due to an issue with newer versions, golang 1.8 must be used to compile the project.
 
 `compile_webidebridge.sh` contains the cross-platform script we use to deploy the agent for all the supported platforms; it needs to be adjusted as per your `go` installation paths and OS.
 
