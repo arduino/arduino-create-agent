@@ -45,66 +45,12 @@ import (
 	"github.com/codeclysm/extract"
 )
 
+// Tool is a program needed to program a board
 type Tool struct {
 	Name     string
 	Version  string
 	Packager string
 	Path     string
-}
-
-func (t *Tool) Download(url, signature string, opts *Opts) error {
-	opts = opts.fill()
-
-	// Download
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := opts.Client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Checksum
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	h := sha256.New()
-	h.Write(body)
-	sum := h.Sum(nil)
-	signature = strings.Split(signature, ":")[1]
-
-	if string(hex.EncodeToString(sum)) != signature {
-		return errors.New("signature doesn't match")
-	}
-
-	// Remove folder
-	path := filepath.Join(opts.Location, t.Packager, t.Name, t.Version)
-	err = os.RemoveAll(path)
-	if err != nil {
-		return err
-	}
-
-	// Extract
-	err = extract.Archive(bytes.NewReader(body), path, func(file string) string {
-		// Remove the first part of the path if it matches the name
-		parts := strings.Split(file, string(filepath.Separator))
-		if len(parts) > 0 && strings.HasPrefix(parts[0], t.Name) {
-			parts = parts[1:]
-			file = strings.Join(parts, string(filepath.Separator))
-		}
-
-		return file
-	})
-	if err != nil {
-		return err
-	}
-	t.Path = path
-
-	return nil
 }
 
 // Opts contain options to pass to the Download function
@@ -133,6 +79,62 @@ func (o *Opts) fill() *Opts {
 	fmt.Println(o)
 
 	return o
+}
+
+// Download unpacks a tool on the system, checking that the checksum matches
+func (t *Tool) Download(url, checksum string, opts *Opts) error {
+	opts = opts.fill()
+
+	// Download
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := opts.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Checksum
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	h := sha256.New()
+	h.Write(body)
+	sum := h.Sum(nil)
+	checksum = strings.Split(checksum, ":")[1]
+
+	if string(hex.EncodeToString(sum)) != checksum {
+		return errors.New("checksum doesn't match")
+	}
+
+	// Remove folder
+	path := filepath.Join(opts.Location, t.Packager, t.Name, t.Version)
+	err = os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+
+	// Extract
+	err = extract.Archive(bytes.NewReader(body), path, func(file string) string {
+		// Remove the first part of the path if it matches the name
+		parts := strings.Split(file, string(filepath.Separator))
+		if len(parts) > 0 && strings.HasPrefix(parts[0], t.Name) {
+			parts = parts[1:]
+			file = strings.Join(parts, string(filepath.Separator))
+		}
+
+		return file
+	})
+	if err != nil {
+		return err
+	}
+	t.Path = path
+
+	return nil
 }
 
 // Installed returns a list of the installed tools
