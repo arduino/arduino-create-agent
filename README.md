@@ -107,9 +107,9 @@ Once you have the websocket endpoint you need you can:
 ```javascript
 var socket = io(endpoint);
 socket.on('connect', function () {
-    socket.emit('message', yourCommand);
+    socket.emit('command', yourCommand);
 
-    socket.on('message', function () {
+    socket.on('command', function () {
         // Your code to handle messages
     })
 }
@@ -309,17 +309,20 @@ The results of the upload will be delivered via websocket with messages that loo
 
 ## Development
 
-From the project root dir executing:
+To clone the repository, run the following command:
 ```
-export GOPATH=$PWD
-go get
+go get github.com/arduino/arduino-create-agent
+```
+
+This will clone the repository into your [Go workspace](https://golang.org/doc/code.html#Workspaces) or create a new workspace, if one doesn't exist. You can set `$GOPATH` to define where your Go workspace is located.
+
+Now you can go to the project directory and compile it:
+```
+cd $GOPATH/src/github.com/arduino/arduino-create-agent
 go build
 ```
-will build the `arduino-create-agent` binary. Note that due to an issue with newer versions, golang 1.8 must be used to compile the project.
 
-`compile_webidebridge.sh` contains the cross-platform script we use to deploy the agent for all the supported platforms; it needs to be adjusted as per your `go` installation paths and OS.
-
-You can use `bootstrapPlatforms` function to compile the needed CGO-enabled environment
+This will create the `arduino-create-agent` binary. Note that due to an issue with newer versions, golang 1.8 must be used to compile the project.
 
 Other prerequisites are:
 * libappindicator (Linux only on Ubuntu `sudo apt-get install libappindicator1`)
