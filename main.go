@@ -124,22 +124,6 @@ func main() {
 				iniflags.Parse()
 			}
 
-			// move CORS to config file compatibility, Vagrant version
-			if *origins == "" {
-				log.Println("Patching config.ini for compatibility")
-				f, err := os.OpenFile(dest+"/"+*configIni, os.O_APPEND|os.O_WRONLY, 0666)
-				if err != nil {
-					panic(err)
-				}
-				_, err = f.WriteString("\norigins = http://webide.arduino.cc:8080\n")
-				if err != nil {
-					panic(err)
-				}
-				f.Close()
-				restart("")
-			}
-			//log.SetFormatter(&log.JSONFormatter{})
-
 			log.SetLevel(log.InfoLevel)
 
 			log.SetOutput(os.Stderr)
