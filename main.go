@@ -131,7 +131,7 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
-				_, err = f.WriteString("\norigins = http://webide.arduino.cc:8080\n")
+				_, err = f.WriteString("\norigins = http://local.arduino.cc:8000\n")
 				if err != nil {
 					panic(err)
 				}
