@@ -83,7 +83,10 @@ func getConfigs() []ConfigIni {
 	filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
 		if !f.IsDir() {
 			if filepath.Ext(path) == ".ini" {
-				cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, f.Name()))
+				cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, f.Name()))
+				if err != nil {
+					return err
+				}
 				defaultSection, err := cfg.GetSection("")
 				name := defaultSection.Key("name").String()
 				if name == "" || err != nil {
@@ -183,7 +186,7 @@ func setupSysTrayReal() {
 		for {
 			<-mDebug.ClickedCh
 			logAction("log on")
-			open.Start("http://localhost" + port)
+			open.Start("http://127.0.0.1" + port)
 		}
 	}()
 

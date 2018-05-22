@@ -91,12 +91,12 @@ It will listen to http and websocket connections on a range of ports from `8990`
 ### Discover the port
 You should make GET request to the `/info` endpoint on the possible ports, until you find a reply:
 
-    $ curl http://localhost:8990/info
-    curl: (7) Failed to connect to localhost port 8990: Connection refused
-    $ curl http://localhost:8991/info
+    $ curl http://127.0.0.1:8990/info
+    curl: (7) Failed to connect to 127.0.0.1 port 8990: Connection refused
+    $ curl http://127.0.0.1:8991/info
     
-    $ curl http://localhost:8992/info
-    {"http":"http://localhost:8992","https":"https://localhost:8991","version":"1.0.36","ws":"ws://localhost:8992","wss":"wss://localhost:8991"}
+    $ curl http://127.0.0.1:8992/info
+    {"http":"http://127.0.0.1:8992","https":"https://127.0.0.1:8991","version":"1.0.36","ws":"ws://127.0.0.1:8992","wss":"wss://127.0.0.1:8991"}
 
 The reply will contain a json with info about the version and the http and https endpoints to use
 
@@ -176,7 +176,7 @@ where you should replace /dev/ttyACM0 with the actual port and 9600 with the bau
 You will receive a message like:
 
 ```json
-{  
+{
   "Cmd":"Open",
   "Desc":"Got register/open on port.",
   "Port":"/dev/ttyACM0",
@@ -189,7 +189,7 @@ You will receive a message like:
 or
 
 ```json
-{  
+{
   "Cmd":"OpenFail",
   "Desc":"Error opening port. Serial port busy",
   "Port":"/dev/ttyACM0",
@@ -204,7 +204,7 @@ You can then close the port with
 You will receive a message like:
 
 ```json
-{  
+{
   "Cmd":"Close",
   "Desc":"Got unregister/close on port.",
   "Port":"/dev/ttyACM0",
@@ -216,7 +216,7 @@ or
 
 
 ```json
-{  
+{
   "Error":"We could not find the serial port /dev/ttyACM0 that you were trying to close."
 }
 ```
@@ -238,7 +238,7 @@ with a reply like
 You can receive output from the serial port by listening to messages like this:
 
 ```json
-{  
+{
   "D":"output string\r\n"
 }
 ```

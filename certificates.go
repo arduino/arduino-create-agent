@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	host      = "localhost"
+	host      = "127.0.0.1"
 	validFrom = ""
 	validFor  = 365 * 24 * time.Hour * 2 // 2 years
 	rsaBits   = 2048
@@ -104,7 +104,7 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 		Subject: pkix.Name{
 			Organization:       []string{"Arduino LLC US"},
 			Country:            []string{"US"},
-			CommonName:         "localhost",
+			CommonName:         "127.0.0.1",
 			OrganizationalUnit: []string{"IT"},
 		},
 		NotBefore: notBefore,
