@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	host      = "127.0.0.1"
+	host      = "localhost"
 	validFrom = ""
 	validFor  = 365 * 24 * time.Hour * 2 // 2 years
 	rsaBits   = 2048
