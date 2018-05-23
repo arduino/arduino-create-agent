@@ -15,9 +15,9 @@ func infoHandler(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"version": version,
 		"http":    "http://" + host + port,
-		"https":   "https://" + host + portSSL,
+		"https":   "https://localhost" + portSSL,
 		"ws":      "ws://" + host + port,
-		"wss":     "wss://" + host + portSSL,
+		"wss":     "wss://localhost" + portSSL,
 	})
 }
 
