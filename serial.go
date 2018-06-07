@@ -186,11 +186,12 @@ func spListDual(network bool) {
 	spl := SpPortList{make([]SpPortItem, n, n), network}
 
 	ctr := 0
+
 	for _, item := range list {
 
 		spl.Ports[ctr] = SpPortItem{
 			Name:            item.Name,
-			SerialNumber:    item.SerialNumber,
+			SerialNumber:    item.ISerial,
 			DeviceClass:     item.DeviceClass,
 			IsOpen:          false,
 			IsPrimary:       false,
