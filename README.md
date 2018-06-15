@@ -79,9 +79,20 @@ or in the location selected during the installation
 
 Please use the current latest version:
 
-* [Windows dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
-* [MacOSX dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer.dmg)
-* [Linux x64 dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer.run)
+### Windows
+* [Windows with Edge dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-edge.exe)
+* [Windows with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
+* [Windows with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-firefox.exe)
+
+### MacOSX
+* [MacOSX with Safari dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-safari.dmg)
+* [MacOSX with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-chrome.dmg)
+* [MacOSX with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-firefox.dmg)
+
+### Linux
+* [Linux x64 with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-chrome.run)
+* [Linux x64 with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-firefox.run)
+
 
 ## How to use it
 The arduino create agent is a single binary that reads from a configuration file. Upon launching it will sit on the traybar and work in the background.
