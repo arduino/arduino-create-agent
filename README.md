@@ -75,6 +75,25 @@ $ nohup $HOME/ArduinoCreateAgent-1.1/Arduino_Create_Bridge &
 ```
 or in the location selected during the installation
 
+## Using multiple configurations
+
+The agent support multiple configuration files. When multiple configurations are found by the agent, the tray icon menu is expanded to contain the different configurations:
+
+![Agent multiple configuration tray ycon](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/tray-icon-multiple-profiles.png)
+
+The default `config.ini` file contains common configurations, every other config file inherit from it.
+
+To create multiple configuration files:
+- stop the agent: tray bar icon -> pause then tray bar icon -> kill
+- find the `config.ini` file that is present in the `arduino-create-agent` installation folder 
+- copy `config.ini` or create a new ini file (e.g. `example.ini`) with content:
+    ```ini
+    name = your configuration nanem
+    ```
+    add in this file other configuration options (you can override inherited values from `config.ini`)
+- restart the agent
+- click the tray bar icon and select the new configuration
+
 # Contributing
 
 Please use the current latest version:
