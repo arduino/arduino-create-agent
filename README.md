@@ -6,7 +6,7 @@ Get the latest version of the Agent for all supported platforms:
 
 ### Windows
 * [Windows with Edge](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-edge.exe)
-* [Windows with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer.exe)
+* [Windows with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-chrome.exe)
 * [Windows with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-firefox.exe)
 
 ### MacOSX
