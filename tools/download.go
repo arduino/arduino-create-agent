@@ -419,6 +419,11 @@ func extractTarGz(body []byte, location string) (string, error) {
 		path := filepath.Join(location, strings.Replace(header.Name, basedir, "", -1))
 		info := header.FileInfo()
 
+		// Create parent folder
+		if err = os.MkdirAll(filepath.Dir(path), info.Mode()); err != nil {
+			return location, err
+		}
+
 		if info.IsDir() {
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
 				return location, err
