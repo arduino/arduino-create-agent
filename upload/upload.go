@@ -51,10 +51,11 @@ type Extra struct {
 
 // PartiallyResolve replaces some symbols in the commandline with the appropriate values
 // it can return an error when looking a variable in the Locater
-func PartiallyResolve(board, file, commandline string, extra Extra, t Locater) (string, error) {
+func PartiallyResolve(board, file, platformPath, commandline string, extra Extra, t Locater) (string, error) {
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
 	commandline = strings.Replace(commandline, "{network.password}", extra.Auth.Password, -1)
+	commandline = strings.Replace(commandline, "{runtime.platform.path}", platformPath, -1)
 
 	if extra.Verbose == true {
 		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsVerbose, -1)
