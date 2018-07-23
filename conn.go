@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
@@ -119,13 +120,27 @@ func uploadHandler(c *gin.Context) {
 	var filePaths []string
 	filePaths = append(filePaths, filePath)
 
+	tmpdir, err := ioutil.TempDir("", "extrafiles")
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
 	for _, extraFile := range data.ExtraFiles {
-		path := filepath.Join(filepath.Dir(filePath), extraFile.Filename)
+		path := filepath.Join(tmpdir, extraFile.Filename)
 		filePaths = append(filePaths, path)
 		log.Printf("Saving %s on %s", extraFile.Filename, path)
+
+		err = os.MkdirAll(filepath.Dir(path), 0744)
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
+
 		err := ioutil.WriteFile(path, extraFile.Hex, 0644)
 		if err != nil {
-			log.Printf(err.Error())
+			c.String(http.StatusBadRequest, err.Error())
+			return
 		}
 	}
 
@@ -135,7 +150,7 @@ func uploadHandler(c *gin.Context) {
 
 	go func() {
 		// Resolve commandline
-		commandline, err := upload.PartiallyResolve(data.Board, filePath, data.Commandline, data.Extra, &Tools)
+		commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, &Tools)
 		if err != nil {
 			send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 			return
