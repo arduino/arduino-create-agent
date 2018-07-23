@@ -319,6 +319,9 @@ func stringInSlice(str string, list []string) bool {
 }
 
 func findBaseDir(dirList []string) string {
+	if len(dirList) == 1 {
+		return filepath.Dir(dirList[0]) + "/"
+	}
 	baseDir := ""
 	// https://github.com/backdrop-ops/contrib/issues/55#issuecomment-73814500
 	dontdiff := []string{"pax_global_header"}
