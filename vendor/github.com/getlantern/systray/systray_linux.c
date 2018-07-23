@@ -34,7 +34,8 @@ int nativeLoop(void) {
 	global_temp_icon_file_names = g_array_new(TRUE, FALSE, sizeof(char*));
 	systray_ready();
 	gtk_main();
-	return;
+	systray_on_exit();
+	return 0;
 }
 
 // runs in main thread, should always return FALSE to prevent gtk to execute it again
@@ -100,11 +101,46 @@ gboolean do_add_or_update_menu_item(gpointer data) {
 	}
 	GtkWidget * menu_item = GTK_WIDGET(((MenuItemNode*)(it->data))->menu_item);
 	gtk_widget_set_sensitive(menu_item, mii->disabled == 1 ? FALSE : TRUE);
-	gtk_widget_show_all(global_tray_menu);
+	gtk_widget_show(menu_item);
 
 	free(mii->title);
 	free(mii->tooltip);
 	free(mii);
+	return FALSE;
+}
+
+gboolean do_add_separator(gpointer data) {
+	GtkWidget *separator = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(global_tray_menu), separator);
+	gtk_widget_show(separator);
+	return FALSE;
+}
+
+// runs in main thread, should always return FALSE to prevent gtk to execute it again
+gboolean do_hide_menu_item(gpointer data) {
+	MenuItemInfo *mii = (MenuItemInfo*)data;
+	GList* it;
+	for(it = global_menu_items; it != NULL; it = it->next) {
+		MenuItemNode* item = (MenuItemNode*)(it->data);
+		if(item->menu_id == mii->menu_id){
+			gtk_widget_hide(GTK_WIDGET(item->menu_item));
+			break;
+		}
+	}
+	return FALSE;
+}
+
+// runs in main thread, should always return FALSE to prevent gtk to execute it again
+gboolean do_show_menu_item(gpointer data) {
+	MenuItemInfo *mii = (MenuItemInfo*)data;
+	GList* it;
+	for(it = global_menu_items; it != NULL; it = it->next) {
+		MenuItemNode* item = (MenuItemNode*)(it->data);
+		if(item->menu_id == mii->menu_id){
+			gtk_widget_show(GTK_WIDGET(item->menu_item));
+			break;
+		}
+	}
 	return FALSE;
 }
 
@@ -123,6 +159,7 @@ gboolean do_quit(gpointer data) {
 	}
 	// app indicator doesn't provide a way to remove it, hide it as a workaround
 	app_indicator_set_status(global_app_indicator, APP_INDICATOR_STATUS_PASSIVE);
+	gtk_main_quit();
 	return FALSE;
 }
 
@@ -148,6 +185,24 @@ void add_or_update_menu_item(int menu_id, char* title, char* tooltip, short disa
 	mii->disabled = disabled;
 	mii->checked = checked;
 	g_idle_add(do_add_or_update_menu_item, mii);
+}
+
+void add_separator(int menu_id) {
+	MenuItemInfo *mii = malloc(sizeof(MenuItemInfo));
+	mii->menu_id = menu_id;
+	g_idle_add(do_add_separator, mii);
+}
+
+void hide_menu_item(int menu_id) {
+	MenuItemInfo *mii = malloc(sizeof(MenuItemInfo));
+	mii->menu_id = menu_id;
+	g_idle_add(do_hide_menu_item, mii);
+}
+
+void show_menu_item(int menu_id) {
+	MenuItemInfo *mii = malloc(sizeof(MenuItemInfo));
+	mii->menu_id = menu_id;
+	g_idle_add(do_show_menu_item, mii);
 }
 
 void quit() {

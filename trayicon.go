@@ -42,16 +42,15 @@ import (
 	"github.com/go-ini/ini"
 	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
-	"github.com/vharitonsky/iniflags"
 	"go.bug.st/serial.v1"
 )
 
 func setupSysTray() {
 	runtime.LockOSThread()
 	if *hibernate == true {
-		systray.Run(setupSysTrayHibernate)
+		systray.Run(setupSysTrayHibernate, nil)
 	} else {
-		systray.Run(setupSysTrayReal)
+		systray.Run(setupSysTrayReal, nil)
 	}
 }
 
@@ -151,7 +150,7 @@ func setupSysTrayReal() {
 			for {
 				<-mConfigCheckbox[v].ClickedCh
 				flag.Set("config", configs[v].Localtion)
-				iniflags.UpdateConfig()
+				// iniflags.UpdateConfig()
 				applyEnvironment(configs[v].Localtion)
 				mConfigCheckbox[v].SetTitle(" 🗹 " + configs[v].Name)
 				//mConfigCheckbox[v].Check()

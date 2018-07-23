@@ -36,7 +36,7 @@ type (
 	}
 
 	// RouterGroup is used internally to configure router, a RouterGroup is associated with a prefix
-	// and an array of handlers (middlewares)
+	// and an array of handlers (middleware)
 	RouterGroup struct {
 		Handlers HandlersChain
 		basePath string
@@ -47,9 +47,9 @@ type (
 
 var _ IRouter = &RouterGroup{}
 
-// Use adds middlewares to the group, see example code in github.
-func (group *RouterGroup) Use(middlewares ...HandlerFunc) IRoutes {
-	group.Handlers = append(group.Handlers, middlewares...)
+// Use adds middleware to the group, see example code in github.
+func (group *RouterGroup) Use(middleware ...HandlerFunc) IRoutes {
+	group.Handlers = append(group.Handlers, middleware...)
 	return group.returnObj()
 }
 
@@ -74,8 +74,8 @@ func (group *RouterGroup) handle(httpMethod, relativePath string, handlers Handl
 	return group.returnObj()
 }
 
-// Handle registers a new request handle and middlewares with the given path and method.
-// The last handler should be the real handler, the other ones should be middlewares that can and should be shared among different routes.
+// Handle registers a new request handle and middleware with the given path and method.
+// The last handler should be the real handler, the other ones should be middleware that can and should be shared among different routes.
 // See the example code in github.
 //
 // For GET, POST, PUT, PATCH and DELETE requests the respective shortcut

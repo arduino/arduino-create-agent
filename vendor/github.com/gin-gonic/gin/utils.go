@@ -7,6 +7,7 @@ package gin
 import (
 	"encoding/xml"
 	"net/http"
+	"os"
 	"path"
 	"reflect"
 	"runtime"
@@ -46,7 +47,7 @@ func WrapH(h http.Handler) HandlerFunc {
 
 type H map[string]interface{}
 
-// Allows type H to be used with xml.Marshal
+// MarshalXML allows type H to be used with xml.Marshal
 func (h H) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Name = xml.Name{
 		Space: "",
@@ -68,6 +69,12 @@ func (h H) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		return err
 	}
 	return nil
+}
+
+func assert1(guard bool, text string) {
+	if !guard {
+		panic(text)
+	}
 }
 
 func filterFlags(content string) string {
@@ -128,4 +135,20 @@ func joinPaths(absolutePath, relativePath string) string {
 		return finalPath + "/"
 	}
 	return finalPath
+}
+
+func resolveAddress(addr []string) string {
+	switch len(addr) {
+	case 0:
+		if port := os.Getenv("PORT"); len(port) > 0 {
+			debugPrint("Environment variable PORT=\"%s\"", port)
+			return ":" + port
+		}
+		debugPrint("Environment variable PORT is undefined. Using port :8080 by default")
+		return ":8080"
+	case 1:
+		return addr[0]
+	default:
+		panic("too much parameters")
+	}
 }

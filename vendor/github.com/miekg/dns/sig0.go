@@ -5,6 +5,7 @@ import (
 	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"encoding/binary"
 	"math/big"
 	"strings"
 	"time"
@@ -13,7 +14,7 @@ import (
 // Sign signs a dns.Msg. It fills the signature with the appropriate data.
 // The SIG record should have the SignerName, KeyTag, Algorithm, Inception
 // and Expiration set.
-func (rr *SIG) Sign(k PrivateKey, m *Msg) ([]byte, error) {
+func (rr *SIG) Sign(k crypto.Signer, m *Msg) ([]byte, error) {
 	if k == nil {
 		return nil, ErrPrivKey
 	}
@@ -41,44 +42,38 @@ func (rr *SIG) Sign(k PrivateKey, m *Msg) ([]byte, error) {
 		return nil, err
 	}
 	buf = buf[:off:cap(buf)]
-	var hash crypto.Hash
-	switch rr.Algorithm {
-	case DSA, RSASHA1:
-		hash = crypto.SHA1
-	case RSASHA256, ECDSAP256SHA256:
-		hash = crypto.SHA256
-	case ECDSAP384SHA384:
-		hash = crypto.SHA384
-	case RSASHA512:
-		hash = crypto.SHA512
-	default:
+
+	hash, ok := AlgorithmToHash[rr.Algorithm]
+	if !ok {
 		return nil, ErrAlg
 	}
+
 	hasher := hash.New()
 	// Write SIG rdata
 	hasher.Write(buf[len(mbuf)+1+2+2+4+2:])
 	// Write message
 	hasher.Write(buf[:len(mbuf)])
-	hashed := hasher.Sum(nil)
 
-	sig, err := k.Sign(hashed, rr.Algorithm)
+	signature, err := sign(k, hasher.Sum(nil), hash, rr.Algorithm)
 	if err != nil {
 		return nil, err
 	}
-	rr.Signature = toBase64(sig)
-	buf = append(buf, sig...)
+
+	rr.Signature = toBase64(signature)
+
+	buf = append(buf, signature...)
 	if len(buf) > int(^uint16(0)) {
 		return nil, ErrBuf
 	}
 	// Adjust sig data length
 	rdoff := len(mbuf) + 1 + 2 + 2 + 4
-	rdlen, _ := unpackUint16(buf, rdoff)
-	rdlen += uint16(len(sig))
-	buf[rdoff], buf[rdoff+1] = packUint16(rdlen)
+	rdlen := binary.BigEndian.Uint16(buf[rdoff:])
+	rdlen += uint16(len(signature))
+	binary.BigEndian.PutUint16(buf[rdoff:], rdlen)
 	// Adjust additional count
-	adc, _ := unpackUint16(buf, 10)
+	adc := binary.BigEndian.Uint16(buf[10:])
 	adc++
-	buf[10], buf[11] = packUint16(adc)
+	binary.BigEndian.PutUint16(buf[10:], adc)
 	return buf, nil
 }
 
@@ -108,10 +103,11 @@ func (rr *SIG) Verify(k *KEY, buf []byte) error {
 	hasher := hash.New()
 
 	buflen := len(buf)
-	qdc, _ := unpackUint16(buf, 4)
-	anc, _ := unpackUint16(buf, 6)
-	auc, _ := unpackUint16(buf, 8)
-	adc, offset := unpackUint16(buf, 10)
+	qdc := binary.BigEndian.Uint16(buf[4:])
+	anc := binary.BigEndian.Uint16(buf[6:])
+	auc := binary.BigEndian.Uint16(buf[8:])
+	adc := binary.BigEndian.Uint16(buf[10:])
+	offset := 12
 	var err error
 	for i := uint16(0); i < qdc && offset < buflen; i++ {
 		_, offset, err = UnpackDomainName(buf, offset)
@@ -132,7 +128,8 @@ func (rr *SIG) Verify(k *KEY, buf []byte) error {
 			continue
 		}
 		var rdlen uint16
-		rdlen, offset = unpackUint16(buf, offset)
+		rdlen = binary.BigEndian.Uint16(buf[offset:])
+		offset += 2
 		offset += int(rdlen)
 	}
 	if offset >= buflen {
@@ -154,9 +151,9 @@ func (rr *SIG) Verify(k *KEY, buf []byte) error {
 	if offset+4+4 >= buflen {
 		return &Error{err: "overflow unpacking signed message"}
 	}
-	expire := uint32(buf[offset])<<24 | uint32(buf[offset+1])<<16 | uint32(buf[offset+2])<<8 | uint32(buf[offset+3])
+	expire := binary.BigEndian.Uint32(buf[offset:])
 	offset += 4
-	incept := uint32(buf[offset])<<24 | uint32(buf[offset+1])<<16 | uint32(buf[offset+2])<<8 | uint32(buf[offset+3])
+	incept := binary.BigEndian.Uint32(buf[offset:])
 	offset += 4
 	now := uint32(time.Now().Unix())
 	if now < incept || now > expire {

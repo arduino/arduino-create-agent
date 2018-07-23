@@ -35,6 +35,10 @@ type Op interface {
 	// or failure to all registered Reporters.
 	End()
 
+	// Cancel cancels this op so that even if End() is called later, it will not
+	// report its success or failure.
+	Cancel()
+
 	// Set puts a key->value pair into the current Op's context.
 	Set(key string, value interface{}) Op
 
@@ -49,8 +53,9 @@ type Op interface {
 }
 
 type op struct {
-	ctx     context.Context
-	failure atomic.Value
+	ctx      context.Context
+	canceled bool
+	failure  atomic.Value
 }
 
 // RegisterReporter registers the given reporter.
@@ -78,7 +83,15 @@ func Go(fn func()) {
 	cm.Go(fn)
 }
 
+func (o *op) Cancel() {
+	o.canceled = true
+}
+
 func (o *op) End() {
+	if o.canceled {
+		return
+	}
+
 	var reportersCopy []Reporter
 	reportersMutex.RLock()
 	if len(reporters) > 0 {

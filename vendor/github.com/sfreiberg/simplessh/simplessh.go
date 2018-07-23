@@ -1,6 +1,7 @@
 package simplessh
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -15,6 +17,37 @@ import (
 )
 
 const DefaultTimeout = 30 * time.Second
+
+// This is the phrase that tells us sudo is looking for a password via stdin
+const sudoPwPrompt = "sudo_password"
+
+// Set a default HostKeyCallback variable. This may not be desireable for some
+// environments.
+var HostKeyCallback = ssh.InsecureIgnoreHostKey()
+
+// sudoWriter is used to both combine stdout and stderr as well as
+// look for a password request from sudo.
+type sudoWriter struct {
+	b     bytes.Buffer
+	pw    string    // The password to pass to sudo (if requested)
+	stdin io.Writer // The writer from the ssh session
+	m     sync.Mutex
+}
+
+func (w *sudoWriter) Write(p []byte) (int, error) {
+	// If we get the sudo password prompt phrase send the password via stdin
+	// and don't write it to the buffer.
+	if string(p) == sudoPwPrompt {
+		w.stdin.Write([]byte(w.pw + "\n"))
+		w.pw = "" // We don't need the password anymore so reset the string
+		return len(p), nil
+	}
+
+	w.m.Lock()
+	defer w.m.Unlock()
+
+	return w.b.Write(p)
+}
 
 type Client struct {
 	SSHClient *ssh.Client
@@ -72,6 +105,16 @@ func ConnectWithKey(host, username, privKey string) (*Client, error) {
 	return ConnectWithKeyTimeout(host, username, privKey, DefaultTimeout)
 }
 
+// Connect to an ssh agent with a custom timeout. If username is empty simplessh will attempt to get the current user. The windows implementation uses a different library which expects pageant to be running.
+func ConnectWithAgentTimeout(host, username string, timeout time.Duration) (*Client, error) {
+	return connectWithAgentTimeout(host, username, timeout)
+}
+
+// Connect to an ssh agent. If username is empty simplessh will attempt to get the current user. The windows implementation uses a different library which expects pageant to be running.
+func ConnectWithAgent(host, username string) (*Client, error) {
+	return ConnectWithAgentTimeout(host, username, DefaultTimeout)
+}
+
 func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Duration) (*Client, error) {
 	if username == "" {
 		user, err := user.Current()
@@ -83,8 +126,9 @@ func connect(username, host string, authMethod ssh.AuthMethod, timeout time.Dura
 	}
 
 	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{authMethod},
+		User:            username,
+		Auth:            []ssh.AuthMethod{authMethod},
+		HostKeyCallback: HostKeyCallback,
 	}
 
 	host = addPortToHost(host)
@@ -114,6 +158,43 @@ func (c *Client) Exec(cmd string) ([]byte, error) {
 	return session.CombinedOutput(cmd)
 }
 
+// Execute cmd via sudo. Do not include the sudo command in
+// the cmd string. For example: Client.ExecSudo("uptime", "password").
+// If you are using passwordless sudo you can use the regular Exec()
+// function.
+func (c *Client) ExecSudo(cmd, passwd string) ([]byte, error) {
+	session, err := c.SSHClient.NewSession()
+	if err != nil {
+		return nil, err
+	}
+	defer session.Close()
+
+	// -n run non interactively
+	// -p specify the prompt. We do this to know that sudo is asking for a passwd
+	// -S Writes the prompt to StdErr and reads the password from StdIn
+	cmd = "sudo -p " + sudoPwPrompt + " -S " + cmd
+
+	// Use the sudoRW struct to handle the interaction with sudo and capture the
+	// output of the command
+	w := &sudoWriter{
+		pw: passwd,
+	}
+	w.stdin, err = session.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	// Combine stdout, stderr to the same writer which also looks for the sudo
+	// password prompt
+	session.Stdout = w
+	session.Stderr = w
+
+	err = session.Run(cmd)
+
+	return w.b.Bytes(), err
+}
+
+// Download a file from the remote server
 func (c *Client) Download(remote, local string) error {
 	client, err := sftp.NewClient(c.SSHClient)
 	if err != nil {
@@ -137,6 +218,7 @@ func (c *Client) Download(remote, local string) error {
 	return err
 }
 
+// Upload a file to the remote server
 func (c *Client) Upload(local, remote string) error {
 	client, err := sftp.NewClient(c.SSHClient)
 	if err != nil {
@@ -157,6 +239,28 @@ func (c *Client) Upload(local, remote string) error {
 
 	_, err = io.Copy(remoteFile, localFile)
 	return err
+}
+
+// Remove a file from the remote server
+func (c *Client) Remove(path string) error {
+	client, err := sftp.NewClient(c.SSHClient)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	return client.Remove(path)
+}
+
+// Remove a directory from the remote server
+func (c *Client) RemoveDirectory(path string) error {
+	client, err := sftp.NewClient(c.SSHClient)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	return client.RemoveDirectory(path)
 }
 
 // Read a remote file and return the contents.

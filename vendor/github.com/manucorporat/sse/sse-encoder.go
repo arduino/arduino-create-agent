@@ -22,7 +22,14 @@ const ContentType = "text/event-stream"
 
 var contentType = []string{ContentType}
 var noCache = []string{"no-cache"}
-var replacer = strings.NewReplacer("\n", "\\n", "\r", "\\r")
+
+var fieldReplacer = strings.NewReplacer(
+	"\n", "\\n",
+	"\r", "\\r")
+
+var dataReplacer = strings.NewReplacer(
+	"\n", "\ndata:",
+	"\r", "\\r")
 
 type Event struct {
 	Event string
@@ -41,30 +48,30 @@ func Encode(writer io.Writer, event Event) error {
 
 func writeId(w stringWriter, id string) {
 	if len(id) > 0 {
-		w.WriteString("id: ")
-		writeEscape(w, id)
+		w.WriteString("id:")
+		fieldReplacer.WriteString(w, id)
 		w.WriteString("\n")
 	}
 }
 
 func writeEvent(w stringWriter, event string) {
 	if len(event) > 0 {
-		w.WriteString("event: ")
-		writeEscape(w, event)
+		w.WriteString("event:")
+		fieldReplacer.WriteString(w, event)
 		w.WriteString("\n")
 	}
 }
 
 func writeRetry(w stringWriter, retry uint) {
 	if retry > 0 {
-		w.WriteString("retry: ")
+		w.WriteString("retry:")
 		w.WriteString(strconv.FormatUint(uint64(retry), 10))
 		w.WriteString("\n")
 	}
 }
 
 func writeData(w stringWriter, data interface{}) error {
-	w.WriteString("data: ")
+	w.WriteString("data:")
 	switch kindOfData(data) {
 	case reflect.Struct, reflect.Slice, reflect.Map:
 		err := json.NewEncoder(w).Encode(data)
@@ -73,8 +80,7 @@ func writeData(w stringWriter, data interface{}) error {
 		}
 		w.WriteString("\n")
 	default:
-		text := fmt.Sprint(data)
-		writeEscape(w, text)
+		dataReplacer.WriteString(w, fmt.Sprint(data))
 		w.WriteString("\n\n")
 	}
 	return nil
@@ -97,10 +103,4 @@ func kindOfData(data interface{}) reflect.Kind {
 		valueType = value.Elem().Kind()
 	}
 	return valueType
-}
-
-func writeEscape(w stringWriter, str string) {
-	// any-char		= %x0000-0009 / %x000B-000C / %x000E-10FFFF
-	// ; a Unicode character other than U+000A LINE FEED (LF) or U+000D CARRIAGE RETURN (CR)
-	replacer.WriteString(w, str)
 }

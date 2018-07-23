@@ -1,5 +1,5 @@
 //
-// Copyright 2014-2016 Cristian Maglie. All rights reserved.
+// Copyright 2014-2017 Cristian Maglie. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
@@ -22,8 +22,6 @@ import "syscall"
 type windowsPort struct {
 	handle syscall.Handle
 }
-
-//sys regEnumValue(key syscall.Handle, index uint32, name *uint16, nameLen *uint32, reserved *uint32, class *uint16, value *uint16, valueLen *uint32) (regerrno error) = advapi32.RegEnumValueW
 
 func nativeGetPortsList() ([]string, error) {
 	subKey, err := syscall.UTF16PtrFromString("HARDWARE\\DEVICEMAP\\SERIALCOMM\\")
@@ -62,7 +60,7 @@ func (port *windowsPort) Close() error {
 
 func (port *windowsPort) Read(p []byte) (int, error) {
 	var readed uint32
-	//params := &dcb{}
+	params := &dcb{}
 	ev, err := createOverlappedEvent()
 	if err != nil {
 		return 0, err
@@ -94,14 +92,11 @@ func (port *windowsPort) Read(p []byte) (int, error) {
 		// a serial port is alive in Windows is to check if the SetCommState
 		// function fails.
 
-		// XXX: this function was causing spurious USB transactions;
-		// the 16u2 on an Arduino UNO/Mega interprets these data and sends a \0 to the main processor
-
-		//getCommState(port.handle, params)
-		//if err := setCommState(port.handle, params); err != nil {
-		//	port.Close()
-		//	return 0, err
-		//}
+		getCommState(port.handle, params)
+		if err := setCommState(port.handle, params); err != nil {
+			port.Close()
+			return 0, err
+		}
 	}
 }
 
@@ -118,6 +113,21 @@ func (port *windowsPort) Write(p []byte) (int, error) {
 		err = getOverlappedResult(port.handle, ev, &writed, true)
 	}
 	return int(writed), err
+}
+
+const (
+	purgeRxAbort uint32 = 0x0002
+	purgeRxClear        = 0x0008
+	purgeTxAbort        = 0x0001
+	purgeTxClear        = 0x0004
+)
+
+func (port *windowsPort) ResetInputBuffer() error {
+	return purgeComm(port.handle, purgeRxClear|purgeRxAbort)
+}
+
+func (port *windowsPort) ResetOutputBuffer() error {
+	return purgeComm(port.handle, purgeTxClear|purgeTxAbort)
 }
 
 const (
@@ -184,10 +194,6 @@ type commTimeouts struct {
 	WriteTotalTimeoutConstant   uint32
 }
 
-//sys getCommState(handle syscall.Handle, dcb *dcb) (err error) = GetCommState
-//sys setCommState(handle syscall.Handle, dcb *dcb) (err error) = SetCommState
-//sys setCommTimeouts(handle syscall.Handle, timeouts *commTimeouts) (err error) = SetCommTimeouts
-
 const (
 	noParity    = 0
 	oddParity   = 1
@@ -216,8 +222,6 @@ var stopBitsMap = map[StopBits]byte{
 	TwoStopBits:          twoStopBits,
 }
 
-//sys escapeCommFunction(handle syscall.Handle, function uint32) (res bool) = EscapeCommFunction
-
 const (
 	commFunctionSetXOFF  = 1
 	commFunctionSetXON   = 2
@@ -228,8 +232,6 @@ const (
 	commFunctionSetBreak = 8
 	commFunctionClrBreak = 9
 )
-
-//sys getCommModemStatus(handle syscall.Handle, bits *uint32) (res bool) = GetCommModemStatus
 
 const (
 	msCTSOn  = 0x0010
@@ -264,15 +266,41 @@ func (port *windowsPort) SetMode(mode *Mode) error {
 }
 
 func (port *windowsPort) SetDTR(dtr bool) error {
-	var res bool
+	// Like for RTS there are problems with the escapeCommFunction
+	// observed behaviour was that DTR is set from false -> true
+	// when setting RTS from true -> false
+	// 1) Connect 		-> RTS = true 	(low) 	DTR = true 	(low) 	OKAY
+	// 2) SetDTR(false) -> RTS = true 	(low) 	DTR = false (heigh)	OKAY
+	// 3) SetRTS(false)	-> RTS = false 	(heigh)	DTR = true 	(low) 	ERROR: DTR toggled
+	//
+	// In addition this way the CommState Flags are not updated
+	/*
+		var res bool
+		if dtr {
+			res = escapeCommFunction(port.handle, commFunctionSetDTR)
+		} else {
+			res = escapeCommFunction(port.handle, commFunctionClrDTR)
+		}
+		if !res {
+			return &PortError{}
+		}
+		return nil
+	*/
+
+	// The following seems a more reliable way to do it
+
+	params := &dcb{}
+	if err := getCommState(port.handle, params); err != nil {
+		return &PortError{causedBy: err}
+	}
+	params.Flags &= dcbDTRControlDisableMask
 	if dtr {
-		res = escapeCommFunction(port.handle, commFunctionSetDTR)
-	} else {
-		res = escapeCommFunction(port.handle, commFunctionClrDTR)
+		params.Flags |= dcbDTRControlEnable
 	}
-	if !res {
-		return &PortError{}
+	if err := setCommState(port.handle, params); err != nil {
+		return &PortError{causedBy: err}
 	}
+
 	return nil
 }
 
@@ -281,6 +309,8 @@ func (port *windowsPort) SetRTS(rts bool) error {
 	// it doesn't send USB control message when the RTS bit is
 	// changed, so the following code not always works with
 	// USB-to-serial adapters.
+	//
+	// In addition this way the CommState Flags are not updated
 
 	/*
 		var res bool
@@ -323,10 +353,6 @@ func (port *windowsPort) GetModemStatusBits() (*ModemStatusBits, error) {
 		RI:  (bits & msRingOn) != 0,
 	}, nil
 }
-
-//sys createEvent(eventAttributes *uint32, manualReset bool, initialState bool, name *uint16) (handle syscall.Handle, err error) = CreateEventW
-//sys resetEvent(handle syscall.Handle) (err error) = ResetEvent
-//sys getOverlappedResult(handle syscall.Handle, overlapEvent *syscall.Overlapped, n *uint32, wait bool) (err error) = GetOverlappedResult
 
 func createOverlappedEvent() (*syscall.Overlapped, error) {
 	h, err := createEvent(nil, true, false, nil)

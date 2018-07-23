@@ -58,6 +58,11 @@
   systray_ready();
 }
 
+- (void)applicationWillTerminate:(NSNotification *)aNotification
+{
+  systray_on_exit();
+}
+
 - (void)setIcon:(NSImage *)image {
   [statusItem setImage:image];
 }
@@ -103,9 +108,36 @@
   }
 }
 
+- (void) add_separator:(NSNumber*) menuId
+{
+  [menu addItem: [NSMenuItem separatorItem]];
+}
+
+- (void) hide_menu_item:(NSNumber*) menuId
+{
+  NSMenuItem* menuItem;
+  int existedMenuIndex = [menu indexOfItemWithRepresentedObject: menuId];
+  if (existedMenuIndex == -1) {
+    return;
+  }
+  menuItem = [menu itemAtIndex: existedMenuIndex];
+  [menuItem setHidden:TRUE];
+}
+
+- (void) show_menu_item:(NSNumber*) menuId
+{
+  NSMenuItem* menuItem;
+  int existedMenuIndex = [menu indexOfItemWithRepresentedObject: menuId];
+  if (existedMenuIndex == -1) {
+    return;
+  }
+  menuItem = [menu itemAtIndex: existedMenuIndex];
+  [menuItem setHidden:FALSE];
+}
+
 - (void) quit
 {
-  [[NSStatusBar systemStatusBar] removeStatusItem: statusItem];
+  [NSApp terminate:self];
 }
 
 @end
@@ -127,6 +159,7 @@ void runInMainThread(SEL method, id object) {
 void setIcon(const char* iconBytes, int length) {
   NSData* buffer = [NSData dataWithBytes: iconBytes length:length];
   NSImage *image = [[NSImage alloc] initWithData:buffer];
+  [image setSize:NSMakeSize(16, 16)];
   runInMainThread(@selector(setIcon:), (id)image);
 }
 
@@ -149,6 +182,21 @@ void add_or_update_menu_item(int menuId, char* title, char* tooltip, short disab
   free(title);
   free(tooltip);
   runInMainThread(@selector(add_or_update_menu_item:), (id)item);
+}
+
+void add_separator(int menuId) {
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(add_separator:), (id)mId);
+}
+
+void hide_menu_item(int menuId) {
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(hide_menu_item:), (id)mId);
+}
+
+void show_menu_item(int menuId) {
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(show_menu_item:), (id)mId);
 }
 
 void quit() {

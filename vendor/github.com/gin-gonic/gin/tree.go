@@ -1,10 +1,11 @@
 // Copyright 2013 Julien Schmidt. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be found
-// in the LICENSE file.
+// at https://github.com/julienschmidt/httprouter/blob/master/LICENSE
 
 package gin
 
 import (
+	"net/url"
 	"strings"
 	"unicode"
 )
@@ -20,7 +21,7 @@ type Param struct {
 // It is therefore safe to read values by the index.
 type Params []Param
 
-// ByName returns the value of the first Param which key matches the given name.
+// Get returns the value of the first Param which key matches the given name.
 // If no matching Param is found, an empty string is returned.
 func (ps Params) Get(name string) (string, bool) {
 	for _, entry := range ps {
@@ -31,6 +32,8 @@ func (ps Params) Get(name string) (string, bool) {
 	return "", false
 }
 
+// ByName returns the value of the first Param which key matches the given name.
+// If no matching Param is found, an empty string is returned.
 func (ps Params) ByName(name string) (va string) {
 	va, _ = ps.Get(name)
 	return
@@ -76,9 +79,10 @@ func countParams(path string) uint8 {
 type nodeType uint8
 
 const (
-	static   nodeType = 0
-	param    nodeType = 1
-	catchAll nodeType = 2
+	static nodeType = iota // default
+	root
+	param
+	catchAll
 )
 
 type node struct {
@@ -238,6 +242,7 @@ func (n *node) addRoute(path string, handlers HandlersChain) {
 		}
 	} else { // Empty tree
 		n.insertChild(numParams, path, fullPath, handlers)
+		n.nType = root
 	}
 }
 
@@ -359,7 +364,7 @@ func (n *node) insertChild(numParams uint8, path string, fullPath string, handle
 // If no handle can be found, a TSR (trailing slash redirect) recommendation is
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
-func (n *node) getValue(path string, po Params) (handlers HandlersChain, p Params, tsr bool) {
+func (n *node) getValue(path string, po Params, unescape bool) (handlers HandlersChain, p Params, tsr bool) {
 	p = po
 walk: // Outer loop for walking the tree
 	for {
@@ -402,7 +407,15 @@ walk: // Outer loop for walking the tree
 					i := len(p)
 					p = p[:i+1] // expand slice within preallocated capacity
 					p[i].Key = n.path[1:]
-					p[i].Value = path[:end]
+					val := path[:end]
+					if unescape {
+						var err error
+						if p[i].Value, err = url.QueryUnescape(val); err != nil {
+							p[i].Value = val // fallback, in case of error
+						}
+					} else {
+						p[i].Value = val
+					}
 
 					// we need to go deeper!
 					if end < len(path) {
@@ -419,7 +432,8 @@ walk: // Outer loop for walking the tree
 
 					if handlers = n.handlers; handlers != nil {
 						return
-					} else if len(n.children) == 1 {
+					}
+					if len(n.children) == 1 {
 						// No handle found. Check if a handle for this path + a
 						// trailing slash exists for TSR recommendation
 						n = n.children[0]
@@ -436,7 +450,14 @@ walk: // Outer loop for walking the tree
 					i := len(p)
 					p = p[:i+1] // expand slice within preallocated capacity
 					p[i].Key = n.path[2:]
-					p[i].Value = path
+					if unescape {
+						var err error
+						if p[i].Value, err = url.QueryUnescape(path); err != nil {
+							p[i].Value = path // fallback, in case of error
+						}
+					} else {
+						p[i].Value = path
+					}
 
 					handlers = n.handlers
 					return
@@ -449,6 +470,11 @@ walk: // Outer loop for walking the tree
 			// We should have reached the node containing the handle.
 			// Check if this node has a handle registered.
 			if handlers = n.handlers; handlers != nil {
+				return
+			}
+
+			if path == "/" && n.wildChild && n.nType != root {
+				tsr = true
 				return
 			}
 

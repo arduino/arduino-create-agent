@@ -66,13 +66,13 @@ func (msg *Error) JSON() interface{} {
 	return json
 }
 
-// Implements the json.Marshaller interface
+// MarshalJSON implements the json.Marshaller interface
 func (msg *Error) MarshalJSON() ([]byte, error) {
 	return json.Marshal(msg.JSON())
 }
 
 // Implements the error interface
-func (msg *Error) Error() string {
+func (msg Error) Error() string {
 	return msg.Err.Error()
 }
 
@@ -80,7 +80,7 @@ func (msg *Error) IsType(flags ErrorType) bool {
 	return (msg.Type & flags) > 0
 }
 
-// Returns a readonly copy filterd the byte.
+// Returns a readonly copy filtered the byte.
 // ie ByType(gin.ErrorTypePublic) returns a slice of errors with type=ErrorTypePublic
 func (a errorMsgs) ByType(typ ErrorType) errorMsgs {
 	if len(a) == 0 {
@@ -89,7 +89,7 @@ func (a errorMsgs) ByType(typ ErrorType) errorMsgs {
 	if typ == ErrorTypeAny {
 		return a
 	}
-	var result errorMsgs = nil
+	var result errorMsgs
 	for _, msg := range a {
 		if msg.IsType(typ) {
 			result = append(result, msg)
@@ -109,13 +109,11 @@ func (a errorMsgs) Last() *Error {
 }
 
 // Returns an array will all the error messages.
-// Example
-// ```
-// c.Error(errors.New("first"))
-// c.Error(errors.New("second"))
-// c.Error(errors.New("third"))
-// c.Errors.Errors() // == []string{"first", "second", "third"}
-// ``
+// Example:
+// 		c.Error(errors.New("first"))
+// 		c.Error(errors.New("second"))
+// 		c.Error(errors.New("third"))
+// 		c.Errors.Errors() // == []string{"first", "second", "third"}
 func (a errorMsgs) Errors() []string {
 	if len(a) == 0 {
 		return nil

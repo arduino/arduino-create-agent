@@ -5,19 +5,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"syscall"
 	"runtime"
+	"syscall"
 	"unsafe"
 
 	"github.com/getlantern/filepersist"
 )
 
 var (
-	iconFiles = make([]*os.File, 0)
-	dllDir    = filepath.Join(os.Getenv("APPDATA"), "systray")
+	iconFiles   = make([]*os.File, 0)
+	dllDir      = filepath.Join(os.Getenv("APPDATA"), "systray")
 	dllFileName = "systray" + runtime.GOARCH + ".dll"
-	dllFile   = filepath.Join(dllDir, dllFileName)
-
+	dllFile     = filepath.Join(dllDir, dllFileName)
 
 	mod                      = syscall.NewLazyDLL(dllFile)
 	_nativeLoop              = mod.NewProc("nativeLoop")
@@ -26,29 +25,32 @@ var (
 	_setTitle                = mod.NewProc("setTitle")
 	_setTooltip              = mod.NewProc("setTooltip")
 	_add_or_update_menu_item = mod.NewProc("add_or_update_menu_item")
+	_add_separator           = mod.NewProc("add_separator")
+	_hide_menu_item          = mod.NewProc("hide_menu_item")
 )
 
 func init() {
 	// Write DLL to file
 	b, err := Asset(dllFileName)
 	if err != nil {
-		panic(fmt.Errorf("Unable to read " + dllFileName + ": %v", err))
+		panic(fmt.Errorf("Unable to read "+dllFileName+": %v", err))
 	}
 
 	err = os.MkdirAll(dllDir, 0755)
 	if err != nil {
-		panic(fmt.Errorf("Unable to create directory %v to hold " + dllFileName + ": %v", dllDir, err))
+		panic(fmt.Errorf("Unable to create directory %v to hold "+dllFileName+": %v", dllDir, err))
 	}
 
 	err = filepersist.Save(dllFile, b, 0644)
 	if err != nil {
-		panic(fmt.Errorf("Unable to save " + dllFileName + " to %v: %v", dllFile, err))
+		panic(fmt.Errorf("Unable to save "+dllFileName+" to %v: %v", dllFile, err))
 	}
 }
 
 func nativeLoop() {
 	_nativeLoop.Call(
 		syscall.NewCallbackCDecl(systray_ready),
+		syscall.NewCallbackCDecl(systray_on_exit),
 		syscall.NewCallbackCDecl(systray_menu_item_selected))
 }
 
@@ -131,6 +133,18 @@ func addOrUpdateMenuItem(item *MenuItem) {
 	)
 }
 
+func addSeparator(id int32) {
+	_add_separator.Call(uintptr(id))
+}
+
+func hideMenuItem(item *MenuItem) {
+	_hide_menu_item.Call(uintptr(item.id))
+}
+
+func showMenuItem(item *MenuItem) {
+	addOrUpdateMenuItem(item)
+}
+
 type utf16 []uint16
 
 // Raw returns the underlying *wchar_t of an utf16 so we can pass to DLL
@@ -148,6 +162,11 @@ func strUTF16(s string) (utf16, error) {
 // parameter to the function).
 func systray_ready(ignore uintptr) uintptr {
 	systrayReady()
+	return 0
+}
+
+func systray_on_exit(ignore uintptr) uintptr {
+	systrayExit()
 	return 0
 }
 

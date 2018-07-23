@@ -60,9 +60,30 @@ func addOrUpdateMenuItem(item *MenuItem) {
 	)
 }
 
+func addSeparator(id int32) {
+	C.add_separator(C.int(id))
+}
+
+func hideMenuItem(item *MenuItem) {
+	C.hide_menu_item(
+		C.int(item.id),
+	)
+}
+
+func showMenuItem(item *MenuItem) {
+	C.show_menu_item(
+		C.int(item.id),
+	)
+}
+
 //export systray_ready
 func systray_ready() {
 	systrayReady()
+}
+
+//export systray_on_exit
+func systray_on_exit() {
+	systrayExit()
 }
 
 //export systray_menu_item_selected

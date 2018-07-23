@@ -6,17 +6,16 @@ package binding
 
 import (
 	"encoding/json"
-
 	"net/http"
 )
 
 type jsonBinding struct{}
 
-func (_ jsonBinding) Name() string {
+func (jsonBinding) Name() string {
 	return "json"
 }
 
-func (_ jsonBinding) Bind(req *http.Request, obj interface{}) error {
+func (jsonBinding) Bind(req *http.Request, obj interface{}) error {
 	decoder := json.NewDecoder(req.Body)
 	if err := decoder.Decode(obj); err != nil {
 		return err

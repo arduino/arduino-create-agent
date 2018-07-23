@@ -8,6 +8,7 @@ import "net/http"
 
 type Render interface {
 	Render(http.ResponseWriter) error
+	WriteContentType(w http.ResponseWriter)
 }
 
 var (
@@ -20,6 +21,9 @@ var (
 	_ Render     = HTML{}
 	_ HTMLRender = HTMLDebug{}
 	_ HTMLRender = HTMLProduction{}
+	_ Render     = YAML{}
+	_ Render     = MsgPack{}
+	_ Render     = MsgPack{}
 )
 
 func writeContentType(w http.ResponseWriter, value []string) {

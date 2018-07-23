@@ -120,6 +120,7 @@ func Middleware(config Config) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		// Read the Origin header from the HTTP request
 		currentOrigin := context.Request.Header.Get(OriginKey)
+		context.Writer.Header().Add("Vary", OriginKey)
 
 		// CORS headers are added whenever the browser request includes an "Origin" header
 		// However, if no Origin is supplied, they should never be added.
@@ -150,12 +151,14 @@ func Middleware(config Config) gin.HandlerFunc {
 
 			if valid {
 
-				// Allowed origins cannot be the string "*" cannot be used for a resource that supports credentials.
 				if config.Credentials {
 					context.Writer.Header().Set(AllowCredentialsKey, config.credentials)
+					// Allowed origins cannot be the string "*" cannot be used for a resource that supports credentials.
 					context.Writer.Header().Set(AllowOriginKey, currentOrigin)
-				} else {
+				} else if forceOriginMatch {
 					context.Writer.Header().Set(AllowOriginKey, "*")
+				} else {
+					context.Writer.Header().Set(AllowOriginKey, currentOrigin)
 				}
 
 				//If this is a preflight request, we are finished, quit.
@@ -232,11 +235,11 @@ func validateRequestHeaders(requestHeaders string, config Config) bool {
 		return true
 	}
 
-	headers := strings.Split(requestHeaders, ", ")
+	headers := strings.Split(requestHeaders, ",")
 
 	for _, header := range headers {
 		match := false
-		header = strings.ToLower(header)
+		header = strings.ToLower(strings.Trim(header, " \t\r\n"))
 
 		for _, value := range config.requestHeaders {
 			if value == header {

@@ -3,12 +3,14 @@ package socketio
 import (
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 type baseHandler struct {
 	events    map[string]*caller
 	name      string
 	broadcast BroadcastAdaptor
+	evMu      sync.Mutex
 }
 
 func newBaseHandler(name string, broadcast BroadcastAdaptor) *baseHandler {
@@ -16,21 +18,25 @@ func newBaseHandler(name string, broadcast BroadcastAdaptor) *baseHandler {
 		events:    make(map[string]*caller),
 		name:      name,
 		broadcast: broadcast,
+		evMu:      sync.Mutex{},
 	}
 }
 
-// On registers the function f to handle message.
-func (h *baseHandler) On(message string, f interface{}) error {
+// On registers the function f to handle an event.
+func (h *baseHandler) On(event string, f interface{}) error {
 	c, err := newCaller(f)
 	if err != nil {
 		return err
 	}
-	h.events[message] = c
+	h.evMu.Lock()
+	h.events[event] = c
+	h.evMu.Unlock()
 	return nil
 }
 
 type socketHandler struct {
 	*baseHandler
+	acksmu sync.Mutex
 	acks   map[int]*caller
 	socket *socket
 	rooms  map[string]struct{}
@@ -38,13 +44,16 @@ type socketHandler struct {
 
 func newSocketHandler(s *socket, base *baseHandler) *socketHandler {
 	events := make(map[string]*caller)
+	base.evMu.Lock()
 	for k, v := range base.events {
 		events[k] = v
 	}
+	base.evMu.Unlock()
 	return &socketHandler{
 		baseHandler: &baseHandler{
 			events:    events,
 			broadcast: base.broadcast,
+			evMu:      base.evMu,
 		},
 		acks:   make(map[int]*caller),
 		socket: s,
@@ -52,7 +61,7 @@ func newSocketHandler(s *socket, base *baseHandler) *socketHandler {
 	}
 }
 
-func (h *socketHandler) Emit(message string, args ...interface{}) error {
+func (h *socketHandler) Emit(event string, args ...interface{}) error {
 	var c *caller
 	if l := len(args); l > 0 {
 		fv := reflect.ValueOf(args[l-1])
@@ -65,13 +74,15 @@ func (h *socketHandler) Emit(message string, args ...interface{}) error {
 			args = args[:l-1]
 		}
 	}
-	args = append([]interface{}{message}, args...)
+	args = append([]interface{}{event}, args...)
 	if c != nil {
 		id, err := h.socket.sendId(args)
 		if err != nil {
 			return err
 		}
+		h.acksmu.Lock()
 		h.acks[id] = c
+		h.acksmu.Unlock()
 		return nil
 	}
 	return h.socket.send(args)
@@ -112,12 +123,12 @@ func (h *socketHandler) LeaveAll() error {
 	return nil
 }
 
-func (h *baseHandler) BroadcastTo(room, message string, args ...interface{}) error {
-	return h.broadcast.Send(nil, h.broadcastName(room), message, args...)
+func (h *baseHandler) BroadcastTo(room, event string, args ...interface{}) error {
+	return h.broadcast.Send(nil, h.broadcastName(room), event, args...)
 }
 
-func (h *socketHandler) BroadcastTo(room, message string, args ...interface{}) error {
-	return h.baseHandler.broadcast.Send(h.socket, h.broadcastName(room), message, args...)
+func (h *socketHandler) BroadcastTo(room, event string, args ...interface{}) error {
+	return h.baseHandler.broadcast.Send(h.socket, h.broadcastName(room), event, args...)
 }
 
 func (h *baseHandler) broadcastName(room string) string {
@@ -125,6 +136,12 @@ func (h *baseHandler) broadcastName(room string) string {
 }
 
 func (h *socketHandler) onPacket(decoder *decoder, packet *packet) ([]interface{}, error) {
+	defer func() {
+		if decoder != nil {
+			decoder.Close()
+		}
+	}()
+
 	var message string
 	switch packet.Type {
 	case _CONNECT:
@@ -134,21 +151,28 @@ func (h *socketHandler) onPacket(decoder *decoder, packet *packet) ([]interface{
 	case _ERROR:
 		message = "error"
 	case _ACK:
+		fallthrough
 	case _BINARY_ACK:
 		return nil, h.onAck(packet.Id, decoder, packet)
 	default:
-		message = decoder.Message()
+		if decoder != nil {
+			message = decoder.Message()
+		}
 	}
+	h.evMu.Lock()
 	c, ok := h.events[message]
+	h.evMu.Unlock()
 	if !ok {
 		// If the message is not recognized by the server, the decoder.currentCloser
 		// needs to be closed otherwise the server will be stuck until the e
-		decoder.Close()
+		if decoder != nil {
+			decoder.Close()
+		}
 		return nil, nil
 	}
 	args := c.GetArgs()
 	olen := len(args)
-	if olen > 0 {
+	if olen > 0 && decoder != nil {
 		packet.Data = &args
 		if err := decoder.DecodeData(packet); err != nil {
 			return nil, err
@@ -176,11 +200,14 @@ func (h *socketHandler) onPacket(decoder *decoder, packet *packet) ([]interface{
 }
 
 func (h *socketHandler) onAck(id int, decoder *decoder, packet *packet) error {
+	h.acksmu.Lock()
 	c, ok := h.acks[id]
 	if !ok {
+		h.acksmu.Unlock()
 		return nil
 	}
 	delete(h.acks, id)
+	h.acksmu.Unlock()
 
 	args := c.GetArgs()
 	packet.Data = &args
