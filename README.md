@@ -4,13 +4,68 @@ arduino-create-agent
 ## Installation
 Get the latest version of the Agent for all supported platforms:
 
-* [Windows](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer.exe)
-* [MacOSX](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer.dmg)
-* [Linux x64](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer.run)
+### Windows
+* [Windows with Edge](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-edge.exe)
+* [Windows with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-chrome.exe)
+* [Windows with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-firefox.exe)
+
+### MacOSX
+* [MacOSX with Safari](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-safari.dmg)
+* [MacOSX with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-chrome.dmg)
+* [MacOSX with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-firefox.dmg)
+
+### Linux
+* [Linux x64 with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-chrome.tar.gz)
+* [Linux x64 with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-firefox.tar.gz)
 
 arduino-create-agent is a fork of @johnlauer's serial-port-json-server (which we really want to thank for his kindness and great work)
 
 The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
+
+
+
+## Using multiple configurations
+
+The agent support multiple configuration files. When multiple configurations are found by the agent, the tray icon menu is expanded to contain the different configurations:
+
+![Agent multiple configuration tray icon](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/tray-icon-multiple-profiles.png)
+
+The default `config.ini` file contains common configurations, every other config file inherit from it.
+
+To create multiple configuration files:
+- stop the agent: tray bar icon -> pause then tray bar icon -> kill
+- find the `config.ini` file that is present in the `arduino-create-agent` installation folder 
+- copy `config.ini` or create a new ini file (e.g. `example.ini`) with content:
+    ```ini
+    name = your configuration name
+    ```
+    add in this file other configuration options (you can override inherited values from `config.ini`)
+- restart the agent
+- click the tray bar icon and select the new configuration
+
+**Tip**: you can also use the multiple configurations feature to create a new configuration with the proxy settings. This way you can have multiple proxies configured and disable proxy configuration with ease.
+
+## When behind a proxy
+
+The agent support working behind a proxy, but manual configuration is required ( there is no support for automatic proxy discovery ).
+
+To add proxy configuration:
+- stop the agent: tray bar icon -> pause then tray bar icon -> kill
+- find the `config.ini` file that is present in the `arduino-create-agent` installation folder
+- copy `config.ini` to a new file (e.g. `proxy.ini`) with content:
+    ```ini
+    name = Proxy Enabled
+    [env]
+    http_proxy=your.proxy.here
+    https_proxy=your.https.proxyhere
+    ```
+- please note spaces are not allowed before and after the string `http_proxy`
+- restart the agent
+- select the proper Proxy profile as in the image
+- your agent will now work behind a proxy
+
+![Agent multiple configuration tray icon](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/tray-icon-multiple-profiles.png)
+   
 
 ## Disable Autostart
 
@@ -79,9 +134,20 @@ or in the location selected during the installation
 
 Please use the current latest version:
 
-* [Windows dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
-* [MacOSX dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer.dmg)
-* [Linux x64 dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer.run)
+### Windows
+* [Windows with Edge dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-edge.exe)
+* [Windows with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
+* [Windows with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-firefox.exe)
+
+### MacOSX
+* [MacOSX with Safari dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-safari.dmg)
+* [MacOSX with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-chrome.dmg)
+* [MacOSX with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-firefox.dmg)
+
+### Linux
+* [Linux x64 with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-chrome.run)
+* [Linux x64 with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-firefox.run)
+
 
 ## How to use it
 The arduino create agent is a single binary that reads from a configuration file. Upon launching it will sit on the traybar and work in the background.
@@ -91,12 +157,12 @@ It will listen to http and websocket connections on a range of ports from `8990`
 ### Discover the port
 You should make GET request to the `/info` endpoint on the possible ports, until you find a reply:
 
-    $ curl http://localhost:8990/info
-    curl: (7) Failed to connect to localhost port 8990: Connection refused
-    $ curl http://localhost:8991/info
+    $ curl http://127.0.0.1:8990/info
+    curl: (7) Failed to connect to 127.0.0.1 port 8990: Connection refused
+    $ curl http://127.0.0.1:8991/info
     
-    $ curl http://localhost:8992/info
-    {"http":"http://localhost:8992","https":"https://localhost:8991","version":"1.0.36","ws":"ws://localhost:8992","wss":"wss://localhost:8991"}
+    $ curl http://127.0.0.1:8992/info
+    {"http":"http://127.0.0.1:8992","https":"https://127.0.0.1:8991","version":"1.0.36","ws":"ws://127.0.0.1:8992","wss":"wss://127.0.0.1:8991"}
 
 The reply will contain a json with info about the version and the http and https endpoints to use
 
@@ -107,9 +173,9 @@ Once you have the websocket endpoint you need you can:
 ```javascript
 var socket = io(endpoint);
 socket.on('connect', function () {
-    socket.emit('message', yourCommand);
+    socket.emit('command', yourCommand);
 
-    socket.on('message', function () {
+    socket.on('command', function () {
         // Your code to handle messages
     })
 }
@@ -176,7 +242,7 @@ where you should replace /dev/ttyACM0 with the actual port and 9600 with the bau
 You will receive a message like:
 
 ```json
-{  
+{
   "Cmd":"Open",
   "Desc":"Got register/open on port.",
   "Port":"/dev/ttyACM0",
@@ -189,7 +255,7 @@ You will receive a message like:
 or
 
 ```json
-{  
+{
   "Cmd":"OpenFail",
   "Desc":"Error opening port. Serial port busy",
   "Port":"/dev/ttyACM0",
@@ -204,7 +270,7 @@ You can then close the port with
 You will receive a message like:
 
 ```json
-{  
+{
   "Cmd":"Close",
   "Desc":"Got unregister/close on port.",
   "Port":"/dev/ttyACM0",
@@ -216,7 +282,7 @@ or
 
 
 ```json
-{  
+{
   "Error":"We could not find the serial port /dev/ttyACM0 that you were trying to close."
 }
 ```
@@ -238,7 +304,7 @@ with a reply like
 You can receive output from the serial port by listening to messages like this:
 
 ```json
-{  
+{
   "D":"output string\r\n"
 }
 ```
@@ -309,17 +375,20 @@ The results of the upload will be delivered via websocket with messages that loo
 
 ## Development
 
-From the project root dir executing:
+To clone the repository, run the following command:
 ```
-export GOPATH=$PWD
-go get
+go get github.com/arduino/arduino-create-agent
+```
+
+This will clone the repository into your [Go workspace](https://golang.org/doc/code.html#Workspaces) or create a new workspace, if one doesn't exist. You can set `$GOPATH` to define where your Go workspace is located.
+
+Now you can go to the project directory and compile it:
+```
+cd $GOPATH/src/github.com/arduino/arduino-create-agent
 go build
 ```
-will build the `arduino-create-agent` binary.
 
-`compile_webidebridge.sh` contains the cross-platform script we use to deploy the agent for all the supported platforms; it needs to be adjusted as per your `go` installation paths and OS.
-
-You can use `bootstrapPlatforms` function to compile the needed CGO-enabled environment
+This will create the `arduino-create-agent` binary.
 
 Other prerequisites are:
 * libappindicator (Linux only on Ubuntu `sudo apt-get install libappindicator1`)

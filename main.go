@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
@@ -220,14 +221,20 @@ func main() {
 
 			socketHandler := wsHandler().ServeHTTP
 
-			extraOriginStr := "https://create.arduino.cc, http://create.arduino.cc, https://create-dev.arduino.cc, http://create-dev.arduino.cc, https://create-intel.arduino.cc, http://create-intel.arduino.cc"
+			extraOrigins := []string{
+				"https://create.arduino.cc",
+				"http://create.arduino.cc", "https://create-dev.arduino.cc", "http://create-dev.arduino.cc", "https://create-intel.arduino.cc", "http://create-intel.arduino.cc",
+			}
 
 			for i := 8990; i < 9001; i++ {
-				extraOriginStr = extraOriginStr + ", http://localhost:" + strconv.Itoa(i) + ", https://localhost:" + strconv.Itoa(i)
+				port := strconv.Itoa(i)
+				extraOrigins = append(extraOrigins, "http://localhost:"+port)
+				extraOrigins = append(extraOrigins, "https://localhost:"+port)
+				extraOrigins = append(extraOrigins, "http://127.0.0.1:"+port)
 			}
 
 			r.Use(cors.Middleware(cors.Config{
-				Origins:         *origins + ", " + extraOriginStr,
+				Origins:         *origins + ", " + strings.Join(extraOrigins, ", "),
 				Methods:         "GET, PUT, POST, DELETE",
 				RequestHeaders:  "Origin, Authorization, Content-Type",
 				ExposedHeaders:  "",

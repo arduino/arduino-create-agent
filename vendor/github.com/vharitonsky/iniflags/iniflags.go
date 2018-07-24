@@ -75,12 +75,12 @@ func configUpdater() {
 		for {
 			// Use time.Sleep() instead of time.Tick() for the sake of dynamic flag update.
 			time.Sleep(*configUpdateInterval)
-			updateConfig()
+			UpdateConfig()
 		}
 	}
 }
 
-func updateConfig() {
+func UpdateConfig() {
 	if oldFlagValues, ok := parseConfigFlags(); ok && len(oldFlagValues) > 0 {
 		modifiedFlags := make(map[string]string)
 		for k := range oldFlagValues {
@@ -138,7 +138,7 @@ func issueAllFlagChangeCallbacks() {
 
 func sighupHandler(ch <-chan os.Signal) {
 	for _ = range ch {
-		updateConfig()
+		UpdateConfig()
 	}
 }
 

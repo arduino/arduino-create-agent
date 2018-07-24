@@ -31,12 +31,18 @@
 package main
 
 import (
+	"flag"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/getlantern/systray"
+	"github.com/go-ini/ini"
+	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/vharitonsky/iniflags"
 	"go.bug.st/serial.v1"
 )
 
@@ -61,6 +67,55 @@ func addRebootTrayElement() {
 	}()
 }
 
+type ConfigIni struct {
+	Name      string
+	Localtion string
+}
+
+func getConfigs() []ConfigIni {
+	// parse all configs in executable folder
+	// config.ini must be there, so call it Default
+	src, _ := osext.Executable()
+	dest := filepath.Dir(src)
+
+	var configs []ConfigIni
+
+	filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
+		if !f.IsDir() {
+			if filepath.Ext(path) == ".ini" {
+				cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, f.Name()))
+				if err != nil {
+					return err
+				}
+				defaultSection, err := cfg.GetSection("")
+				name := defaultSection.Key("name").String()
+				if name == "" || err != nil {
+					name = "Default config"
+				}
+				conf := ConfigIni{Name: name, Localtion: f.Name()}
+				configs = append(configs, conf)
+			}
+		}
+		return nil
+	})
+	return configs
+}
+
+func applyEnvironment(filename string) {
+	src, _ := osext.Executable()
+	dest := filepath.Dir(src)
+	cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, filename))
+	defaultSection, err := cfg.GetSection("env")
+	if err != nil {
+		return
+	}
+	for _, env := range defaultSection.KeyStrings() {
+		val := defaultSection.Key(env).String()
+		log.Info("Applying env setting: " + env + "=" + val)
+		os.Setenv(env, val)
+	}
+}
+
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.GetIcon())
@@ -68,9 +123,46 @@ func setupSysTrayReal() {
 	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
 	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
 	mPause := systray.AddMenuItem("Pause Plugin", "")
+	var mConfigCheckbox []*systray.MenuItem
+
+	configs := getConfigs()
+
+	if len(configs) > 1 {
+		for _, config := range configs {
+			entry := systray.AddMenuItem(config.Name, "")
+			mConfigCheckbox = append(mConfigCheckbox, entry)
+			// decorate configs
+			gliph := " ☐ "
+			if *configIni == config.Localtion {
+				gliph = " 🗹 "
+			}
+			entry.SetTitle(gliph + config.Name)
+		}
+	} else {
+		// apply env setting from first config immediately
+		// applyEnvironment(configs[0].Localtion)
+	}
 	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
 	menuVer.Disable()
+
+	for i, _ := range mConfigCheckbox {
+		go func(v int) {
+			for {
+				<-mConfigCheckbox[v].ClickedCh
+				flag.Set("config", configs[v].Localtion)
+				iniflags.UpdateConfig()
+				applyEnvironment(configs[v].Localtion)
+				mConfigCheckbox[v].SetTitle(" 🗹 " + configs[v].Name)
+				//mConfigCheckbox[v].Check()
+				for j, _ := range mConfigCheckbox {
+					if j != v {
+						mConfigCheckbox[j].SetTitle(" ☐ " + configs[j].Name)
+					}
+				}
+			}
+		}(i)
+	}
 
 	go func() {
 		<-mPause.ClickedCh
@@ -94,7 +186,7 @@ func setupSysTrayReal() {
 		for {
 			<-mDebug.ClickedCh
 			logAction("log on")
-			open.Start("http://localhost" + port)
+			open.Start("http://127.0.0.1" + port)
 		}
 	}()
 

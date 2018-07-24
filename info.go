@@ -1,17 +1,25 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"go.bug.st/serial.v1"
 )
 
 func infoHandler(c *gin.Context) {
+	host := c.Request.Host
+	parts := strings.Split(host, ":")
+	host = parts[0]
+
 	c.JSON(200, gin.H{
 		"version": version,
-		"http":    "http://localhost" + port,
+		"http":    "http://" + host + port,
 		"https":   "https://localhost" + portSSL,
-		"ws":      "ws://localhost" + port,
+		"ws":      "ws://" + host + port,
 		"wss":     "wss://localhost" + portSSL,
+		"origins": origins,
+		"update_url": updateUrl,
 	})
 }
 

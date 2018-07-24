@@ -13,7 +13,6 @@ import (
 
 type OsSerialPort struct {
 	Name         string
-	SerialNumber string
 	DeviceClass  string
 	Manufacturer string
 	Product      string
