@@ -49,6 +49,7 @@ var (
 	indexURL              = flag.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
 	requiredToolsAPILevel = "v1"
 	httpProxy             = flag.String("httpProxy", "", "Proxy server for HTTP requests")
+	httpsProxy            = flag.String("httpsProxy", "", "Proxy server for HTTPS requests")
 )
 
 type NullWriter int
@@ -133,6 +134,17 @@ func main() {
 			if *httpProxy != "" {
 				log.Printf("Setting HTTP_PROXY variable to %v", *httpProxy)
 				err := os.Setenv("HTTP_PROXY", *httpProxy)
+				if err != nil {
+					// The os.Setenv documentation doesn't specify how it can
+					// fail, so I don't know how to handle this error
+					// appropriately.
+					panic(err)
+				}
+			}
+
+			if *httpsProxy != "" {
+				log.Printf("Setting HTTPS_PROXY variable to %v", *httpProxy)
+				err := os.Setenv("HTTPS_PROXY", *httpProxy)
 				if err != nil {
 					// The os.Setenv documentation doesn't specify how it can
 					// fail, so I don't know how to handle this error
