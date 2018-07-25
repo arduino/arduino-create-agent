@@ -31,7 +31,6 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -42,7 +41,6 @@ import (
 	"github.com/go-ini/ini"
 	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
-	"github.com/vharitonsky/iniflags"
 	"go.bug.st/serial.v1"
 )
 
@@ -133,7 +131,7 @@ func setupSysTrayReal() {
 			mConfigCheckbox = append(mConfigCheckbox, entry)
 			// decorate configs
 			gliph := " ☐ "
-			if *configIni == config.Localtion {
+			if *additionalConfig == config.Localtion {
 				gliph = " 🗹 "
 			}
 			entry.SetTitle(gliph + config.Name)
@@ -150,16 +148,8 @@ func setupSysTrayReal() {
 		go func(v int) {
 			for {
 				<-mConfigCheckbox[v].ClickedCh
-				flag.Set("config", configs[v].Localtion)
-				iniflags.UpdateConfig()
-				applyEnvironment(configs[v].Localtion)
-				mConfigCheckbox[v].SetTitle(" 🗹 " + configs[v].Name)
-				//mConfigCheckbox[v].Check()
-				for j, _ := range mConfigCheckbox {
-					if j != v {
-						mConfigCheckbox[j].SetTitle(" ☐ " + configs[j].Name)
-					}
-				}
+
+				restart("", "-additional-config", configs[v].Localtion)
 			}
 		}(i)
 	}
