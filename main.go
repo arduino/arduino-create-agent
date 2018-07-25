@@ -116,7 +116,6 @@ func main() {
 
 		// Parse ini config
 		args, err := parseIni("config.ini")
-		fmt.Println(args)
 		if err != nil {
 			panic(err)
 		}
@@ -130,7 +129,10 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		iniConf.Parse(args)
+		err = iniConf.Parse(args)
+		if err != nil {
+			panic(err)
+		}
 
 		// Instantiate Tools
 		usr, _ := user.Current()
@@ -454,7 +456,6 @@ body {
 
 func parseIni(filename string) (args []string, err error) {
 	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false}, filename)
-
 	if err != nil {
 		return nil, err
 	}
@@ -466,6 +467,9 @@ func parseIni(filename string) (args []string, err error) {
 				continue
 			} // Ignore configUpdateInterval
 			if key == "configUpdateInterval" {
+				continue
+			} // Ignore name
+			if key == "name" {
 				continue
 			}
 			args = append(args, "-"+key, val)
