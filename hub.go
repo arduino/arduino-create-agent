@@ -276,7 +276,7 @@ func exit() {
 
 }
 
-func restart(path string) {
+func restart(path string, args ...string) {
 	log.Println("called restart", path)
 	quitSysTray()
 	// relaunch ourself and exit
@@ -302,14 +302,9 @@ func restart(path string) {
 
 	exePath = strings.Trim(exePath, "\n")
 
-	hiberString := ""
-	if *hibernate == true {
-		hiberString = "-hibernate"
-	}
-
-	cmd := exec.Command(exePath, "-ls", "-regex", *regExpFilter, "-gc", *gcType, hiberString)
-
-	fmt.Println(cmd)
+	args = append(args, "-ls")
+	args = append(args, "-hibernate="+fmt.Sprint(*hibernate))
+	cmd := exec.Command(exePath, args...)
 
 	err := cmd.Start()
 	if err != nil {

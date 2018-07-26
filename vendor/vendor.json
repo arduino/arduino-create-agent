@@ -207,11 +207,6 @@
 			"revisionTime": "2015-02-21T09:03:35-05:00"
 		},
 		{
-			"path": "github.com/vharitonsky/iniflags",
-			"revision": "02b57ef987a5ee59eedc7dcd93315a43f6dcc4a7",
-			"revisionTime": "2015-11-14T13:23:54+02:00"
-		},
-		{
 			"path": "github.com/xrash/smetrics",
 			"revision": "81a89232431423f9140fa413823ce3045f02f19c",
 			"revisionTime": "2014-12-22T05:03:38-02:00"

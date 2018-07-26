@@ -13,12 +13,12 @@ func infoHandler(c *gin.Context) {
 	host = parts[0]
 
 	c.JSON(200, gin.H{
-		"version": version,
-		"http":    "http://" + host + port,
-		"https":   "https://localhost" + portSSL,
-		"ws":      "ws://" + host + port,
-		"wss":     "wss://localhost" + portSSL,
-		"origins": origins,
+		"version":    version,
+		"http":       "http://" + host + port,
+		"https":      "https://localhost" + portSSL,
+		"ws":         "ws://" + host + port,
+		"wss":        "wss://localhost" + portSSL,
+		"origins":    origins,
 		"update_url": updateUrl,
 	})
 }
