@@ -33,8 +33,6 @@ var (
 	port                  string
 	portSSL               string
 	requiredToolsAPILevel = "v1"
-	httpProxy             = flag.String("httpProxy", "", "Proxy server for HTTP requests")
-	httpsProxy            = flag.String("httpsProxy", "", "Proxy server for HTTPS requests")
 )
 
 // regular flags
@@ -47,12 +45,14 @@ var (
 
 // iniflags
 var (
-	iniConf      = flag.NewFlagSet("ini", flag.ContinueOnError)
 	address      = iniConf.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
 	appName      = iniConf.String("appName", "", "")
 	gcType       = iniConf.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
 	hostname     = iniConf.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+	httpProxy    = iniConf.String("httpProxy", "", "Proxy server for HTTP requests")
+	httpsProxy   = iniConf.String("httpsProxy", "", "Proxy server for HTTPS requests")
 	indexURL     = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
+	iniConf      = flag.NewFlagSet("ini", flag.ContinueOnError)
 	logDump      = iniConf.String("log", "off", "off = (default)")
 	origins      = iniConf.String("origins", "", "Allowed origin list for CORS")
 	regExpFilter = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
