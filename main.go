@@ -502,7 +502,7 @@ func parseIni(filename string) (args []string, err error) {
 			if key == "name" {
 				continue
 			}
-			args = append(args, "-"+key, val)
+			args = append(args, "-"+key+"="+val)
 		}
 	}
 
