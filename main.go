@@ -6,7 +6,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -98,7 +97,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	fmt.Println(*hibernate)
+	// Launch systray
+	go setupSysTray()
 
 	if *hibernate == false {
 		// autoextract self
@@ -288,7 +288,9 @@ func main() {
 			}
 		}()
 	}
-	setupSysTray()
+
+	// Block forever until the application is shut down
+	select {}
 }
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
