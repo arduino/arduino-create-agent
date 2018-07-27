@@ -121,7 +121,7 @@ func main() {
 		}
 
 		// Parse ini config
-		args, err := parseIni("config.ini")
+		args, err := parseIni(filepath.Join(dest, "config.ini"))
 		if err != nil {
 			panic(err)
 		}
@@ -131,7 +131,7 @@ func main() {
 		}
 
 		// Parse additional ini config
-		args, err = parseIni(*additionalConfig)
+		args, err = parseIni(filepath.Join(dest, *additionalConfig))
 		if err != nil {
 			panic(err)
 		}
