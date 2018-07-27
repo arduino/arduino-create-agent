@@ -41,6 +41,10 @@ var (
 	genCert          = flag.Bool("generateCert", false, "")
 	additionalConfig = flag.String("additional-config", "config.ini", "config file path")
 	isLaunchSelf     = flag.Bool("ls", false, "launch self 5 seconds later")
+
+	// Ignored flags for compatibility
+	_ = flag.String("gc", "std", "Deprecated. Use the config.ini file")
+	_ = flag.String("regex", "usb|acm|com", "Deprecated. Use the config.ini file")
 )
 
 // iniflags
