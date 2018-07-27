@@ -31,7 +31,6 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -42,7 +41,6 @@ import (
 	"github.com/go-ini/ini"
 	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
-	"github.com/vharitonsky/iniflags"
 	"go.bug.st/serial.v1"
 )
 
@@ -101,21 +99,6 @@ func getConfigs() []ConfigIni {
 	return configs
 }
 
-func applyEnvironment(filename string) {
-	src, _ := osext.Executable()
-	dest := filepath.Dir(src)
-	cfg, _ := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, filename))
-	defaultSection, err := cfg.GetSection("env")
-	if err != nil {
-		return
-	}
-	for _, env := range defaultSection.KeyStrings() {
-		val := defaultSection.Key(env).String()
-		log.Info("Applying env setting: " + env + "=" + val)
-		os.Setenv(env, val)
-	}
-}
-
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.GetIcon())
@@ -133,14 +116,11 @@ func setupSysTrayReal() {
 			mConfigCheckbox = append(mConfigCheckbox, entry)
 			// decorate configs
 			gliph := " ☐ "
-			if *configIni == config.Localtion {
+			if *additionalConfig == config.Localtion {
 				gliph = " 🗹 "
 			}
 			entry.SetTitle(gliph + config.Name)
 		}
-	} else {
-		// apply env setting from first config immediately
-		// applyEnvironment(configs[0].Localtion)
 	}
 	//mQuit := systray.AddMenuItem("Quit Plugin", "")
 
@@ -150,16 +130,8 @@ func setupSysTrayReal() {
 		go func(v int) {
 			for {
 				<-mConfigCheckbox[v].ClickedCh
-				flag.Set("config", configs[v].Localtion)
-				iniflags.UpdateConfig()
-				applyEnvironment(configs[v].Localtion)
-				mConfigCheckbox[v].SetTitle(" 🗹 " + configs[v].Name)
-				//mConfigCheckbox[v].Check()
-				for j, _ := range mConfigCheckbox {
-					if j != v {
-						mConfigCheckbox[j].SetTitle(" ☐ " + configs[j].Name)
-					}
-				}
+
+				restart("", "-additional-config", configs[v].Localtion)
 			}
 		}(i)
 	}

@@ -15,13 +15,14 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-ini/ini"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
 	cors "github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
-	"github.com/vharitonsky/iniflags"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
@@ -29,25 +30,40 @@ var (
 	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
 	git_revision          = "xxxxxxxx"  //don't modify it, Jenkins will take care
 	embedded_autoextract  = false
-	hibernate             = flag.Bool("hibernate", false, "start hibernated")
-	verbose               = flag.Bool("v", true, "show debug logging")
-	isLaunchSelf          = flag.Bool("ls", false, "launch self 5 seconds later")
-	configIni             = flag.String("configFile", "config.ini", "config file path")
-	regExpFilter          = flag.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-	gcType                = flag.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
-	logDump               = flag.String("log", "off", "off = (default)")
-	hostname              = flag.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
-	updateUrl             = flag.String("updateUrl", "", "")
-	appName               = flag.String("appName", "", "")
-	genCert               = flag.Bool("generateCert", false, "")
 	port                  string
 	portSSL               string
-	origins               = flag.String("origins", "", "Allowed origin list for CORS")
-	address               = flag.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
-	signatureKey          = flag.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
-	Tools                 tools.Tools
-	indexURL              = flag.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
 	requiredToolsAPILevel = "v1"
+)
+
+// regular flags
+var (
+	hibernate        = flag.Bool("hibernate", false, "start hibernated")
+	genCert          = flag.Bool("generateCert", false, "")
+	additionalConfig = flag.String("additional-config", "config.ini", "config file path")
+	isLaunchSelf     = flag.Bool("ls", false, "launch self 5 seconds later")
+)
+
+// iniflags
+var (
+	address      = iniConf.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
+	appName      = iniConf.String("appName", "", "")
+	gcType       = iniConf.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
+	hostname     = iniConf.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+	httpProxy    = iniConf.String("httpProxy", "", "Proxy server for HTTP requests")
+	httpsProxy   = iniConf.String("httpsProxy", "", "Proxy server for HTTPS requests")
+	indexURL     = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
+	iniConf      = flag.NewFlagSet("ini", flag.ContinueOnError)
+	logDump      = iniConf.String("log", "off", "off = (default)")
+	origins      = iniConf.String("origins", "", "Allowed origin list for CORS")
+	regExpFilter = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
+	signatureKey = iniConf.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
+	updateUrl    = iniConf.String("updateUrl", "", "")
+	verbose      = iniConf.Bool("v", true, "show debug logging")
+)
+
+// global clients
+var (
+	Tools tools.Tools
 )
 
 type NullWriter int
@@ -74,200 +90,235 @@ func launchSelfLater() {
 }
 
 func main() {
-
+	// Parse regular flags
 	flag.Parse()
 
+	// Generate certificates
 	if *genCert == true {
 		generateCertificates()
 		os.Exit(0)
 	}
 
+	// Launch systray
+	go setupSysTray()
+
 	if *hibernate == false {
+		// autoextract self
+		src, _ := osext.Executable()
+		dest := filepath.Dir(src)
+
+		if embedded_autoextract {
+			// save the config.ini (if it exists)
+			if _, err := os.Stat(filepath.Join(dest, "config.ini")); os.IsNotExist(err) {
+				log.Println("First run, unzipping self")
+				err := utilities.Unzip(src, dest)
+				log.Println("Self extraction, err:", err)
+			}
+		}
+
+		// Parse ini config
+		args, err := parseIni("config.ini")
+		if err != nil {
+			panic(err)
+		}
+		err = iniConf.Parse(args)
+		if err != nil {
+			panic(err)
+		}
+
+		// Parse additional ini config
+		args, err = parseIni(*additionalConfig)
+		if err != nil {
+			panic(err)
+		}
+		err = iniConf.Parse(args)
+		if err != nil {
+			panic(err)
+		}
+
+		// Instantiate Tools
+		usr, _ := user.Current()
+		directory := filepath.Join(usr.HomeDir, ".arduino-create")
+		Tools = tools.Tools{
+			Directory: directory,
+			IndexURL:  *indexURL,
+			Logger: func(msg string) {
+				mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+				mapB, _ := json.Marshal(mapD)
+				h.broadcastSys <- mapB
+			},
+		}
+		Tools.Init(requiredToolsAPILevel)
+
+		log.SetLevel(log.InfoLevel)
+
+		log.SetOutput(os.Stderr)
+
+		// see if we are supposed to wait 5 seconds
+		if *isLaunchSelf {
+			launchSelfLater()
+		}
+
+		log.Println("Version:" + version)
+
+		// hostname
+		hn, _ := os.Hostname()
+		if *hostname == "unknown-hostname" {
+			*hostname = hn
+		}
+		log.Println("Hostname:", *hostname)
+
+		// turn off garbage collection
+		// this is dangerous, as u could overflow memory
+		//if *isGC {
+		if *gcType == "std" {
+			log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
+		} else if *gcType == "max" {
+			log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
+		} else {
+			log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
+			debug.SetGCPercent(-1)
+		}
+
+		// If the httpProxy setting is set, use its value to override the
+		// HTTP_PROXY environment variable. Setting this environment
+		// variable ensures that all HTTP requests using net/http use this
+		// proxy server.
+		if *httpProxy != "" {
+			log.Printf("Setting HTTP_PROXY variable to %v", *httpProxy)
+			err := os.Setenv("HTTP_PROXY", *httpProxy)
+			if err != nil {
+				// The os.Setenv documentation doesn't specify how it can
+				// fail, so I don't know how to handle this error
+				// appropriately.
+				panic(err)
+			}
+		}
+
+		if *httpsProxy != "" {
+			log.Printf("Setting HTTPS_PROXY variable to %v", *httpProxy)
+			err := os.Setenv("HTTPS_PROXY", *httpProxy)
+			if err != nil {
+				// The os.Setenv documentation doesn't specify how it can
+				// fail, so I don't know how to handle this error
+				// appropriately.
+				panic(err)
+			}
+		}
+
+		// see if they provided a regex filter
+		if len(*regExpFilter) > 0 {
+			log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
+		}
+
+		// list serial ports
+		portList, _ := GetList(false)
+		log.Println("Your serial ports:")
+		if len(portList) == 0 {
+			log.Println("\tThere are no serial ports to list.")
+		}
+		for _, element := range portList {
+			log.Printf("\t%v\n", element)
+
+		}
+
+		if !*verbose {
+			log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
+			log.SetOutput(new(NullWriter)) //route all logging to nullwriter
+		}
+
+		// launch the hub routine which is the singleton for the websocket server
+		go h.run()
+		// launch our serial port routine
+		go sh.run()
+		// launch our dummy data routine
+		//go d.run()
+
+		go discoverLoop()
+
+		r := gin.New()
+
+		socketHandler := wsHandler().ServeHTTP
+
+		extraOrigins := []string{
+			"https://create.arduino.cc",
+			"http://create.arduino.cc", "https://create-dev.arduino.cc", "http://create-dev.arduino.cc", "https://create-intel.arduino.cc", "http://create-intel.arduino.cc",
+		}
+
+		for i := 8990; i < 9001; i++ {
+			port := strconv.Itoa(i)
+			extraOrigins = append(extraOrigins, "http://localhost:"+port)
+			extraOrigins = append(extraOrigins, "https://localhost:"+port)
+			extraOrigins = append(extraOrigins, "http://127.0.0.1:"+port)
+		}
+
+		r.Use(cors.Middleware(cors.Config{
+			Origins:         *origins + ", " + strings.Join(extraOrigins, ", "),
+			Methods:         "GET, PUT, POST, DELETE",
+			RequestHeaders:  "Origin, Authorization, Content-Type",
+			ExposedHeaders:  "",
+			MaxAge:          50 * time.Second,
+			Credentials:     true,
+			ValidateHeaders: false,
+		}))
+
+		r.LoadHTMLFiles("templates/nofirefox.html")
+
+		r.GET("/", homeHandler)
+		r.GET("/certificate.crt", certHandler)
+		r.DELETE("/certificate.crt", deleteCertHandler)
+		r.POST("/upload", uploadHandler)
+		r.GET("/socket.io/", socketHandler)
+		r.POST("/socket.io/", socketHandler)
+		r.Handle("WS", "/socket.io/", socketHandler)
+		r.Handle("WSS", "/socket.io/", socketHandler)
+		r.GET("/info", infoHandler)
+		r.POST("/killbrowser", killBrowserHandler)
+		r.POST("/pause", pauseHandler)
+		r.POST("/update", updateHandler)
 
 		go func() {
-
-			// autoextract self
-			src, _ := osext.Executable()
-			dest := filepath.Dir(src)
-
-			// Instantiate Tools
-			usr, _ := user.Current()
-			directory := filepath.Join(usr.HomeDir, ".arduino-create")
-			Tools = tools.Tools{
-				Directory: directory,
-				IndexURL:  *indexURL,
-				Logger: func(msg string) {
-					mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
-					mapB, _ := json.Marshal(mapD)
-					h.broadcastSys <- mapB
-				},
+			// check if certificates exist; if not, use plain http
+			if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
+				return
 			}
-			Tools.Init(requiredToolsAPILevel)
 
-			if embedded_autoextract {
-				// save the config.ini (if it exists)
-				if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-					log.Println("First run, unzipping self")
-					err := utilities.Unzip(src, dest)
-					log.Println("Self extraction, err:", err)
-				}
-
-				if _, err := os.Stat(dest + "/" + *configIni); os.IsNotExist(err) {
-					flag.Parse()
-					log.Println("No config.ini at", *configIni)
+			start := 8990
+			end := 9000
+			i := start
+			for i < end {
+				i = i + 1
+				portSSL = ":" + strconv.Itoa(i)
+				if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+					log.Printf("Error trying to bind to port: %v, so exiting...", err)
+					continue
 				} else {
-					flag.Parse()
-					flag.Set("config", dest+"/"+*configIni)
-					iniflags.Parse()
+					log.Print("Starting server and websocket (SSL) on " + *address + "" + port)
+					break
 				}
-			} else {
-				flag.Set("config", dest+"/"+*configIni)
-				iniflags.Parse()
 			}
+		}()
 
-			log.SetLevel(log.InfoLevel)
-
-			log.SetOutput(os.Stderr)
-
-			// see if we are supposed to wait 5 seconds
-			if *isLaunchSelf {
-				launchSelfLater()
-			}
-
-			log.Println("Version:" + version)
-
-			// hostname
-			hn, _ := os.Hostname()
-			if *hostname == "unknown-hostname" {
-				*hostname = hn
-			}
-			log.Println("Hostname:", *hostname)
-
-			// turn off garbage collection
-			// this is dangerous, as u could overflow memory
-			//if *isGC {
-			if *gcType == "std" {
-				log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
-			} else if *gcType == "max" {
-				log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
-			} else {
-				log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
-				debug.SetGCPercent(-1)
-			}
-
-			// see if they provided a regex filter
-			if len(*regExpFilter) > 0 {
-				log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
-			}
-
-			// list serial ports
-			portList, _ := GetList(false)
-			log.Println("Your serial ports:")
-			if len(portList) == 0 {
-				log.Println("\tThere are no serial ports to list.")
-			}
-			for _, element := range portList {
-				log.Printf("\t%v\n", element)
-
-			}
-
-			if !*verbose {
-				log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
-				log.SetOutput(new(NullWriter)) //route all logging to nullwriter
-			}
-
-			// launch the hub routine which is the singleton for the websocket server
-			go h.run()
-			// launch our serial port routine
-			go sh.run()
-			// launch our dummy data routine
-			//go d.run()
-
-			go discoverLoop()
-
-			r := gin.New()
-
-			socketHandler := wsHandler().ServeHTTP
-
-			extraOrigins := []string{
-				"https://create.arduino.cc",
-				"http://create.arduino.cc", "https://create-dev.arduino.cc", "http://create-dev.arduino.cc", "https://create-intel.arduino.cc", "http://create-intel.arduino.cc",
-			}
-
-			for i := 8990; i < 9001; i++ {
-				port := strconv.Itoa(i)
-				extraOrigins = append(extraOrigins, "http://localhost:"+port)
-				extraOrigins = append(extraOrigins, "https://localhost:"+port)
-				extraOrigins = append(extraOrigins, "http://127.0.0.1:"+port)
-			}
-
-			r.Use(cors.Middleware(cors.Config{
-				Origins:         *origins + ", " + strings.Join(extraOrigins, ", "),
-				Methods:         "GET, PUT, POST, DELETE",
-				RequestHeaders:  "Origin, Authorization, Content-Type",
-				ExposedHeaders:  "",
-				MaxAge:          50 * time.Second,
-				Credentials:     true,
-				ValidateHeaders: false,
-			}))
-
-			r.LoadHTMLFiles("templates/nofirefox.html")
-
-			r.GET("/", homeHandler)
-			r.GET("/certificate.crt", certHandler)
-			r.DELETE("/certificate.crt", deleteCertHandler)
-			r.POST("/upload", uploadHandler)
-			r.GET("/socket.io/", socketHandler)
-			r.POST("/socket.io/", socketHandler)
-			r.Handle("WS", "/socket.io/", socketHandler)
-			r.Handle("WSS", "/socket.io/", socketHandler)
-			r.GET("/info", infoHandler)
-			r.POST("/killbrowser", killBrowserHandler)
-			r.POST("/pause", pauseHandler)
-			r.POST("/update", updateHandler)
-
-			go func() {
-				// check if certificates exist; if not, use plain http
-				if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
-					return
+		go func() {
+			start := 8990
+			end := 9000
+			i := start
+			for i < end {
+				i = i + 1
+				port = ":" + strconv.Itoa(i)
+				if err := r.Run(*address + port); err != nil {
+					log.Printf("Error trying to bind to port: %v, so exiting...", err)
+					continue
+				} else {
+					log.Print("Starting server and websocket on " + *address + "" + port)
+					break
 				}
-
-				start := 8990
-				end := 9000
-				i := start
-				for i < end {
-					i = i + 1
-					portSSL = ":" + strconv.Itoa(i)
-					if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
-						log.Printf("Error trying to bind to port: %v, so exiting...", err)
-						continue
-					} else {
-						log.Print("Starting server and websocket (SSL) on " + *address + "" + port)
-						break
-					}
-				}
-			}()
-
-			go func() {
-				start := 8990
-				end := 9000
-				i := start
-				for i < end {
-					i = i + 1
-					port = ":" + strconv.Itoa(i)
-					if err := r.Run(*address + port); err != nil {
-						log.Printf("Error trying to bind to port: %v, so exiting...", err)
-						continue
-					} else {
-						log.Print("Starting server and websocket on " + *address + "" + port)
-						break
-					}
-				}
-			}()
-
+			}
 		}()
 	}
-	setupSysTray()
+
+	// Block forever until the application is shut down
+	select {}
 }
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
@@ -432,3 +483,28 @@ body {
 </body>
 </html>
 `
+
+func parseIni(filename string) (args []string, err error) {
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false}, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, section := range cfg.Sections() {
+		for key, val := range section.KeysHash() {
+			// Ignore launchself
+			if key == "ls" {
+				continue
+			} // Ignore configUpdateInterval
+			if key == "configUpdateInterval" {
+				continue
+			} // Ignore name
+			if key == "name" {
+				continue
+			}
+			args = append(args, "-"+key+"="+val)
+		}
+	}
+
+	return args, nil
+}
