@@ -103,226 +103,229 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Launch systray
-	go setupSysTray()
+	// Launch main loop in a goroutine
+	go loop()
 
-	if *hibernate == false {
-		// autoextract self
-		src, _ := osext.Executable()
-		dest := filepath.Dir(src)
+	// SetupSystray is the main thread
+	setupSysTray()
+}
 
-		if embedded_autoextract {
-			// save the config.ini (if it exists)
-			if _, err := os.Stat(filepath.Join(dest, "config.ini")); os.IsNotExist(err) {
-				log.Println("First run, unzipping self")
-				err := utilities.Unzip(src, dest)
-				log.Println("Self extraction, err:", err)
-			}
+func loop() {
+	if *hibernate {
+		return
+	}
+	// autoextract self
+	src, _ := osext.Executable()
+	dest := filepath.Dir(src)
+
+	if embedded_autoextract {
+		// save the config.ini (if it exists)
+		if _, err := os.Stat(filepath.Join(dest, "config.ini")); os.IsNotExist(err) {
+			log.Println("First run, unzipping self")
+			err := utilities.Unzip(src, dest)
+			log.Println("Self extraction, err:", err)
 		}
-
-		// Parse ini config
-		args, err := parseIni(filepath.Join(dest, "config.ini"))
-		if err != nil {
-			panic(err)
-		}
-		err = iniConf.Parse(args)
-		if err != nil {
-			panic(err)
-		}
-
-		// Parse additional ini config
-		args, err = parseIni(filepath.Join(dest, *additionalConfig))
-		if err != nil {
-			panic(err)
-		}
-		err = iniConf.Parse(args)
-		if err != nil {
-			panic(err)
-		}
-
-		// Instantiate Tools
-		usr, _ := user.Current()
-		directory := filepath.Join(usr.HomeDir, ".arduino-create")
-		Tools = tools.Tools{
-			Directory: directory,
-			IndexURL:  *indexURL,
-			Logger: func(msg string) {
-				mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
-				mapB, _ := json.Marshal(mapD)
-				h.broadcastSys <- mapB
-			},
-		}
-		Tools.Init(requiredToolsAPILevel)
-
-		log.SetLevel(log.InfoLevel)
-
-		log.SetOutput(os.Stderr)
-
-		// see if we are supposed to wait 5 seconds
-		if *isLaunchSelf {
-			launchSelfLater()
-		}
-
-		log.Println("Version:" + version)
-
-		// hostname
-		hn, _ := os.Hostname()
-		if *hostname == "unknown-hostname" {
-			*hostname = hn
-		}
-		log.Println("Hostname:", *hostname)
-
-		// turn off garbage collection
-		// this is dangerous, as u could overflow memory
-		//if *isGC {
-		if *gcType == "std" {
-			log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
-		} else if *gcType == "max" {
-			log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
-		} else {
-			log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
-			debug.SetGCPercent(-1)
-		}
-
-		// If the httpProxy setting is set, use its value to override the
-		// HTTP_PROXY environment variable. Setting this environment
-		// variable ensures that all HTTP requests using net/http use this
-		// proxy server.
-		if *httpProxy != "" {
-			log.Printf("Setting HTTP_PROXY variable to %v", *httpProxy)
-			err := os.Setenv("HTTP_PROXY", *httpProxy)
-			if err != nil {
-				// The os.Setenv documentation doesn't specify how it can
-				// fail, so I don't know how to handle this error
-				// appropriately.
-				panic(err)
-			}
-		}
-
-		if *httpsProxy != "" {
-			log.Printf("Setting HTTPS_PROXY variable to %v", *httpProxy)
-			err := os.Setenv("HTTPS_PROXY", *httpProxy)
-			if err != nil {
-				// The os.Setenv documentation doesn't specify how it can
-				// fail, so I don't know how to handle this error
-				// appropriately.
-				panic(err)
-			}
-		}
-
-		// see if they provided a regex filter
-		if len(*regExpFilter) > 0 {
-			log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
-		}
-
-		// list serial ports
-		portList, _ := GetList(false)
-		log.Println("Your serial ports:")
-		if len(portList) == 0 {
-			log.Println("\tThere are no serial ports to list.")
-		}
-		for _, element := range portList {
-			log.Printf("\t%v\n", element)
-
-		}
-
-		if !*verbose {
-			log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
-			log.SetOutput(new(NullWriter)) //route all logging to nullwriter
-		}
-
-		// launch the hub routine which is the singleton for the websocket server
-		go h.run()
-		// launch our serial port routine
-		go sh.run()
-		// launch our dummy data routine
-		//go d.run()
-
-		go discoverLoop()
-
-		r := gin.New()
-
-		socketHandler := wsHandler().ServeHTTP
-
-		extraOrigins := []string{
-			"https://create.arduino.cc",
-			"http://create.arduino.cc", "https://create-dev.arduino.cc", "http://create-dev.arduino.cc", "https://create-intel.arduino.cc", "http://create-intel.arduino.cc",
-		}
-
-		for i := 8990; i < 9001; i++ {
-			port := strconv.Itoa(i)
-			extraOrigins = append(extraOrigins, "http://localhost:"+port)
-			extraOrigins = append(extraOrigins, "https://localhost:"+port)
-			extraOrigins = append(extraOrigins, "http://127.0.0.1:"+port)
-		}
-
-		r.Use(cors.Middleware(cors.Config{
-			Origins:         *origins + ", " + strings.Join(extraOrigins, ", "),
-			Methods:         "GET, PUT, POST, DELETE",
-			RequestHeaders:  "Origin, Authorization, Content-Type",
-			ExposedHeaders:  "",
-			MaxAge:          50 * time.Second,
-			Credentials:     true,
-			ValidateHeaders: false,
-		}))
-
-		r.LoadHTMLFiles("templates/nofirefox.html")
-
-		r.GET("/", homeHandler)
-		r.GET("/certificate.crt", certHandler)
-		r.DELETE("/certificate.crt", deleteCertHandler)
-		r.POST("/upload", uploadHandler)
-		r.GET("/socket.io/", socketHandler)
-		r.POST("/socket.io/", socketHandler)
-		r.Handle("WS", "/socket.io/", socketHandler)
-		r.Handle("WSS", "/socket.io/", socketHandler)
-		r.GET("/info", infoHandler)
-		r.POST("/killbrowser", killBrowserHandler)
-		r.POST("/pause", pauseHandler)
-		r.POST("/update", updateHandler)
-
-		go func() {
-			// check if certificates exist; if not, use plain http
-			if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
-				return
-			}
-
-			start := 8990
-			end := 9000
-			i := start
-			for i < end {
-				i = i + 1
-				portSSL = ":" + strconv.Itoa(i)
-				if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
-					log.Printf("Error trying to bind to port: %v, so exiting...", err)
-					continue
-				} else {
-					log.Print("Starting server and websocket (SSL) on " + *address + "" + port)
-					break
-				}
-			}
-		}()
-
-		go func() {
-			start := 8990
-			end := 9000
-			i := start
-			for i < end {
-				i = i + 1
-				port = ":" + strconv.Itoa(i)
-				if err := r.Run(*address + port); err != nil {
-					log.Printf("Error trying to bind to port: %v, so exiting...", err)
-					continue
-				} else {
-					log.Print("Starting server and websocket on " + *address + "" + port)
-					break
-				}
-			}
-		}()
 	}
 
-	// Block forever until the application is shut down
-	select {}
+	// Parse ini config
+	args, err := parseIni(filepath.Join(dest, "config.ini"))
+	if err != nil {
+		panic(err)
+	}
+	err = iniConf.Parse(args)
+	if err != nil {
+		panic(err)
+	}
+
+	// Parse additional ini config
+	args, err = parseIni(filepath.Join(dest, *additionalConfig))
+	if err != nil {
+		panic(err)
+	}
+	err = iniConf.Parse(args)
+	if err != nil {
+		panic(err)
+	}
+
+	// Instantiate Tools
+	usr, _ := user.Current()
+	directory := filepath.Join(usr.HomeDir, ".arduino-create")
+	Tools = tools.Tools{
+		Directory: directory,
+		IndexURL:  *indexURL,
+		Logger: func(msg string) {
+			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
+		},
+	}
+	Tools.Init(requiredToolsAPILevel)
+
+	log.SetLevel(log.InfoLevel)
+
+	log.SetOutput(os.Stderr)
+
+	// see if we are supposed to wait 5 seconds
+	if *isLaunchSelf {
+		launchSelfLater()
+	}
+
+	log.Println("Version:" + version)
+
+	// hostname
+	hn, _ := os.Hostname()
+	if *hostname == "unknown-hostname" {
+		*hostname = hn
+	}
+	log.Println("Hostname:", *hostname)
+
+	// turn off garbage collection
+	// this is dangerous, as u could overflow memory
+	//if *isGC {
+	if *gcType == "std" {
+		log.Println("Garbage collection is on using Standard mode, meaning we just let Golang determine when to garbage collect.")
+	} else if *gcType == "max" {
+		log.Println("Garbage collection is on for MAXIMUM real-time collecting on each send/recv from serial port. Higher CPU, but less stopping of the world to garbage collect since it is being done on a constant basis.")
+	} else {
+		log.Println("Garbage collection is off. Memory use will grow unbounded. You WILL RUN OUT OF RAM unless you send in the gc command to manually force garbage collection. Lower CPU, but progressive memory footprint.")
+		debug.SetGCPercent(-1)
+	}
+
+	// If the httpProxy setting is set, use its value to override the
+	// HTTP_PROXY environment variable. Setting this environment
+	// variable ensures that all HTTP requests using net/http use this
+	// proxy server.
+	if *httpProxy != "" {
+		log.Printf("Setting HTTP_PROXY variable to %v", *httpProxy)
+		err := os.Setenv("HTTP_PROXY", *httpProxy)
+		if err != nil {
+			// The os.Setenv documentation doesn't specify how it can
+			// fail, so I don't know how to handle this error
+			// appropriately.
+			panic(err)
+		}
+	}
+
+	if *httpsProxy != "" {
+		log.Printf("Setting HTTPS_PROXY variable to %v", *httpProxy)
+		err := os.Setenv("HTTPS_PROXY", *httpProxy)
+		if err != nil {
+			// The os.Setenv documentation doesn't specify how it can
+			// fail, so I don't know how to handle this error
+			// appropriately.
+			panic(err)
+		}
+	}
+
+	// see if they provided a regex filter
+	if len(*regExpFilter) > 0 {
+		log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
+	}
+
+	// list serial ports
+	portList, _ := GetList(false)
+	log.Println("Your serial ports:")
+	if len(portList) == 0 {
+		log.Println("\tThere are no serial ports to list.")
+	}
+	for _, element := range portList {
+		log.Printf("\t%v\n", element)
+
+	}
+
+	if !*verbose {
+		log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
+		log.SetOutput(new(NullWriter)) //route all logging to nullwriter
+	}
+
+	// launch the hub routine which is the singleton for the websocket server
+	go h.run()
+	// launch our serial port routine
+	go sh.run()
+	// launch our dummy data routine
+	//go d.run()
+
+	go discoverLoop()
+
+	r := gin.New()
+
+	socketHandler := wsHandler().ServeHTTP
+
+	extraOrigins := []string{
+		"https://create.arduino.cc",
+		"http://create.arduino.cc", "https://create-dev.arduino.cc", "http://create-dev.arduino.cc", "https://create-intel.arduino.cc", "http://create-intel.arduino.cc",
+	}
+
+	for i := 8990; i < 9001; i++ {
+		port := strconv.Itoa(i)
+		extraOrigins = append(extraOrigins, "http://localhost:"+port)
+		extraOrigins = append(extraOrigins, "https://localhost:"+port)
+		extraOrigins = append(extraOrigins, "http://127.0.0.1:"+port)
+	}
+
+	r.Use(cors.Middleware(cors.Config{
+		Origins:         *origins + ", " + strings.Join(extraOrigins, ", "),
+		Methods:         "GET, PUT, POST, DELETE",
+		RequestHeaders:  "Origin, Authorization, Content-Type",
+		ExposedHeaders:  "",
+		MaxAge:          50 * time.Second,
+		Credentials:     true,
+		ValidateHeaders: false,
+	}))
+
+	r.LoadHTMLFiles("templates/nofirefox.html")
+
+	r.GET("/", homeHandler)
+	r.GET("/certificate.crt", certHandler)
+	r.DELETE("/certificate.crt", deleteCertHandler)
+	r.POST("/upload", uploadHandler)
+	r.GET("/socket.io/", socketHandler)
+	r.POST("/socket.io/", socketHandler)
+	r.Handle("WS", "/socket.io/", socketHandler)
+	r.Handle("WSS", "/socket.io/", socketHandler)
+	r.GET("/info", infoHandler)
+	r.POST("/killbrowser", killBrowserHandler)
+	r.POST("/pause", pauseHandler)
+	r.POST("/update", updateHandler)
+
+	go func() {
+		// check if certificates exist; if not, use plain http
+		if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
+			return
+		}
+
+		start := 8990
+		end := 9000
+		i := start
+		for i < end {
+			i = i + 1
+			portSSL = ":" + strconv.Itoa(i)
+			if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+				log.Printf("Error trying to bind to port: %v, so exiting...", err)
+				continue
+			} else {
+				log.Print("Starting server and websocket (SSL) on " + *address + "" + port)
+				break
+			}
+		}
+	}()
+
+	go func() {
+		start := 8990
+		end := 9000
+		i := start
+		for i < end {
+			i = i + 1
+			port = ":" + strconv.Itoa(i)
+			if err := r.Run(*address + port); err != nil {
+				log.Printf("Error trying to bind to port: %v, so exiting...", err)
+				continue
+			} else {
+				log.Print("Starting server and websocket on " + *address + "" + port)
+				break
+			}
+		}
+	}()
 }
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
