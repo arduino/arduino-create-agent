@@ -423,7 +423,8 @@ func extractTarGz(body []byte, location string) (string, error) {
 		info := header.FileInfo()
 
 		// Create parent folder
-		if err = os.MkdirAll(filepath.Dir(path), info.Mode()); err != nil {
+		dirmode := info.Mode() | os.ModeDir | 0700
+		if err = os.MkdirAll(filepath.Dir(path), dirmode); err != nil {
 			return location, err
 		}
 
@@ -513,6 +514,12 @@ func extractBz2(body []byte, location string) (string, error) {
 
 		path := filepath.Join(location, strings.Replace(header.Name, basedir, "", -1))
 		info := header.FileInfo()
+
+		// Create parent folder
+		dirmode := info.Mode() | os.ModeDir | 0700
+		if err = os.MkdirAll(filepath.Dir(path), dirmode); err != nil {
+			return location, err
+		}
 
 		if info.IsDir() {
 			if err = os.MkdirAll(path, info.Mode()); err != nil {
