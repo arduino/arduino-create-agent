@@ -18,7 +18,7 @@ Get the latest version of the Agent for all supported platforms:
 * [Linux x64 with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-chrome.tar.gz)
 * [Linux x64 with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-firefox.tar.gz)
 
-arduino-create-agent is a fork of @johnlauer's serial-port-json-server (which we really want to thank for his kindness and great work)
+arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
 
 The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
 
@@ -26,7 +26,7 @@ The history has been rewritten to keep the repo small (thus removing all binarie
 
 ## Using multiple configurations
 
-The agent support multiple configuration files. When multiple configurations are found by the agent, the tray icon menu is expanded to contain the different configurations:
+The agent supports multiple configuration files. When multiple configurations are found by the agent, the tray icon menu is expanded to contain the different configurations:
 
 ![Agent multiple configuration tray icon](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/tray-icon-multiple-profiles.png)
 
@@ -47,7 +47,7 @@ To create multiple configuration files:
 
 ## When behind a proxy
 
-The agent support working behind a proxy, but manual configuration is required ( there is no support for automatic proxy discovery ).
+The agent supports working behind a proxy, but manual configuration is required (there is no support for automatic proxy discovery).
 
 To add proxy configuration:
 - stop the agent: tray bar icon -> pause then tray bar icon -> kill
@@ -402,7 +402,7 @@ Please attach the output of the commands running at the debug console if useful.
 
 We are glad you want to contribute with code: that's the best way to help this software.
 
-Your contribution is adding or modifying existing behaviour, please always refer to an existing issue or open a new one before contributing. We are are trying to use [Test Driven Development](https://en.wikipedia.org/wiki/Test-driven_development) in the near future: please add one or more tests that prove that your contribution is good and is working as expected, it will help us a lot.
+Your contribution is adding or modifying existing behaviour, please always refer to an existing issue or open a new one before contributing. We are trying to use [Test Driven Development](https://en.wikipedia.org/wiki/Test-driven_development) in the near future: please add one or more tests that prove that your contribution is good and is working as expected, it will help us a lot.
 
 Be sure to use `go vet` and `go fmt` on every file before each commit: it ensures your code is properly formatted.
 
