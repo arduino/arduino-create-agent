@@ -1,3 +1,4 @@
+
 arduino-create-agent
 ====================
 
@@ -374,6 +375,8 @@ The results of the upload will be delivered via websocket with messages that loo
 ---
 
 ## Development
+
+Please remember that for compile the project, you need go version <= 1.8.7 (more recent versions are not supported for compile)
 
 To clone the repository, run the following command:
 ```
