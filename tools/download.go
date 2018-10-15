@@ -56,6 +56,7 @@ var systems = map[string]string{
 	"darwinamd64":  "apple-darwin",
 	"windows386":   "i686-mingw32",
 	"windowsamd64": "i686-mingw32",
+	"linuxarm":     "arm-linux-gnueabihf",
 }
 
 func mimeType(data []byte) (string, error) {
