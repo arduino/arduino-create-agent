@@ -344,9 +344,13 @@ The payload is a json object that looks like this:
   "signature":"97db97ced2c",
   "hex":"OjEwMDAwMDAwMEM5NEU1MDAwQzk0MEQwMTBDOTQwRDAxMEM5NDBEMDE2MQ0KOjEwMDAxMDAwMEM5NDBEMDEwQzk0M",
   "filename":"Blink.ino.hex",
+  "extrafiles": [],
   "extra":{
     "auth":{
-      "password":null
+      "username":null,
+      "password":null,
+      "private_key":null,
+      "port":null
     },
     "wait_for_upload_port":true,
     "use_1200bps_touch":true,
