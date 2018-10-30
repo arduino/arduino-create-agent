@@ -13,6 +13,7 @@ func Test_findBaseDir(t *testing.T) {
 		{[]string{"bin/bossac"}, "bin/"},
 		{[]string{"bin/", "bin/bossac"}, "bin/"},
 		{[]string{"bin/", "bin/bossac", "example"}, ""},
+		{[]string{"avrdude/bin/avrdude", "avrdude/etc/avrdude.conf"}, "avrdude"},
 	}
 	for _, tt := range cases {
 		t.Run(fmt.Sprintln(tt.dirList), func(t *testing.T) {
