@@ -31,7 +31,7 @@
 //    commandline = upload.Resolve("/dev/ttyACM0", "arduino:avr:leonardo", "./sketch.hex", commandline, upload.Extra{}, t)
 //    ```
 //
-// t must implement the locater interface (the Tools package does!)
+// 't' must implement the locater interface (the Tools package does!)
 //
 // **Logging**
 // If you're interested in the output of the commands, you can implement the logger interface. Here's an example:

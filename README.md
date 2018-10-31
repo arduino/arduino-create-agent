@@ -232,7 +232,7 @@ You will receive an object of all the boards connected with USB or over the netw
 }
 ```
 
-## Open/Close ports
+### Open/Close ports
 
 To read input from a board connected to USB you must first open the port with the command
 
@@ -340,7 +340,7 @@ The payload is a json object that looks like this:
 {
   "board":"arduino:avr:leonardo",
   "port":"/dev/ttyACM1",
-  "commandline":"\"{runtime.tools.avrdude.path}/bin/avrdude\" \"-C{runtime.tools.avrdude.path}/etc/avrdude.conf\" {upload.verbose} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D \"-Uflash:w:{build.path}/{build.project_name}.hex:i\"",
+  "commandline":"\"{runtime.tools.avrdude.path}/bin/avrdude\" \"-C{runtime.tools.avrdude.path}/etc/avrdude.conf\" -v -patmega32u4 -cavr109 -P{serial.port} -b57600 -D \"-Uflash:w:{build.path}/{build.project_name}.hex:i\"",
   "signature":"97db97ced2c",
   "hex":"OjEwMDAwMDAwMEM5NEU1MDAwQzk0MEQwMTBDOTQwRDAxMEM5NDBEMDE2MQ0KOjEwMDAxMDAwMEM5NDBEMDEwQzk0M",
   "filename":"Blink.ino.hex",
@@ -355,16 +355,13 @@ The payload is a json object that looks like this:
     "wait_for_upload_port":true,
     "use_1200bps_touch":true,
     "network":false,
-    "params_verbose":"-v",
-    "params_quiet":"-q -q",
-    "verbose":true
   }
 }
 ```
 
 - commandline is the command to execute to perform the upload. This is, for example, avrdude on a Leonardo.
 
-- hex contains the sketch hex encoded in base64
+- hex contains the sketch binary encoded in base64 (could decode in Intel hex or raw binary)
 
 - signature is the signature of the commandline signed with the private key that matches the public key contained in the config.ini of the arduino-create-agent
 
@@ -375,6 +372,10 @@ The results of the upload will be delivered via websocket with messages that loo
 {"Msg":"avrdude done. Thank you.","ProgrammerStatus":"Busy"}
 {"Flash":"Ok","ProgrammerStatus":"Done"}
 ```
+
+### Javacript client library
+
+You can install the [arduino-create-agent-js-client](https://github.com/arduino/arduino-create-agent-js-client) in your client application
 
 ---
 
