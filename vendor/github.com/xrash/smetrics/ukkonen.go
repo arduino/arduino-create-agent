@@ -9,45 +9,43 @@ func Ukkonen(a, b string, icost, dcost, scost int) int {
 
 	if icost < dcost && icost < scost {
 		lowerCost = icost
-	} else if (dcost < scost) {
+	} else if dcost < scost {
 		lowerCost = dcost
 	} else {
 		lowerCost = scost
 	}
 
-	infinite := math.MaxInt32/2
-
-	if len(a) > len(b) {
-		tmp := b
-		b = a
-		a = tmp
-	}
+	infinite := math.MaxInt32 / 2
 
 	var r []int
-	var k, kprime, p int
+	var k, kprime, p, t int
 	var ins, del, sub int
 
-	t := (len(b) - len(a) + 1) * lowerCost
+	if len(a) > len(b) {
+		t = (len(a) - len(b) + 1) * lowerCost
+	} else {
+		t = (len(b) - len(a) + 1) * lowerCost
+	}
 
 	for {
-		if (t/lowerCost) < (len(b) - len(a)) {
+		if (t / lowerCost) < (len(b) - len(a)) {
 			continue
 		}
 
-		// This is the right damn thing since the original Ukkonen 
+		// This is the right damn thing since the original Ukkonen
 		// paper minimizes the expression result only, but the uncommented version
 		// doesn't need to deal with floats so it's faster.
 		// p = int(math.Floor(0.5*((float64(t)/float64(lowerCost)) - float64(len(b) - len(a)))))
-		p = ((t/lowerCost) - (len(b) - len(a))) / 2
+		p = ((t / lowerCost) - (len(b) - len(a))) / 2
 
 		k = -p
 		kprime = k
 
-		rowlength := (len(b) - len(a)) + (2*p)
+		rowlength := (len(b) - len(a)) + (2 * p)
 
-		r = make([]int, rowlength + 2)
+		r = make([]int, rowlength+2)
 
-		for i := 0; i < rowlength + 2; i++ {
+		for i := 0; i < rowlength+2; i++ {
 			r[i] = infinite
 		}
 
@@ -56,7 +54,7 @@ func Ukkonen(a, b string, icost, dcost, scost int) int {
 				if i == j+k && i == 0 {
 					r[j] = 0
 				} else {
-					if (j-1 < 0) {
+					if j-1 < 0 {
 						ins = infinite
 					} else {
 						ins = r[j-1] + icost
@@ -73,7 +71,7 @@ func Ukkonen(a, b string, icost, dcost, scost int) int {
 
 					if ins < del && ins < sub {
 						r[j] = ins
-					} else if (del < sub) {
+					} else if del < sub {
 						r[j] = del
 					} else {
 						r[j] = sub
@@ -83,12 +81,12 @@ func Ukkonen(a, b string, icost, dcost, scost int) int {
 			k++
 		}
 
-		if r[(len(b) - len(a)) + (2 * p) + kprime] <= t {
-			break;
+		if r[(len(b)-len(a))+(2*p)+kprime] <= t {
+			break
 		} else {
 			t *= 2
 		}
 	}
 
-	return r[(len(b) - len(a)) + (2 * p) + kprime]
+	return r[(len(b)-len(a))+(2*p)+kprime]
 }

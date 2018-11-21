@@ -43,18 +43,21 @@ func (fi *fileInfo) IsDir() bool { return fi.Mode().IsDir() }
 
 func (fi *fileInfo) Sys() interface{} { return fi.sys }
 
-// FileStat holds the original unmarshalled values from a call to READDIR or *STAT.
-// It is exported for the purposes of accessing the raw values via os.FileInfo.Sys()
+// FileStat holds the original unmarshalled values from a call to READDIR or
+// *STAT. It is exported for the purposes of accessing the raw values via
+// os.FileInfo.Sys(). It is also used server side to store the unmarshalled
+// values for SetStat.
 type FileStat struct {
 	Size     uint64
 	Mode     uint32
 	Mtime    uint32
 	Atime    uint32
-	Uid      uint32
-	Gid      uint32
+	UID      uint32
+	GID      uint32
 	Extended []StatExtended
 }
 
+// StatExtended contains additional, extended information for a FileStat.
 type StatExtended struct {
 	ExtType string
 	ExtData string
@@ -93,15 +96,19 @@ func fileStatFromInfo(fi os.FileInfo) (uint32, FileStat) {
 
 func unmarshalAttrs(b []byte) (*FileStat, []byte) {
 	flags, b := unmarshalUint32(b)
+	return getFileStat(flags, b)
+}
+
+func getFileStat(flags uint32, b []byte) (*FileStat, []byte) {
 	var fs FileStat
 	if flags&ssh_FILEXFER_ATTR_SIZE == ssh_FILEXFER_ATTR_SIZE {
 		fs.Size, b = unmarshalUint64(b)
 	}
 	if flags&ssh_FILEXFER_ATTR_UIDGID == ssh_FILEXFER_ATTR_UIDGID {
-		fs.Uid, b = unmarshalUint32(b)
+		fs.UID, b = unmarshalUint32(b)
 	}
 	if flags&ssh_FILEXFER_ATTR_UIDGID == ssh_FILEXFER_ATTR_UIDGID {
-		fs.Gid, b = unmarshalUint32(b)
+		fs.GID, b = unmarshalUint32(b)
 	}
 	if flags&ssh_FILEXFER_ATTR_PERMISSIONS == ssh_FILEXFER_ATTR_PERMISSIONS {
 		fs.Mode, b = unmarshalUint32(b)
@@ -113,7 +120,7 @@ func unmarshalAttrs(b []byte) (*FileStat, []byte) {
 	if flags&ssh_FILEXFER_ATTR_EXTENDED == ssh_FILEXFER_ATTR_EXTENDED {
 		var count uint32
 		count, b = unmarshalUint32(b)
-		ext := make([]StatExtended, count, count)
+		ext := make([]StatExtended, count)
 		for i := uint32(0); i < count; i++ {
 			var typ string
 			var data string
@@ -149,8 +156,8 @@ func marshalFileInfo(b []byte, fi os.FileInfo) []byte {
 		b = marshalUint64(b, fileStat.Size)
 	}
 	if flags&ssh_FILEXFER_ATTR_UIDGID != 0 {
-		b = marshalUint32(b, fileStat.Uid)
-		b = marshalUint32(b, fileStat.Gid)
+		b = marshalUint32(b, fileStat.UID)
+		b = marshalUint32(b, fileStat.GID)
 	}
 	if flags&ssh_FILEXFER_ATTR_PERMISSIONS != 0 {
 		b = marshalUint32(b, fileStat.Mode)

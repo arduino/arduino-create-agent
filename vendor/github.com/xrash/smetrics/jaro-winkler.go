@@ -20,5 +20,5 @@ func JaroWinkler(a, b string, boostThreshold float64, prefixSize int) float64 {
 		}
 	}
 
-	return j + 0.1 * prefixMatch * (1.0 - j)
+	return j + 0.1*prefixMatch*(1.0-j)
 }

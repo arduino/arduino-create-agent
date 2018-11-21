@@ -60,9 +60,37 @@ func addOrUpdateMenuItem(item *MenuItem) {
 	)
 }
 
+// SetIcon sets the icon of a menu item. Only available on Mac.
+// iconBytes should be the content of .ico/.jpg/.png
+func (item *MenuItem) SetIcon(iconBytes []byte) {
+	cstr := (*C.char)(unsafe.Pointer(&iconBytes[0]))
+	C.setMenuItemIcon(cstr, (C.int)(len(iconBytes)), C.int(item.id))
+}
+
+func addSeparator(id int32) {
+	C.add_separator(C.int(id))
+}
+
+func hideMenuItem(item *MenuItem) {
+	C.hide_menu_item(
+		C.int(item.id),
+	)
+}
+
+func showMenuItem(item *MenuItem) {
+	C.show_menu_item(
+		C.int(item.id),
+	)
+}
+
 //export systray_ready
 func systray_ready() {
 	systrayReady()
+}
+
+//export systray_on_exit
+func systray_on_exit() {
+	systrayExit()
 }
 
 //export systray_menu_item_selected

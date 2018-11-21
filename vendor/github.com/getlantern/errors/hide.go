@@ -29,7 +29,7 @@ func (e *structured) save() {
 	hiddenMutex.Unlock()
 }
 
-func get(hiddenID []byte) *structured {
+func get(hiddenID []byte) Error {
 	if len(hiddenID) != 8 {
 		return nil
 	}
