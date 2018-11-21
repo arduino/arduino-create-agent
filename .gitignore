@@ -6,3 +6,6 @@ serial-port-json-server
 snapshot/*
 public/
 artifacts*
+
+# IDEs config 
+.idea
