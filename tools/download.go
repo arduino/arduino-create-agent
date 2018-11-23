@@ -319,7 +319,7 @@ func stringInSlice(str string, list []string) bool {
 	return false
 }
 
-func CommonPrefix(sep byte, paths []string) string {
+func commonPrefix(sep byte, paths []string) string {
 	// Handle special cases.
 	switch len(paths) {
 	case 0:
@@ -365,11 +365,27 @@ func CommonPrefix(sep byte, paths []string) string {
 	return string(c)
 }
 
+func removeStringFromSlice(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
 func findBaseDir(dirList []string) string {
 	if len(dirList) == 1 {
 		return filepath.Dir(dirList[0]) + "/"
 	}
-	commonBaseDir := CommonPrefix(os.PathSeparator, dirList)
+
+	// https://github.com/backdrop-ops/contrib/issues/55#issuecomment-73814500
+	dontdiff := []string{"pax_global_header"}
+	for _, v := range dontdiff {
+		dirList = removeStringFromSlice(dirList, v)
+	}
+
+	commonBaseDir := commonPrefix(os.PathSeparator, dirList)
 	if commonBaseDir != "" {
 		commonBaseDir = commonBaseDir + "/"
 	}
