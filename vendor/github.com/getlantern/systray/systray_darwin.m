@@ -1,14 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #include "systray.h"
 
-#ifndef NSControlStateValueOff
-  #define NSControlStateValueOff NSOffState
-#endif
-
-#ifndef NSControlStateValueOn
-  #define NSControlStateValueOn NSOnState
-#endif
-
 @interface MenuItem : NSObject
 {
   @public
@@ -72,30 +64,15 @@
 }
 
 - (void)setIcon:(NSImage *)image {
-  statusItem.button.image = image;
-  [self updateTitleButtonStyle];
+  [statusItem setImage:image];
 }
 
 - (void)setTitle:(NSString *)title {
-  statusItem.button.title = title;
-  [self updateTitleButtonStyle];
+  [statusItem setTitle:title];
 }
-
--(void)updateTitleButtonStyle {
-  if (statusItem.button.image != nil) {
-    if ([statusItem.button.title length] == 0) {
-      statusItem.button.imagePosition = NSImageOnly;
-    } else {
-      statusItem.button.imagePosition = NSImageLeft;
-    }
-  } else {
-    statusItem.button.imagePosition = NSNoImage;
-  }
-}
-
 
 - (void)setTooltip:(NSString *)tooltip {
-  statusItem.button.toolTip = tooltip;
+  [statusItem setToolTip:tooltip];
 }
 
 - (IBAction)menuHandler:(id)sender
@@ -120,14 +97,14 @@
   }
   [menuItem setToolTip:item->tooltip];
   if (item->disabled == 1) {
-    menuItem.enabled = FALSE;
+    [menuItem setEnabled:FALSE];
   } else {
-    menuItem.enabled = TRUE;
+    [menuItem setEnabled:TRUE];
   }
   if (item->checked == 1) {
-    menuItem.state = NSControlStateValueOn;
+    [menuItem setState:NSOnState];
   } else {
-    menuItem.state = NSControlStateValueOff;
+    [menuItem setState:NSOffState];
   }
 }
 
