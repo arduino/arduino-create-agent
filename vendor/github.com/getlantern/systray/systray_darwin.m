@@ -58,16 +58,36 @@
   systray_ready();
 }
 
+- (void)applicationWillTerminate:(NSNotification *)aNotification
+{
+  systray_on_exit();
+}
+
 - (void)setIcon:(NSImage *)image {
-  [statusItem setImage:image];
+  statusItem.button.image = image;
+  [self updateTitleButtonStyle];
 }
 
 - (void)setTitle:(NSString *)title {
-  [statusItem setTitle:title];
+  statusItem.button.title = title;
+  [self updateTitleButtonStyle];
 }
 
+-(void)updateTitleButtonStyle {
+  if (statusItem.button.image != nil) {
+    if ([statusItem.button.title length] == 0) {
+      statusItem.button.imagePosition = NSImageOnly;
+    } else {
+      statusItem.button.imagePosition = NSImageLeft;
+    }
+  } else {
+    statusItem.button.imagePosition = NSNoImage;
+  }
+}
+
+
 - (void)setTooltip:(NSString *)tooltip {
-  [statusItem setToolTip:tooltip];
+  statusItem.button.toolTip = tooltip;
 }
 
 - (IBAction)menuHandler:(id)sender
@@ -92,20 +112,60 @@
   }
   [menuItem setToolTip:item->tooltip];
   if (item->disabled == 1) {
-    [menuItem setEnabled:FALSE];
+    menuItem.enabled = FALSE;
   } else {
-    [menuItem setEnabled:TRUE];
+    menuItem.enabled = TRUE;
   }
   if (item->checked == 1) {
-    [menuItem setState:NSOnState];
+    menuItem.state = NSControlStateValueOn;
   } else {
-    [menuItem setState:NSOffState];
+    menuItem.state = NSControlStateValueOff;
   }
+}
+
+- (void) add_separator:(NSNumber*) menuId
+{
+  [menu addItem: [NSMenuItem separatorItem]];
+}
+
+- (void) hide_menu_item:(NSNumber*) menuId
+{
+  NSMenuItem* menuItem;
+  int existedMenuIndex = [menu indexOfItemWithRepresentedObject: menuId];
+  if (existedMenuIndex == -1) {
+    return;
+  }
+  menuItem = [menu itemAtIndex: existedMenuIndex];
+  [menuItem setHidden:TRUE];
+}
+
+- (void)setMenuItemIcon:(NSArray*)imageAndMenuId {
+  NSImage* image = [imageAndMenuId objectAtIndex:0];
+  NSNumber* menuId = [imageAndMenuId objectAtIndex:1];
+
+  NSMenuItem* menuItem;
+  int existedMenuIndex = [menu indexOfItemWithRepresentedObject: menuId];
+  if (existedMenuIndex == -1) {
+    return;
+  }
+  menuItem = [menu itemAtIndex: existedMenuIndex];
+  menuItem.image = image;
+}
+
+- (void) show_menu_item:(NSNumber*) menuId
+{
+  NSMenuItem* menuItem;
+  int existedMenuIndex = [menu indexOfItemWithRepresentedObject: menuId];
+  if (existedMenuIndex == -1) {
+    return;
+  }
+  menuItem = [menu itemAtIndex: existedMenuIndex];
+  [menuItem setHidden:FALSE];
 }
 
 - (void) quit
 {
-  [[NSStatusBar systemStatusBar] removeStatusItem: statusItem];
+  [NSApp terminate:self];
 }
 
 @end
@@ -127,7 +187,17 @@ void runInMainThread(SEL method, id object) {
 void setIcon(const char* iconBytes, int length) {
   NSData* buffer = [NSData dataWithBytes: iconBytes length:length];
   NSImage *image = [[NSImage alloc] initWithData:buffer];
+  [image setSize:NSMakeSize(16, 16)];
   runInMainThread(@selector(setIcon:), (id)image);
+}
+
+void setMenuItemIcon(const char* iconBytes, int length, int menuId) {
+  NSData* buffer = [NSData dataWithBytes: iconBytes length:length];
+  NSImage *image = [[NSImage alloc] initWithData:buffer];
+  [image setSize:NSMakeSize(16, 16)];
+
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(setMenuItemIcon:), @[image, (id)mId]);
 }
 
 void setTitle(char* ctitle) {
@@ -149,6 +219,21 @@ void add_or_update_menu_item(int menuId, char* title, char* tooltip, short disab
   free(title);
   free(tooltip);
   runInMainThread(@selector(add_or_update_menu_item:), (id)item);
+}
+
+void add_separator(int menuId) {
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(add_separator:), (id)mId);
+}
+
+void hide_menu_item(int menuId) {
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(hide_menu_item:), (id)mId);
+}
+
+void show_menu_item(int menuId) {
+  NSNumber *mId = [NSNumber numberWithInt:menuId];
+  runInMainThread(@selector(show_menu_item:), (id)mId);
 }
 
 void quit() {

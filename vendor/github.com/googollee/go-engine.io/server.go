@@ -5,11 +5,12 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
-	"github.com/googollee/go-engine.io/polling"
-	"github.com/googollee/go-engine.io/websocket"
 	"net/http"
 	"sync/atomic"
 	"time"
+
+	"github.com/googollee/go-engine.io/polling"
+	"github.com/googollee/go-engine.io/websocket"
 )
 
 type config struct {
@@ -78,6 +79,16 @@ func (s *Server) SetMaxConnection(n int) {
 	s.config.MaxConnection = n
 }
 
+// GetMaxConnection returns the current max connection
+func (s *Server) GetMaxConnection() int {
+	return s.config.MaxConnection
+}
+
+// Count returns a count of current number of active connections in session
+func (s *Server) Count() int {
+	return int(atomic.LoadInt32(&s.currentConnection))
+}
+
 // SetAllowRequest sets the middleware function when establish connection. If it return non-nil, connection won't be established. Default will allow all request.
 func (s *Server) SetAllowRequest(f func(*http.Request) error) {
 	s.config.AllowRequest = f
@@ -122,6 +133,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		n := atomic.AddInt32(&s.currentConnection, 1)
 		if int(n) > s.config.MaxConnection {
+			atomic.AddInt32(&s.currentConnection, -1)
 			http.Error(w, "too many connections", http.StatusServiceUnavailable)
 			return
 		}
@@ -131,6 +143,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var err error
 		conn, err = newServerConn(sid, w, r, s)
 		if err != nil {
+			atomic.AddInt32(&s.currentConnection, -1)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}

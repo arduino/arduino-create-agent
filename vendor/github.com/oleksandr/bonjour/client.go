@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/miekg/dns"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
+	"github.com/miekg/dns"
 )
 
 // Main client data structure to run browse/lookup queries
@@ -27,7 +27,7 @@ func NewResolver(iface *net.Interface) (*Resolver, error) {
 	return &Resolver{c, c.closedCh}, nil
 }
 
-// Browse for all services of a fiven type in a given domain
+// Browse for all services of a given type in a given domain
 func (r *Resolver) Browse(service, domain string, entries chan<- *ServiceEntry) error {
 	params := defaultParams(service)
 	if domain != "" {
@@ -89,7 +89,7 @@ func newClient(iface *net.Interface) (*client, error) {
 	}
 	ipv6conn, err := net.ListenUDP("udp6", mdnsWildcardAddrIPv6)
 	if err != nil {
-		//log.Printf("[ERR] bonjour: Failed to bind to udp6 port: %v", err)
+		log.Printf("[ERR] bonjour: Failed to bind to udp6 port: %v", err)
 	}
 	if ipv4conn == nil && ipv6conn == nil {
 		return nil, fmt.Errorf("[ERR] bonjour: Failed to bind to any udp port!")

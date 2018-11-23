@@ -1,10 +1,11 @@
 // Copyright 2013 Julien Schmidt. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be found
-// in the LICENSE file.
+// at https://github.com/julienschmidt/httprouter/blob/master/LICENSE
 
 package gin
 
 import (
+	"net/url"
 	"strings"
 	"unicode"
 )
@@ -20,7 +21,7 @@ type Param struct {
 // It is therefore safe to read values by the index.
 type Params []Param
 
-// ByName returns the value of the first Param which key matches the given name.
+// Get returns the value of the first Param which key matches the given name.
 // If no matching Param is found, an empty string is returned.
 func (ps Params) Get(name string) (string, bool) {
 	for _, entry := range ps {
@@ -31,6 +32,8 @@ func (ps Params) Get(name string) (string, bool) {
 	return "", false
 }
 
+// ByName returns the value of the first Param which key matches the given name.
+// If no matching Param is found, an empty string is returned.
 func (ps Params) ByName(name string) (va string) {
 	va, _ = ps.Get(name)
 	return
@@ -76,23 +79,24 @@ func countParams(path string) uint8 {
 type nodeType uint8
 
 const (
-	static   nodeType = 0
-	param    nodeType = 1
-	catchAll nodeType = 2
+	static nodeType = iota // default
+	root
+	param
+	catchAll
 )
 
 type node struct {
 	path      string
-	wildChild bool
-	nType     nodeType
-	maxParams uint8
 	indices   string
 	children  []*node
 	handlers  HandlersChain
 	priority  uint32
+	nType     nodeType
+	maxParams uint8
+	wildChild bool
 }
 
-// increments priority of the given child and reorders if necessary
+// increments priority of the given child and reorders if necessary.
 func (n *node) incrementChildPrio(pos int) int {
 	n.children[pos].priority++
 	prio := n.children[pos].priority
@@ -101,9 +105,7 @@ func (n *node) incrementChildPrio(pos int) int {
 	newPos := pos
 	for newPos > 0 && n.children[newPos-1].priority < prio {
 		// swap node positions
-		tmpN := n.children[newPos-1]
-		n.children[newPos-1] = n.children[newPos]
-		n.children[newPos] = tmpN
+		n.children[newPos-1], n.children[newPos] = n.children[newPos], n.children[newPos-1]
 
 		newPos--
 	}
@@ -230,7 +232,7 @@ func (n *node) addRoute(path string, handlers HandlersChain) {
 
 			} else if i == len(path) { // Make node a (in-path) leaf
 				if n.handlers != nil {
-					panic("handlers are already registered for path ''" + fullPath + "'")
+					panic("handlers are already registered for path '" + fullPath + "'")
 				}
 				n.handlers = handlers
 			}
@@ -238,13 +240,14 @@ func (n *node) addRoute(path string, handlers HandlersChain) {
 		}
 	} else { // Empty tree
 		n.insertChild(numParams, path, fullPath, handlers)
+		n.nType = root
 	}
 }
 
 func (n *node) insertChild(numParams uint8, path string, fullPath string, handlers HandlersChain) {
 	var offset int // already handled bytes of the path
 
-	// find prefix until first wildcard (beginning with ':'' or '*'')
+	// find prefix until first wildcard (beginning with ':' or '*')
 	for i, max := 0, len(path); numParams > 0; i++ {
 		c := path[i]
 		if c != ':' && c != '*' {
@@ -354,12 +357,12 @@ func (n *node) insertChild(numParams uint8, path string, fullPath string, handle
 	n.handlers = handlers
 }
 
-// Returns the handle registered with the given path (key). The values of
+// getValue returns the handle registered with the given path (key). The values of
 // wildcards are saved to a map.
 // If no handle can be found, a TSR (trailing slash redirect) recommendation is
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
-func (n *node) getValue(path string, po Params) (handlers HandlersChain, p Params, tsr bool) {
+func (n *node) getValue(path string, po Params, unescape bool) (handlers HandlersChain, p Params, tsr bool) {
 	p = po
 walk: // Outer loop for walking the tree
 	for {
@@ -381,7 +384,7 @@ walk: // Outer loop for walking the tree
 					// Nothing found.
 					// We can recommend to redirect to the same URL without a
 					// trailing slash if a leaf exists for that path.
-					tsr = (path == "/" && n.handlers != nil)
+					tsr = path == "/" && n.handlers != nil
 					return
 				}
 
@@ -402,7 +405,15 @@ walk: // Outer loop for walking the tree
 					i := len(p)
 					p = p[:i+1] // expand slice within preallocated capacity
 					p[i].Key = n.path[1:]
-					p[i].Value = path[:end]
+					val := path[:end]
+					if unescape {
+						var err error
+						if p[i].Value, err = url.QueryUnescape(val); err != nil {
+							p[i].Value = val // fallback, in case of error
+						}
+					} else {
+						p[i].Value = val
+					}
 
 					// we need to go deeper!
 					if end < len(path) {
@@ -413,17 +424,18 @@ walk: // Outer loop for walking the tree
 						}
 
 						// ... but we can't
-						tsr = (len(path) == end+1)
+						tsr = len(path) == end+1
 						return
 					}
 
 					if handlers = n.handlers; handlers != nil {
 						return
-					} else if len(n.children) == 1 {
+					}
+					if len(n.children) == 1 {
 						// No handle found. Check if a handle for this path + a
 						// trailing slash exists for TSR recommendation
 						n = n.children[0]
-						tsr = (n.path == "/" && n.handlers != nil)
+						tsr = n.path == "/" && n.handlers != nil
 					}
 
 					return
@@ -436,7 +448,14 @@ walk: // Outer loop for walking the tree
 					i := len(p)
 					p = p[:i+1] // expand slice within preallocated capacity
 					p[i].Key = n.path[2:]
-					p[i].Value = path
+					if unescape {
+						var err error
+						if p[i].Value, err = url.QueryUnescape(path); err != nil {
+							p[i].Value = path // fallback, in case of error
+						}
+					} else {
+						p[i].Value = path
+					}
 
 					handlers = n.handlers
 					return
@@ -449,6 +468,11 @@ walk: // Outer loop for walking the tree
 			// We should have reached the node containing the handle.
 			// Check if this node has a handle registered.
 			if handlers = n.handlers; handlers != nil {
+				return
+			}
+
+			if path == "/" && n.wildChild && n.nType != root {
+				tsr = true
 				return
 			}
 
@@ -475,7 +499,7 @@ walk: // Outer loop for walking the tree
 	}
 }
 
-// Makes a case-insensitive lookup of the given path and tries to find a handler.
+// findCaseInsensitivePath makes a case-insensitive lookup of the given path and tries to find a handler.
 // It can optionally also fix trailing slashes.
 // It returns the case-corrected path and a bool indicating whether the lookup
 // was successful.
@@ -506,7 +530,7 @@ func (n *node) findCaseInsensitivePath(path string, fixTrailingSlash bool) (ciPa
 
 				// Nothing found. We can recommend to redirect to the same URL
 				// without a trailing slash if a leaf exists for that path
-				found = (fixTrailingSlash && path == "/" && n.handlers != nil)
+				found = fixTrailingSlash && path == "/" && n.handlers != nil
 				return
 			}
 

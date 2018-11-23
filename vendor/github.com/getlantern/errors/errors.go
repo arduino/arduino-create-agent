@@ -83,7 +83,7 @@ import (
 	"github.com/getlantern/context"
 	"github.com/getlantern/hidden"
 	"github.com/getlantern/ops"
-	"github.com/getlantern/stack"
+	"github.com/go-stack/stack"
 )
 
 // Error wraps system and application defined errors in unified structure for

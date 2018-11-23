@@ -93,6 +93,23 @@ The Soundex encoding. It is a phonetic algorithm that considers how the words so
         smetrics.Soundex("Ladd")
 		>> L300
 
+## Hamming
+
+        func Hamming(a, b string) (int, error)
+
+The Hamming distance is simply the minimum number of substitutions required to change one string into the other. Both strings must have the same size, of the function returns an error.
+
+#### Examples:
+
+        smetrics.Hamming("aaa", "aaa")
+		>> 0, nil
+
+        smetrics.Hamming("aaa", "aab")
+		>> 1, nil
+
+        smetrics.Hamming("aaaa", "a")
+		>> -1, error
+
 # TODO
 
 - Optimize WagnerFischer for memory; currently it stores the whole matrix and so it needs O(mn) space. Only the previous row of the matrix needs to be stored, so it can be easily optimized to use O(m) space.

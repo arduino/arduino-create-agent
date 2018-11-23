@@ -319,29 +319,77 @@ func stringInSlice(str string, list []string) bool {
 	return false
 }
 
+func commonPrefix(sep byte, paths []string) string {
+	// Handle special cases.
+	switch len(paths) {
+	case 0:
+		return ""
+	case 1:
+		return path.Clean(paths[0])
+	}
+
+	c := []byte(path.Clean(paths[0]))
+
+	// We add a trailing sep to handle: common prefix directory is included in the path list
+	// (e.g. /home/user1, /home/user1/foo, /home/user1/bar).
+	// path.Clean will have cleaned off trailing / separators with
+	// the exception of the root directory, "/" making it "//"
+	// but this will get fixed up to "/" below).
+	c = append(c, sep)
+
+	// Ignore the first path since it's already in c
+	for _, v := range paths[1:] {
+		// Clean up each path before testing it
+		v = path.Clean(v) + string(sep)
+
+		// Find the first non-common byte and truncate c
+		if len(v) < len(c) {
+			c = c[:len(v)]
+		}
+		for i := 0; i < len(c); i++ {
+			if v[i] != c[i] {
+				c = c[:i]
+				break
+			}
+		}
+	}
+
+	// Remove trailing non-separator characters and the final separator
+	for i := len(c) - 1; i >= 0; i-- {
+		if c[i] == sep {
+			c = c[:i]
+			break
+		}
+	}
+
+	return string(c)
+}
+
+func removeStringFromSlice(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
 func findBaseDir(dirList []string) string {
 	if len(dirList) == 1 {
 		return filepath.Dir(dirList[0]) + "/"
 	}
-	baseDir := ""
+
 	// https://github.com/backdrop-ops/contrib/issues/55#issuecomment-73814500
 	dontdiff := []string{"pax_global_header"}
-	for index, _ := range dirList {
-		if stringInSlice(dirList[index], dontdiff) {
-			continue
-		}
-		candidateBaseDir := dirList[index]
-		for i := index; i < len(dirList); i++ {
-			if !strings.Contains(dirList[i], candidateBaseDir) {
-				return baseDir
-			}
-		}
-		// avoid setting the candidate if it is the last file
-		if dirList[len(dirList)-1] != candidateBaseDir {
-			baseDir = candidateBaseDir
-		}
+	for _, v := range dontdiff {
+		dirList = removeStringFromSlice(dirList, v)
 	}
-	return baseDir
+
+	commonBaseDir := commonPrefix(os.PathSeparator, dirList)
+	if commonBaseDir != "" {
+		commonBaseDir = commonBaseDir + "/"
+	}
+	return commonBaseDir
 }
 
 func extractZip(body []byte, location string) (string, error) {

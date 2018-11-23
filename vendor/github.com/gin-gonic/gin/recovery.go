@@ -10,7 +10,10 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/httputil"
 	"runtime"
+	"time"
 )
 
 var (
@@ -22,29 +25,31 @@ var (
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 func Recovery() HandlerFunc {
-	return RecoveryWithWriter(DefaultWriter)
+	return RecoveryWithWriter(DefaultErrorWriter)
 }
 
+// RecoveryWithWriter returns a middleware for a given writer that recovers from any panics and writes a 500 if there was one.
 func RecoveryWithWriter(out io.Writer) HandlerFunc {
 	var logger *log.Logger
 	if out != nil {
-		logger = log.New(out, "", log.LstdFlags)
+		logger = log.New(out, "\n\n\x1b[31m", log.LstdFlags)
 	}
 	return func(c *Context) {
 		defer func() {
 			if err := recover(); err != nil {
 				if logger != nil {
 					stack := stack(3)
-					logger.Printf("Panic recovery -> %s\n%s\n", err, stack)
+					httprequest, _ := httputil.DumpRequest(c.Request, false)
+					logger.Printf("[Recovery] %s panic recovered:\n%s\n%s\n%s%s", timeFormat(time.Now()), string(httprequest), err, stack, reset)
 				}
-				c.AbortWithStatus(500)
+				c.AbortWithStatus(http.StatusInternalServerError)
 			}
 		}()
 		c.Next()
 	}
 }
 
-// stack returns a nicely formated stack frame, skipping skip frames
+// stack returns a nicely formatted stack frame, skipping skip frames.
 func stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
 	// As we loop, we open files and read them. These variables record the currently
@@ -103,4 +108,9 @@ func function(pc uintptr) []byte {
 	}
 	name = bytes.Replace(name, centerDot, dot, -1)
 	return name
+}
+
+func timeFormat(t time.Time) string {
+	var timeString = t.Format("2006/01/02 - 15:04:05")
+	return timeString
 }
