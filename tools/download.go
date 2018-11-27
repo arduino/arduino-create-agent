@@ -377,7 +377,7 @@ func removeStringFromSlice(s []string, r string) []string {
 
 func findBaseDir(dirList []string) string {
 	if len(dirList) == 1 {
-		return filepath.Dir(dirList[0]) + "/"
+		return fmt.Sprintf("%s%s", filepath.Dir(dirList[0]), string(os.PathSeparator))
 	}
 
 	// https://github.com/backdrop-ops/contrib/issues/55#issuecomment-73814500
@@ -388,12 +388,12 @@ func findBaseDir(dirList []string) string {
 
 	commonBaseDir := commonPrefix(os.PathSeparator, dirList)
 	if commonBaseDir != "" {
-		commonBaseDir = commonBaseDir + "/"
+		commonBaseDir = fmt.Sprintf("%s%s", commonBaseDir, string(os.PathSeparator))
 	}
 	return commonBaseDir
 }
 
-func  extractZip(log func(msg string) , body []byte, location string) (string, error) {
+func extractZip(log func(msg string), body []byte, location string) (string, error) {
 	path, err := utilities.SaveFileonTempDir("tooldownloaded.zip", bytes.NewReader(body))
 	r, err := zip.OpenReader(path)
 	if err != nil {
@@ -441,7 +441,7 @@ func  extractZip(log func(msg string) , body []byte, location string) (string, e
 	return location, nil
 }
 
-func extractTarGz(log func(msg string),body []byte, location string) (string, error) {
+func extractTarGz(log func(msg string), body []byte, location string) (string, error) {
 	bodyCopy := make([]byte, len(body))
 	copy(bodyCopy, body)
 	tarFile, _ := gzip.NewReader(bytes.NewReader(body))
@@ -505,8 +505,7 @@ func extractTarGz(log func(msg string),body []byte, location string) (string, er
 	return location, nil
 }
 
-
-func  extractBz2(log func(msg string),body []byte, location string) (string, error) {
+func extractBz2(log func(msg string), body []byte, location string) (string, error) {
 	bodyCopy := make([]byte, len(body))
 	copy(bodyCopy, body)
 	tarFile := bzip2.NewReader(bytes.NewReader(body))
@@ -571,7 +570,6 @@ func  extractBz2(log func(msg string),body []byte, location string) (string, err
 	}
 	return location, nil
 }
-
 
 func (t *Tools) installDrivers(location string) error {
 	OK_PRESSED := 6
