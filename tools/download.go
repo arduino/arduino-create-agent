@@ -227,7 +227,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	// Decompress
 
 	location := path.Join(dir(), pack, correctTool.Name, correctTool.Version)
-	t.Logger("Unpacking tool " + name + " in location: "+location)
+	t.Logger("Unpacking tool " + name + " in location: " + location)
 	err = os.RemoveAll(location)
 
 	if err != nil {
@@ -407,11 +407,15 @@ func extractZip(log func(msg string), body []byte, location string) (string, err
 	}
 
 	basedir := findBaseDir(dirList)
-	log(fmt.Sprintf("selected baseDir %s from Zip Archive Content: %v", basedir, dirList))
+	log(fmt.Sprintf("given location: %s > selected baseDir %s from Zip Archive Content: %v",location, basedir, dirList))
 
 	for _, f := range r.File {
-		fullname := filepath.Join(location, strings.Replace(filepath.ToSlash(f.Name), filepath.Clean(filepath.ToSlash(basedir)), "", -1))
-		log(fmt.Sprintf("selected fullname %s from replacing in %s the string %s", fullname, filepath.ToSlash(f.Name), filepath.Clean(filepath.ToSlash(basedir))))
+		normLocation := location
+		normName := filepath.Join(strings.Split(filepath.ToSlash(f.Name), "/")...)
+		normBaseDir := filepath.Join(strings.Split(filepath.ToSlash(basedir), "/")...)+ string(os.PathSeparator)
+		fullname := filepath.Join(normLocation, strings.Replace(normName, normBaseDir, "", -1))
+
+		log(fmt.Sprintf("selected fullname %s from replacing in %s the string %s", fullname, normName, normBaseDir))
 
 		if f.FileInfo().IsDir() {
 			os.MkdirAll(fullname, f.FileInfo().Mode().Perm())
