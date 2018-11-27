@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -226,7 +227,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	// Decompress
 	t.Logger("Unpacking tool " + name)
 
-	location := path.Join(dir(), pack, correctTool.Name, correctTool.Version)
+	location := path.Join("tmp", dir(), pack, correctTool.Name, correctTool.Version)
 	err = os.RemoveAll(location)
 
 	if err != nil {
@@ -240,12 +241,12 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 
 	switch srcType {
 	case "application/zip":
-		location, err = extractZip(body, location)
+		location, err = extractZip(t.Logger, body, location)
 	case "application/x-bz2":
 	case "application/octet-stream":
-		location, err = extractBz2(body, location)
+		location, err = extractBz2(t.Logger, body, location)
 	case "application/x-gzip":
-		location, err = extractTarGz(body, location)
+		location, err = extractTarGz(t.Logger, body, location)
 	default:
 		return errors.New("Unknown extension for file " + correctSystem.URL)
 	}
@@ -392,7 +393,7 @@ func findBaseDir(dirList []string) string {
 	return commonBaseDir
 }
 
-func extractZip(body []byte, location string) (string, error) {
+func  extractZip(log func(msg string) , body []byte, location string) (string, error) {
 	path, err := utilities.SaveFileonTempDir("tooldownloaded.zip", bytes.NewReader(body))
 	r, err := zip.OpenReader(path)
 	if err != nil {
@@ -406,6 +407,7 @@ func extractZip(body []byte, location string) (string, error) {
 	}
 
 	basedir := findBaseDir(dirList)
+	log(fmt.Sprintf("selected baseDir %s from Zip Archive Content: %v", basedir, dirList))
 
 	for _, f := range r.File {
 		fullname := filepath.Join(location, strings.Replace(f.Name, basedir, "", -1))
@@ -439,7 +441,7 @@ func extractZip(body []byte, location string) (string, error) {
 	return location, nil
 }
 
-func extractTarGz(body []byte, location string) (string, error) {
+func extractTarGz(log func(msg string),body []byte, location string) (string, error) {
 	bodyCopy := make([]byte, len(body))
 	copy(bodyCopy, body)
 	tarFile, _ := gzip.NewReader(bytes.NewReader(body))
@@ -456,6 +458,7 @@ func extractTarGz(body []byte, location string) (string, error) {
 	}
 
 	basedir := findBaseDir(dirList)
+	log(fmt.Sprintf("selected baseDir %s from TarGz Archive Content: %v", basedir, dirList))
 
 	tarFile, _ = gzip.NewReader(bytes.NewReader(bodyCopy))
 	tarReader = tar.NewReader(tarFile)
@@ -502,36 +505,8 @@ func extractTarGz(body []byte, location string) (string, error) {
 	return location, nil
 }
 
-func (t *Tools) installDrivers(location string) error {
-	OK_PRESSED := 6
-	extension := ".bat"
-	preamble := ""
-	if runtime.GOOS != "windows" {
-		extension = ".sh"
-		// add ./ to force locality
-		preamble = "./"
-	}
-	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
-		t.Logger("Installing drivers")
-		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
-		if ok == OK_PRESSED {
-			os.Chdir(location)
-			t.Logger(preamble + "post_install" + extension)
-			oscmd := exec.Command(preamble + "post_install" + extension)
-			if runtime.GOOS != "linux" {
-				// spawning a shell could be the only way to let the user type his password
-				TellCommandNotToSpawnShell(oscmd)
-			}
-			err = oscmd.Run()
-			return err
-		} else {
-			return errors.New("Could not install drivers")
-		}
-	}
-	return nil
-}
 
-func extractBz2(body []byte, location string) (string, error) {
+func  extractBz2(log func(msg string),body []byte, location string) (string, error) {
 	bodyCopy := make([]byte, len(body))
 	copy(bodyCopy, body)
 	tarFile := bzip2.NewReader(bytes.NewReader(body))
@@ -548,6 +523,7 @@ func extractBz2(body []byte, location string) (string, error) {
 	}
 
 	basedir := findBaseDir(dirList)
+	log(fmt.Sprintf("selected baseDir %s from Bz2 Archive Content: %v", basedir, dirList))
 
 	tarFile = bzip2.NewReader(bytes.NewReader(bodyCopy))
 	tarReader = tar.NewReader(tarFile)
@@ -594,6 +570,36 @@ func extractBz2(body []byte, location string) (string, error) {
 		file.Close()
 	}
 	return location, nil
+}
+
+
+func (t *Tools) installDrivers(location string) error {
+	OK_PRESSED := 6
+	extension := ".bat"
+	preamble := ""
+	if runtime.GOOS != "windows" {
+		extension = ".sh"
+		// add ./ to force locality
+		preamble = "./"
+	}
+	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
+		t.Logger("Installing drivers")
+		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
+		if ok == OK_PRESSED {
+			os.Chdir(location)
+			t.Logger(preamble + "post_install" + extension)
+			oscmd := exec.Command(preamble + "post_install" + extension)
+			if runtime.GOOS != "linux" {
+				// spawning a shell could be the only way to let the user type his password
+				TellCommandNotToSpawnShell(oscmd)
+			}
+			err = oscmd.Run()
+			return err
+		} else {
+			return errors.New("Could not install drivers")
+		}
+	}
+	return nil
 }
 
 func makeExecutable(location string) error {
