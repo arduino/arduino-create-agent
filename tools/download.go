@@ -410,7 +410,9 @@ func extractZip(log func(msg string), body []byte, location string) (string, err
 	log(fmt.Sprintf("selected baseDir %s from Zip Archive Content: %v", basedir, dirList))
 
 	for _, f := range r.File {
-		fullname := filepath.Join(location, strings.Replace(f.Name, basedir, "", -1))
+		fullname := filepath.Join(location, strings.Replace(filepath.ToSlash(f.Name), filepath.ToSlash(basedir), "", -1))
+		log(fmt.Sprintf("selected fullname %s from replacing in %s the string %s", fullname, filepath.ToSlash(f.Name), filepath.ToSlash(basedir)))
+
 		if f.FileInfo().IsDir() {
 			os.MkdirAll(fullname, f.FileInfo().Mode().Perm())
 		} else {
