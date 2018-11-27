@@ -157,10 +157,10 @@ func pathExists(path string) bool {
 // if it already exists.
 func (t *Tools) Download(pack, name, version, behaviour string) error {
 
-	index_file := path.Join(t.Directory, "package_index.json")
-	signature_file := path.Join(t.Directory, "package_index.json.sig")
+	index_file := filepath.Join(t.Directory, "package_index.json")
+	signature_file := filepath.Join(t.Directory, "package_index.json.sig")
 
-	if _, err := os.Stat(path.Join(t.Directory, "package_index.json")); err != nil || time.Since(t.LastRefresh) > 1*time.Hour {
+	if _, err := os.Stat(filepath.Join(t.Directory, "package_index.json")); err != nil || time.Since(t.LastRefresh) > 1*time.Hour {
 		// Download the file again and save it
 		err = t.DownloadPackageIndex(index_file, signature_file)
 		if err != nil {
@@ -225,9 +225,9 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	}
 
 	// Decompress
-	t.Logger("Unpacking tool " + name)
 
 	location := path.Join(dir(), pack, correctTool.Name, correctTool.Version)
+	t.Logger("Unpacking tool " + name + " in location: "+location)
 	err = os.RemoveAll(location)
 
 	if err != nil {
@@ -601,14 +601,14 @@ func (t *Tools) installDrivers(location string) error {
 }
 
 func makeExecutable(location string) error {
-	location = path.Join(location, "bin")
+	location = filepath.Join(location, "bin")
 	files, err := ioutil.ReadDir(location)
 	if err != nil {
 		return err
 	}
 
 	for _, file := range files {
-		err = os.Chmod(path.Join(location, file.Name()), 0755)
+		err = os.Chmod(filepath.Join(location, file.Name()), 0755)
 		if err != nil {
 			return err
 		}
