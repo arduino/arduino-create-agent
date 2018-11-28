@@ -27,75 +27,27 @@
 
 [[constraint]]
   name = "github.com/Sirupsen/logrus"
-  version = "1.0.6"
+  version = "1.2.0"
 
 [[constraint]]
   name = "github.com/blang/semver"
   version = "3.5.1"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/creack/goselect"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/getlantern/context"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/getlantern/errors"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/getlantern/filepersist"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/getlantern/golog"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/getlantern/hex"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/getlantern/hidden"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/getlantern/ops"
-
-[[constraint]]
-  name = "github.com/getlantern/stack"
-  version = "1.5.1"
-
-[[constraint]]
-  branch = "master"
+  revision = "89b3d9c45cc69f861868cc7f3159eba2b4cdfb22"
   name = "github.com/getlantern/systray"
 
 [[constraint]]
   name = "github.com/gin-gonic/gin"
-  version = "1.2.0"
+  version = "1.3.0"
 
 [[constraint]]
   name = "github.com/go-ini/ini"
-  version = "1.38.1"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/googollee/go-engine.io"
+  version = "1.39.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/googollee/go-socket.io"
-
-[[constraint]]
-  name = "github.com/gorilla/websocket"
-  version = "1.2.0"
-
-[[constraint]]
-  branch = "filemode"
-  name = "github.com/inconshreveable/go-update"
 
 [[constraint]]
   name = "github.com/itsjamie/gin-cors"
@@ -110,36 +62,12 @@
   version = "0.1.0"
 
 [[constraint]]
-  name = "github.com/kr/fs"
-  version = "0.1.0"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/manucorporat/sse"
-
-[[constraint]]
-  name = "github.com/mattn/go-colorable"
-  version = "0.0.9"
-
-[[constraint]]
-  name = "github.com/mattn/go-isatty"
-  version = "0.0.3"
-
-[[constraint]]
-  name = "github.com/mattn/go-ole"
-  version = "1.2.1"
-
-[[constraint]]
   name = "github.com/mattn/go-shellwords"
   version = "1.0.3"
 
 [[constraint]]
-  name = "github.com/miekg/dns"
-  version = "1.0.8"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/mitchellh/go-homedir"
+  version = "1.0.0"
 
 [[constraint]]
   branch = "master"
@@ -150,28 +78,12 @@
   version = "0.8.0"
 
 [[constraint]]
-  name = "github.com/pkg/sftp"
-  version = "1.8.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/sfreiberg/simplessh"
 
 [[constraint]]
   branch = "master"
   name = "github.com/skratchdot/open-golang"
-
-[[constraint]]
-  name = "github.com/smartystreets/goconvey"
-  version = "1.6.3"
-
-[[constraint]]
-  name = "github.com/stretchr/testify"
-  version = "1.2.2"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/vharitonsky/iniflags"
 
 [[constraint]]
   branch = "master"
@@ -186,26 +98,9 @@
   name = "golang.org/x/crypto"
 
 [[constraint]]
-  branch = "master"
-  name = "golang.org/x/net"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/sys"
-
-[[constraint]]
-  name = "gopkg.in/bluesuncorp/validator.v5"
-  version = "5.12.0"
-
-[[constraint]]
   branch = "v0"
   name = "gopkg.in/inconshreveable/go-update.v0"
 
-[[constraint]]
-  name = "gopkg.in/ini.v1"
-  version = "1.38.1"
-
 [prune]
-  non-go = true
   go-tests = true
   unused-packages = true
