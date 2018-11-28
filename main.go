@@ -335,7 +335,7 @@ var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
 const homeTemplateHtml = `<!DOCTYPE html>
 <html>
 <head>
-<title>Serial Port Example</title>
+<title>Arduino Create Agent Debug Console</title>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
 <script type="text/javascript">
