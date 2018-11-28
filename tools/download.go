@@ -377,7 +377,7 @@ func removeStringFromSlice(s []string, r string) []string {
 
 func findBaseDir(dirList []string) string {
 	if len(dirList) == 1 {
-		return filepath.Dir(dirList[0]) + "/"
+		return path.Dir(dirList[0]) + "/"
 	}
 
 	// https://github.com/backdrop-ops/contrib/issues/55#issuecomment-73814500
@@ -386,7 +386,7 @@ func findBaseDir(dirList []string) string {
 		dirList = removeStringFromSlice(dirList, v)
 	}
 
-	commonBaseDir := commonPrefix(os.PathSeparator, dirList)
+	commonBaseDir := commonPrefix('/', dirList)
 	if commonBaseDir != "" {
 		commonBaseDir = commonBaseDir + "/"
 	}
@@ -411,6 +411,7 @@ func  extractZip(log func(msg string) , body []byte, location string) (string, e
 
 	for _, f := range r.File {
 		fullname := filepath.Join(location, strings.Replace(f.Name, basedir, "", -1))
+		log(fmt.Sprintf("generated fullname %s removing %s from %s", fullname, basedir, f.Name))
 		if f.FileInfo().IsDir() {
 			os.MkdirAll(fullname, f.FileInfo().Mode().Perm())
 		} else {
