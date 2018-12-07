@@ -34,8 +34,8 @@
   version = "3.5.1"
 
 [[constraint]]
-  revision = "89b3d9c45cc69f861868cc7f3159eba2b4cdfb22"
-  name = "github.com/getlantern/systray"
+  branch = "master"
+  name = "github.com/facchinm/systray"
 
 [[constraint]]
   name = "github.com/gin-gonic/gin"

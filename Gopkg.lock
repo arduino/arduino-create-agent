@@ -26,12 +26,28 @@
   revision = "58854f77ee8d858ce751b0a9bcc5533fef7bfa9e"
 
 [[projects]]
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  pruneopts = "UT"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
+
+[[projects]]
   digest = "1:ce303e1d83a733bda89c5bad61fcf7e86b9f68b97bf783509192090ddd3919cb"
   name = "github.com/davidmz/go-pageant"
   packages = ["."]
   pruneopts = "UT"
   revision = "30ad2d03e9fe97a029a6a6dc87bff319e0bb6bc4"
   version = "v1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:8df8718256c87ae7984cbfa1304b9efdd8b5952dcb94a8a51cfe9d61f08785ee"
+  name = "github.com/facchinm/systray"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b32308b0b662e45cde7c5986bc29def5d48bafbb"
 
 [[projects]]
   branch = "master"
@@ -48,6 +64,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "e24b7f4ff7c70be59bbefca6b7695d68cda8b399"
+
+[[projects]]
+  branch = "master"
+  digest = "1:99c1c515274e6c3ead7bf68dcc77f56131d0f937adeb6808ba86e0911adfdda7"
+  name = "github.com/getlantern/filepersist"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c5f0cd24e7991579ba6f5f1bd20a1ad2c9f06cd4"
 
 [[projects]]
   branch = "master"
@@ -80,13 +104,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "37353306c90844c8e0591956f56611f46299d202"
-
-[[projects]]
-  digest = "1:bd5504d3204cc1625bc017e477690ad7da71f5c800dc5efdf8a9a7d4feebe2e7"
-  name = "github.com/getlantern/systray"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "89b3d9c45cc69f861868cc7f3159eba2b4cdfb22"
 
 [[projects]]
   branch = "master"
@@ -286,6 +303,14 @@
   version = "v1.8.3"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  pruneopts = "UT"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:e244ec9ef8a91f5d0f640c4d14db6d65938182bb976c07f01f0f6e8f4605c4e9"
   name = "github.com/sfreiberg/simplessh"
@@ -300,6 +325,14 @@
   packages = ["open"]
   pruneopts = "UT"
   revision = "75fb7ed4208cf72d323d7d02fd1a5964a7a9073c"
+
+[[projects]]
+  digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  pruneopts = "UT"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   digest = "1:c268acaa4a4d94a467980e5e91452eb61c460145765293dc0aed48e5e9919cc6"
@@ -410,7 +443,7 @@
   input-imports = [
     "github.com/Sirupsen/logrus",
     "github.com/blang/semver",
-    "github.com/getlantern/systray",
+    "github.com/facchinm/systray",
     "github.com/gin-gonic/gin",
     "github.com/go-ini/ini",
     "github.com/googollee/go-socket.io",
@@ -423,6 +456,7 @@
     "github.com/pkg/errors",
     "github.com/sfreiberg/simplessh",
     "github.com/skratchdot/open-golang/open",
+    "github.com/stretchr/testify/assert",
     "github.com/xrash/smetrics",
     "go.bug.st/serial.v1",
     "go.bug.st/serial.v1/enumerator",
