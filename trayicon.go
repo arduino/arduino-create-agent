@@ -37,7 +37,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/icon"
-	"github.com/getlantern/systray"
+	"github.com/facchinm/systray"
 	"github.com/go-ini/ini"
 	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
@@ -47,9 +47,9 @@ import (
 func setupSysTray() {
 	runtime.LockOSThread()
 	if *hibernate == true {
-		systray.Run(setupSysTrayHibernate,nil)
+		systray.Run(setupSysTrayHibernate)
 	} else {
-		systray.Run(setupSysTrayReal,nil)
+		systray.Run(setupSysTrayReal)
 	}
 }
 
@@ -144,7 +144,7 @@ func setupSysTrayReal() {
 		}
 		systray.Quit()
 		*hibernate = true
-		log.Println("Restart becayse setup went wrong?")
+		log.Println("Restart because setup went wrong?")
 		restart("")
 	}()
 
@@ -180,7 +180,7 @@ func setupSysTrayHibernate() {
 	go func() {
 		<-mOpen.ClickedCh
 		*hibernate = false
-		log.Println("Restart for hubernation")
+		log.Println("Restart for hibernation")
 		systray.Quit()
 		restart("")
 	}()
