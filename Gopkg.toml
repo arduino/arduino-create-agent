@@ -43,7 +43,7 @@
 
 [[constraint]]
   name = "github.com/go-ini/ini"
-  version = "1.39.0"
+  version = "1.41.0"
 
 [[constraint]]
   branch = "master"
