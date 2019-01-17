@@ -43,6 +43,22 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:376e5a9fdb57657725ff19b4c510c3f5e1f804ab4ab0ff3064d8f4dc01e40fe2"
+  name = "github.com/dimfeld/httppath"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ee938bf735983d53694d79138ad9820efff94c92"
+
+[[projects]]
+  digest = "1:09d3ceb4456b0b463c5730198a9138e383089b27c0c10b1032789a0618a6dfe6"
+  name = "github.com/dimfeld/httptreemux"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a454a10de4a11f751681a0914461ab9e98c2a3ff"
+  version = "5.0.2"
+
+[[projects]]
+  branch = "master"
   digest = "1:8df8718256c87ae7984cbfa1304b9efdd8b5952dcb94a8a51cfe9d61f08785ee"
   name = "github.com/facchinm/systray"
   packages = ["."]
@@ -240,6 +256,14 @@
   version = "v0.1.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:393f23e872c9141dbe315c428dc3eac9406f029be7ab0e1cae2374486c07aa54"
+  name = "github.com/manveru/faker"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9fbc68a78c4dbc7914e1a23f88f126bea4383b97"
+
+[[projects]]
   digest = "1:fa610f9fe6a93f4a75e64c83673dfff9bf1a34bbb21e6102021b6bc7850834a3"
   name = "github.com/mattn/go-isatty"
   packages = ["."]
@@ -311,6 +335,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:d917313f309bda80d27274d53985bc65651f81a5b66b820749ac7f8ef061fd04"
+  name = "github.com/sergi/go-diff"
+  packages = ["diffmatchpatch"]
+  pruneopts = "UT"
+  revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:e244ec9ef8a91f5d0f640c4d14db6d65938182bb976c07f01f0f6e8f4605c4e9"
   name = "github.com/sfreiberg/simplessh"
@@ -351,6 +383,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:6f7f5a5452e6dc8b0665b0fd2b779c3c6b7e70a121e0661aeb03daef7baae58d"
+  name = "github.com/zach-klippenstein/goregen"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "795b5e3961ea1912fde60af417ad85e86acc0d6a"
+
+[[projects]]
+  branch = "master"
   digest = "1:49b892f63d6b54df49cc35901eba38acc3c5309f919b40b3d1e2ff859c8108ba"
   name = "go.bug.st/serial.v1"
   packages = [
@@ -360,6 +400,29 @@
   ]
   pruneopts = "UT"
   revision = "5f7892a7bb453066bdc6683b9b5d24d9dee03ec1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:f3f6a6b258e99d130be6d10ab74bf1a8eb25796af7258e85354a0b0602b3e122"
+  name = "goa.design/goa"
+  packages = [
+    ".",
+    "codegen",
+    "codegen/generator",
+    "codegen/server",
+    "codegen/service",
+    "dsl",
+    "eval",
+    "expr",
+    "grpc/codegen",
+    "http",
+    "http/codegen",
+    "http/codegen/openapi",
+    "http/middleware",
+    "pkg",
+  ]
+  pruneopts = "UT"
+  revision = "40843d63b0e4f06ef5004d2c526ee64814b24542"
 
 [[projects]]
   branch = "master"
@@ -412,6 +475,26 @@
   revision = "62eef0e2fa9b2c385f7b2778e763486da6880d37"
 
 [[projects]]
+  branch = "master"
+  digest = "1:b5cd6adda1381d3b37182aa4a403bca5e69bc7ff6eb412b8618fe38fce3400bd"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/cgo",
+    "go/internal/gcimporter",
+    "go/internal/packagesdriver",
+    "go/packages",
+    "go/types/typeutil",
+    "imports",
+    "internal/fastwalk",
+    "internal/gopathwalk",
+    "internal/semver",
+  ]
+  pruneopts = "UT"
+  revision = "b258f6da23835bf37e95cc50af792447c7c67fe4"
+
+[[projects]]
   digest = "1:1b4724d3c8125f6044925f02b485b74bfec9905cbf579d95aafd1a6c8f8447d3"
   name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
@@ -460,6 +543,12 @@
     "github.com/xrash/smetrics",
     "go.bug.st/serial.v1",
     "go.bug.st/serial.v1/enumerator",
+    "goa.design/goa/codegen/generator",
+    "goa.design/goa/dsl",
+    "goa.design/goa/eval",
+    "goa.design/goa/http",
+    "goa.design/goa/http/middleware",
+    "goa.design/goa/pkg",
     "golang.org/x/crypto/openpgp",
     "gopkg.in/inconshreveable/go-update.v0",
   ]

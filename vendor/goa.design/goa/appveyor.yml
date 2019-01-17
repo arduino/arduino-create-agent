@@ -1,0 +1,21 @@
+version: "{build}"
+
+os: Windows Server 2012 R2
+
+environment:
+  GOPATH: C:\gopath
+
+clone_folder: c:\gopath\src\goa.design\goa
+
+install:
+  - go version
+  - copy c:\MinGW\bin\mingw32-make.exe c:\MinGW\bin\make.exe
+  - set PATH=%PATH%;c:\MinGW\bin;%GOPATH%\bin
+
+build_script:
+  - make depend
+  - make test
+
+test: off
+
+deploy: off
