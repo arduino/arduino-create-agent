@@ -11,13 +11,16 @@ import (
 	goa "goa.design/goa"
 )
 
-// Tool is the viewed result type that is projected based on a view.
-type Tool struct {
+// ToolCollection is the viewed result type that is projected based on a view.
+type ToolCollection struct {
 	// Type to project
-	Projected *ToolView
+	Projected ToolCollectionView
 	// View to render
 	View string
 }
+
+// ToolCollectionView is a type that runs validations on a projected type.
+type ToolCollectionView []*ToolView
 
 // ToolView is a type that runs validations on a projected type.
 type ToolView struct {
@@ -29,13 +32,25 @@ type ToolView struct {
 	Packager *string
 }
 
-// ValidateTool runs the validations defined on the viewed result type Tool.
-func ValidateTool(result *Tool) (err error) {
+// ValidateToolCollection runs the validations defined on the viewed result
+// type ToolCollection.
+func ValidateToolCollection(result ToolCollection) (err error) {
 	switch result.View {
 	case "default", "":
-		err = ValidateToolView(result.Projected)
+		err = ValidateToolCollectionView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
+	}
+	return
+}
+
+// ValidateToolCollectionView runs the validations defined on
+// ToolCollectionView using the "default" view.
+func ValidateToolCollectionView(result ToolCollectionView) (err error) {
+	for _, item := range result {
+		if err2 := ValidateToolView(item); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
 	}
 	return
 }

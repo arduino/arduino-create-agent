@@ -61,13 +61,13 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("tools", "list", err)
 			}
-			p := NewListToolOK(&body)
+			p := NewListToolCollectionOK(body)
 			view := "default"
-			vres := &toolsviews.Tool{p, view}
-			if err = toolsviews.ValidateTool(vres); err != nil {
+			vres := toolsviews.ToolCollection{p, view}
+			if err = toolsviews.ValidateToolCollection(vres); err != nil {
 				return nil, goahttp.ErrValidationError("tools", "list", err)
 			}
-			res := tools.NewTool(vres)
+			res := tools.NewToolCollection(vres)
 			return res, nil
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)

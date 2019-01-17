@@ -9,11 +9,15 @@ package client
 
 import (
 	toolsviews "github.com/arduino/arduino-create-agent/gen/tools/views"
+	goa "goa.design/goa"
 )
 
 // ListResponseBody is the type of the "tools" service "list" endpoint HTTP
 // response body.
-type ListResponseBody struct {
+type ListResponseBody []*ToolResponse
+
+// ToolResponse is used to define fields on response body types.
+type ToolResponse struct {
 	// The name of the tool
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
 	// The version of the tool
@@ -22,13 +26,30 @@ type ListResponseBody struct {
 	Packager *string `form:"packager,omitempty" json:"packager,omitempty" xml:"packager,omitempty"`
 }
 
-// NewListToolOK builds a "tools" service "list" endpoint result from a HTTP
-// "OK" response.
-func NewListToolOK(body *ListResponseBody) *toolsviews.ToolView {
-	v := &toolsviews.ToolView{
-		Name:     body.Name,
-		Version:  body.Version,
-		Packager: body.Packager,
+// NewListToolCollectionOK builds a "tools" service "list" endpoint result from
+// a HTTP "OK" response.
+func NewListToolCollectionOK(body ListResponseBody) toolsviews.ToolCollectionView {
+	v := make([]*toolsviews.ToolView, len(body))
+	for i, val := range body {
+		v[i] = &toolsviews.ToolView{
+			Name:     val.Name,
+			Version:  val.Version,
+			Packager: val.Packager,
+		}
 	}
 	return v
+}
+
+// ValidateToolResponse runs the validations defined on ToolResponse
+func ValidateToolResponse(body *ToolResponse) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Version == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("version", "body"))
+	}
+	if body.Packager == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("packager", "body"))
+	}
+	return
 }

@@ -19,9 +19,9 @@ import (
 // list endpoint.
 func EncodeListResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
-		res := v.(*toolsviews.Tool)
+		res := v.(toolsviews.ToolCollection)
 		enc := encoder(ctx, w)
-		body := NewListResponseBody(res.Projected)
+		body := NewToolResponseCollection(res.Projected)
 		w.WriteHeader(http.StatusOK)
 		return enc.Encode(body)
 	}

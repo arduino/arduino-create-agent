@@ -5,7 +5,7 @@ import . "goa.design/goa/dsl"
 var _ = Service("tools", func() {
 	Description("The tools service managed the tools installed in the system.")
 	Method("list", func() {
-		Result(Tool)
+		Result(CollectionOf(Tool))
 		HTTP(func() {
 			GET("/tools")
 			Response(StatusOK)

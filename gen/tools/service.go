@@ -16,7 +16,7 @@ import (
 // The tools service managed the tools installed in the system.
 type Service interface {
 	// List implements list.
-	List(context.Context) (res *Tool, err error)
+	List(context.Context) (res ToolCollection, err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -29,7 +29,10 @@ const ServiceName = "tools"
 // MethodKey key.
 var MethodNames = [1]string{"list"}
 
-// Tool is the result type of the tools service list method.
+// ToolCollection is the result type of the tools service list method.
+type ToolCollection []*Tool
+
+// A tool is an executable program that can upload sketches.
 type Tool struct {
 	// The name of the tool
 	Name string
@@ -39,24 +42,45 @@ type Tool struct {
 	Packager string
 }
 
-// NewTool initializes result type Tool from viewed result type Tool.
-func NewTool(vres *toolsviews.Tool) *Tool {
-	var res *Tool
+// NewToolCollection initializes result type ToolCollection from viewed result
+// type ToolCollection.
+func NewToolCollection(vres toolsviews.ToolCollection) ToolCollection {
+	var res ToolCollection
 	switch vres.View {
 	case "default", "":
-		res = newTool(vres.Projected)
+		res = newToolCollection(vres.Projected)
 	}
 	return res
 }
 
-// NewViewedTool initializes viewed result type Tool from result type Tool
-// using the given view.
-func NewViewedTool(res *Tool, view string) *toolsviews.Tool {
-	var vres *toolsviews.Tool
+// NewViewedToolCollection initializes viewed result type ToolCollection from
+// result type ToolCollection using the given view.
+func NewViewedToolCollection(res ToolCollection, view string) toolsviews.ToolCollection {
+	var vres toolsviews.ToolCollection
 	switch view {
 	case "default", "":
-		p := newToolView(res)
-		vres = &toolsviews.Tool{p, "default"}
+		p := newToolCollectionView(res)
+		vres = toolsviews.ToolCollection{p, "default"}
+	}
+	return vres
+}
+
+// newToolCollection converts projected type ToolCollection to service type
+// ToolCollection.
+func newToolCollection(vres toolsviews.ToolCollectionView) ToolCollection {
+	res := make(ToolCollection, len(vres))
+	for i, n := range vres {
+		res[i] = newTool(n)
+	}
+	return res
+}
+
+// newToolCollectionView projects result type ToolCollection into projected
+// type ToolCollectionView using the "default" view.
+func newToolCollectionView(res ToolCollection) toolsviews.ToolCollectionView {
+	vres := make(toolsviews.ToolCollectionView, len(res))
+	for i, n := range res {
+		vres[i] = newToolView(n)
 	}
 	return vres
 }

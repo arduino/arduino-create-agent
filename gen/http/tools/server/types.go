@@ -11,9 +11,12 @@ import (
 	toolsviews "github.com/arduino/arduino-create-agent/gen/tools/views"
 )
 
-// ListResponseBody is the type of the "tools" service "list" endpoint HTTP
-// response body.
-type ListResponseBody struct {
+// ToolResponseCollection is the type of the "tools" service "list" endpoint
+// HTTP response body.
+type ToolResponseCollection []*ToolResponse
+
+// ToolResponse is used to define fields on response body types.
+type ToolResponse struct {
 	// The name of the tool
 	Name string `form:"name" json:"name" xml:"name"`
 	// The version of the tool
@@ -22,13 +25,16 @@ type ListResponseBody struct {
 	Packager string `form:"packager" json:"packager" xml:"packager"`
 }
 
-// NewListResponseBody builds the HTTP response body from the result of the
-// "list" endpoint of the "tools" service.
-func NewListResponseBody(res *toolsviews.ToolView) *ListResponseBody {
-	body := &ListResponseBody{
-		Name:     *res.Name,
-		Version:  *res.Version,
-		Packager: *res.Packager,
+// NewToolResponseCollection builds the HTTP response body from the result of
+// the "list" endpoint of the "tools" service.
+func NewToolResponseCollection(res toolsviews.ToolCollectionView) ToolResponseCollection {
+	body := make([]*ToolResponse, len(res))
+	for i, val := range res {
+		body[i] = &ToolResponse{
+			Name:     *val.Name,
+			Version:  *val.Version,
+			Packager: *val.Packager,
+		}
 	}
 	return body
 }

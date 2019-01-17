@@ -38,7 +38,7 @@ func NewListEndpoint(s Service) goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedTool(res, "default")
+		vres := NewViewedToolCollection(res, "default")
 		return vres, nil
 	}
 }

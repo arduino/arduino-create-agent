@@ -9,6 +9,6 @@ import (
 type Tools struct {
 }
 
-func (c *Tools) List(ctx context.Context) (*tools.Tool, error) {
-	return nil, nil
+func (c *Tools) List(ctx context.Context) (tools.ToolCollection, error) {
+	return tools.ToolCollection{}, nil
 }

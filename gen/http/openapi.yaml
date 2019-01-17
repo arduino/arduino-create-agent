@@ -26,11 +26,11 @@ paths:
         "200":
           description: OK response.
           schema:
-            $ref: '#/definitions/ToolsListResponseBody'
+            $ref: '#/definitions/ToolsToolResponseCollection'
       schemes:
       - http
 definitions:
-  ToolsListResponseBody:
+  ToolResponse:
     title: 'Mediatype identifier: application/vnd.arduino.tool; view=default'
     type: object
     properties:
@@ -46,7 +46,8 @@ definitions:
         type: string
         description: The version of the tool
         example: 6.3.0-arduino9
-    description: ListResponseBody result type (default view)
+    description: A tool is an executable program that can upload sketches. (default
+      view)
     example:
       name: avrdude
       packager: arduino
@@ -55,3 +56,17 @@ definitions:
     - name
     - version
     - packager
+  ToolsToolResponseCollection:
+    title: 'Mediatype identifier: application/vnd.arduino.tool; type=collection; view=default'
+    type: array
+    items:
+      $ref: '#/definitions/ToolResponse'
+    description: ListResponseBody is the result type for an array of ToolResponse
+      (default view)
+    example:
+    - name: avrdude
+      packager: arduino
+      version: 6.3.0-arduino9
+    - name: avrdude
+      packager: arduino
+      version: 6.3.0-arduino9
