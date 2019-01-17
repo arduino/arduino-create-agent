@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
 	toolssvr "github.com/arduino/arduino-create-agent/gen/http/tools/server"
 	toolssvc "github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/v2/tools"
+	"github.com/sirupsen/logrus"
 	goahttp "goa.design/goa/http"
 	"goa.design/goa/http/middleware"
 )
@@ -17,10 +17,13 @@ func Server() http.Handler {
 
 	// Instantiate logger
 	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
 	logAdapter := LogAdapter{Logger: logger}
 
 	// Mount tools
-	toolsSvc := tools.Tools{}
+	toolsSvc := tools.Tools{
+		Log: logger,
+	}
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
 
 	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))

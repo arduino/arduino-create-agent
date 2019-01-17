@@ -27,7 +27,7 @@
 required = ["goa.design/goa/codegen/generator"]
 
 [[constraint]]
-  name = "github.com/Sirupsen/logrus"
+  name = "github.com/sirupsen/logrus"
   version = "1.2.0"
 
 [[constraint]]

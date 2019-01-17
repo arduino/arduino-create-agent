@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bcd833dfe83d3cebad139e4a29ed79cb2318bf95"
-  version = "v1.2.0"
-
-[[projects]]
   digest = "1:705c40022f5c03bf96ffeb6477858d88565064485a513abcd0f11a0911546cb6"
   name = "github.com/blang/semver"
   packages = ["."]
@@ -351,6 +343,14 @@
   revision = "495cbb862a9c6348e0fff479ed1e7b70c871b372"
 
 [[projects]]
+  digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bcd833dfe83d3cebad139e4a29ed79cb2318bf95"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   digest = "1:39853e1ae46a02816e2419e1f590e00682b1a6b60bb988597cf2efb84314da45"
   name = "github.com/skratchdot/open-golang"
@@ -514,17 +514,17 @@
   revision = "d8b0b1d421aa1cbf392c05869f8abbc669bb7066"
 
 [[projects]]
-  digest = "1:cacb98d52c60c337c2ce95a7af83ba0313a93ce5e73fa9e99a96aff70776b9d3"
+  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "a5b47d31c556af34a302ce5d659e6fea44d90de0"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/Sirupsen/logrus",
     "github.com/blang/semver",
     "github.com/facchinm/systray",
     "github.com/gin-gonic/gin",
@@ -538,17 +538,17 @@
     "github.com/oleksandr/bonjour",
     "github.com/pkg/errors",
     "github.com/sfreiberg/simplessh",
+    "github.com/sirupsen/logrus",
     "github.com/skratchdot/open-golang/open",
     "github.com/stretchr/testify/assert",
     "github.com/xrash/smetrics",
     "go.bug.st/serial.v1",
     "go.bug.st/serial.v1/enumerator",
+    "goa.design/goa",
     "goa.design/goa/codegen/generator",
     "goa.design/goa/dsl",
-    "goa.design/goa/eval",
     "goa.design/goa/http",
     "goa.design/goa/http/middleware",
-    "goa.design/goa/pkg",
     "golang.org/x/crypto/openpgp",
     "gopkg.in/inconshreveable/go-update.v0",
   ]

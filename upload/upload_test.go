@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/upload"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/sirupsen/logrus"
 )
 
 type mockTools struct{}

@@ -8,7 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	serial "go.bug.st/serial.v1"
 )
 

@@ -15,7 +15,6 @@ import (
 	"text/template"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/arduino-create-agent/v2"
@@ -23,6 +22,7 @@ import (
 	"github.com/go-ini/ini"
 	cors "github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
+	log "github.com/sirupsen/logrus"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
