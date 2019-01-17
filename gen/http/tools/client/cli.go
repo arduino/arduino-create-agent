@@ -3,6 +3,35 @@
 // tools HTTP client CLI support package
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package client
+
+import (
+	"encoding/json"
+	"fmt"
+
+	tools "github.com/arduino/arduino-create-agent/gen/tools"
+)
+
+// BuildInstallPayload builds the payload for the tools install endpoint from
+// CLI flags.
+func BuildInstallPayload(toolsInstallBody string) (*tools.ToolPayload, error) {
+	var err error
+	var body InstallRequestBody
+	{
+		err = json.Unmarshal([]byte(toolsInstallBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"name\": \"avrdude\",\n      \"packager\": \"arduino\",\n      \"version\": \"6.3.0-arduino9\"\n   }'")
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	v := &tools.ToolPayload{
+		Name:     body.Name,
+		Version:  body.Version,
+		Packager: body.Packager,
+	}
+	return v, nil
+}

@@ -1,4 +1,4 @@
-package tools
+package pkgs
 
 import (
 	"context"
@@ -14,7 +14,11 @@ type Tools struct {
 	Log *logrus.Logger
 }
 
-func (c *Tools) List(ctx context.Context) (tools.ToolCollection, error) {
+func (c *Tools) Available(ctx context.Context) (tools.ToolCollection, error) {
+	return nil, nil
+}
+
+func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 	res := tools.ToolCollection{}
 
 	// Find packagers
@@ -52,4 +56,12 @@ func (c *Tools) List(ctx context.Context) (tools.ToolCollection, error) {
 	}
 
 	return res, nil
+}
+
+func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
+	return nil
+}
+
+func (c *Tools) Remove(ctx context.Context) error {
+	return nil
 }

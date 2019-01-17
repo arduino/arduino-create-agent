@@ -3,18 +3,34 @@
 // tools HTTP client types
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package client
 
 import (
+	tools "github.com/arduino/arduino-create-agent/gen/tools"
 	toolsviews "github.com/arduino/arduino-create-agent/gen/tools/views"
 	goa "goa.design/goa"
 )
 
-// ListResponseBody is the type of the "tools" service "list" endpoint HTTP
-// response body.
-type ListResponseBody []*ToolResponse
+// InstallRequestBody is the type of the "tools" service "install" endpoint
+// HTTP request body.
+type InstallRequestBody struct {
+	// The name of the tool
+	Name string `form:"name" json:"name" xml:"name"`
+	// The version of the tool
+	Version string `form:"version" json:"version" xml:"version"`
+	// The packager of the tool
+	Packager string `form:"packager" json:"packager" xml:"packager"`
+}
+
+// AvailableResponseBody is the type of the "tools" service "available"
+// endpoint HTTP response body.
+type AvailableResponseBody []*ToolResponse
+
+// InstalledResponseBody is the type of the "tools" service "installed"
+// endpoint HTTP response body.
+type InstalledResponseBody []*ToolResponse
 
 // ToolResponse is used to define fields on response body types.
 type ToolResponse struct {
@@ -26,9 +42,34 @@ type ToolResponse struct {
 	Packager *string `form:"packager,omitempty" json:"packager,omitempty" xml:"packager,omitempty"`
 }
 
-// NewListToolCollectionOK builds a "tools" service "list" endpoint result from
-// a HTTP "OK" response.
-func NewListToolCollectionOK(body ListResponseBody) toolsviews.ToolCollectionView {
+// NewInstallRequestBody builds the HTTP request body from the payload of the
+// "install" endpoint of the "tools" service.
+func NewInstallRequestBody(p *tools.ToolPayload) *InstallRequestBody {
+	body := &InstallRequestBody{
+		Name:     p.Name,
+		Version:  p.Version,
+		Packager: p.Packager,
+	}
+	return body
+}
+
+// NewAvailableToolCollectionOK builds a "tools" service "available" endpoint
+// result from a HTTP "OK" response.
+func NewAvailableToolCollectionOK(body AvailableResponseBody) toolsviews.ToolCollectionView {
+	v := make([]*toolsviews.ToolView, len(body))
+	for i, val := range body {
+		v[i] = &toolsviews.ToolView{
+			Name:     val.Name,
+			Version:  val.Version,
+			Packager: val.Packager,
+		}
+	}
+	return v
+}
+
+// NewInstalledToolCollectionOK builds a "tools" service "installed" endpoint
+// result from a HTTP "OK" response.
+func NewInstalledToolCollectionOK(body InstalledResponseBody) toolsviews.ToolCollectionView {
 	v := make([]*toolsviews.ToolView, len(body))
 	for i, val := range body {
 		v[i] = &toolsviews.ToolView{

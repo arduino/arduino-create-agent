@@ -3,7 +3,7 @@
 // tools service
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package tools
 
@@ -13,10 +13,16 @@ import (
 	toolsviews "github.com/arduino/arduino-create-agent/gen/tools/views"
 )
 
-// The tools service managed the tools installed in the system.
+// The tools service manages the available and installed tools
 type Service interface {
-	// List implements list.
-	List(context.Context) (res ToolCollection, err error)
+	// Available implements available.
+	Available(context.Context) (res ToolCollection, err error)
+	// Installed implements installed.
+	Installed(context.Context) (res ToolCollection, err error)
+	// Install implements install.
+	Install(context.Context, *ToolPayload) (err error)
+	// Remove implements remove.
+	Remove(context.Context) (err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -27,10 +33,20 @@ const ServiceName = "tools"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [1]string{"list"}
+var MethodNames = [4]string{"available", "installed", "install", "remove"}
 
-// ToolCollection is the result type of the tools service list method.
+// ToolCollection is the result type of the tools service available method.
 type ToolCollection []*Tool
+
+// ToolPayload is the payload type of the tools service install method.
+type ToolPayload struct {
+	// The name of the tool
+	Name string
+	// The version of the tool
+	Version string
+	// The packager of the tool
+	Packager string
+}
 
 // A tool is an executable program that can upload sketches.
 type Tool struct {

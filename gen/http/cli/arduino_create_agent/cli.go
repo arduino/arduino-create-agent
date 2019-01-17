@@ -3,7 +3,7 @@
 // arduino-create-agent HTTP client CLI support package
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package cli
 
@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 
+	indexesc "github.com/arduino/arduino-create-agent/gen/http/indexes/client"
 	toolsc "github.com/arduino/arduino-create-agent/gen/http/tools/client"
 	goa "goa.design/goa"
 	goahttp "goa.design/goa/http"
@@ -23,13 +24,15 @@ import (
 //    command (subcommand1|subcommand2|...)
 //
 func UsageCommands() string {
-	return `tools list
+	return `indexes (list|add|remove)
+tools (available|installed|install|remove)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` tools list` + "\n" +
+	return os.Args[0] + ` indexes list` + "\n" +
+		os.Args[0] + ` tools available` + "\n" +
 		""
 }
 
@@ -43,12 +46,35 @@ func ParseEndpoint(
 	restore bool,
 ) (goa.Endpoint, interface{}, error) {
 	var (
+		indexesFlags = flag.NewFlagSet("indexes", flag.ContinueOnError)
+
+		indexesListFlags = flag.NewFlagSet("list", flag.ExitOnError)
+
+		indexesAddFlags = flag.NewFlagSet("add", flag.ExitOnError)
+
+		indexesRemoveFlags = flag.NewFlagSet("remove", flag.ExitOnError)
+
 		toolsFlags = flag.NewFlagSet("tools", flag.ContinueOnError)
 
-		toolsListFlags = flag.NewFlagSet("list", flag.ExitOnError)
+		toolsAvailableFlags = flag.NewFlagSet("available", flag.ExitOnError)
+
+		toolsInstalledFlags = flag.NewFlagSet("installed", flag.ExitOnError)
+
+		toolsInstallFlags    = flag.NewFlagSet("install", flag.ExitOnError)
+		toolsInstallBodyFlag = toolsInstallFlags.String("body", "REQUIRED", "")
+
+		toolsRemoveFlags = flag.NewFlagSet("remove", flag.ExitOnError)
 	)
+	indexesFlags.Usage = indexesUsage
+	indexesListFlags.Usage = indexesListUsage
+	indexesAddFlags.Usage = indexesAddUsage
+	indexesRemoveFlags.Usage = indexesRemoveUsage
+
 	toolsFlags.Usage = toolsUsage
-	toolsListFlags.Usage = toolsListUsage
+	toolsAvailableFlags.Usage = toolsAvailableUsage
+	toolsInstalledFlags.Usage = toolsInstalledUsage
+	toolsInstallFlags.Usage = toolsInstallUsage
+	toolsRemoveFlags.Usage = toolsRemoveUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -65,6 +91,8 @@ func ParseEndpoint(
 	{
 		svcn = os.Args[1+flag.NFlag()]
 		switch svcn {
+		case "indexes":
+			svcf = indexesFlags
 		case "tools":
 			svcf = toolsFlags
 		default:
@@ -82,10 +110,32 @@ func ParseEndpoint(
 	{
 		epn = os.Args[2+flag.NFlag()+svcf.NFlag()]
 		switch svcn {
-		case "tools":
+		case "indexes":
 			switch epn {
 			case "list":
-				epf = toolsListFlags
+				epf = indexesListFlags
+
+			case "add":
+				epf = indexesAddFlags
+
+			case "remove":
+				epf = indexesRemoveFlags
+
+			}
+
+		case "tools":
+			switch epn {
+			case "available":
+				epf = toolsAvailableFlags
+
+			case "installed":
+				epf = toolsInstalledFlags
+
+			case "install":
+				epf = toolsInstallFlags
+
+			case "remove":
+				epf = toolsRemoveFlags
 
 			}
 
@@ -109,11 +159,33 @@ func ParseEndpoint(
 	)
 	{
 		switch svcn {
-		case "tools":
-			c := toolsc.NewClient(scheme, host, doer, enc, dec, restore)
+		case "indexes":
+			c := indexesc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
 			case "list":
 				endpoint = c.List()
+				data = nil
+			case "add":
+				endpoint = c.Add()
+				data = nil
+			case "remove":
+				endpoint = c.Remove()
+				data = nil
+			}
+		case "tools":
+			c := toolsc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "available":
+				endpoint = c.Available()
+				data = nil
+			case "installed":
+				endpoint = c.Installed()
+				data = nil
+			case "install":
+				endpoint = c.Install()
+				data, err = toolsc.BuildInstallPayload(*toolsInstallBodyFlag)
+			case "remove":
+				endpoint = c.Remove()
 				data = nil
 			}
 		}
@@ -125,25 +197,108 @@ func ParseEndpoint(
 	return endpoint, data, nil
 }
 
+// indexesUsage displays the usage of the indexes command and its subcommands.
+func indexesUsage() {
+	fmt.Fprintf(os.Stderr, `The indexes service manages the package_index files
+Usage:
+    %s [globalflags] indexes COMMAND [flags]
+
+COMMAND:
+    list: List implements list.
+    add: Add implements add.
+    remove: Remove implements remove.
+
+Additional help:
+    %s indexes COMMAND --help
+`, os.Args[0], os.Args[0])
+}
+func indexesListUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] indexes list
+
+List implements list.
+
+Example:
+    `+os.Args[0]+` indexes list
+`, os.Args[0])
+}
+
+func indexesAddUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] indexes add
+
+Add implements add.
+
+Example:
+    `+os.Args[0]+` indexes add
+`, os.Args[0])
+}
+
+func indexesRemoveUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] indexes remove
+
+Remove implements remove.
+
+Example:
+    `+os.Args[0]+` indexes remove
+`, os.Args[0])
+}
+
 // toolsUsage displays the usage of the tools command and its subcommands.
 func toolsUsage() {
-	fmt.Fprintf(os.Stderr, `The tools service managed the tools installed in the system.
+	fmt.Fprintf(os.Stderr, `The tools service manages the available and installed tools
 Usage:
     %s [globalflags] tools COMMAND [flags]
 
 COMMAND:
-    list: List implements list.
+    available: Available implements available.
+    installed: Installed implements installed.
+    install: Install implements install.
+    remove: Remove implements remove.
 
 Additional help:
     %s tools COMMAND --help
 `, os.Args[0], os.Args[0])
 }
-func toolsListUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] tools list
+func toolsAvailableUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] tools available
 
-List implements list.
+Available implements available.
 
 Example:
-    `+os.Args[0]+` tools list
+    `+os.Args[0]+` tools available
+`, os.Args[0])
+}
+
+func toolsInstalledUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] tools installed
+
+Installed implements installed.
+
+Example:
+    `+os.Args[0]+` tools installed
+`, os.Args[0])
+}
+
+func toolsInstallUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] tools install -body JSON
+
+Install implements install.
+    -body JSON: 
+
+Example:
+    `+os.Args[0]+` tools install --body '{
+      "name": "avrdude",
+      "packager": "arduino",
+      "version": "6.3.0-arduino9"
+   }'
+`, os.Args[0])
+}
+
+func toolsRemoveUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] tools remove
+
+Remove implements remove.
+
+Example:
+    `+os.Args[0]+` tools remove
 `, os.Args[0])
 }

@@ -3,7 +3,7 @@
 // tools client
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package tools
 
@@ -15,22 +15,50 @@ import (
 
 // Client is the "tools" service client.
 type Client struct {
-	ListEndpoint goa.Endpoint
+	AvailableEndpoint goa.Endpoint
+	InstalledEndpoint goa.Endpoint
+	InstallEndpoint   goa.Endpoint
+	RemoveEndpoint    goa.Endpoint
 }
 
 // NewClient initializes a "tools" service client given the endpoints.
-func NewClient(list goa.Endpoint) *Client {
+func NewClient(available, installed, install, remove goa.Endpoint) *Client {
 	return &Client{
-		ListEndpoint: list,
+		AvailableEndpoint: available,
+		InstalledEndpoint: installed,
+		InstallEndpoint:   install,
+		RemoveEndpoint:    remove,
 	}
 }
 
-// List calls the "list" endpoint of the "tools" service.
-func (c *Client) List(ctx context.Context) (res ToolCollection, err error) {
+// Available calls the "available" endpoint of the "tools" service.
+func (c *Client) Available(ctx context.Context) (res ToolCollection, err error) {
 	var ires interface{}
-	ires, err = c.ListEndpoint(ctx, nil)
+	ires, err = c.AvailableEndpoint(ctx, nil)
 	if err != nil {
 		return
 	}
 	return ires.(ToolCollection), nil
+}
+
+// Installed calls the "installed" endpoint of the "tools" service.
+func (c *Client) Installed(ctx context.Context) (res ToolCollection, err error) {
+	var ires interface{}
+	ires, err = c.InstalledEndpoint(ctx, nil)
+	if err != nil {
+		return
+	}
+	return ires.(ToolCollection), nil
+}
+
+// Install calls the "install" endpoint of the "tools" service.
+func (c *Client) Install(ctx context.Context, p *ToolPayload) (err error) {
+	_, err = c.InstallEndpoint(ctx, p)
+	return
+}
+
+// Remove calls the "remove" endpoint of the "tools" service.
+func (c *Client) Remove(ctx context.Context) (err error) {
+	_, err = c.RemoveEndpoint(ctx, nil)
+	return
 }

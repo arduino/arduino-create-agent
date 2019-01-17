@@ -3,7 +3,7 @@
 // tools HTTP client encoders and decoders
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package client
 
@@ -19,13 +19,13 @@ import (
 	goahttp "goa.design/goa/http"
 )
 
-// BuildListRequest instantiates a HTTP request object with method and path set
-// to call the "tools" service "list" endpoint
-func (c *Client) BuildListRequest(ctx context.Context, v interface{}) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ListToolsPath()}
+// BuildAvailableRequest instantiates a HTTP request object with method and
+// path set to call the "tools" service "available" endpoint
+func (c *Client) BuildAvailableRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AvailableToolsPath()}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, goahttp.ErrInvalidURL("tools", "list", u.String(), err)
+		return nil, goahttp.ErrInvalidURL("tools", "available", u.String(), err)
 	}
 	if ctx != nil {
 		req = req.WithContext(ctx)
@@ -34,10 +34,10 @@ func (c *Client) BuildListRequest(ctx context.Context, v interface{}) (*http.Req
 	return req, nil
 }
 
-// DecodeListResponse returns a decoder for responses returned by the tools
-// list endpoint. restoreBody controls whether the response body should be
-// restored after having been read.
-func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+// DecodeAvailableResponse returns a decoder for responses returned by the
+// tools available endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeAvailableResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
 		if restoreBody {
 			b, err := ioutil.ReadAll(resp.Body)
@@ -54,24 +54,181 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 		switch resp.StatusCode {
 		case http.StatusOK:
 			var (
-				body ListResponseBody
+				body AvailableResponseBody
 				err  error
 			)
 			err = decoder(resp).Decode(&body)
 			if err != nil {
-				return nil, goahttp.ErrDecodingError("tools", "list", err)
+				return nil, goahttp.ErrDecodingError("tools", "available", err)
 			}
-			p := NewListToolCollectionOK(body)
+			p := NewAvailableToolCollectionOK(body)
 			view := "default"
 			vres := toolsviews.ToolCollection{p, view}
 			if err = toolsviews.ValidateToolCollection(vres); err != nil {
-				return nil, goahttp.ErrValidationError("tools", "list", err)
+				return nil, goahttp.ErrValidationError("tools", "available", err)
 			}
 			res := tools.NewToolCollection(vres)
 			return res, nil
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("tools", "list", resp.StatusCode, string(body))
+			return nil, goahttp.ErrInvalidResponse("tools", "available", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildInstalledRequest instantiates a HTTP request object with method and
+// path set to call the "tools" service "installed" endpoint
+func (c *Client) BuildInstalledRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: InstalledToolsPath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tools", "installed", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeInstalledResponse returns a decoder for responses returned by the
+// tools installed endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeInstalledResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body InstalledResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tools", "installed", err)
+			}
+			p := NewInstalledToolCollectionOK(body)
+			view := "default"
+			vres := toolsviews.ToolCollection{p, view}
+			if err = toolsviews.ValidateToolCollection(vres); err != nil {
+				return nil, goahttp.ErrValidationError("tools", "installed", err)
+			}
+			res := tools.NewToolCollection(vres)
+			return res, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tools", "installed", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildInstallRequest instantiates a HTTP request object with method and path
+// set to call the "tools" service "install" endpoint
+func (c *Client) BuildInstallRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: InstallToolsPath()}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tools", "install", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeInstallRequest returns an encoder for requests sent to the tools
+// install server.
+func EncodeInstallRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*tools.ToolPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("tools", "install", "*tools.ToolPayload", v)
+		}
+		body := NewInstallRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("tools", "install", err)
+		}
+		return nil
+	}
+}
+
+// DecodeInstallResponse returns a decoder for responses returned by the tools
+// install endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+func DecodeInstallResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tools", "install", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildRemoveRequest instantiates a HTTP request object with method and path
+// set to call the "tools" service "remove" endpoint
+func (c *Client) BuildRemoveRequest(ctx context.Context, v interface{}) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveToolsPath()}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tools", "remove", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeRemoveResponse returns a decoder for responses returned by the tools
+// remove endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+func DecodeRemoveResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
+	return func(resp *http.Response) (interface{}, error) {
+		if restoreBody {
+			b, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		default:
+			body, _ := ioutil.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tools", "remove", resp.StatusCode, string(body))
 		}
 	}
 }

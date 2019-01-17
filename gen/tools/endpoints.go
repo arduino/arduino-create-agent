@@ -3,7 +3,7 @@
 // tools endpoints
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package tools
 
@@ -15,30 +15,69 @@ import (
 
 // Endpoints wraps the "tools" service endpoints.
 type Endpoints struct {
-	List goa.Endpoint
+	Available goa.Endpoint
+	Installed goa.Endpoint
+	Install   goa.Endpoint
+	Remove    goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "tools" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		List: NewListEndpoint(s),
+		Available: NewAvailableEndpoint(s),
+		Installed: NewInstalledEndpoint(s),
+		Install:   NewInstallEndpoint(s),
+		Remove:    NewRemoveEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "tools" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
-	e.List = m(e.List)
+	e.Available = m(e.Available)
+	e.Installed = m(e.Installed)
+	e.Install = m(e.Install)
+	e.Remove = m(e.Remove)
 }
 
-// NewListEndpoint returns an endpoint function that calls the method "list" of
-// service "tools".
-func NewListEndpoint(s Service) goa.Endpoint {
+// NewAvailableEndpoint returns an endpoint function that calls the method
+// "available" of service "tools".
+func NewAvailableEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
-		res, err := s.List(ctx)
+		res, err := s.Available(ctx)
 		if err != nil {
 			return nil, err
 		}
 		vres := NewViewedToolCollection(res, "default")
 		return vres, nil
+	}
+}
+
+// NewInstalledEndpoint returns an endpoint function that calls the method
+// "installed" of service "tools".
+func NewInstalledEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		res, err := s.Installed(ctx)
+		if err != nil {
+			return nil, err
+		}
+		vres := NewViewedToolCollection(res, "default")
+		return vres, nil
+	}
+}
+
+// NewInstallEndpoint returns an endpoint function that calls the method
+// "install" of service "tools".
+func NewInstallEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		p := req.(*ToolPayload)
+		return nil, s.Install(ctx, p)
+	}
+}
+
+// NewRemoveEndpoint returns an endpoint function that calls the method
+// "remove" of service "tools".
+func NewRemoveEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, s.Remove(ctx)
 	}
 }

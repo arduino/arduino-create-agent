@@ -3,26 +3,83 @@
 // tools HTTP server encoders and decoders
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package server
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	toolsviews "github.com/arduino/arduino-create-agent/gen/tools/views"
+	goa "goa.design/goa"
 	goahttp "goa.design/goa/http"
 )
 
-// EncodeListResponse returns an encoder for responses returned by the tools
-// list endpoint.
-func EncodeListResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+// EncodeAvailableResponse returns an encoder for responses returned by the
+// tools available endpoint.
+func EncodeAvailableResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
 		res := v.(toolsviews.ToolCollection)
 		enc := encoder(ctx, w)
 		body := NewToolResponseCollection(res.Projected)
 		w.WriteHeader(http.StatusOK)
 		return enc.Encode(body)
+	}
+}
+
+// EncodeInstalledResponse returns an encoder for responses returned by the
+// tools installed endpoint.
+func EncodeInstalledResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		res := v.(toolsviews.ToolCollection)
+		enc := encoder(ctx, w)
+		body := NewToolResponseCollection(res.Projected)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// EncodeInstallResponse returns an encoder for responses returned by the tools
+// install endpoint.
+func EncodeInstallResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeInstallRequest returns a decoder for requests sent to the tools
+// install endpoint.
+func DecodeInstallRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			body InstallRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateInstallRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewInstallToolPayload(&body)
+
+		return payload, nil
+	}
+}
+
+// EncodeRemoveResponse returns an encoder for responses returned by the tools
+// remove endpoint.
+func EncodeRemoveResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
+	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
 	}
 }

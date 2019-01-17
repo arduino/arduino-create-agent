@@ -3,7 +3,7 @@
 // tools client HTTP transport
 //
 // Command:
-// $ goa gen github.com/arduino/arduino-create-agent/design -debug
+// $ goa gen github.com/arduino/arduino-create-agent/design
 
 package client
 
@@ -17,8 +17,20 @@ import (
 
 // Client lists the tools service endpoint HTTP clients.
 type Client struct {
-	// List Doer is the HTTP client used to make requests to the list endpoint.
-	ListDoer goahttp.Doer
+	// Available Doer is the HTTP client used to make requests to the available
+	// endpoint.
+	AvailableDoer goahttp.Doer
+
+	// Installed Doer is the HTTP client used to make requests to the installed
+	// endpoint.
+	InstalledDoer goahttp.Doer
+
+	// Install Doer is the HTTP client used to make requests to the install
+	// endpoint.
+	InstallDoer goahttp.Doer
+
+	// Remove Doer is the HTTP client used to make requests to the remove endpoint.
+	RemoveDoer goahttp.Doer
 
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
@@ -40,7 +52,10 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		ListDoer:            doer,
+		AvailableDoer:       doer,
+		InstalledDoer:       doer,
+		InstallDoer:         doer,
+		RemoveDoer:          doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -49,21 +64,86 @@ func NewClient(
 	}
 }
 
-// List returns an endpoint that makes HTTP requests to the tools service list
-// server.
-func (c *Client) List() goa.Endpoint {
+// Available returns an endpoint that makes HTTP requests to the tools service
+// available server.
+func (c *Client) Available() goa.Endpoint {
 	var (
-		decodeResponse = DecodeListResponse(c.decoder, c.RestoreResponseBody)
+		decodeResponse = DecodeAvailableResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v interface{}) (interface{}, error) {
-		req, err := c.BuildListRequest(ctx, v)
+		req, err := c.BuildAvailableRequest(ctx, v)
 		if err != nil {
 			return nil, err
 		}
-		resp, err := c.ListDoer.Do(req)
+		resp, err := c.AvailableDoer.Do(req)
 
 		if err != nil {
-			return nil, goahttp.ErrRequestError("tools", "list", err)
+			return nil, goahttp.ErrRequestError("tools", "available", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Installed returns an endpoint that makes HTTP requests to the tools service
+// installed server.
+func (c *Client) Installed() goa.Endpoint {
+	var (
+		decodeResponse = DecodeInstalledResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildInstalledRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.InstalledDoer.Do(req)
+
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tools", "installed", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Install returns an endpoint that makes HTTP requests to the tools service
+// install server.
+func (c *Client) Install() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeInstallRequest(c.encoder)
+		decodeResponse = DecodeInstallResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildInstallRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.InstallDoer.Do(req)
+
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tools", "install", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Remove returns an endpoint that makes HTTP requests to the tools service
+// remove server.
+func (c *Client) Remove() goa.Endpoint {
+	var (
+		decodeResponse = DecodeRemoveResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v interface{}) (interface{}, error) {
+		req, err := c.BuildRemoveRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.RemoveDoer.Do(req)
+
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tools", "remove", err)
 		}
 		return decodeResponse(resp)
 	}
