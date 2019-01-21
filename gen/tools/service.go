@@ -22,7 +22,7 @@ type Service interface {
 	// Install implements install.
 	Install(context.Context, *ToolPayload) (err error)
 	// Remove implements remove.
-	Remove(context.Context) (err error)
+	Remove(context.Context, *ToolPayload) (err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the

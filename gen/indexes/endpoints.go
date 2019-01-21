@@ -48,7 +48,8 @@ func NewListEndpoint(s Service) goa.Endpoint {
 // service "indexes".
 func NewAddEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
-		return nil, s.Add(ctx)
+		p := req.(*IndexPayload)
+		return nil, s.Add(ctx, p)
 	}
 }
 
@@ -56,6 +57,7 @@ func NewAddEndpoint(s Service) goa.Endpoint {
 // "remove" of service "indexes".
 func NewRemoveEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
-		return nil, s.Remove(ctx)
+		p := req.(*IndexPayload)
+		return nil, s.Remove(ctx, p)
 	}
 }

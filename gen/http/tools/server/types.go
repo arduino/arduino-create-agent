@@ -62,6 +62,15 @@ func NewInstallToolPayload(body *InstallRequestBody) *tools.ToolPayload {
 	return v
 }
 
+// NewRemoveToolPayload builds a tools service remove endpoint payload.
+func NewRemoveToolPayload(packager string, name string, version string) *tools.ToolPayload {
+	return &tools.ToolPayload{
+		Packager: packager,
+		Name:     name,
+		Version:  version,
+	}
+}
+
 // ValidateInstallRequestBody runs the validations defined on InstallRequestBody
 func ValidateInstallRequestBody(body *InstallRequestBody) (err error) {
 	if body.Name == nil {

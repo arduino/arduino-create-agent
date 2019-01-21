@@ -391,6 +391,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:975e88bfd9ed90a0e939a9e67ecab0682a28c0b9ed021bd30f469a0b5b4e3739"
+  name = "go.bug.st/downloader"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9b8976a44d87b5d86444bccc3ed875b2530f45e0"
+
+[[projects]]
+  branch = "master"
   digest = "1:49b892f63d6b54df49cc35901eba38acc3c5309f919b40b3d1e2ff859c8108ba"
   name = "go.bug.st/serial.v1"
   packages = [
@@ -542,6 +550,7 @@
     "github.com/skratchdot/open-golang/open",
     "github.com/stretchr/testify/assert",
     "github.com/xrash/smetrics",
+    "go.bug.st/downloader",
     "go.bug.st/serial.v1",
     "go.bug.st/serial.v1/enumerator",
     "goa.design/goa",

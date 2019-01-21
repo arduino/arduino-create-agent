@@ -62,6 +62,6 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 	return nil
 }
 
-func (c *Tools) Remove(ctx context.Context) error {
+func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
 	return nil
 }

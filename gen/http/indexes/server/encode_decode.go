@@ -11,6 +11,7 @@ import (
 	"context"
 	"net/http"
 
+	goa "goa.design/goa"
 	goahttp "goa.design/goa/http"
 )
 
@@ -26,6 +27,29 @@ func EncodeListResponse(encoder func(context.Context, http.ResponseWriter) goaht
 	}
 }
 
+// EncodeListError returns an encoder for errors returned by the list indexes
+// endpoint.
+func EncodeListError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		en, ok := v.(ErrorNamer)
+		if !ok {
+			return encodeError(ctx, w, v)
+		}
+		switch en.ErrorName() {
+		case "invalid_url":
+			res := v.(*goa.ServiceError)
+			enc := encoder(ctx, w)
+			body := NewListInvalidURLResponseBody(res)
+			w.Header().Set("goa-error", "invalid_url")
+			w.WriteHeader(http.StatusBadRequest)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // EncodeAddResponse returns an encoder for responses returned by the indexes
 // add endpoint.
 func EncodeAddResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
@@ -35,11 +59,89 @@ func EncodeAddResponse(encoder func(context.Context, http.ResponseWriter) goahtt
 	}
 }
 
+// DecodeAddRequest returns a decoder for requests sent to the indexes add
+// endpoint.
+func DecodeAddRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			url_ string
+
+			params = mux.Vars(r)
+		)
+		url_ = params["url"]
+		payload := NewAddIndexPayload(url_)
+
+		return payload, nil
+	}
+}
+
+// EncodeAddError returns an encoder for errors returned by the add indexes
+// endpoint.
+func EncodeAddError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		en, ok := v.(ErrorNamer)
+		if !ok {
+			return encodeError(ctx, w, v)
+		}
+		switch en.ErrorName() {
+		case "invalid_url":
+			res := v.(*goa.ServiceError)
+			enc := encoder(ctx, w)
+			body := NewAddInvalidURLResponseBody(res)
+			w.Header().Set("goa-error", "invalid_url")
+			w.WriteHeader(http.StatusBadRequest)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // EncodeRemoveResponse returns an encoder for responses returned by the
 // indexes remove endpoint.
 func EncodeRemoveResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
 		w.WriteHeader(http.StatusOK)
 		return nil
+	}
+}
+
+// DecodeRemoveRequest returns a decoder for requests sent to the indexes
+// remove endpoint.
+func DecodeRemoveRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			url_ string
+
+			params = mux.Vars(r)
+		)
+		url_ = params["url"]
+		payload := NewRemoveIndexPayload(url_)
+
+		return payload, nil
+	}
+}
+
+// EncodeRemoveError returns an encoder for errors returned by the remove
+// indexes endpoint.
+func EncodeRemoveError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		en, ok := v.(ErrorNamer)
+		if !ok {
+			return encodeError(ctx, w, v)
+		}
+		switch en.ErrorName() {
+		case "invalid_url":
+			res := v.(*goa.ServiceError)
+			enc := encoder(ctx, w)
+			body := NewRemoveInvalidURLResponseBody(res)
+			w.Header().Set("goa-error", "invalid_url")
+			w.WriteHeader(http.StatusBadRequest)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
 	}
 }

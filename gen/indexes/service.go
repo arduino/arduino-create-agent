@@ -9,6 +9,8 @@ package indexes
 
 import (
 	"context"
+
+	"goa.design/goa"
 )
 
 // The indexes service manages the package_index files
@@ -16,9 +18,9 @@ type Service interface {
 	// List implements list.
 	List(context.Context) (res []string, err error)
 	// Add implements add.
-	Add(context.Context) (err error)
+	Add(context.Context, *IndexPayload) (err error)
 	// Remove implements remove.
-	Remove(context.Context) (err error)
+	Remove(context.Context, *IndexPayload) (err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -30,3 +32,18 @@ const ServiceName = "indexes"
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
 var MethodNames = [3]string{"list", "add", "remove"}
+
+// IndexPayload is the payload type of the indexes service add method.
+type IndexPayload struct {
+	// The url of the index file
+	URL string
+}
+
+// MakeInvalidURL builds a goa.ServiceError from an error.
+func MakeInvalidURL(err error) *goa.ServiceError {
+	return &goa.ServiceError{
+		Name:    "invalid_url",
+		ID:      goa.NewErrorID(),
+		Message: err.Error(),
+	}
+}

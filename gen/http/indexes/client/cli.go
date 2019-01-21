@@ -6,3 +6,33 @@
 // $ goa gen github.com/arduino/arduino-create-agent/design
 
 package client
+
+import (
+	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
+)
+
+// BuildAddPayload builds the payload for the indexes add endpoint from CLI
+// flags.
+func BuildAddPayload(indexesAddURL string) (*indexes.IndexPayload, error) {
+	var url_ string
+	{
+		url_ = indexesAddURL
+	}
+	payload := &indexes.IndexPayload{
+		URL: url_,
+	}
+	return payload, nil
+}
+
+// BuildRemovePayload builds the payload for the indexes remove endpoint from
+// CLI flags.
+func BuildRemovePayload(indexesRemoveURL string) (*indexes.IndexPayload, error) {
+	var url_ string
+	{
+		url_ = indexesRemoveURL
+	}
+	payload := &indexes.IndexPayload{
+		URL: url_,
+	}
+	return payload, nil
+}

@@ -6,3 +6,118 @@
 // $ goa gen github.com/arduino/arduino-create-agent/design
 
 package server
+
+import (
+	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
+	goa "goa.design/goa"
+)
+
+// ListInvalidURLResponseBody is the type of the "indexes" service "list"
+// endpoint HTTP response body for the "invalid_url" error.
+type ListInvalidURLResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
+// AddInvalidURLResponseBody is the type of the "indexes" service "add"
+// endpoint HTTP response body for the "invalid_url" error.
+type AddInvalidURLResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
+// RemoveInvalidURLResponseBody is the type of the "indexes" service "remove"
+// endpoint HTTP response body for the "invalid_url" error.
+type RemoveInvalidURLResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
+// NewListInvalidURLResponseBody builds the HTTP response body from the result
+// of the "list" endpoint of the "indexes" service.
+func NewListInvalidURLResponseBody(res *goa.ServiceError) *ListInvalidURLResponseBody {
+	body := &ListInvalidURLResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
+	}
+	return body
+}
+
+// NewAddInvalidURLResponseBody builds the HTTP response body from the result
+// of the "add" endpoint of the "indexes" service.
+func NewAddInvalidURLResponseBody(res *goa.ServiceError) *AddInvalidURLResponseBody {
+	body := &AddInvalidURLResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
+	}
+	return body
+}
+
+// NewRemoveInvalidURLResponseBody builds the HTTP response body from the
+// result of the "remove" endpoint of the "indexes" service.
+func NewRemoveInvalidURLResponseBody(res *goa.ServiceError) *RemoveInvalidURLResponseBody {
+	body := &RemoveInvalidURLResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
+	}
+	return body
+}
+
+// NewAddIndexPayload builds a indexes service add endpoint payload.
+func NewAddIndexPayload(url_ string) *indexes.IndexPayload {
+	return &indexes.IndexPayload{
+		URL: url_,
+	}
+}
+
+// NewRemoveIndexPayload builds a indexes service remove endpoint payload.
+func NewRemoveIndexPayload(url_ string) *indexes.IndexPayload {
+	return &indexes.IndexPayload{
+		URL: url_,
+	}
+}

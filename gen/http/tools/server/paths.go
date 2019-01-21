@@ -7,6 +7,10 @@
 
 package server
 
+import (
+	"fmt"
+)
+
 // AvailableToolsPath returns the URL path to the tools service available HTTP endpoint.
 func AvailableToolsPath() string {
 	return "/v2/pkgs/tools/available"
@@ -23,6 +27,6 @@ func InstallToolsPath() string {
 }
 
 // RemoveToolsPath returns the URL path to the tools service remove HTTP endpoint.
-func RemoveToolsPath() string {
-	return "/v2/pkgs/tools/installed/:id"
+func RemoveToolsPath(packager string, name string, version string) string {
+	return fmt.Sprintf("/v2/pkgs/tools/installed/%v/%v/%v", packager, name, version)
 }

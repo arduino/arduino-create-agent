@@ -50,9 +50,11 @@ func ParseEndpoint(
 
 		indexesListFlags = flag.NewFlagSet("list", flag.ExitOnError)
 
-		indexesAddFlags = flag.NewFlagSet("add", flag.ExitOnError)
+		indexesAddFlags   = flag.NewFlagSet("add", flag.ExitOnError)
+		indexesAddURLFlag = indexesAddFlags.String("url", "REQUIRED", "The url of the index file")
 
-		indexesRemoveFlags = flag.NewFlagSet("remove", flag.ExitOnError)
+		indexesRemoveFlags   = flag.NewFlagSet("remove", flag.ExitOnError)
+		indexesRemoveURLFlag = indexesRemoveFlags.String("url", "REQUIRED", "The url of the index file")
 
 		toolsFlags = flag.NewFlagSet("tools", flag.ContinueOnError)
 
@@ -63,7 +65,10 @@ func ParseEndpoint(
 		toolsInstallFlags    = flag.NewFlagSet("install", flag.ExitOnError)
 		toolsInstallBodyFlag = toolsInstallFlags.String("body", "REQUIRED", "")
 
-		toolsRemoveFlags = flag.NewFlagSet("remove", flag.ExitOnError)
+		toolsRemoveFlags        = flag.NewFlagSet("remove", flag.ExitOnError)
+		toolsRemovePackagerFlag = toolsRemoveFlags.String("packager", "REQUIRED", "The packager of the tool")
+		toolsRemoveNameFlag     = toolsRemoveFlags.String("name", "REQUIRED", "The name of the tool")
+		toolsRemoveVersionFlag  = toolsRemoveFlags.String("version", "REQUIRED", "The version of the tool")
 	)
 	indexesFlags.Usage = indexesUsage
 	indexesListFlags.Usage = indexesListUsage
@@ -167,10 +172,10 @@ func ParseEndpoint(
 				data = nil
 			case "add":
 				endpoint = c.Add()
-				data = nil
+				data, err = indexesc.BuildAddPayload(*indexesAddURLFlag)
 			case "remove":
 				endpoint = c.Remove()
-				data = nil
+				data, err = indexesc.BuildRemovePayload(*indexesRemoveURLFlag)
 			}
 		case "tools":
 			c := toolsc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -186,7 +191,7 @@ func ParseEndpoint(
 				data, err = toolsc.BuildInstallPayload(*toolsInstallBodyFlag)
 			case "remove":
 				endpoint = c.Remove()
-				data = nil
+				data, err = toolsc.BuildRemovePayload(*toolsRemovePackagerFlag, *toolsRemoveNameFlag, *toolsRemoveVersionFlag)
 			}
 		}
 	}
@@ -223,22 +228,24 @@ Example:
 }
 
 func indexesAddUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] indexes add
+	fmt.Fprintf(os.Stderr, `%s [flags] indexes add -url STRING
 
 Add implements add.
+    -url STRING: The url of the index file
 
 Example:
-    `+os.Args[0]+` indexes add
+    `+os.Args[0]+` indexes add --url "http://downloads.arduino.cc/packages/package_index.json"
 `, os.Args[0])
 }
 
 func indexesRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] indexes remove
+	fmt.Fprintf(os.Stderr, `%s [flags] indexes remove -url STRING
 
 Remove implements remove.
+    -url STRING: The url of the index file
 
 Example:
-    `+os.Args[0]+` indexes remove
+    `+os.Args[0]+` indexes remove --url "http://downloads.arduino.cc/packages/package_index.json"
 `, os.Args[0])
 }
 
@@ -294,11 +301,14 @@ Example:
 }
 
 func toolsRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] tools remove
+	fmt.Fprintf(os.Stderr, `%s [flags] tools remove -packager STRING -name STRING -version STRING
 
 Remove implements remove.
+    -packager STRING: The packager of the tool
+    -name STRING: The name of the tool
+    -version STRING: The version of the tool
 
 Example:
-    `+os.Args[0]+` tools remove
+    `+os.Args[0]+` tools remove --packager "arduino" --name "avrdude" --version "6.3.0-arduino9"
 `, os.Args[0])
 }

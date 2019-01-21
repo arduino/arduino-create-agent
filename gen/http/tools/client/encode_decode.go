@@ -194,7 +194,21 @@ func DecodeInstallResponse(decoder func(*http.Response) goahttp.Decoder, restore
 // BuildRemoveRequest instantiates a HTTP request object with method and path
 // set to call the "tools" service "remove" endpoint
 func (c *Client) BuildRemoveRequest(ctx context.Context, v interface{}) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveToolsPath()}
+	var (
+		packager string
+		name     string
+		version  string
+	)
+	{
+		p, ok := v.(*tools.ToolPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("tools", "remove", "*tools.ToolPayload", v)
+		}
+		packager = p.Packager
+		name = p.Name
+		version = p.Version
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveToolsPath(packager, name, version)}
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("tools", "remove", u.String(), err)

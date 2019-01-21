@@ -29,18 +29,32 @@ paths:
             type: array
             items:
               type: string
-              example: Quos quia non.
+              example: Qui magnam saepe quisquam.
+        "400":
+          description: Bad Request response.
+          schema:
+            $ref: '#/definitions/Indexeslist_invalid_url_response_body'
       schemes:
       - http
-  /pkgs/indexes/:id:
+  /pkgs/indexes/{url}:
     put:
       tags:
       - indexes
       summary: add indexes
       operationId: indexes#add
+      parameters:
+      - name: url
+        in: path
+        description: The url of the index file
+        required: true
+        type: string
       responses:
         "200":
           description: OK response.
+        "400":
+          description: Bad Request response.
+          schema:
+            $ref: '#/definitions/Indexesadd_invalid_url_response_body'
       schemes:
       - http
     delete:
@@ -48,9 +62,19 @@ paths:
       - indexes
       summary: remove indexes
       operationId: indexes#remove
+      parameters:
+      - name: url
+        in: path
+        description: The url of the index file
+        required: true
+        type: string
       responses:
         "200":
           description: OK response.
+        "400":
+          description: Bad Request response.
+          schema:
+            $ref: '#/definitions/Indexesremove_invalid_url_response_body'
       schemes:
       - http
   /pkgs/tools/available:
@@ -99,18 +123,169 @@ paths:
           description: OK response.
       schemes:
       - http
-  /pkgs/tools/installed/:id:
+  /pkgs/tools/installed/{packager}/{name}/{version}:
     delete:
       tags:
       - tools
       summary: remove tools
       operationId: tools#remove
+      parameters:
+      - name: packager
+        in: path
+        description: The packager of the tool
+        required: true
+        type: string
+      - name: name
+        in: path
+        description: The name of the tool
+        required: true
+        type: string
+      - name: version
+        in: path
+        description: The version of the tool
+        required: true
+        type: string
       responses:
         "200":
           description: OK response.
       schemes:
       - http
 definitions:
+  Indexesadd_invalid_url_response_body:
+    title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+    type: object
+    properties:
+      fault:
+        type: boolean
+        description: Is the error a server-side fault?
+        example: false
+      id:
+        type: string
+        description: ID is a unique identifier for this particular occurrence of the
+          problem.
+        example: 123abc
+      message:
+        type: string
+        description: Message is a human-readable explanation specific to this occurrence
+          of the problem.
+        example: parameter 'p' must be an integer
+      name:
+        type: string
+        description: Name is the name of this class of errors.
+        example: bad_request
+      temporary:
+        type: boolean
+        description: Is the error temporary?
+        example: true
+      timeout:
+        type: boolean
+        description: Is the error a timeout?
+        example: false
+    description: url invalid (default view)
+    example:
+      fault: true
+      id: 123abc
+      message: parameter 'p' must be an integer
+      name: bad_request
+      temporary: false
+      timeout: false
+    required:
+    - name
+    - id
+    - message
+    - temporary
+    - timeout
+    - fault
+  Indexeslist_invalid_url_response_body:
+    title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+    type: object
+    properties:
+      fault:
+        type: boolean
+        description: Is the error a server-side fault?
+        example: false
+      id:
+        type: string
+        description: ID is a unique identifier for this particular occurrence of the
+          problem.
+        example: 123abc
+      message:
+        type: string
+        description: Message is a human-readable explanation specific to this occurrence
+          of the problem.
+        example: parameter 'p' must be an integer
+      name:
+        type: string
+        description: Name is the name of this class of errors.
+        example: bad_request
+      temporary:
+        type: boolean
+        description: Is the error temporary?
+        example: false
+      timeout:
+        type: boolean
+        description: Is the error a timeout?
+        example: true
+    description: url invalid (default view)
+    example:
+      fault: true
+      id: 123abc
+      message: parameter 'p' must be an integer
+      name: bad_request
+      temporary: true
+      timeout: true
+    required:
+    - name
+    - id
+    - message
+    - temporary
+    - timeout
+    - fault
+  Indexesremove_invalid_url_response_body:
+    title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+    type: object
+    properties:
+      fault:
+        type: boolean
+        description: Is the error a server-side fault?
+        example: true
+      id:
+        type: string
+        description: ID is a unique identifier for this particular occurrence of the
+          problem.
+        example: 123abc
+      message:
+        type: string
+        description: Message is a human-readable explanation specific to this occurrence
+          of the problem.
+        example: parameter 'p' must be an integer
+      name:
+        type: string
+        description: Name is the name of this class of errors.
+        example: bad_request
+      temporary:
+        type: boolean
+        description: Is the error temporary?
+        example: true
+      timeout:
+        type: boolean
+        description: Is the error a timeout?
+        example: true
+    description: url invalid (default view)
+    example:
+      fault: true
+      id: 123abc
+      message: parameter 'p' must be an integer
+      name: bad_request
+      temporary: false
+      timeout: false
+    required:
+    - name
+    - id
+    - message
+    - temporary
+    - timeout
+    - fault
   ToolResponse:
     title: 'Mediatype identifier: application/vnd.arduino.tool; view=default'
     type: object
@@ -169,9 +344,6 @@ definitions:
     description: AvailableResponseBody is the result type for an array of ToolResponse
       (default view)
     example:
-    - name: avrdude
-      packager: arduino
-      version: 6.3.0-arduino9
     - name: avrdude
       packager: arduino
       version: 6.3.0-arduino9

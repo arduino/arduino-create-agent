@@ -58,7 +58,7 @@ func (c *Client) Install(ctx context.Context, p *ToolPayload) (err error) {
 }
 
 // Remove calls the "remove" endpoint of the "tools" service.
-func (c *Client) Remove(ctx context.Context) (err error) {
-	_, err = c.RemoveEndpoint(ctx, nil)
+func (c *Client) Remove(ctx context.Context, p *ToolPayload) (err error) {
+	_, err = c.RemoveEndpoint(ctx, p)
 	return
 }

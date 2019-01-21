@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 
+	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
 	goahttp "goa.design/goa/http"
 )
 
@@ -35,6 +36,9 @@ func (c *Client) BuildListRequest(ctx context.Context, v interface{}) (*http.Req
 // DecodeListResponse returns a decoder for responses returned by the indexes
 // list endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
+// DecodeListResponse may return the following errors:
+//	- "invalid_url" (type *goa.ServiceError): http.StatusBadRequest
+//	- error: internal error
 func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
 		if restoreBody {
@@ -60,6 +64,20 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 				return nil, goahttp.ErrDecodingError("indexes", "list", err)
 			}
 			return body, nil
+		case http.StatusBadRequest:
+			var (
+				body ListInvalidURLResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("indexes", "list", err)
+			}
+			err = ValidateListInvalidURLResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("indexes", "list", err)
+			}
+			return nil, NewListInvalidURL(&body)
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("indexes", "list", resp.StatusCode, string(body))
@@ -70,7 +88,17 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 // BuildAddRequest instantiates a HTTP request object with method and path set
 // to call the "indexes" service "add" endpoint
 func (c *Client) BuildAddRequest(ctx context.Context, v interface{}) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddIndexesPath()}
+	var (
+		url_ string
+	)
+	{
+		p, ok := v.(*indexes.IndexPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("indexes", "add", "*indexes.IndexPayload", v)
+		}
+		url_ = p.URL
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddIndexesPath(url_)}
 	req, err := http.NewRequest("PUT", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("indexes", "add", u.String(), err)
@@ -85,6 +113,9 @@ func (c *Client) BuildAddRequest(ctx context.Context, v interface{}) (*http.Requ
 // DecodeAddResponse returns a decoder for responses returned by the indexes
 // add endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
+// DecodeAddResponse may return the following errors:
+//	- "invalid_url" (type *goa.ServiceError): http.StatusBadRequest
+//	- error: internal error
 func DecodeAddResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
 		if restoreBody {
@@ -102,6 +133,20 @@ func DecodeAddResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody
 		switch resp.StatusCode {
 		case http.StatusOK:
 			return nil, nil
+		case http.StatusBadRequest:
+			var (
+				body AddInvalidURLResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("indexes", "add", err)
+			}
+			err = ValidateAddInvalidURLResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("indexes", "add", err)
+			}
+			return nil, NewAddInvalidURL(&body)
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("indexes", "add", resp.StatusCode, string(body))
@@ -112,7 +157,17 @@ func DecodeAddResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody
 // BuildRemoveRequest instantiates a HTTP request object with method and path
 // set to call the "indexes" service "remove" endpoint
 func (c *Client) BuildRemoveRequest(ctx context.Context, v interface{}) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveIndexesPath()}
+	var (
+		url_ string
+	)
+	{
+		p, ok := v.(*indexes.IndexPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("indexes", "remove", "*indexes.IndexPayload", v)
+		}
+		url_ = p.URL
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveIndexesPath(url_)}
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("indexes", "remove", u.String(), err)
@@ -127,6 +182,9 @@ func (c *Client) BuildRemoveRequest(ctx context.Context, v interface{}) (*http.R
 // DecodeRemoveResponse returns a decoder for responses returned by the indexes
 // remove endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
+// DecodeRemoveResponse may return the following errors:
+//	- "invalid_url" (type *goa.ServiceError): http.StatusBadRequest
+//	- error: internal error
 func DecodeRemoveResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (interface{}, error) {
 	return func(resp *http.Response) (interface{}, error) {
 		if restoreBody {
@@ -144,6 +202,20 @@ func DecodeRemoveResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 		switch resp.StatusCode {
 		case http.StatusOK:
 			return nil, nil
+		case http.StatusBadRequest:
+			var (
+				body RemoveInvalidURLResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("indexes", "remove", err)
+			}
+			err = ValidateRemoveInvalidURLResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("indexes", "remove", err)
+			}
+			return nil, NewRemoveInvalidURL(&body)
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("indexes", "remove", resp.StatusCode, string(body))

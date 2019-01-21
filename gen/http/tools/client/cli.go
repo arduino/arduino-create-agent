@@ -35,3 +35,26 @@ func BuildInstallPayload(toolsInstallBody string) (*tools.ToolPayload, error) {
 	}
 	return v, nil
 }
+
+// BuildRemovePayload builds the payload for the tools remove endpoint from CLI
+// flags.
+func BuildRemovePayload(toolsRemovePackager string, toolsRemoveName string, toolsRemoveVersion string) (*tools.ToolPayload, error) {
+	var packager string
+	{
+		packager = toolsRemovePackager
+	}
+	var name string
+	{
+		name = toolsRemoveName
+	}
+	var version string
+	{
+		version = toolsRemoveVersion
+	}
+	payload := &tools.ToolPayload{
+		Packager: packager,
+		Name:     name,
+		Version:  version,
+	}
+	return payload, nil
+}

@@ -83,3 +83,23 @@ func EncodeRemoveResponse(encoder func(context.Context, http.ResponseWriter) goa
 		return nil
 	}
 }
+
+// DecodeRemoveRequest returns a decoder for requests sent to the tools remove
+// endpoint.
+func DecodeRemoveRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
+	return func(r *http.Request) (interface{}, error) {
+		var (
+			packager string
+			name     string
+			version  string
+
+			params = mux.Vars(r)
+		)
+		packager = params["packager"]
+		name = params["name"]
+		version = params["version"]
+		payload := NewRemoveToolPayload(packager, name, version)
+
+		return payload, nil
+	}
+}

@@ -5,6 +5,11 @@ import . "goa.design/goa/dsl"
 var _ = Service("indexes", func() {
 	Description("The indexes service manages the package_index files")
 
+	Error("invalid_url", ErrorResult, "url invalid")
+	HTTP(func() {
+		Response("invalid_url", StatusBadRequest)
+	})
+
 	Method("list", func() {
 		Result(ArrayOf(String))
 		HTTP(func() {
@@ -14,15 +19,17 @@ var _ = Service("indexes", func() {
 	})
 
 	Method("add", func() {
+		Payload(IndexPayload)
 		HTTP(func() {
-			PUT("/pkgs/indexes/:id")
+			PUT("/pkgs/indexes/{url}")
 			Response(StatusOK)
 		})
 	})
 
 	Method("remove", func() {
+		Payload(IndexPayload)
 		HTTP(func() {
-			DELETE("/pkgs/indexes/:id")
+			DELETE("/pkgs/indexes/{url}")
 			Response(StatusOK)
 		})
 	})
@@ -56,11 +63,22 @@ var _ = Service("tools", func() {
 	})
 
 	Method("remove", func() {
+		Payload(ToolPayload)
+
 		HTTP(func() {
-			DELETE("/pkgs/tools/installed/:id")
+			DELETE("/pkgs/tools/installed/{packager}/{name}/{version}")
 			Response(StatusOK)
 		})
 	})
+})
+
+var IndexPayload = Type("arduino.index", func() {
+	TypeName("IndexPayload")
+
+	Attribute("url", String, "The url of the index file", func() {
+		Example("http://downloads.arduino.cc/packages/package_index.json")
+	})
+	Required("url")
 })
 
 var ToolPayload = Type("arduino.tool", func() {

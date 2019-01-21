@@ -78,6 +78,7 @@ func NewInstallEndpoint(s Service) goa.Endpoint {
 // "remove" of service "tools".
 func NewRemoveEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
-		return nil, s.Remove(ctx)
+		p := req.(*ToolPayload)
+		return nil, s.Remove(ctx, p)
 	}
 }

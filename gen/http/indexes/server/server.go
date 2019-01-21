@@ -52,8 +52,8 @@ func New(
 	return &Server{
 		Mounts: []*MountPoint{
 			{"List", "GET", "/v2/pkgs/indexes"},
-			{"Add", "PUT", "/v2/pkgs/indexes/:id"},
-			{"Remove", "DELETE", "/v2/pkgs/indexes/:id"},
+			{"Add", "PUT", "/v2/pkgs/indexes/{url}"},
+			{"Remove", "DELETE", "/v2/pkgs/indexes/{url}"},
 		},
 		List:   NewListHandler(e.List, mux, dec, enc, eh),
 		Add:    NewAddHandler(e.Add, mux, dec, enc, eh),
@@ -101,7 +101,7 @@ func NewListHandler(
 ) http.Handler {
 	var (
 		encodeResponse = EncodeListResponse(enc)
-		encodeError    = goahttp.ErrorEncoder(enc)
+		encodeError    = EncodeListError(enc)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
@@ -131,7 +131,7 @@ func MountAddHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("PUT", "/v2/pkgs/indexes/:id", f)
+	mux.Handle("PUT", "/v2/pkgs/indexes/{url}", f)
 }
 
 // NewAddHandler creates a HTTP handler which loads the HTTP request and calls
@@ -144,15 +144,23 @@ func NewAddHandler(
 	eh func(context.Context, http.ResponseWriter, error),
 ) http.Handler {
 	var (
+		decodeRequest  = DecodeAddRequest(mux, dec)
 		encodeResponse = EncodeAddResponse(enc)
-		encodeError    = goahttp.ErrorEncoder(enc)
+		encodeError    = EncodeAddError(enc)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "add")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "indexes")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				eh(ctx, w, err)
+			}
+			return
+		}
 
-		res, err := endpoint(ctx, nil)
+		res, err := endpoint(ctx, payload)
 
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
@@ -175,7 +183,7 @@ func MountRemoveHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("DELETE", "/v2/pkgs/indexes/:id", f)
+	mux.Handle("DELETE", "/v2/pkgs/indexes/{url}", f)
 }
 
 // NewRemoveHandler creates a HTTP handler which loads the HTTP request and
@@ -188,15 +196,23 @@ func NewRemoveHandler(
 	eh func(context.Context, http.ResponseWriter, error),
 ) http.Handler {
 	var (
+		decodeRequest  = DecodeRemoveRequest(mux, dec)
 		encodeResponse = EncodeRemoveResponse(enc)
-		encodeError    = goahttp.ErrorEncoder(enc)
+		encodeError    = EncodeRemoveError(enc)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "remove")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "indexes")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				eh(ctx, w, err)
+			}
+			return
+		}
 
-		res, err := endpoint(ctx, nil)
+		res, err := endpoint(ctx, payload)
 
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {

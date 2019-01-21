@@ -55,7 +55,7 @@ func New(
 			{"Available", "GET", "/v2/pkgs/tools/available"},
 			{"Installed", "GET", "/v2/pkgs/tools/installed"},
 			{"Install", "PUT", "/v2/pkgs/tools/installed"},
-			{"Remove", "DELETE", "/v2/pkgs/tools/installed/:id"},
+			{"Remove", "DELETE", "/v2/pkgs/tools/installed/{packager}/{name}/{version}"},
 		},
 		Available: NewAvailableHandler(e.Available, mux, dec, enc, eh),
 		Installed: NewInstalledHandler(e.Installed, mux, dec, enc, eh),
@@ -232,7 +232,7 @@ func MountRemoveHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("DELETE", "/v2/pkgs/tools/installed/:id", f)
+	mux.Handle("DELETE", "/v2/pkgs/tools/installed/{packager}/{name}/{version}", f)
 }
 
 // NewRemoveHandler creates a HTTP handler which loads the HTTP request and
@@ -245,6 +245,7 @@ func NewRemoveHandler(
 	eh func(context.Context, http.ResponseWriter, error),
 ) http.Handler {
 	var (
+		decodeRequest  = DecodeRemoveRequest(mux, dec)
 		encodeResponse = EncodeRemoveResponse(enc)
 		encodeError    = goahttp.ErrorEncoder(enc)
 	)
@@ -252,8 +253,15 @@ func NewRemoveHandler(
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "remove")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "tools")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				eh(ctx, w, err)
+			}
+			return
+		}
 
-		res, err := endpoint(ctx, nil)
+		res, err := endpoint(ctx, payload)
 
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
