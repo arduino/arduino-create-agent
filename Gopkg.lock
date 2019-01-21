@@ -10,6 +10,14 @@
   version = "v3.5.1"
 
 [[projects]]
+  digest = "1:db8e2f3c8cc717afe53c6941776312bd7046d45d9fb757c5f3f32fd3cc46562d"
+  name = "github.com/codeclysm/extract"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "de8493db4b3e06921c3ee97fa0b200435a8a796d"
+  version = "v2.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:210dd3b6f30ebc5ff2e0b4795b5141ee4578c29b38df0326fb140863d45c01fa"
   name = "github.com/creack/goselect"
@@ -214,6 +222,14 @@
   pruneopts = "UT"
   revision = "36b14963da70d11297d313183d7e6388c8510e1e"
   version = "1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:7d1a655e1f16ccaf1adb026bdeece28499ecb0ead32d32accc6ed6f2c40cacee"
+  name = "github.com/juju/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "089d3ea4e4d597bd98acac068193d341983326a3"
 
 [[projects]]
   branch = "master"
@@ -511,6 +527,18 @@
   version = "v8.18.1"
 
 [[projects]]
+  digest = "1:8b1a1e6d3dcef7c542f604f8b9f8013d1d13c3d61f8e9cbe368afa2735c898c2"
+  name = "gopkg.in/h2non/filetype.v1"
+  packages = [
+    ".",
+    "matchers",
+    "types",
+  ]
+  pruneopts = "UT"
+  revision = "cc14fdc9ca0e4c2bafad7458f6ff79fd3947cfbb"
+  version = "v1.0.5"
+
+[[projects]]
   branch = "v0"
   digest = "1:580aa4af38b87e235950c3a09841bb7f9f329e2495ec5d43c42d7f7fb7f5a464"
   name = "gopkg.in/inconshreveable/go-update.v0"
@@ -534,6 +562,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/blang/semver",
+    "github.com/codeclysm/extract",
     "github.com/facchinm/systray",
     "github.com/gin-gonic/gin",
     "github.com/go-ini/ini",

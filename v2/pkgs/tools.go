@@ -2,12 +2,17 @@ package pkgs
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os/user"
 	"path/filepath"
+	"runtime"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/codeclysm/extract"
 	"github.com/sirupsen/logrus"
+	"github.com/xrash/smetrics"
 )
 
 type Tools struct {
@@ -86,9 +91,77 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 }
 
 func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
+	list, err := c.Indexes.List(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, url := range list {
+		index, err := c.Indexes.Get(ctx, url)
+		if err != nil {
+			return err
+		}
+
+		for _, packager := range index.Packages {
+			if packager.Name != payload.Packager {
+				continue
+			}
+
+			for _, tool := range packager.Tools {
+				if tool.Name == payload.Name &&
+					tool.Version == payload.Version {
+					return c.install(ctx, tool)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c *Tools) install(ctx context.Context, tool Tool) error {
+	i := findSystem(tool)
+
+	// Download
+	fmt.Println(tool.Systems[i].URL)
+	res, err := http.Get(tool.Systems[i].URL)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	err = extract.Archive(ctx, res.Body, c.Folder, nil)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
 	return nil
+}
+
+func findSystem(tool Tool) int {
+	var systems = map[string]string{
+		"linuxamd64":   "x86_64-linux-gnu",
+		"linux386":     "i686-linux-gnu",
+		"darwinamd64":  "apple-darwin",
+		"windows386":   "i686-mingw32",
+		"windowsamd64": "i686-mingw32",
+		"linuxarm":     "arm-linux-gnueabihf",
+	}
+
+	var correctSystem int
+	maxSimilarity := 0.7
+
+	for i, system := range tool.Systems {
+		similarity := smetrics.Jaro(system.Host, systems[runtime.GOOS+runtime.GOARCH])
+		if similarity > maxSimilarity {
+			correctSystem = i
+			maxSimilarity = similarity
+		}
+	}
+
+	return correctSystem
 }
