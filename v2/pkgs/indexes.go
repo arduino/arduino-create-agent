@@ -2,6 +2,7 @@ package pkgs
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -45,6 +46,22 @@ func (c *Indexes) Add(ctx context.Context, payload *indexes.IndexPayload) error 
 	return nil
 }
 
+func (c *Indexes) Get(ctx context.Context, uri string) (index Index, err error) {
+	filename := url.PathEscape(uri)
+	path := filepath.Join(c.Folder, filename)
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return index, err
+	}
+
+	err = json.Unmarshal(data, &index)
+	if err != nil {
+		return index, err
+	}
+
+	return index, nil
+}
+
 func (c *Indexes) List(context.Context) ([]string, error) {
 	// Read files
 	files, err := ioutil.ReadDir(c.Folder)
@@ -67,4 +84,27 @@ func (c *Indexes) List(context.Context) ([]string, error) {
 func (c *Indexes) Remove(ctx context.Context, payload *indexes.IndexPayload) error {
 	filename := url.PathEscape(payload.URL)
 	return os.RemoveAll(filepath.Join(c.Folder, filename))
+}
+
+type Index struct {
+	Packages []struct {
+		Name       string `json:"name"`
+		Maintainer string `json:"maintainer"`
+		WebsiteURL string `json:"websiteURL"`
+		Email      string `json:"email,omitempty"`
+		Help       struct {
+			Online string `json:"online"`
+		} `json:"help,omitempty"`
+		Tools []struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+			Systems []struct {
+				Host            string `json:"host"`
+				URL             string `json:"url"`
+				ArchiveFileName string `json:"archiveFileName"`
+				Checksum        string `json:"checksum"`
+				Size            string `json:"size"`
+			} `json:"systems"`
+		} `json:"tools"`
+	} `json:"packages"`
 }

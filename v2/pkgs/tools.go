@@ -11,11 +11,38 @@ import (
 )
 
 type Tools struct {
-	Log *logrus.Logger
+	Log     *logrus.Logger
+	Indexes interface {
+		List(context.Context) ([]string, error)
+		Get(context.Context, string) (Index, error)
+	}
+	Folder string
 }
 
-func (c *Tools) Available(ctx context.Context) (tools.ToolCollection, error) {
-	return nil, nil
+func (c *Tools) Available(ctx context.Context) (res tools.ToolCollection, err error) {
+	list, err := c.Indexes.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, url := range list {
+		index, err := c.Indexes.Get(ctx, url)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, packager := range index.Packages {
+			for _, tool := range packager.Tools {
+				res = append(res, &tools.Tool{
+					Packager: packager.Name,
+					Name:     tool.Name,
+					Version:  tool.Version,
+				})
+			}
+		}
+	}
+
+	return res, nil
 }
 
 func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {

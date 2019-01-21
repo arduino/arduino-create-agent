@@ -3,6 +3,8 @@ package pkgs_test
 import (
 	"context"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -14,12 +16,17 @@ import (
 // TestIndexes performs a series of operations about indexes, ensuring it behaves as expected.
 // This test depends on the internet so it could fail unexpectedly
 func TestIndexes(t *testing.T) {
+	// Use local file as index
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "testdata/package_index.json")
+	}))
+	defer ts.Close()
+
 	// Initialize indexes with a temp folder
 	tmp, err := ioutil.TempDir("", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	defer os.RemoveAll(tmp)
 
 	service := pkgs.Indexes{
@@ -44,7 +51,7 @@ func TestIndexes(t *testing.T) {
 	}
 
 	// Add a new index
-	err = service.Add(ctx, &indexes.IndexPayload{URL: "https://downloads.arduino.cc/packages/package_index.json"})
+	err = service.Add(ctx, &indexes.IndexPayload{URL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,12 +64,12 @@ func TestIndexes(t *testing.T) {
 	if len(list) != 1 {
 		t.Fatalf("expected %d == %d (%s)", len(list), 1, "len(list)")
 	}
-	if list[0] != "https://downloads.arduino.cc/packages/package_index.json" {
+	if list[0] != ts.URL {
 		t.Fatalf("expected %s == %s (%s)", list[0], "downloads.arduino.cc/packages/package_index.json", "list[0]")
 	}
 
 	// Remove the index
-	err = service.Remove(ctx, &indexes.IndexPayload{URL: "https://downloads.arduino.cc/packages/package_index.json"})
+	err = service.Remove(ctx, &indexes.IndexPayload{URL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,4 +82,7 @@ func TestIndexes(t *testing.T) {
 	if len(list) != 0 {
 		t.Fatalf("expected %d == %d (%s)", len(list), 0, "len(list)")
 	}
+
+	t.Fail()
+
 }
