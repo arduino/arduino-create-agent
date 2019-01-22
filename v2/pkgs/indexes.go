@@ -13,11 +13,15 @@ import (
 	"go.bug.st/downloader"
 )
 
+// Indexes is a client that implements github.com/arduino/arduino-create-agent/gen/indexes.Service interface
 type Indexes struct {
 	Log    *logrus.Logger
 	Folder string
 }
 
+// Add downloads the index file found at the url contained in the payload, and saves it in the Indexes Folder.
+// If called with an already existing index, it overwrites the file.
+// It can fail if the payload is not defined, if it contains an invalid url.
 func (c *Indexes) Add(ctx context.Context, payload *indexes.IndexPayload) error {
 	// Parse url
 	indexURL, err := url.Parse(payload.URL)
@@ -46,6 +50,7 @@ func (c *Indexes) Add(ctx context.Context, payload *indexes.IndexPayload) error 
 	return nil
 }
 
+// Get reads the index file from the Indexes Folder, unmarshaling it
 func (c *Indexes) Get(ctx context.Context, uri string) (index Index, err error) {
 	filename := url.PathEscape(uri)
 	path := filepath.Join(c.Folder, filename)
@@ -62,6 +67,7 @@ func (c *Indexes) Get(ctx context.Context, uri string) (index Index, err error) 
 	return index, nil
 }
 
+// List reads from the Indexes Folder and returns the indexes that have been downloaded
 func (c *Indexes) List(context.Context) ([]string, error) {
 	// Read files
 	files, err := ioutil.ReadDir(c.Folder)
@@ -81,6 +87,7 @@ func (c *Indexes) List(context.Context) ([]string, error) {
 	return res, nil
 }
 
+// Remove deletes the index file from the Indexes Folder
 func (c *Indexes) Remove(ctx context.Context, payload *indexes.IndexPayload) error {
 	filename := url.PathEscape(payload.URL)
 	return os.RemoveAll(filepath.Join(c.Folder, filename))

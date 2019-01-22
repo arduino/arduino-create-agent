@@ -17,12 +17,21 @@ import (
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/codeclysm/extract"
-	"github.com/sirupsen/logrus"
 	"github.com/xrash/smetrics"
 )
 
+// Tools is a client that implements github.com/arduino/arduino-create-agent/gen/tools.Service interface.
+// It saves tools in a specified folder with this structure: packager/name/version
+// For example:
+//   folder
+//   └── arduino
+//       └── bossac
+//           ├── 1.6.1-arduino
+//           │   └── bossac
+//           └── 1.7.0
+//               └── bossac
+// It requires an Indexes client to list and read package index files: use the Indexes struct
 type Tools struct {
-	Log     *logrus.Logger
 	Indexes interface {
 		List(context.Context) ([]string, error)
 		Get(context.Context, string) (Index, error)
@@ -30,6 +39,7 @@ type Tools struct {
 	Folder string
 }
 
+// Available crawles the downloaded package index files and returns a list of tools that can be installed.
 func (c *Tools) Available(ctx context.Context) (res tools.ToolCollection, err error) {
 	list, err := c.Indexes.List(ctx)
 	if err != nil {
@@ -56,6 +66,7 @@ func (c *Tools) Available(ctx context.Context) (res tools.ToolCollection, err er
 	return res, nil
 }
 
+// Installed crawles the Tools Folder and finds the installed tools.
 func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 	res := tools.ToolCollection{}
 
@@ -94,6 +105,8 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 	return res, nil
 }
 
+// Install crawles the Index folder, downloads the specified tool, extracts the archive in the Tools Folder.
+// It checks for the Signature specified in the package index.
 func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 	list, err := c.Indexes.List(ctx)
 	if err != nil {
@@ -157,6 +170,7 @@ func (c *Tools) install(ctx context.Context, packager string, tool Tool) error {
 	return nil
 }
 
+// Remove deletes the tool folder from Tools Folder
 func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
 	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
 
