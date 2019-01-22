@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/codeclysm/extract"
@@ -110,7 +111,7 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 			for _, tool := range packager.Tools {
 				if tool.Name == payload.Name &&
 					tool.Version == payload.Version {
-					return c.install(ctx, tool)
+					return c.install(ctx, payload.Packager, tool)
 				}
 			}
 		}
@@ -121,7 +122,7 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 			payload.Packager, payload.Name, payload.Version))
 }
 
-func (c *Tools) install(ctx context.Context, tool Tool) error {
+func (c *Tools) install(ctx context.Context, packager string, tool Tool) error {
 	i := findSystem(tool)
 
 	// Download
@@ -132,7 +133,7 @@ func (c *Tools) install(ctx context.Context, tool Tool) error {
 	}
 	defer res.Body.Close()
 
-	err = extract.Archive(ctx, res.Body, c.Folder, nil)
+	err = extract.Archive(ctx, res.Body, c.Folder, rename(packager, tool.Name, tool.Version))
 	if err != nil {
 		return err
 	}
@@ -142,6 +143,17 @@ func (c *Tools) install(ctx context.Context, tool Tool) error {
 
 func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
 	return nil
+}
+
+func rename(packager, name, version string) extract.Renamer {
+	base := filepath.Join(packager, name, version)
+	return func(path string) string {
+		parts := strings.Split(path, string(filepath.Separator))
+		path = strings.Join(parts[1:], string(filepath.Separator))
+		path = filepath.Join(base, path)
+		fmt.Println("path", path)
+		return path
+	}
 }
 
 func findSystem(tool Tool) int {
