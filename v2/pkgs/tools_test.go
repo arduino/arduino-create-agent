@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/arduino/arduino-create-agent/gen/indexes"
@@ -54,6 +55,12 @@ func TestTools(t *testing.T) {
 	}
 	if len(available) != 61 {
 		t.Fatalf("expected %d == %d (%s)", len(available), 61, "len(available)")
+	}
+
+	// Try to install a non-existent tool
+	err = service.Install(ctx, &tools.ToolPayload{})
+	if err == nil || !strings.Contains(err.Error(), "tool not found with packager '', name '', version ''") {
+		t.Fatalf("expected '%v' == '%v' (%s)", err, "tool not found with packager '', name '', version ''", "err")
 	}
 
 	// Install a tool

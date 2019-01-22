@@ -52,6 +52,9 @@ func (c *Client) Installed(ctx context.Context) (res ToolCollection, err error) 
 }
 
 // Install calls the "install" endpoint of the "tools" service.
+// Install may return the following errors:
+//	- "not_found" (type *goa.ServiceError): tool not found
+//	- error: internal error
 func (c *Client) Install(ctx context.Context, p *ToolPayload) (err error) {
 	_, err = c.InstallEndpoint(ctx, p)
 	return

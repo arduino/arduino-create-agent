@@ -116,7 +116,9 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 		}
 	}
 
-	return nil
+	return tools.MakeNotFound(
+		fmt.Errorf("tool not found with packager '%s', name '%s', version '%s'",
+			payload.Packager, payload.Name, payload.Version))
 }
 
 func (c *Tools) install(ctx context.Context, tool Tool) error {

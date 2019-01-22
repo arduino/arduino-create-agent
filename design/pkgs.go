@@ -55,6 +55,10 @@ var _ = Service("tools", func() {
 	})
 
 	Method("install", func() {
+		Error("not_found", ErrorResult, "tool not found")
+		HTTP(func() {
+			Response("not_found", StatusBadRequest)
+		})
 		Payload(ToolPayload)
 		HTTP(func() {
 			PUT("/pkgs/tools/installed")

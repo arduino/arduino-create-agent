@@ -11,6 +11,7 @@ import (
 	"context"
 
 	toolsviews "github.com/arduino/arduino-create-agent/gen/tools/views"
+	"goa.design/goa"
 )
 
 // The tools service manages the available and installed tools
@@ -56,6 +57,15 @@ type Tool struct {
 	Version string
 	// The packager of the tool
 	Packager string
+}
+
+// MakeNotFound builds a goa.ServiceError from an error.
+func MakeNotFound(err error) *goa.ServiceError {
+	return &goa.ServiceError{
+		Name:    "not_found",
+		ID:      goa.NewErrorID(),
+		Message: err.Error(),
+	}
 }
 
 // NewToolCollection initializes result type ToolCollection from viewed result
