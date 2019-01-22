@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -61,9 +60,7 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 	res := tools.ToolCollection{}
 
 	// Find packagers
-	usr, _ := user.Current()
-	path := filepath.Join(usr.HomeDir, ".arduino-create")
-	packagers, err := ioutil.ReadDir(path)
+	packagers, err := ioutil.ReadDir(c.Folder)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +70,13 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 			continue
 		}
 		// Find tools
-		toolss, err := ioutil.ReadDir(filepath.Join(path, packager.Name()))
+		toolss, err := ioutil.ReadDir(filepath.Join(c.Folder, packager.Name()))
 		if err != nil {
 			return nil, err
 		}
 		for _, tool := range toolss {
 			// Find versions
-			versions, err := ioutil.ReadDir(filepath.Join(path, packager.Name(), tool.Name()))
+			versions, err := ioutil.ReadDir(filepath.Join(c.Folder, packager.Name(), tool.Name()))
 			if err != nil {
 				return nil, err
 			}
@@ -161,7 +158,9 @@ func (c *Tools) install(ctx context.Context, packager string, tool Tool) error {
 }
 
 func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
-	return nil
+	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
+
+	return os.RemoveAll(filepath.Join(c.Folder, path))
 }
 
 func rename(base string) extract.Renamer {

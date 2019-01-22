@@ -81,7 +81,4 @@ func TestIndexes(t *testing.T) {
 	if len(list) != 0 {
 		t.Fatalf("expected %d == %d (%s)", len(list), 0, "len(list)")
 	}
-
-	t.Fail()
-
 }

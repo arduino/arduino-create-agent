@@ -64,6 +64,14 @@ func TestTools(t *testing.T) {
 	}
 
 	// Install a tool
+	installed, err := service.Installed(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(installed) != 0 {
+		t.Fatalf("expected %d == %d (%s)", len(installed), 0, "len(installed)")
+	}
+
 	err = service.Install(ctx, &tools.ToolPayload{
 		Packager: "arduino",
 		Name:     "avrdude",
@@ -73,6 +81,29 @@ func TestTools(t *testing.T) {
 		t.Fatal(err)
 	}
 	// List installed tools
+	installed, err = service.Installed(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(installed) != 1 {
+		t.Fatalf("expected %d == %d (%s)", len(installed), 1, "len(installed)")
+	}
 
-	// Uninstall tool
+	// Remove tool
+	err = service.Remove(ctx, &tools.ToolPayload{
+		Packager: "arduino",
+		Name:     "avrdude",
+		Version:  "6.0.1-arduino2",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	installed, err = service.Installed(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(installed) != 0 {
+		t.Fatalf("expected %d == %d (%s)", len(installed), 0, "len(installed)")
+	}
 }
