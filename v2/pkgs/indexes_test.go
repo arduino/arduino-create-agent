@@ -14,7 +14,6 @@ import (
 )
 
 // TestIndexes performs a series of operations about indexes, ensuring it behaves as expected.
-// This test depends on the internet so it could fail unexpectedly
 func TestIndexes(t *testing.T) {
 	// Use local file as index
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

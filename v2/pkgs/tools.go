@@ -1,10 +1,16 @@
 package pkgs
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/user"
 	"path/filepath"
 	"runtime"
@@ -133,9 +139,22 @@ func (c *Tools) install(ctx context.Context, packager string, tool Tool) error {
 	}
 	defer res.Body.Close()
 
-	err = extract.Archive(ctx, res.Body, c.Folder, rename(packager, tool.Name, tool.Version))
+	// Use a teereader to only read once
+	var buffer bytes.Buffer
+	reader := io.TeeReader(res.Body, &buffer)
+
+	basepath := filepath.Join(packager, tool.Name, tool.Version)
+	err = extract.Archive(ctx, reader, c.Folder, rename(basepath))
 	if err != nil {
 		return err
+	}
+
+	checksum := sha256.Sum256(buffer.Bytes())
+	checkSumString := "SHA-256:" + hex.EncodeToString(checksum[:sha256.Size])
+
+	if checkSumString != tool.Systems[i].Checksum {
+		os.RemoveAll(basepath)
+		return errors.New("checksum doesn't match")
 	}
 
 	return nil
@@ -145,13 +164,11 @@ func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
 	return nil
 }
 
-func rename(packager, name, version string) extract.Renamer {
-	base := filepath.Join(packager, name, version)
+func rename(base string) extract.Renamer {
 	return func(path string) string {
 		parts := strings.Split(path, string(filepath.Separator))
 		path = strings.Join(parts[1:], string(filepath.Separator))
 		path = filepath.Join(base, path)
-		fmt.Println("path", path)
 		return path
 	}
 }
