@@ -8,17 +8,32 @@
 <body>
     <p>pkgs api manage the indexes and tools installed on the system.</p>
 
+    <h1>Indexes</h1>
     <p>An index file contains the info about a core and its tools. You can see an example at <a href="" target="_blank">https://downloads.arduino.cc/packages/package_index.json</a></p>
 
     <p>index files are saved (with an urlencoded filename) in the folder <code>~/.arduino-create/indexes</code></p>
 
-    <textarea cols="100" id="indexesGet">
+    <h2>List Indexes</h2>
+    <p>You can list the indexes installed in the system with this simple GET</p>
+    <textarea cols="100" id="indexesList">
 fetch('http://localhost:8991/v2/pkgs/indexes')
     </textarea><br>
-    <textarea cols="100" rows="10" id="indexesGetRes">
+    <textarea cols="100" rows="10" id="indexesListRes"></textarea><br>
+    <button onclick="tryCode('indexesList', 'indexesListRes');">Try</button>
+
+    <h2>Add Indexes</h2>
+    <p>You can add a new index with a POST request</p>
+    <textarea cols="100" rows="5" id="indexesCreate">
+fetch('http://localhost:8991/v2/pkgs/indexes/add', {
+    method: "POST",
+    body: '{"url": "https://downloads.arduino.cc/packages/package_index.json"}'
+})
+    </textarea><br>
+    <textarea cols="100" rows="10" id="indexesCreateRes">
 
     </textarea><br>
-    <button onclick="tryCode('indexesGet', 'indexesGetRes');">Try</button>
+    <button onclick="tryCode('indexesCreate', 'indexesCreateRes');">Try</button>
+
 </body>
 
 <script>
@@ -38,7 +53,7 @@ function tryCode(code, target) {
 
         console.log(err)
 
-        target.innerText = JSON.stringify(err);
+        target.innerText = err;
     })
 
     console.debug(code, target, result)

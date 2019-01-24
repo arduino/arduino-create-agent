@@ -8,31 +8,48 @@
 package client
 
 import (
+	"encoding/json"
+	"fmt"
+
 	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
 )
 
 // BuildAddPayload builds the payload for the indexes add endpoint from CLI
 // flags.
-func BuildAddPayload(indexesAddURL string) (*indexes.IndexPayload, error) {
-	var url_ string
+func BuildAddPayload(indexesAddBody string) (*indexes.IndexPayload, error) {
+	var err error
+	var body AddRequestBody
 	{
-		url_ = indexesAddURL
+		err = json.Unmarshal([]byte(indexesAddBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"url\": \"http://downloads.arduino.cc/packages/package_index.json\"\n   }'")
+		}
 	}
-	payload := &indexes.IndexPayload{
-		URL: url_,
+	if err != nil {
+		return nil, err
 	}
-	return payload, nil
+	v := &indexes.IndexPayload{
+		URL: body.URL,
+	}
+	return v, nil
 }
 
 // BuildRemovePayload builds the payload for the indexes remove endpoint from
 // CLI flags.
-func BuildRemovePayload(indexesRemoveURL string) (*indexes.IndexPayload, error) {
-	var url_ string
+func BuildRemovePayload(indexesRemoveBody string) (*indexes.IndexPayload, error) {
+	var err error
+	var body RemoveRequestBody
 	{
-		url_ = indexesRemoveURL
+		err = json.Unmarshal([]byte(indexesRemoveBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"url\": \"http://downloads.arduino.cc/packages/package_index.json\"\n   }'")
+		}
 	}
-	payload := &indexes.IndexPayload{
-		URL: url_,
+	if err != nil {
+		return nil, err
 	}
-	return payload, nil
+	v := &indexes.IndexPayload{
+		URL: body.URL,
+	}
+	return v, nil
 }

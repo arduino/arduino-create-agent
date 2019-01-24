@@ -50,11 +50,11 @@ func ParseEndpoint(
 
 		indexesListFlags = flag.NewFlagSet("list", flag.ExitOnError)
 
-		indexesAddFlags   = flag.NewFlagSet("add", flag.ExitOnError)
-		indexesAddURLFlag = indexesAddFlags.String("url", "REQUIRED", "The url of the index file")
+		indexesAddFlags    = flag.NewFlagSet("add", flag.ExitOnError)
+		indexesAddBodyFlag = indexesAddFlags.String("body", "REQUIRED", "")
 
-		indexesRemoveFlags   = flag.NewFlagSet("remove", flag.ExitOnError)
-		indexesRemoveURLFlag = indexesRemoveFlags.String("url", "REQUIRED", "The url of the index file")
+		indexesRemoveFlags    = flag.NewFlagSet("remove", flag.ExitOnError)
+		indexesRemoveBodyFlag = indexesRemoveFlags.String("body", "REQUIRED", "")
 
 		toolsFlags = flag.NewFlagSet("tools", flag.ContinueOnError)
 
@@ -172,10 +172,10 @@ func ParseEndpoint(
 				data = nil
 			case "add":
 				endpoint = c.Add()
-				data, err = indexesc.BuildAddPayload(*indexesAddURLFlag)
+				data, err = indexesc.BuildAddPayload(*indexesAddBodyFlag)
 			case "remove":
 				endpoint = c.Remove()
-				data, err = indexesc.BuildRemovePayload(*indexesRemoveURLFlag)
+				data, err = indexesc.BuildRemovePayload(*indexesRemoveBodyFlag)
 			}
 		case "tools":
 			c := toolsc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -228,24 +228,28 @@ Example:
 }
 
 func indexesAddUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] indexes add -url STRING
+	fmt.Fprintf(os.Stderr, `%s [flags] indexes add -body JSON
 
 Add implements add.
-    -url STRING: The url of the index file
+    -body JSON: 
 
 Example:
-    `+os.Args[0]+` indexes add --url "http://downloads.arduino.cc/packages/package_index.json"
+    `+os.Args[0]+` indexes add --body '{
+      "url": "http://downloads.arduino.cc/packages/package_index.json"
+   }'
 `, os.Args[0])
 }
 
 func indexesRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] indexes remove -url STRING
+	fmt.Fprintf(os.Stderr, `%s [flags] indexes remove -body JSON
 
 Remove implements remove.
-    -url STRING: The url of the index file
+    -body JSON: 
 
 Example:
-    `+os.Args[0]+` indexes remove --url "http://downloads.arduino.cc/packages/package_index.json"
+    `+os.Args[0]+` indexes remove --body '{
+      "url": "http://downloads.arduino.cc/packages/package_index.json"
+   }'
 `, os.Args[0])
 }
 

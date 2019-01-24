@@ -9,6 +9,7 @@ package server
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	goa "goa.design/goa"
@@ -64,12 +65,21 @@ func EncodeAddResponse(encoder func(context.Context, http.ResponseWriter) goahtt
 func DecodeAddRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
 	return func(r *http.Request) (interface{}, error) {
 		var (
-			url_ string
-
-			params = mux.Vars(r)
+			body AddRequestBody
+			err  error
 		)
-		url_ = params["url"]
-		payload := NewAddIndexPayload(url_)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateAddRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewAddIndexPayload(&body)
 
 		return payload, nil
 	}
@@ -112,12 +122,21 @@ func EncodeRemoveResponse(encoder func(context.Context, http.ResponseWriter) goa
 func DecodeRemoveRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (interface{}, error) {
 	return func(r *http.Request) (interface{}, error) {
 		var (
-			url_ string
-
-			params = mux.Vars(r)
+			body RemoveRequestBody
+			err  error
 		)
-		url_ = params["url"]
-		payload := NewRemoveIndexPayload(url_)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateRemoveRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewRemoveIndexPayload(&body)
 
 		return payload, nil
 	}

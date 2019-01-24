@@ -21,7 +21,7 @@ var _ = Service("indexes", func() {
 	Method("add", func() {
 		Payload(IndexPayload)
 		HTTP(func() {
-			PUT("/pkgs/indexes/{url}")
+			POST("/pkgs/indexes/add")
 			Response(StatusOK)
 		})
 	})
@@ -29,7 +29,7 @@ var _ = Service("indexes", func() {
 	Method("remove", func() {
 		Payload(IndexPayload)
 		HTTP(func() {
-			DELETE("/pkgs/indexes/{url}")
+			POST("/pkgs/indexes/delete")
 			Response(StatusOK)
 		})
 	})

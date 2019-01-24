@@ -88,18 +88,8 @@ func DecodeListResponse(decoder func(*http.Response) goahttp.Decoder, restoreBod
 // BuildAddRequest instantiates a HTTP request object with method and path set
 // to call the "indexes" service "add" endpoint
 func (c *Client) BuildAddRequest(ctx context.Context, v interface{}) (*http.Request, error) {
-	var (
-		url_ string
-	)
-	{
-		p, ok := v.(*indexes.IndexPayload)
-		if !ok {
-			return nil, goahttp.ErrInvalidType("indexes", "add", "*indexes.IndexPayload", v)
-		}
-		url_ = p.URL
-	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddIndexesPath(url_)}
-	req, err := http.NewRequest("PUT", u.String(), nil)
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddIndexesPath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("indexes", "add", u.String(), err)
 	}
@@ -108,6 +98,22 @@ func (c *Client) BuildAddRequest(ctx context.Context, v interface{}) (*http.Requ
 	}
 
 	return req, nil
+}
+
+// EncodeAddRequest returns an encoder for requests sent to the indexes add
+// server.
+func EncodeAddRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*indexes.IndexPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("indexes", "add", "*indexes.IndexPayload", v)
+		}
+		body := NewAddRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("indexes", "add", err)
+		}
+		return nil
+	}
 }
 
 // DecodeAddResponse returns a decoder for responses returned by the indexes
@@ -157,18 +163,8 @@ func DecodeAddResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody
 // BuildRemoveRequest instantiates a HTTP request object with method and path
 // set to call the "indexes" service "remove" endpoint
 func (c *Client) BuildRemoveRequest(ctx context.Context, v interface{}) (*http.Request, error) {
-	var (
-		url_ string
-	)
-	{
-		p, ok := v.(*indexes.IndexPayload)
-		if !ok {
-			return nil, goahttp.ErrInvalidType("indexes", "remove", "*indexes.IndexPayload", v)
-		}
-		url_ = p.URL
-	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveIndexesPath(url_)}
-	req, err := http.NewRequest("DELETE", u.String(), nil)
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveIndexesPath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("indexes", "remove", u.String(), err)
 	}
@@ -177,6 +173,22 @@ func (c *Client) BuildRemoveRequest(ctx context.Context, v interface{}) (*http.R
 	}
 
 	return req, nil
+}
+
+// EncodeRemoveRequest returns an encoder for requests sent to the indexes
+// remove server.
+func EncodeRemoveRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*indexes.IndexPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("indexes", "remove", "*indexes.IndexPayload", v)
+		}
+		body := NewRemoveRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("indexes", "remove", err)
+		}
+		return nil
+	}
 }
 
 // DecodeRemoveResponse returns a decoder for responses returned by the indexes

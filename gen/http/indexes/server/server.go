@@ -52,8 +52,8 @@ func New(
 	return &Server{
 		Mounts: []*MountPoint{
 			{"List", "GET", "/v2/pkgs/indexes"},
-			{"Add", "PUT", "/v2/pkgs/indexes/{url}"},
-			{"Remove", "DELETE", "/v2/pkgs/indexes/{url}"},
+			{"Add", "POST", "/v2/pkgs/indexes/add"},
+			{"Remove", "POST", "/v2/pkgs/indexes/delete"},
 		},
 		List:   NewListHandler(e.List, mux, dec, enc, eh),
 		Add:    NewAddHandler(e.Add, mux, dec, enc, eh),
@@ -131,7 +131,7 @@ func MountAddHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("PUT", "/v2/pkgs/indexes/{url}", f)
+	mux.Handle("POST", "/v2/pkgs/indexes/add", f)
 }
 
 // NewAddHandler creates a HTTP handler which loads the HTTP request and calls
@@ -183,7 +183,7 @@ func MountRemoveHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("DELETE", "/v2/pkgs/indexes/{url}", f)
+	mux.Handle("POST", "/v2/pkgs/indexes/delete", f)
 }
 
 // NewRemoveHandler creates a HTTP handler which loads the HTTP request and

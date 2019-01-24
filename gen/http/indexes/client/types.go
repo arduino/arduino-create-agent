@@ -8,8 +8,23 @@
 package client
 
 import (
+	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
 	goa "goa.design/goa"
 )
+
+// AddRequestBody is the type of the "indexes" service "add" endpoint HTTP
+// request body.
+type AddRequestBody struct {
+	// The url of the index file
+	URL string `form:"url" json:"url" xml:"url"`
+}
+
+// RemoveRequestBody is the type of the "indexes" service "remove" endpoint
+// HTTP request body.
+type RemoveRequestBody struct {
+	// The url of the index file
+	URL string `form:"url" json:"url" xml:"url"`
+}
 
 // ListInvalidURLResponseBody is the type of the "indexes" service "list"
 // endpoint HTTP response body for the "invalid_url" error.
@@ -63,6 +78,24 @@ type RemoveInvalidURLResponseBody struct {
 	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
 	// Is the error a server-side fault?
 	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
+// NewAddRequestBody builds the HTTP request body from the payload of the "add"
+// endpoint of the "indexes" service.
+func NewAddRequestBody(p *indexes.IndexPayload) *AddRequestBody {
+	body := &AddRequestBody{
+		URL: p.URL,
+	}
+	return body
+}
+
+// NewRemoveRequestBody builds the HTTP request body from the payload of the
+// "remove" endpoint of the "indexes" service.
+func NewRemoveRequestBody(p *indexes.IndexPayload) *RemoveRequestBody {
+	body := &RemoveRequestBody{
+		URL: p.URL,
+	}
+	return body
 }
 
 // NewListInvalidURL builds a indexes service list endpoint invalid_url error.

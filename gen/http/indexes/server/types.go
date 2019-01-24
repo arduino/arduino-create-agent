@@ -12,6 +12,20 @@ import (
 	goa "goa.design/goa"
 )
 
+// AddRequestBody is the type of the "indexes" service "add" endpoint HTTP
+// request body.
+type AddRequestBody struct {
+	// The url of the index file
+	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+}
+
+// RemoveRequestBody is the type of the "indexes" service "remove" endpoint
+// HTTP request body.
+type RemoveRequestBody struct {
+	// The url of the index file
+	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+}
+
 // ListInvalidURLResponseBody is the type of the "indexes" service "list"
 // endpoint HTTP response body for the "invalid_url" error.
 type ListInvalidURLResponseBody struct {
@@ -109,15 +123,33 @@ func NewRemoveInvalidURLResponseBody(res *goa.ServiceError) *RemoveInvalidURLRes
 }
 
 // NewAddIndexPayload builds a indexes service add endpoint payload.
-func NewAddIndexPayload(url_ string) *indexes.IndexPayload {
-	return &indexes.IndexPayload{
-		URL: url_,
+func NewAddIndexPayload(body *AddRequestBody) *indexes.IndexPayload {
+	v := &indexes.IndexPayload{
+		URL: *body.URL,
 	}
+	return v
 }
 
 // NewRemoveIndexPayload builds a indexes service remove endpoint payload.
-func NewRemoveIndexPayload(url_ string) *indexes.IndexPayload {
-	return &indexes.IndexPayload{
-		URL: url_,
+func NewRemoveIndexPayload(body *RemoveRequestBody) *indexes.IndexPayload {
+	v := &indexes.IndexPayload{
+		URL: *body.URL,
 	}
+	return v
+}
+
+// ValidateAddRequestBody runs the validations defined on AddRequestBody
+func ValidateAddRequestBody(body *AddRequestBody) (err error) {
+	if body.URL == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("url", "body"))
+	}
+	return
+}
+
+// ValidateRemoveRequestBody runs the validations defined on RemoveRequestBody
+func ValidateRemoveRequestBody(body *RemoveRequestBody) (err error) {
+	if body.URL == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("url", "body"))
+	}
+	return
 }

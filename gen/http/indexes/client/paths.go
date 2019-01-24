@@ -7,21 +7,17 @@
 
 package client
 
-import (
-	"fmt"
-)
-
 // ListIndexesPath returns the URL path to the indexes service list HTTP endpoint.
 func ListIndexesPath() string {
 	return "/v2/pkgs/indexes"
 }
 
 // AddIndexesPath returns the URL path to the indexes service add HTTP endpoint.
-func AddIndexesPath(url_ string) string {
-	return fmt.Sprintf("/v2/pkgs/indexes/%v", url_)
+func AddIndexesPath() string {
+	return "/v2/pkgs/indexes/add"
 }
 
 // RemoveIndexesPath returns the URL path to the indexes service remove HTTP endpoint.
-func RemoveIndexesPath(url_ string) string {
-	return fmt.Sprintf("/v2/pkgs/indexes/%v", url_)
+func RemoveIndexesPath() string {
+	return "/v2/pkgs/indexes/delete"
 }

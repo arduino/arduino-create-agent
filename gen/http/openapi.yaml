@@ -46,18 +46,20 @@ paths:
             $ref: '#/definitions/Indexeslist_invalid_url_response_body'
       schemes:
       - http
-  /v2/pkgs/indexes/{url}:
-    put:
+  /v2/pkgs/indexes/add:
+    post:
       tags:
       - indexes
       summary: add indexes
       operationId: indexes#add
       parameters:
-      - name: url
-        in: path
-        description: The url of the index file
+      - name: AddRequestBody
+        in: body
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/IndexesAddRequestBody'
+          required:
+          - url
       responses:
         "200":
           description: OK response.
@@ -67,17 +69,20 @@ paths:
             $ref: '#/definitions/Indexesadd_invalid_url_response_body'
       schemes:
       - http
-    delete:
+  /v2/pkgs/indexes/delete:
+    post:
       tags:
       - indexes
       summary: remove indexes
       operationId: indexes#remove
       parameters:
-      - name: url
-        in: path
-        description: The url of the index file
+      - name: RemoveRequestBody
+        in: body
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/IndexesRemoveRequestBody'
+          required:
+          - url
       responses:
         "200":
           description: OK response.
@@ -161,6 +166,30 @@ paths:
       schemes:
       - http
 definitions:
+  IndexesAddRequestBody:
+    title: IndexesAddRequestBody
+    type: object
+    properties:
+      url:
+        type: string
+        description: The url of the index file
+        example: http://downloads.arduino.cc/packages/package_index.json
+    example:
+      url: http://downloads.arduino.cc/packages/package_index.json
+    required:
+    - url
+  IndexesRemoveRequestBody:
+    title: IndexesRemoveRequestBody
+    type: object
+    properties:
+      url:
+        type: string
+        description: The url of the index file
+        example: http://downloads.arduino.cc/packages/package_index.json
+    example:
+      url: http://downloads.arduino.cc/packages/package_index.json
+    required:
+    - url
   Indexesadd_invalid_url_response_body:
     title: 'Mediatype identifier: application/vnd.goa.error; view=default'
     type: object
