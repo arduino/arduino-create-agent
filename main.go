@@ -289,7 +289,7 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server()
+	goa := v2.Server(directory)
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {

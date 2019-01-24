@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"net/http"
+	"path/filepath"
 
 	docssvr "github.com/arduino/arduino-create-agent/gen/http/docs/server"
 	indexessvr "github.com/arduino/arduino-create-agent/gen/http/indexes/server"
@@ -15,7 +16,7 @@ import (
 	"goa.design/goa/http/middleware"
 )
 
-func Server() http.Handler {
+func Server(home string) http.Handler {
 	mux := goahttp.NewMuxer()
 
 	// Instantiate logger
@@ -25,7 +26,8 @@ func Server() http.Handler {
 
 	// Mount indexes
 	indexesSvc := pkgs.Indexes{
-		Log: logger,
+		Log:    logger,
+		Folder: filepath.Join(home, "indexes"),
 	}
 	indexesEndpoints := indexessvc.NewEndpoints(&indexesSvc)
 	indexesServer := indexessvr.New(indexesEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))

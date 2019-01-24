@@ -69,6 +69,8 @@ func (c *Indexes) Get(ctx context.Context, uri string) (index Index, err error) 
 
 // List reads from the Indexes Folder and returns the indexes that have been downloaded
 func (c *Indexes) List(context.Context) ([]string, error) {
+	// Create folder if it doesn't exist
+	_ = os.MkdirAll(c.Folder, 0755)
 	// Read files
 	files, err := ioutil.ReadDir(c.Folder)
 	if err != nil {

@@ -10,7 +10,7 @@
 
     <p>An index file contains the info about a core and its tools. You can see an example at <a href="" target="_blank">https://downloads.arduino.cc/packages/package_index.json</a></p>
 
-    <p>index files are saved (with an urlencoded filename) in the folder ~/.arduino-create/indexes</p>
+    <p>index files are saved (with an urlencoded filename) in the folder <code>~/.arduino-create/indexes</code></p>
 
     <textarea cols="100" id="indexesGet">
 fetch('http://localhost:8991/v2/pkgs/indexes')
@@ -31,7 +31,6 @@ function tryCode(code, target) {
         target.innerHTML = res.statusText + "\n";
         return res.json();
     }).then(function (body) {
-        debugger
         target.innerHTML = target.innerHTML + JSON.stringify(body, " ", "  ");
         return;
     })
