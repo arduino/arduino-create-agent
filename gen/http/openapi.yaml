@@ -6,7 +6,6 @@ info:
     sketches on them."
   version: ""
 host: localhost:80
-basePath: /v2
 consumes:
 - application/json
 - application/xml
@@ -16,7 +15,18 @@ produces:
 - application/xml
 - application/gob
 paths:
-  /pkgs/indexes:
+  /v2/docs/pkgs:
+    get:
+      summary: Download docs/pkgs.html
+      operationId: docs#/v2/docs/pkgs
+      responses:
+        "200":
+          description: File downloaded
+          schema:
+            type: file
+      schemes:
+      - http
+  /v2/pkgs/indexes:
     get:
       tags:
       - indexes
@@ -36,7 +46,7 @@ paths:
             $ref: '#/definitions/Indexeslist_invalid_url_response_body'
       schemes:
       - http
-  /pkgs/indexes/{url}:
+  /v2/pkgs/indexes/{url}:
     put:
       tags:
       - indexes
@@ -77,7 +87,7 @@ paths:
             $ref: '#/definitions/Indexesremove_invalid_url_response_body'
       schemes:
       - http
-  /pkgs/tools/available:
+  /v2/pkgs/tools/available:
     get:
       tags:
       - tools
@@ -90,7 +100,7 @@ paths:
             $ref: '#/definitions/ToolsToolResponseCollection'
       schemes:
       - http
-  /pkgs/tools/installed:
+  /v2/pkgs/tools/installed:
     get:
       tags:
       - tools
@@ -123,7 +133,7 @@ paths:
           description: OK response.
       schemes:
       - http
-  /pkgs/tools/installed/{packager}/{name}/{version}:
+  /v2/pkgs/tools/installed/{packager}/{name}/{version}:
     delete:
       tags:
       - tools

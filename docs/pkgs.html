@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Interactive docs for pkgs api</title>
+</head>
+
+<body>
+    <p>pkgs api manage the indexes and tools installed on the system.</p>
+
+    <p>An index file contains the info about a core and its tools. You can see an example at <a href="" target="_blank">https://downloads.arduino.cc/packages/package_index.json</a></p>
+
+    <p>index files are saved (with an urlencoded filename) in the folder ~/.arduino-create/indexes</p>
+
+    <textarea cols="100" id="indexesGet">
+fetch('http://localhost:8991/v2/pkgs/indexes')
+    </textarea><br>
+    <textarea cols="100" rows="10" id="indexesGetRes">
+
+    </textarea><br>
+    <button onclick="tryCode('indexesGet', 'indexesGetRes');">Try</button>
+</body>
+
+<script>
+function tryCode(code, target) {
+    code = document.getElementById(code).textContent;
+    target = document.getElementById(target);
+
+    var result = eval(code);
+    result.then(function (res) {
+        target.innerHTML = res.statusText + "\n";
+        return res.json();
+    }).then(function (body) {
+        debugger
+        target.innerHTML = target.innerHTML + JSON.stringify(body, " ", "  ");
+        return;
+    })
+    .catch(function (err) {
+
+        console.log(err)
+
+        target.innerText = JSON.stringify(err);
+    })
+
+    console.debug(code, target, result)
+}
+</script>
+
+</html>

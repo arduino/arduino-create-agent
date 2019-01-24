@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	docssvr "github.com/arduino/arduino-create-agent/gen/http/docs/server"
 	indexessvr "github.com/arduino/arduino-create-agent/gen/http/indexes/server"
 	toolssvr "github.com/arduino/arduino-create-agent/gen/http/tools/server"
 	indexessvc "github.com/arduino/arduino-create-agent/gen/indexes"
@@ -31,12 +32,14 @@ func Server() http.Handler {
 	indexessvr.Mount(mux, indexesServer)
 
 	// Mount tools
-	toolsSvc := pkgs.Tools{
-		Log: logger,
-	}
+	toolsSvc := pkgs.Tools{}
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
 	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
 	toolssvr.Mount(mux, toolsServer)
+
+	// Mount docs
+	docssvr.New(nil, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
+	docssvr.Mount(mux)
 
 	// Mount middlewares
 	handler := middleware.Log(logAdapter)(mux)
