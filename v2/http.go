@@ -30,11 +30,15 @@ func Server(home string) http.Handler {
 		Folder: filepath.Join(home, "indexes"),
 	}
 	indexesEndpoints := indexessvc.NewEndpoints(&indexesSvc)
-	indexesServer := indexessvr.New(indexesEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
+	indexesServer := indexessvr.New(indexesEndpoints, mux, goahttp.RequestDecoder,
+		goahttp.ResponseEncoder, errorHandler(logger))
 	indexessvr.Mount(mux, indexesServer)
 
 	// Mount tools
-	toolsSvc := pkgs.Tools{}
+	toolsSvc := pkgs.Tools{
+		Folder:  home,
+		Indexes: &indexesSvc,
+	}
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
 	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
 	toolssvr.Mount(mux, toolsServer)

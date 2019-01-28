@@ -80,16 +80,19 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 		if !packager.IsDir() {
 			continue
 		}
+
 		// Find tools
 		toolss, err := ioutil.ReadDir(filepath.Join(c.Folder, packager.Name()))
 		if err != nil {
 			return nil, err
 		}
+
 		for _, tool := range toolss {
 			// Find versions
-			versions, err := ioutil.ReadDir(filepath.Join(c.Folder, packager.Name(), tool.Name()))
+			path := filepath.Join(c.Folder, packager.Name(), tool.Name())
+			versions, err := ioutil.ReadDir(path)
 			if err != nil {
-				return nil, err
+				continue // we ignore errors because the folders could be dirty
 			}
 
 			for _, version := range versions {
