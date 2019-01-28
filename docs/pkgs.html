@@ -34,30 +34,45 @@ fetch('http://localhost:8991/v2/pkgs/indexes/add', {
     </textarea><br>
     <button onclick="tryCode('indexesCreate', 'indexesCreateRes');">Try</button>
 
+    <p>You can now check if the new package_index was downloaded by repeating List Indexes.</p>
+
+    <h2>Remove Indexes</h2>
+    <p>You can add a new index with a POST request</p>
+    <textarea cols="100" rows="5" id="indexesRemove">
+fetch('http://localhost:8991/v2/pkgs/indexes/delete', {
+    method: "POST",
+    body: '{"url": "https://downloads.arduino.cc/packages/package_index.json"}'
+})
+    </textarea><br>
+    <textarea cols="100" rows="10" id="indexesRemoveRes">
+
+    </textarea><br>
+    <button onclick="tryCode('indexesRemove', 'indexesRemoveRes');">Try</button>
+
+    <p>You can now check if the new package_index was removed by repeating List Indexes.</p>
+
+
 </body>
 
 <script>
-function tryCode(code, target) {
-    code = document.getElementById(code).textContent;
-    target = document.getElementById(target);
+    function tryCode(code, target) {
+        code = document.getElementById(code).textContent;
+        target = document.getElementById(target);
 
-    var result = eval(code);
-    result.then(function (res) {
-        target.innerHTML = res.statusText + "\n";
-        return res.json();
-    }).then(function (body) {
-        target.innerHTML = target.innerHTML + JSON.stringify(body, " ", "  ");
-        return;
-    })
-    .catch(function (err) {
+        var result = eval(code);
+        result.then(function (res) {
+            target.innerHTML = res.statusText + "\n"; return res.text();
+        }).then(function (body) {
+            target.innerHTML = target.innerHTML + body;
+        }).catch(function (err) {
 
-        console.log(err)
+            console.log(err)
 
-        target.innerText = err;
-    })
+            target.innerText = err;
+        })
 
-    console.debug(code, target, result)
-}
+        console.debug(code, target, result)
+    }
 </script>
 
 </html>
