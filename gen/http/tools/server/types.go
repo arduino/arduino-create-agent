@@ -22,6 +22,23 @@ type InstallRequestBody struct {
 	Version *string `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
 	// The packager of the tool
 	Packager *string `form:"packager,omitempty" json:"packager,omitempty" xml:"packager,omitempty"`
+	// The url where the package can be found. Optional.
+	// If present checksum must also be present.
+	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+	// A checksum of the archive. Mandatory when url is present.
+	// This ensures that the package is downloaded correcly.
+	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
+}
+
+// RemoveRequestBody is the type of the "tools" service "remove" endpoint HTTP
+// request body.
+type RemoveRequestBody struct {
+	// The url where the package can be found. Optional.
+	// If present checksum must also be present.
+	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+	// A checksum of the archive. Mandatory when url is present.
+	// This ensures that the package is downloaded correcly.
+	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
 }
 
 // ToolResponseCollection is the type of the "tools" service "available"
@@ -58,17 +75,22 @@ func NewInstallToolPayload(body *InstallRequestBody) *tools.ToolPayload {
 		Name:     *body.Name,
 		Version:  *body.Version,
 		Packager: *body.Packager,
+		URL:      body.URL,
+		Checksum: body.Checksum,
 	}
 	return v
 }
 
 // NewRemoveToolPayload builds a tools service remove endpoint payload.
-func NewRemoveToolPayload(packager string, name string, version string) *tools.ToolPayload {
-	return &tools.ToolPayload{
-		Packager: packager,
-		Name:     name,
-		Version:  version,
+func NewRemoveToolPayload(body *RemoveRequestBody, packager string, name string, version string) *tools.ToolPayload {
+	v := &tools.ToolPayload{
+		URL:      body.URL,
+		Checksum: body.Checksum,
 	}
+	v.Packager = packager
+	v.Name = name
+	v.Version = version
+	return v
 }
 
 // ValidateInstallRequestBody runs the validations defined on InstallRequestBody

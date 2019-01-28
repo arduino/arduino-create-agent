@@ -22,6 +22,23 @@ type InstallRequestBody struct {
 	Version string `form:"version" json:"version" xml:"version"`
 	// The packager of the tool
 	Packager string `form:"packager" json:"packager" xml:"packager"`
+	// The url where the package can be found. Optional.
+	// If present checksum must also be present.
+	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+	// A checksum of the archive. Mandatory when url is present.
+	// This ensures that the package is downloaded correcly.
+	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
+}
+
+// RemoveRequestBody is the type of the "tools" service "remove" endpoint HTTP
+// request body.
+type RemoveRequestBody struct {
+	// The url where the package can be found. Optional.
+	// If present checksum must also be present.
+	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+	// A checksum of the archive. Mandatory when url is present.
+	// This ensures that the package is downloaded correcly.
+	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
 }
 
 // AvailableResponseBody is the type of the "tools" service "available"
@@ -49,6 +66,18 @@ func NewInstallRequestBody(p *tools.ToolPayload) *InstallRequestBody {
 		Name:     p.Name,
 		Version:  p.Version,
 		Packager: p.Packager,
+		URL:      p.URL,
+		Checksum: p.Checksum,
+	}
+	return body
+}
+
+// NewRemoveRequestBody builds the HTTP request body from the payload of the
+// "remove" endpoint of the "tools" service.
+func NewRemoveRequestBody(p *tools.ToolPayload) *RemoveRequestBody {
+	body := &RemoveRequestBody{
+		URL:      p.URL,
+		Checksum: p.Checksum,
 	}
 	return body
 }

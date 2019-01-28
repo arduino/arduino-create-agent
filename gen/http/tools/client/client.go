@@ -133,10 +133,15 @@ func (c *Client) Install() goa.Endpoint {
 // remove server.
 func (c *Client) Remove() goa.Endpoint {
 	var (
+		encodeRequest  = EncodeRemoveRequest(c.encoder)
 		decodeResponse = DecodeRemoveResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v interface{}) (interface{}, error) {
 		req, err := c.BuildRemoveRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
 		if err != nil {
 			return nil, err
 		}

@@ -220,6 +220,22 @@ func (c *Client) BuildRemoveRequest(ctx context.Context, v interface{}) (*http.R
 	return req, nil
 }
 
+// EncodeRemoveRequest returns an encoder for requests sent to the tools remove
+// server.
+func EncodeRemoveRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, interface{}) error {
+	return func(req *http.Request, v interface{}) error {
+		p, ok := v.(*tools.ToolPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("tools", "remove", "*tools.ToolPayload", v)
+		}
+		body := NewRemoveRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("tools", "remove", err)
+		}
+		return nil
+	}
+}
+
 // DecodeRemoveResponse returns a decoder for responses returned by the tools
 // remove endpoint. restoreBody controls whether the response body should be
 // restored after having been read.

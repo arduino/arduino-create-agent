@@ -66,6 +66,7 @@ func ParseEndpoint(
 		toolsInstallBodyFlag = toolsInstallFlags.String("body", "REQUIRED", "")
 
 		toolsRemoveFlags        = flag.NewFlagSet("remove", flag.ExitOnError)
+		toolsRemoveBodyFlag     = toolsRemoveFlags.String("body", "REQUIRED", "")
 		toolsRemovePackagerFlag = toolsRemoveFlags.String("packager", "REQUIRED", "The packager of the tool")
 		toolsRemoveNameFlag     = toolsRemoveFlags.String("name", "REQUIRED", "The name of the tool")
 		toolsRemoveVersionFlag  = toolsRemoveFlags.String("version", "REQUIRED", "The version of the tool")
@@ -191,7 +192,7 @@ func ParseEndpoint(
 				data, err = toolsc.BuildInstallPayload(*toolsInstallBodyFlag)
 			case "remove":
 				endpoint = c.Remove()
-				data, err = toolsc.BuildRemovePayload(*toolsRemovePackagerFlag, *toolsRemoveNameFlag, *toolsRemoveVersionFlag)
+				data, err = toolsc.BuildRemovePayload(*toolsRemoveBodyFlag, *toolsRemovePackagerFlag, *toolsRemoveNameFlag, *toolsRemoveVersionFlag)
 			}
 		}
 	}
@@ -297,22 +298,27 @@ Install implements install.
 
 Example:
     `+os.Args[0]+` tools install --body '{
+      "checksum": "Quam voluptas voluptates expedita rem ipsum.",
       "name": "avrdude",
       "packager": "arduino",
+      "url": "Iusto libero explicabo beatae dolor adipisci nulla.",
       "version": "6.3.0-arduino9"
    }'
 `, os.Args[0])
 }
 
 func toolsRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%s [flags] tools remove -packager STRING -name STRING -version STRING
+	fmt.Fprintf(os.Stderr, `%s [flags] tools remove -body JSON -packager STRING -name STRING -version STRING
 
 Remove implements remove.
+    -body JSON: 
     -packager STRING: The packager of the tool
     -name STRING: The name of the tool
     -version STRING: The version of the tool
 
 Example:
-    `+os.Args[0]+` tools remove --packager "arduino" --name "avrdude" --version "6.3.0-arduino9"
+    `+os.Args[0]+` tools remove --body '{
+      "url": "http://downloads.arduino.cc/packages/package_index.json"
+   }' --packager "arduino" --name "avrdude" --version "6.3.0-arduino9"
 `, os.Args[0])
 }

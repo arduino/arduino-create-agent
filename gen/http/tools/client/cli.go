@@ -22,7 +22,7 @@ func BuildInstallPayload(toolsInstallBody string) (*tools.ToolPayload, error) {
 	{
 		err = json.Unmarshal([]byte(toolsInstallBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"name\": \"avrdude\",\n      \"packager\": \"arduino\",\n      \"version\": \"6.3.0-arduino9\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"checksum\": \"Quam voluptas voluptates expedita rem ipsum.\",\n      \"name\": \"avrdude\",\n      \"packager\": \"arduino\",\n      \"url\": \"Iusto libero explicabo beatae dolor adipisci nulla.\",\n      \"version\": \"6.3.0-arduino9\"\n   }'")
 		}
 	}
 	if err != nil {
@@ -32,13 +32,23 @@ func BuildInstallPayload(toolsInstallBody string) (*tools.ToolPayload, error) {
 		Name:     body.Name,
 		Version:  body.Version,
 		Packager: body.Packager,
+		URL:      body.URL,
+		Checksum: body.Checksum,
 	}
 	return v, nil
 }
 
 // BuildRemovePayload builds the payload for the tools remove endpoint from CLI
 // flags.
-func BuildRemovePayload(toolsRemovePackager string, toolsRemoveName string, toolsRemoveVersion string) (*tools.ToolPayload, error) {
+func BuildRemovePayload(toolsRemoveBody string, toolsRemovePackager string, toolsRemoveName string, toolsRemoveVersion string) (*tools.ToolPayload, error) {
+	var err error
+	var body RemoveRequestBody
+	{
+		err = json.Unmarshal([]byte(toolsRemoveBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, example of valid JSON:\n%s", "'{\n      \"url\": \"http://downloads.arduino.cc/packages/package_index.json\"\n   }'")
+		}
+	}
 	var packager string
 	{
 		packager = toolsRemovePackager
@@ -51,10 +61,15 @@ func BuildRemovePayload(toolsRemovePackager string, toolsRemoveName string, tool
 	{
 		version = toolsRemoveVersion
 	}
-	payload := &tools.ToolPayload{
-		Packager: packager,
-		Name:     name,
-		Version:  version,
+	if err != nil {
+		return nil, err
 	}
-	return payload, nil
+	v := &tools.ToolPayload{
+		URL:      body.URL,
+		Checksum: body.Checksum,
+	}
+	v.Packager = packager
+	v.Name = name
+	v.Version = version
+	return v, nil
 }

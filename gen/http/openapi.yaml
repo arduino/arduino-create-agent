@@ -39,7 +39,7 @@ paths:
             type: array
             items:
               type: string
-              example: Qui magnam saepe quisquam.
+              example: Harum nostrum qui ipsa minima quia dolorem.
         "400":
           description: Bad Request response.
           schema:
@@ -160,6 +160,11 @@ paths:
         description: The version of the tool
         required: true
         type: string
+      - name: RemoveRequestBody
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/ToolsRemoveRequestBody'
       responses:
         "200":
           description: OK response.
@@ -215,56 +220,11 @@ definitions:
       temporary:
         type: boolean
         description: Is the error temporary?
-        example: true
-      timeout:
-        type: boolean
-        description: Is the error a timeout?
-        example: false
-    description: url invalid (default view)
-    example:
-      fault: true
-      id: 123abc
-      message: parameter 'p' must be an integer
-      name: bad_request
-      temporary: false
-      timeout: false
-    required:
-    - name
-    - id
-    - message
-    - temporary
-    - timeout
-    - fault
-  Indexeslist_invalid_url_response_body:
-    title: 'Mediatype identifier: application/vnd.goa.error; view=default'
-    type: object
-    properties:
-      fault:
-        type: boolean
-        description: Is the error a server-side fault?
-        example: false
-      id:
-        type: string
-        description: ID is a unique identifier for this particular occurrence of the
-          problem.
-        example: 123abc
-      message:
-        type: string
-        description: Message is a human-readable explanation specific to this occurrence
-          of the problem.
-        example: parameter 'p' must be an integer
-      name:
-        type: string
-        description: Name is the name of this class of errors.
-        example: bad_request
-      temporary:
-        type: boolean
-        description: Is the error temporary?
         example: false
       timeout:
         type: boolean
         description: Is the error a timeout?
-        example: true
+        example: false
     description: url invalid (default view)
     example:
       fault: true
@@ -280,7 +240,7 @@ definitions:
     - temporary
     - timeout
     - fault
-  Indexesremove_invalid_url_response_body:
+  Indexeslist_invalid_url_response_body:
     title: 'Mediatype identifier: application/vnd.goa.error; view=default'
     type: object
     properties:
@@ -305,6 +265,51 @@ definitions:
       temporary:
         type: boolean
         description: Is the error temporary?
+        example: false
+      timeout:
+        type: boolean
+        description: Is the error a timeout?
+        example: false
+    description: url invalid (default view)
+    example:
+      fault: false
+      id: 123abc
+      message: parameter 'p' must be an integer
+      name: bad_request
+      temporary: false
+      timeout: false
+    required:
+    - name
+    - id
+    - message
+    - temporary
+    - timeout
+    - fault
+  Indexesremove_invalid_url_response_body:
+    title: 'Mediatype identifier: application/vnd.goa.error; view=default'
+    type: object
+    properties:
+      fault:
+        type: boolean
+        description: Is the error a server-side fault?
+        example: false
+      id:
+        type: string
+        description: ID is a unique identifier for this particular occurrence of the
+          problem.
+        example: 123abc
+      message:
+        type: string
+        description: Message is a human-readable explanation specific to this occurrence
+          of the problem.
+        example: parameter 'p' must be an integer
+      name:
+        type: string
+        description: Name is the name of this class of errors.
+        example: bad_request
+      temporary:
+        type: boolean
+        description: Is the error temporary?
         example: true
       timeout:
         type: boolean
@@ -312,11 +317,11 @@ definitions:
         example: true
     description: url invalid (default view)
     example:
-      fault: true
+      fault: false
       id: 123abc
       message: parameter 'p' must be an integer
       name: bad_request
-      temporary: false
+      temporary: true
       timeout: false
     required:
     - name
@@ -355,6 +360,11 @@ definitions:
     title: ToolsInstallRequestBody
     type: object
     properties:
+      checksum:
+        type: string
+        description: "A checksum of the archive. Mandatory when url is present. \n\tThis
+          ensures that the package is downloaded correcly."
+        example: Occaecati eum.
       name:
         type: string
         description: The name of the tool
@@ -363,18 +373,42 @@ definitions:
         type: string
         description: The packager of the tool
         example: arduino
+      url:
+        type: string
+        description: "The url where the package can be found. Optional. \n\tIf present
+          checksum must also be present."
+        example: Sit quod dolor repellat.
       version:
         type: string
         description: The version of the tool
         example: 6.3.0-arduino9
     example:
+      checksum: Id ut totam.
       name: avrdude
       packager: arduino
+      url: Vero ipsum corporis nihil.
       version: 6.3.0-arduino9
     required:
     - name
     - version
     - packager
+  ToolsRemoveRequestBody:
+    title: ToolsRemoveRequestBody
+    type: object
+    properties:
+      checksum:
+        type: string
+        description: "A checksum of the archive. Mandatory when url is present. \n\tThis
+          ensures that the package is downloaded correcly."
+        example: Nobis officia optio inventore.
+      url:
+        type: string
+        description: "The url where the package can be found. Optional. \n\tIf present
+          checksum must also be present."
+        example: Inventore exercitationem.
+    example:
+      checksum: Qui modi dolorem.
+      url: In voluptatibus.
   ToolsToolResponseCollection:
     title: 'Mediatype identifier: application/vnd.arduino.tool; type=collection; view=default'
     type: array
@@ -383,6 +417,12 @@ definitions:
     description: AvailableResponseBody is the result type for an array of ToolResponse
       (default view)
     example:
+    - name: avrdude
+      packager: arduino
+      version: 6.3.0-arduino9
+    - name: avrdude
+      packager: arduino
+      version: 6.3.0-arduino9
     - name: avrdude
       packager: arduino
       version: 6.3.0-arduino9

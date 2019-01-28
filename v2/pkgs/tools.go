@@ -111,6 +111,12 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 // Install crawles the Index folder, downloads the specified tool, extracts the archive in the Tools Folder.
 // It checks for the Signature specified in the package index.
 func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
+	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
+
+	if payload.URL != nil {
+		return c.install(ctx, path, *payload.URL, *payload.Checksum)
+	}
+
 	list, err := c.Indexes.List(ctx)
 	if err != nil {
 		return err
@@ -130,7 +136,10 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 			for _, tool := range packager.Tools {
 				if tool.Name == payload.Name &&
 					tool.Version == payload.Version {
-					return c.install(ctx, payload.Packager, tool)
+
+					i := findSystem(tool)
+
+					return c.install(ctx, path, tool.Systems[i].URL, tool.Systems[i].Checksum)
 				}
 			}
 		}
@@ -141,12 +150,9 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 			payload.Packager, payload.Name, payload.Version))
 }
 
-func (c *Tools) install(ctx context.Context, packager string, tool Tool) error {
-	i := findSystem(tool)
-
+func (c *Tools) install(ctx context.Context, path, url, checksum string) error {
 	// Download
-	fmt.Println(tool.Systems[i].URL)
-	res, err := http.Get(tool.Systems[i].URL)
+	res, err := http.Get(url)
 	if err != nil {
 		return err
 	}
@@ -156,17 +162,16 @@ func (c *Tools) install(ctx context.Context, packager string, tool Tool) error {
 	var buffer bytes.Buffer
 	reader := io.TeeReader(res.Body, &buffer)
 
-	basepath := filepath.Join(packager, tool.Name, tool.Version)
-	err = extract.Archive(ctx, reader, c.Folder, rename(basepath))
+	err = extract.Archive(ctx, reader, c.Folder, rename(path))
 	if err != nil {
 		return err
 	}
 
-	checksum := sha256.Sum256(buffer.Bytes())
-	checkSumString := "SHA-256:" + hex.EncodeToString(checksum[:sha256.Size])
+	sum := sha256.Sum256(buffer.Bytes())
+	sumString := "SHA-256:" + hex.EncodeToString(sum[:sha256.Size])
 
-	if checkSumString != tool.Systems[i].Checksum {
-		os.RemoveAll(basepath)
+	if sumString != checksum {
+		os.RemoveAll(path)
 		return errors.New("checksum doesn't match")
 	}
 
@@ -181,10 +186,14 @@ func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
 }
 
 func rename(base string) extract.Renamer {
+	fmt.Println("rename ", base)
 	return func(path string) string {
 		parts := strings.Split(path, string(filepath.Separator))
 		path = strings.Join(parts[1:], string(filepath.Separator))
 		path = filepath.Join(base, path)
+
+		fmt.Println(path)
+
 		return path
 	}
 }
