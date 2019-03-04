@@ -1,6 +1,7 @@
 package main
 
 import (
+	"runtime"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,7 @@ func infoHandler(c *gin.Context) {
 		"wss":        "wss://localhost" + portSSL,
 		"origins":    origins,
 		"update_url": updateUrl,
+		"os":         runtime.GOOS + ":" + runtime.GOARCH,
 	})
 }
 
