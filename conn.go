@@ -121,6 +121,7 @@ func uploadHandler(c *gin.Context) {
 	filePaths = append(filePaths, filePath)
 
 	tmpdir, err := ioutil.TempDir("", "extrafiles")
+	tmpdir=filepath.Clean(tmpdir)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
