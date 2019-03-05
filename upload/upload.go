@@ -55,7 +55,7 @@ func PartiallyResolve(board, file, platformPath, commandline string, extra Extra
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
 	commandline = strings.Replace(commandline, "{network.password}", extra.Auth.Password, -1)
-	commandline = strings.Replace(commandline, "{runtime.platform.path}", platformPath, -1)
+	commandline = strings.Replace(commandline, "{runtime.platform.path}", filepath.ToSlash(platformPath), -1)
 
 	if extra.Verbose == true {
 		commandline = strings.Replace(commandline, "{upload.verbose}", extra.ParamsVerbose, -1)
