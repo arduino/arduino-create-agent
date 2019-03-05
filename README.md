@@ -380,7 +380,7 @@ The results of the upload will be delivered via websocket with messages that loo
 
 ## Development
 
-Please remember that for compile the project, you need go version <= 1.8.7 (more recent versions are not supported for compile)
+Please remember that for compile the project, you need go version >= 1.10.x (older versions are not supported for compile)
 
 To clone the repository, run the following command:
 ```
@@ -398,7 +398,7 @@ go build
 This will create the `arduino-create-agent` binary.
 
 Other prerequisites are:
-* libappindicator (Linux only on Ubuntu `sudo apt-get install libappindicator1`)
+* libappindicator (Linux only on Ubuntu `sudo apt-get install libappindicator1 libappindicator3-0.1-cil libappindicator3-0.1-cil-dev libappindicator3-1 libappindicator3-dev libgtk-3-0 libgtk-3-dev`)
 * [go-selfupdate] (https://github.com/sanbornm/go-selfupdate) if you want to test automatic updates
 
 ## Submitting an issue
