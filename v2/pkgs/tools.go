@@ -73,7 +73,13 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 	// Find packagers
 	packagers, err := ioutil.ReadDir(c.Folder)
 	if err != nil {
-		return nil, err
+		if !strings.Contains(err.Error(), "no such file") {
+			return nil, err
+		}
+		err = os.MkdirAll(c.Folder, 0755)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for _, packager := range packagers {
@@ -186,13 +192,10 @@ func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
 }
 
 func rename(base string) extract.Renamer {
-	fmt.Println("rename ", base)
 	return func(path string) string {
 		parts := strings.Split(path, string(filepath.Separator))
 		path = strings.Join(parts[1:], string(filepath.Separator))
 		path = filepath.Join(base, path)
-
-		fmt.Println(path)
 
 		return path
 	}
