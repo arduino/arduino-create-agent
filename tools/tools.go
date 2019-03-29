@@ -2,6 +2,7 @@ package tools
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -59,6 +60,16 @@ func (t *Tools) GetLocation(command string) (string, error) {
 
 	var location string
 	var ok bool
+
+	// Load installed
+	fmt.Println(t.installed)
+
+	err := t.readMap()
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println(t.installed)
 
 	// use string similarity to resolve a runtime var with a "similar" map element
 	if location, ok = t.installed[command]; !ok {

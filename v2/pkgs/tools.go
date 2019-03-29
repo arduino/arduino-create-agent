@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -181,6 +182,12 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) error {
 		return errors.New("checksum doesn't match")
 	}
 
+	// Write installed.json for retrocompatibility with v1
+	err = writeInstalled(c.Folder, path)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -223,4 +230,29 @@ func findSystem(tool Tool) int {
 	}
 
 	return correctSystem
+}
+
+func writeInstalled(folder, path string) error {
+	// read installed.json
+	installed := map[string]string{}
+
+	data, err := ioutil.ReadFile(filepath.Join(folder, "installed.json"))
+	if err == nil {
+		err = json.Unmarshal(data, &installed)
+		if err != nil {
+			return err
+		}
+	}
+
+	parts := strings.Split(path, string(filepath.Separator))
+	tool := parts[len(parts)-2]
+
+	installed[tool] = filepath.Join(folder, path)
+
+	data, err = json.Marshal(installed)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(filepath.Join(folder, "installed.json"), data, 0644)
 }
