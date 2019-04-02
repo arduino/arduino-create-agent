@@ -44,7 +44,7 @@ required = ["goa.design/goa/codegen/generator"]
 
 [[constraint]]
   name = "github.com/go-ini/ini"
-  version = "1.39.0"
+  version = "1.42.0"
 
 [[constraint]]
   branch = "master"
