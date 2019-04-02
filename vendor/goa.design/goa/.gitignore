@@ -1,0 +1,26 @@
+# Golang tools artifacts
+**/*.coverprofile
+**/*.test
+vendor
+
+# Executables and test outputs
+_integration_tests/*/**/*.*
+cmd/goagen/goagen
+
+# Editor / IDEs cruft
+.idea/
+*.iml
+.vscode/
+*~
+*.orig
+*.swp
+
+# OSes cruft
+.DS_Store
+
+# Example outputs
+/examples/account/cmd/*
+/examples/account/account
+/examples/cellar/cmd/cellarsvc/cellar.db
+examples/calc/cmd/calc/calc
+examples/calc/cmd/calc-cli/calc-cli

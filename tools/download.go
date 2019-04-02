@@ -227,7 +227,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	// Decompress
 	t.Logger("Unpacking tool " + name)
 
-	location := path.Join( dir(), pack, correctTool.Name, correctTool.Version)
+	location := path.Join(dir(), pack, correctTool.Name, correctTool.Version)
 	err = os.RemoveAll(location)
 
 	if err != nil {
@@ -393,7 +393,7 @@ func findBaseDir(dirList []string) string {
 	return commonBaseDir
 }
 
-func  extractZip(log func(msg string) , body []byte, location string) (string, error) {
+func extractZip(log func(msg string), body []byte, location string) (string, error) {
 	path, err := utilities.SaveFileonTempDir("tooldownloaded.zip", bytes.NewReader(body))
 	r, err := zip.OpenReader(path)
 	if err != nil {
@@ -442,7 +442,7 @@ func  extractZip(log func(msg string) , body []byte, location string) (string, e
 	return location, nil
 }
 
-func extractTarGz(log func(msg string),body []byte, location string) (string, error) {
+func extractTarGz(log func(msg string), body []byte, location string) (string, error) {
 	bodyCopy := make([]byte, len(body))
 	copy(bodyCopy, body)
 	tarFile, _ := gzip.NewReader(bytes.NewReader(body))
@@ -506,8 +506,7 @@ func extractTarGz(log func(msg string),body []byte, location string) (string, er
 	return location, nil
 }
 
-
-func  extractBz2(log func(msg string),body []byte, location string) (string, error) {
+func extractBz2(log func(msg string), body []byte, location string) (string, error) {
 	bodyCopy := make([]byte, len(body))
 	copy(bodyCopy, body)
 	tarFile := bzip2.NewReader(bytes.NewReader(body))
@@ -572,7 +571,6 @@ func  extractBz2(log func(msg string),body []byte, location string) (string, err
 	}
 	return location, nil
 }
-
 
 func (t *Tools) installDrivers(location string) error {
 	OK_PRESSED := 6

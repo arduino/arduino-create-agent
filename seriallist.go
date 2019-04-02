@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial.v1/enumerator"
 )
 

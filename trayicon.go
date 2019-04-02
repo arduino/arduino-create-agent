@@ -35,11 +35,11 @@ import (
 	"path/filepath"
 	"runtime"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/facchinm/systray"
 	"github.com/go-ini/ini"
 	"github.com/kardianos/osext"
+	log "github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	"go.bug.st/serial.v1"
 )

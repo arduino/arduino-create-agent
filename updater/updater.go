@@ -14,9 +14,9 @@ import (
 	"runtime"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/inconshreveable/go-update.v0"
 	"github.com/kr/binarydist"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/inconshreveable/go-update.v0"
 
 	"github.com/kardianos/osext"
 )
