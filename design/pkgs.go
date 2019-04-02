@@ -20,6 +20,7 @@ var _ = Service("indexes", func() {
 
 	Method("add", func() {
 		Payload(IndexPayload)
+		Result(Operation)
 		HTTP(func() {
 			POST("/pkgs/indexes/add")
 			Response(StatusOK)
@@ -28,6 +29,7 @@ var _ = Service("indexes", func() {
 
 	Method("remove", func() {
 		Payload(IndexPayload)
+		Result(Operation)
 		HTTP(func() {
 			POST("/pkgs/indexes/delete")
 			Response(StatusOK)
@@ -60,6 +62,7 @@ var _ = Service("tools", func() {
 			Response("not_found", StatusBadRequest)
 		})
 		Payload(ToolPayload)
+		Result(Operation)
 		HTTP(func() {
 			PUT("/pkgs/tools/installed")
 			Response(StatusOK)
@@ -68,6 +71,7 @@ var _ = Service("tools", func() {
 
 	Method("remove", func() {
 		Payload(ToolPayload)
+		Result(Operation)
 
 		HTTP(func() {
 			DELETE("/pkgs/tools/installed/{packager}/{name}/{version}")
@@ -119,4 +123,14 @@ var Tool = ResultType("application/vnd.arduino.tool", func() {
 	Attribute("packager")
 
 	Required("name", "version", "packager")
+})
+
+var Operation = ResultType("application/vnd.arduino.operation", func() {
+	Description("Describes the result of an operation.")
+	TypeName("Operation")
+
+	Attribute("status", String, "The status of the operation", func() {
+		Example("ok")
+	})
+	Required("status")
 })

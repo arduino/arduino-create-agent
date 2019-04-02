@@ -45,8 +45,11 @@ func EncodeInstalledResponse(encoder func(context.Context, http.ResponseWriter) 
 // install endpoint.
 func EncodeInstallResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		res := v.(*toolsviews.Operation)
+		enc := encoder(ctx, w)
+		body := NewInstallResponseBody(res.Projected)
 		w.WriteHeader(http.StatusOK)
-		return nil
+		return enc.Encode(body)
 	}
 }
 
@@ -79,8 +82,11 @@ func DecodeInstallRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp
 // remove endpoint.
 func EncodeRemoveResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		res := v.(*toolsviews.Operation)
+		enc := encoder(ctx, w)
+		body := NewRemoveResponseBody(res.Projected)
 		w.WriteHeader(http.StatusOK)
-		return nil
+		return enc.Encode(body)
 	}
 }
 

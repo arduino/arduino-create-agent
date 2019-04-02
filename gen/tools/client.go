@@ -55,13 +55,21 @@ func (c *Client) Installed(ctx context.Context) (res ToolCollection, err error) 
 // Install may return the following errors:
 //	- "not_found" (type *goa.ServiceError): tool not found
 //	- error: internal error
-func (c *Client) Install(ctx context.Context, p *ToolPayload) (err error) {
-	_, err = c.InstallEndpoint(ctx, p)
-	return
+func (c *Client) Install(ctx context.Context, p *ToolPayload) (res *Operation, err error) {
+	var ires interface{}
+	ires, err = c.InstallEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*Operation), nil
 }
 
 // Remove calls the "remove" endpoint of the "tools" service.
-func (c *Client) Remove(ctx context.Context, p *ToolPayload) (err error) {
-	_, err = c.RemoveEndpoint(ctx, p)
-	return
+func (c *Client) Remove(ctx context.Context, p *ToolPayload) (res *Operation, err error) {
+	var ires interface{}
+	ires, err = c.RemoveEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*Operation), nil
 }

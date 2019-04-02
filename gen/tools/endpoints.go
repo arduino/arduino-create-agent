@@ -70,7 +70,12 @@ func NewInstalledEndpoint(s Service) goa.Endpoint {
 func NewInstallEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		p := req.(*ToolPayload)
-		return nil, s.Install(ctx, p)
+		res, err := s.Install(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		vres := NewViewedOperation(res, "default")
+		return vres, nil
 	}
 }
 
@@ -79,6 +84,11 @@ func NewInstallEndpoint(s Service) goa.Endpoint {
 func NewRemoveEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		p := req.(*ToolPayload)
-		return nil, s.Remove(ctx, p)
+		res, err := s.Remove(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		vres := NewViewedOperation(res, "default")
+		return vres, nil
 	}
 }

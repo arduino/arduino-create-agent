@@ -15,6 +15,7 @@ import (
 	"net/url"
 
 	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
+	indexesviews "github.com/arduino/arduino-create-agent/gen/indexes/views"
 	goahttp "goa.design/goa/http"
 )
 
@@ -138,7 +139,22 @@ func DecodeAddResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body AddResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("indexes", "add", err)
+			}
+			p := NewAddOperationOK(&body)
+			view := "default"
+			vres := &indexesviews.Operation{p, view}
+			if err = indexesviews.ValidateOperation(vres); err != nil {
+				return nil, goahttp.ErrValidationError("indexes", "add", err)
+			}
+			res := indexes.NewOperation(vres)
+			return res, nil
 		case http.StatusBadRequest:
 			var (
 				body AddInvalidURLResponseBody
@@ -213,7 +229,22 @@ func DecodeRemoveResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body RemoveResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("indexes", "remove", err)
+			}
+			p := NewRemoveOperationOK(&body)
+			view := "default"
+			vres := &indexesviews.Operation{p, view}
+			if err = indexesviews.ValidateOperation(vres); err != nil {
+				return nil, goahttp.ErrValidationError("indexes", "remove", err)
+			}
+			res := indexes.NewOperation(vres)
+			return res, nil
 		case http.StatusBadRequest:
 			var (
 				body RemoveInvalidURLResponseBody

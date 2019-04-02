@@ -19,6 +19,14 @@ type ToolCollection struct {
 	View string
 }
 
+// Operation is the viewed result type that is projected based on a view.
+type Operation struct {
+	// Type to project
+	Projected *OperationView
+	// View to render
+	View string
+}
+
 // ToolCollectionView is a type that runs validations on a projected type.
 type ToolCollectionView []*ToolView
 
@@ -32,12 +40,30 @@ type ToolView struct {
 	Packager *string
 }
 
+// OperationView is a type that runs validations on a projected type.
+type OperationView struct {
+	// The status of the operation
+	Status *string
+}
+
 // ValidateToolCollection runs the validations defined on the viewed result
 // type ToolCollection.
 func ValidateToolCollection(result ToolCollection) (err error) {
 	switch result.View {
 	case "default", "":
 		err = ValidateToolCollectionView(result.Projected)
+	default:
+		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
+	}
+	return
+}
+
+// ValidateOperation runs the validations defined on the viewed result type
+// Operation.
+func ValidateOperation(result *Operation) (err error) {
+	switch result.View {
+	case "default", "":
+		err = ValidateOperationView(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []interface{}{"default"})
 	}
@@ -66,6 +92,15 @@ func ValidateToolView(result *ToolView) (err error) {
 	}
 	if result.Packager == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("packager", "result"))
+	}
+	return
+}
+
+// ValidateOperationView runs the validations defined on OperationView using
+// the "default" view.
+func ValidateOperationView(result *OperationView) (err error) {
+	if result.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
 	}
 	return
 }

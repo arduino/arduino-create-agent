@@ -44,13 +44,13 @@ func TestIndexes(t *testing.T) {
 	}
 
 	// Add a faulty index
-	err = service.Add(ctx, &indexes.IndexPayload{URL: ":"})
+	_, err = service.Add(ctx, &indexes.IndexPayload{URL: ":"})
 	if err == nil || !strings.Contains(err.Error(), "parse :: missing protocol scheme") {
 		t.Fatalf("expected '%v' == '%v' (%s)", err, "parse :: missing protocol scheme", "err")
 	}
 
 	// Add a new index
-	err = service.Add(ctx, &indexes.IndexPayload{URL: ts.URL})
+	_, err = service.Add(ctx, &indexes.IndexPayload{URL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestIndexes(t *testing.T) {
 	}
 
 	// Remove the index
-	err = service.Remove(ctx, &indexes.IndexPayload{URL: ts.URL})
+	_, err = service.Remove(ctx, &indexes.IndexPayload{URL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}

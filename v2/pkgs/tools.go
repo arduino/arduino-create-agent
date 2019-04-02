@@ -117,7 +117,7 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 
 // Install crawles the Index folder, downloads the specified tool, extracts the archive in the Tools Folder.
 // It checks for the Signature specified in the package index.
-func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
+func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
 	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
 
 	if payload.URL != nil {
@@ -126,13 +126,13 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 
 	list, err := c.Indexes.List(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, url := range list {
 		index, err := c.Indexes.Get(ctx, url)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, packager := range index.Packages {
@@ -152,16 +152,16 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) error {
 		}
 	}
 
-	return tools.MakeNotFound(
+	return nil, tools.MakeNotFound(
 		fmt.Errorf("tool not found with packager '%s', name '%s', version '%s'",
 			payload.Packager, payload.Name, payload.Version))
 }
 
-func (c *Tools) install(ctx context.Context, path, url, checksum string) error {
+func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools.Operation, error) {
 	// Download
 	res, err := http.Get(url)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -171,7 +171,7 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) error {
 
 	err = extract.Archive(ctx, reader, c.Folder, rename(path))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	sum := sha256.Sum256(buffer.Bytes())
@@ -179,23 +179,28 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) error {
 
 	if sumString != checksum {
 		os.RemoveAll(path)
-		return errors.New("checksum doesn't match")
+		return nil, errors.New("checksum doesn't match")
 	}
 
 	// Write installed.json for retrocompatibility with v1
 	err = writeInstalled(c.Folder, path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &tools.Operation{Status: "ok"}, nil
 }
 
 // Remove deletes the tool folder from Tools Folder
-func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) error {
+func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
 	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
 
-	return os.RemoveAll(filepath.Join(c.Folder, path))
+	err := os.RemoveAll(filepath.Join(c.Folder, path))
+	if err != nil {
+		return nil, err
+	}
+
+	return &tools.Operation{Status: "ok"}, nil
 }
 
 func rename(base string) extract.Renamer {

@@ -43,7 +43,7 @@ func TestTools(t *testing.T) {
 	ctx := context.Background()
 
 	// Add a new index
-	err = indexesClient.Add(ctx, &indexes.IndexPayload{URL: ts.URL})
+	_, err = indexesClient.Add(ctx, &indexes.IndexPayload{URL: ts.URL})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestTools(t *testing.T) {
 	}
 
 	// Try to install a non-existent tool
-	err = service.Install(ctx, &tools.ToolPayload{})
+	_, err = service.Install(ctx, &tools.ToolPayload{})
 	if err == nil || !strings.Contains(err.Error(), "tool not found with packager '', name '', version ''") {
 		t.Fatalf("expected '%v' == '%v' (%s)", err, "tool not found with packager '', name '', version ''", "err")
 	}
@@ -72,7 +72,7 @@ func TestTools(t *testing.T) {
 		t.Fatalf("expected %d == %d (%s)", len(installed), 0, "len(installed)")
 	}
 
-	err = service.Install(ctx, &tools.ToolPayload{
+	_, err = service.Install(ctx, &tools.ToolPayload{
 		Packager: "arduino",
 		Name:     "avrdude",
 		Version:  "6.0.1-arduino2",
@@ -90,7 +90,7 @@ func TestTools(t *testing.T) {
 	}
 
 	// Remove tool
-	err = service.Remove(ctx, &tools.ToolPayload{
+	_, err = service.Remove(ctx, &tools.ToolPayload{
 		Packager: "arduino",
 		Name:     "avrdude",
 		Version:  "6.0.1-arduino2",
@@ -108,7 +108,7 @@ func TestTools(t *testing.T) {
 	}
 
 	// Install a tool by specifying url and checksum
-	err = service.Install(ctx, &tools.ToolPayload{
+	_, err = service.Install(ctx, &tools.ToolPayload{
 		Packager: "arduino",
 		Name:     "avrdude",
 		Version:  "6.0.1-arduino2",

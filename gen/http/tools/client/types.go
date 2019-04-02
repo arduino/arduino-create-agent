@@ -49,6 +49,20 @@ type AvailableResponseBody []*ToolResponse
 // endpoint HTTP response body.
 type InstalledResponseBody []*ToolResponse
 
+// InstallResponseBody is the type of the "tools" service "install" endpoint
+// HTTP response body.
+type InstallResponseBody struct {
+	// The status of the operation
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+}
+
+// RemoveResponseBody is the type of the "tools" service "remove" endpoint HTTP
+// response body.
+type RemoveResponseBody struct {
+	// The status of the operation
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+}
+
 // ToolResponse is used to define fields on response body types.
 type ToolResponse struct {
 	// The name of the tool
@@ -106,6 +120,24 @@ func NewInstalledToolCollectionOK(body InstalledResponseBody) toolsviews.ToolCol
 			Version:  val.Version,
 			Packager: val.Packager,
 		}
+	}
+	return v
+}
+
+// NewInstallOperationOK builds a "tools" service "install" endpoint result
+// from a HTTP "OK" response.
+func NewInstallOperationOK(body *InstallResponseBody) *toolsviews.OperationView {
+	v := &toolsviews.OperationView{
+		Status: body.Status,
+	}
+	return v
+}
+
+// NewRemoveOperationOK builds a "tools" service "remove" endpoint result from
+// a HTTP "OK" response.
+func NewRemoveOperationOK(body *RemoveResponseBody) *toolsviews.OperationView {
+	v := &toolsviews.OperationView{
+		Status: body.Status,
 	}
 	return v
 }

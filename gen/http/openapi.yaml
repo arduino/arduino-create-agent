@@ -63,6 +63,8 @@ paths:
       responses:
         "200":
           description: OK response.
+          schema:
+            $ref: '#/definitions/IndexesAddResponseBody'
         "400":
           description: Bad Request response.
           schema:
@@ -86,6 +88,8 @@ paths:
       responses:
         "200":
           description: OK response.
+          schema:
+            $ref: '#/definitions/IndexesRemoveResponseBody'
         "400":
           description: Bad Request response.
           schema:
@@ -136,6 +140,8 @@ paths:
       responses:
         "200":
           description: OK response.
+          schema:
+            $ref: '#/definitions/ToolsInstallResponseBody'
       schemes:
       - http
   /v2/pkgs/tools/installed/{packager}/{name}/{version}:
@@ -168,6 +174,8 @@ paths:
       responses:
         "200":
           description: OK response.
+          schema:
+            $ref: '#/definitions/ToolsRemoveResponseBody'
       schemes:
       - http
 definitions:
@@ -183,6 +191,19 @@ definitions:
       url: http://downloads.arduino.cc/packages/package_index.json
     required:
     - url
+  IndexesAddResponseBody:
+    title: 'Mediatype identifier: application/vnd.arduino.operation; view=default'
+    type: object
+    properties:
+      status:
+        type: string
+        description: The status of the operation
+        example: ok
+    description: AddResponseBody result type (default view)
+    example:
+      status: ok
+    required:
+    - status
   IndexesRemoveRequestBody:
     title: IndexesRemoveRequestBody
     type: object
@@ -195,6 +216,19 @@ definitions:
       url: http://downloads.arduino.cc/packages/package_index.json
     required:
     - url
+  IndexesRemoveResponseBody:
+    title: 'Mediatype identifier: application/vnd.arduino.operation; view=default'
+    type: object
+    properties:
+      status:
+        type: string
+        description: The status of the operation
+        example: ok
+    description: RemoveResponseBody result type (default view)
+    example:
+      status: ok
+    required:
+    - status
   Indexesadd_invalid_url_response_body:
     title: 'Mediatype identifier: application/vnd.goa.error; view=default'
     type: object
@@ -392,6 +426,19 @@ definitions:
     - name
     - version
     - packager
+  ToolsInstallResponseBody:
+    title: 'Mediatype identifier: application/vnd.arduino.operation; view=default'
+    type: object
+    properties:
+      status:
+        type: string
+        description: The status of the operation
+        example: ok
+    description: InstallResponseBody result type (default view)
+    example:
+      status: ok
+    required:
+    - status
   ToolsRemoveRequestBody:
     title: ToolsRemoveRequestBody
     type: object
@@ -409,6 +456,19 @@ definitions:
     example:
       checksum: Qui modi dolorem.
       url: In voluptatibus.
+  ToolsRemoveResponseBody:
+    title: 'Mediatype identifier: application/vnd.arduino.operation; view=default'
+    type: object
+    properties:
+      status:
+        type: string
+        description: The status of the operation
+        example: ok
+    description: RemoveResponseBody result type (default view)
+    example:
+      status: ok
+    required:
+    - status
   ToolsToolResponseCollection:
     title: 'Mediatype identifier: application/vnd.arduino.tool; type=collection; view=default'
     type: array

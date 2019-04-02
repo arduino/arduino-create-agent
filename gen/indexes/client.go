@@ -40,13 +40,21 @@ func (c *Client) List(ctx context.Context) (res []string, err error) {
 }
 
 // Add calls the "add" endpoint of the "indexes" service.
-func (c *Client) Add(ctx context.Context, p *IndexPayload) (err error) {
-	_, err = c.AddEndpoint(ctx, p)
-	return
+func (c *Client) Add(ctx context.Context, p *IndexPayload) (res *Operation, err error) {
+	var ires interface{}
+	ires, err = c.AddEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*Operation), nil
 }
 
 // Remove calls the "remove" endpoint of the "indexes" service.
-func (c *Client) Remove(ctx context.Context, p *IndexPayload) (err error) {
-	_, err = c.RemoveEndpoint(ctx, p)
-	return
+func (c *Client) Remove(ctx context.Context, p *IndexPayload) (res *Operation, err error) {
+	var ires interface{}
+	ires, err = c.RemoveEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*Operation), nil
 }

@@ -22,11 +22,11 @@ type Indexes struct {
 // Add downloads the index file found at the url contained in the payload, and saves it in the Indexes Folder.
 // If called with an already existing index, it overwrites the file.
 // It can fail if the payload is not defined, if it contains an invalid url.
-func (c *Indexes) Add(ctx context.Context, payload *indexes.IndexPayload) error {
+func (c *Indexes) Add(ctx context.Context, payload *indexes.IndexPayload) (*indexes.Operation, error) {
 	// Parse url
 	indexURL, err := url.Parse(payload.URL)
 	if err != nil {
-		return indexes.MakeInvalidURL(err)
+		return nil, indexes.MakeInvalidURL(err)
 	}
 
 	// Download tmp file
@@ -34,20 +34,20 @@ func (c *Indexes) Add(ctx context.Context, payload *indexes.IndexPayload) error 
 	path := filepath.Join(c.Folder, filename+".tmp")
 	d, err := downloader.Download(path, indexURL.String())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = d.Run()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Move tmp file
 	err = os.Rename(path, filepath.Join(c.Folder, filename))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &indexes.Operation{Status: "ok"}, nil
 }
 
 // Get reads the index file from the Indexes Folder, unmarshaling it
@@ -90,7 +90,11 @@ func (c *Indexes) List(context.Context) ([]string, error) {
 }
 
 // Remove deletes the index file from the Indexes Folder
-func (c *Indexes) Remove(ctx context.Context, payload *indexes.IndexPayload) error {
+func (c *Indexes) Remove(ctx context.Context, payload *indexes.IndexPayload) (*indexes.Operation, error) {
 	filename := url.PathEscape(payload.URL)
-	return os.RemoveAll(filepath.Join(c.Folder, filename))
+	err := os.RemoveAll(filepath.Join(c.Folder, filename))
+	if err != nil {
+		return nil, err
+	}
+	return &indexes.Operation{Status: "ok"}, nil
 }

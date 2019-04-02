@@ -10,6 +10,7 @@ package indexes
 import (
 	"context"
 
+	indexesviews "github.com/arduino/arduino-create-agent/gen/indexes/views"
 	"goa.design/goa"
 )
 
@@ -18,9 +19,9 @@ type Service interface {
 	// List implements list.
 	List(context.Context) (res []string, err error)
 	// Add implements add.
-	Add(context.Context, *IndexPayload) (err error)
+	Add(context.Context, *IndexPayload) (res *Operation, err error)
 	// Remove implements remove.
-	Remove(context.Context, *IndexPayload) (err error)
+	Remove(context.Context, *IndexPayload) (res *Operation, err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -39,6 +40,12 @@ type IndexPayload struct {
 	URL string
 }
 
+// Operation is the result type of the indexes service add method.
+type Operation struct {
+	// The status of the operation
+	Status string
+}
+
 // MakeInvalidURL builds a goa.ServiceError from an error.
 func MakeInvalidURL(err error) *goa.ServiceError {
 	return &goa.ServiceError{
@@ -46,4 +53,45 @@ func MakeInvalidURL(err error) *goa.ServiceError {
 		ID:      goa.NewErrorID(),
 		Message: err.Error(),
 	}
+}
+
+// NewOperation initializes result type Operation from viewed result type
+// Operation.
+func NewOperation(vres *indexesviews.Operation) *Operation {
+	var res *Operation
+	switch vres.View {
+	case "default", "":
+		res = newOperation(vres.Projected)
+	}
+	return res
+}
+
+// NewViewedOperation initializes viewed result type Operation from result type
+// Operation using the given view.
+func NewViewedOperation(res *Operation, view string) *indexesviews.Operation {
+	var vres *indexesviews.Operation
+	switch view {
+	case "default", "":
+		p := newOperationView(res)
+		vres = &indexesviews.Operation{p, "default"}
+	}
+	return vres
+}
+
+// newOperation converts projected type Operation to service type Operation.
+func newOperation(vres *indexesviews.OperationView) *Operation {
+	res := &Operation{}
+	if vres.Status != nil {
+		res.Status = *vres.Status
+	}
+	return res
+}
+
+// newOperationView projects result type Operation into projected type
+// OperationView using the "default" view.
+func newOperationView(res *Operation) *indexesviews.OperationView {
+	vres := &indexesviews.OperationView{
+		Status: &res.Status,
+	}
+	return vres
 }

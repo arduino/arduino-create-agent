@@ -9,6 +9,7 @@ package client
 
 import (
 	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
+	indexesviews "github.com/arduino/arduino-create-agent/gen/indexes/views"
 	goa "goa.design/goa"
 )
 
@@ -24,6 +25,20 @@ type AddRequestBody struct {
 type RemoveRequestBody struct {
 	// The url of the index file
 	URL string `form:"url" json:"url" xml:"url"`
+}
+
+// AddResponseBody is the type of the "indexes" service "add" endpoint HTTP
+// response body.
+type AddResponseBody struct {
+	// The status of the operation
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+}
+
+// RemoveResponseBody is the type of the "indexes" service "remove" endpoint
+// HTTP response body.
+type RemoveResponseBody struct {
+	// The status of the operation
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 }
 
 // ListInvalidURLResponseBody is the type of the "indexes" service "list"
@@ -111,6 +126,15 @@ func NewListInvalidURL(body *ListInvalidURLResponseBody) *goa.ServiceError {
 	return v
 }
 
+// NewAddOperationOK builds a "indexes" service "add" endpoint result from a
+// HTTP "OK" response.
+func NewAddOperationOK(body *AddResponseBody) *indexesviews.OperationView {
+	v := &indexesviews.OperationView{
+		Status: body.Status,
+	}
+	return v
+}
+
 // NewAddInvalidURL builds a indexes service add endpoint invalid_url error.
 func NewAddInvalidURL(body *AddInvalidURLResponseBody) *goa.ServiceError {
 	v := &goa.ServiceError{
@@ -120,6 +144,15 @@ func NewAddInvalidURL(body *AddInvalidURLResponseBody) *goa.ServiceError {
 		Temporary: *body.Temporary,
 		Timeout:   *body.Timeout,
 		Fault:     *body.Fault,
+	}
+	return v
+}
+
+// NewRemoveOperationOK builds a "indexes" service "remove" endpoint result
+// from a HTTP "OK" response.
+func NewRemoveOperationOK(body *RemoveResponseBody) *indexesviews.OperationView {
+	v := &indexesviews.OperationView{
+		Status: body.Status,
 	}
 	return v
 }

@@ -9,6 +9,7 @@ package server
 
 import (
 	indexes "github.com/arduino/arduino-create-agent/gen/indexes"
+	indexesviews "github.com/arduino/arduino-create-agent/gen/indexes/views"
 	goa "goa.design/goa"
 )
 
@@ -24,6 +25,20 @@ type AddRequestBody struct {
 type RemoveRequestBody struct {
 	// The url of the index file
 	URL *string `form:"url,omitempty" json:"url,omitempty" xml:"url,omitempty"`
+}
+
+// AddResponseBody is the type of the "indexes" service "add" endpoint HTTP
+// response body.
+type AddResponseBody struct {
+	// The status of the operation
+	Status string `form:"status" json:"status" xml:"status"`
+}
+
+// RemoveResponseBody is the type of the "indexes" service "remove" endpoint
+// HTTP response body.
+type RemoveResponseBody struct {
+	// The status of the operation
+	Status string `form:"status" json:"status" xml:"status"`
 }
 
 // ListInvalidURLResponseBody is the type of the "indexes" service "list"
@@ -78,6 +93,24 @@ type RemoveInvalidURLResponseBody struct {
 	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
 	// Is the error a server-side fault?
 	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
+// NewAddResponseBody builds the HTTP response body from the result of the
+// "add" endpoint of the "indexes" service.
+func NewAddResponseBody(res *indexesviews.OperationView) *AddResponseBody {
+	body := &AddResponseBody{
+		Status: *res.Status,
+	}
+	return body
+}
+
+// NewRemoveResponseBody builds the HTTP response body from the result of the
+// "remove" endpoint of the "indexes" service.
+func NewRemoveResponseBody(res *indexesviews.OperationView) *RemoveResponseBody {
+	body := &RemoveResponseBody{
+		Status: *res.Status,
+	}
+	return body
 }
 
 // NewListInvalidURLResponseBody builds the HTTP response body from the result

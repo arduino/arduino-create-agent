@@ -183,7 +183,22 @@ func DecodeInstallResponse(decoder func(*http.Response) goahttp.Decoder, restore
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body InstallResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tools", "install", err)
+			}
+			p := NewInstallOperationOK(&body)
+			view := "default"
+			vres := &toolsviews.Operation{p, view}
+			if err = toolsviews.ValidateOperation(vres); err != nil {
+				return nil, goahttp.ErrValidationError("tools", "install", err)
+			}
+			res := tools.NewOperation(vres)
+			return res, nil
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("tools", "install", resp.StatusCode, string(body))
@@ -255,7 +270,22 @@ func DecodeRemoveResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 		}
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return nil, nil
+			var (
+				body RemoveResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tools", "remove", err)
+			}
+			p := NewRemoveOperationOK(&body)
+			view := "default"
+			vres := &toolsviews.Operation{p, view}
+			if err = toolsviews.ValidateOperation(vres); err != nil {
+				return nil, goahttp.ErrValidationError("tools", "remove", err)
+			}
+			res := tools.NewOperation(vres)
+			return res, nil
 		default:
 			body, _ := ioutil.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("tools", "remove", resp.StatusCode, string(body))

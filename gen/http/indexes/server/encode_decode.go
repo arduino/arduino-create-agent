@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 
+	indexesviews "github.com/arduino/arduino-create-agent/gen/indexes/views"
 	goa "goa.design/goa"
 	goahttp "goa.design/goa/http"
 )
@@ -55,8 +56,11 @@ func EncodeListError(encoder func(context.Context, http.ResponseWriter) goahttp.
 // add endpoint.
 func EncodeAddResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		res := v.(*indexesviews.Operation)
+		enc := encoder(ctx, w)
+		body := NewAddResponseBody(res.Projected)
 		w.WriteHeader(http.StatusOK)
-		return nil
+		return enc.Encode(body)
 	}
 }
 
@@ -112,8 +116,11 @@ func EncodeAddError(encoder func(context.Context, http.ResponseWriter) goahttp.E
 // indexes remove endpoint.
 func EncodeRemoveResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, interface{}) error {
 	return func(ctx context.Context, w http.ResponseWriter, v interface{}) error {
+		res := v.(*indexesviews.Operation)
+		enc := encoder(ctx, w)
+		body := NewRemoveResponseBody(res.Projected)
 		w.WriteHeader(http.StatusOK)
-		return nil
+		return enc.Encode(body)
 	}
 }
 

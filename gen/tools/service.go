@@ -21,9 +21,9 @@ type Service interface {
 	// Installed implements installed.
 	Installed(context.Context) (res ToolCollection, err error)
 	// Install implements install.
-	Install(context.Context, *ToolPayload) (err error)
+	Install(context.Context, *ToolPayload) (res *Operation, err error)
 	// Remove implements remove.
-	Remove(context.Context, *ToolPayload) (err error)
+	Remove(context.Context, *ToolPayload) (res *Operation, err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -53,6 +53,12 @@ type ToolPayload struct {
 	// A checksum of the archive. Mandatory when url is present.
 	// This ensures that the package is downloaded correcly.
 	Checksum *string
+}
+
+// Operation is the result type of the tools service install method.
+type Operation struct {
+	// The status of the operation
+	Status string
 }
 
 // A tool is an executable program that can upload sketches.
@@ -93,6 +99,29 @@ func NewViewedToolCollection(res ToolCollection, view string) toolsviews.ToolCol
 	case "default", "":
 		p := newToolCollectionView(res)
 		vres = toolsviews.ToolCollection{p, "default"}
+	}
+	return vres
+}
+
+// NewOperation initializes result type Operation from viewed result type
+// Operation.
+func NewOperation(vres *toolsviews.Operation) *Operation {
+	var res *Operation
+	switch vres.View {
+	case "default", "":
+		res = newOperation(vres.Projected)
+	}
+	return res
+}
+
+// NewViewedOperation initializes viewed result type Operation from result type
+// Operation using the given view.
+func NewViewedOperation(res *Operation, view string) *toolsviews.Operation {
+	var vres *toolsviews.Operation
+	switch view {
+	case "default", "":
+		p := newOperationView(res)
+		vres = &toolsviews.Operation{p, "default"}
 	}
 	return vres
 }
@@ -139,6 +168,24 @@ func newToolView(res *Tool) *toolsviews.ToolView {
 		Name:     &res.Name,
 		Version:  &res.Version,
 		Packager: &res.Packager,
+	}
+	return vres
+}
+
+// newOperation converts projected type Operation to service type Operation.
+func newOperation(vres *toolsviews.OperationView) *Operation {
+	res := &Operation{}
+	if vres.Status != nil {
+		res.Status = *vres.Status
+	}
+	return res
+}
+
+// newOperationView projects result type Operation into projected type
+// OperationView using the "default" view.
+func newOperationView(res *Operation) *toolsviews.OperationView {
+	vres := &toolsviews.OperationView{
+		Status: &res.Status,
 	}
 	return vres
 }
