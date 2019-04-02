@@ -233,11 +233,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:caf6db28595425c0e0f2301a00257d11712f65c1878e12cffc42f6b9a9cf3f23"
+  digest = "1:f433da6fbabb0bd1bd730fd340782015c644123d02eb78c20c69ce03352daad1"
   name = "github.com/kardianos/osext"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
+  revision = "2bc1f35cddc0cc527b4bc3dce8578fc2a6c11384"
 
 [[projects]]
   digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
