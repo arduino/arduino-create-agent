@@ -15,14 +15,14 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/go-ini/ini"
-
-	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/utilities"
+	"github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/go-ini/ini"
 	cors "github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
+	log "github.com/sirupsen/logrus"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
 
@@ -287,6 +287,10 @@ func loop() {
 	r.POST("/killbrowser", killBrowserHandler)
 	r.POST("/pause", pauseHandler)
 	r.POST("/update", updateHandler)
+
+	// Mount goa handlers
+	goa := v2.Server(directory)
+	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
 		// check if certificates exist; if not, use plain http

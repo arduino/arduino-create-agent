@@ -33,8 +33,8 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/oleksandr/bonjour"
+	log "github.com/sirupsen/logrus"
 )
 
 const timeoutConst = 2

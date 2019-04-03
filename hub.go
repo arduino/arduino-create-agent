@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/kardianos/osext"
+	log "github.com/sirupsen/logrus"
 )
 
 type hub struct {
