@@ -169,8 +169,15 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	var buffer bytes.Buffer
 	reader := io.TeeReader(res.Body, &buffer)
 
+	// Cleanup
+	err = os.RemoveAll(filepath.Join(c.Folder, path))
+	if err != nil {
+		return nil, err
+	}
+
 	err = extract.Archive(ctx, reader, c.Folder, rename(path))
 	if err != nil {
+		os.RemoveAll(path)
 		return nil, err
 	}
 
