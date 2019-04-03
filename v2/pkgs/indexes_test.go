@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -27,6 +28,9 @@ func TestIndexes(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(tmp)
+
+	// Create extraneous folder in temp folder
+	os.MkdirAll(filepath.Join(tmp, "arduino"), 0755)
 
 	service := pkgs.Indexes{
 		Folder: tmp,
