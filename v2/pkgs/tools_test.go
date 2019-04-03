@@ -89,16 +89,6 @@ func TestTools(t *testing.T) {
 		t.Fatalf("expected %d == %d (%s)", len(installed), 1, "len(installed)")
 	}
 
-	// Install the tool again
-	_, err = service.Install(ctx, &tools.ToolPayload{
-		Packager: "arduino",
-		Name:     "avrdude",
-		Version:  "6.0.1-arduino2",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// Remove tool
 	_, err = service.Remove(ctx, &tools.ToolPayload{
 		Packager: "arduino",

@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/arduino/arduino-create-agent/gen/indexes"
 	"github.com/sirupsen/logrus"
@@ -78,17 +77,13 @@ func (c *Indexes) List(context.Context) ([]string, error) {
 		return nil, err
 	}
 
-	res := []string{}
-	for _, file := range files {
-		// Select only files that begin with http
-		if !strings.HasPrefix(file.Name(), "http") {
-			continue
-		}
+	res := make([]string, len(files))
+	for i, file := range files {
 		path, err := url.PathUnescape(file.Name())
 		if err != nil {
 			c.Log.Warn(err)
 		}
-		res = append(res, path)
+		res[i] = path
 	}
 
 	return res, nil
