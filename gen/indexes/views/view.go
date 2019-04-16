@@ -25,6 +25,16 @@ type OperationView struct {
 	Status *string
 }
 
+var (
+	// OperationMap is a map of attribute names in result type Operation indexed by
+	// view name.
+	OperationMap = map[string][]string{
+		"default": []string{
+			"status",
+		},
+	}
+)
+
 // ValidateOperation runs the validations defined on the viewed result type
 // Operation.
 func ValidateOperation(result *Operation) (err error) {

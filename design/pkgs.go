@@ -64,7 +64,7 @@ var _ = Service("tools", func() {
 		Payload(ToolPayload)
 		Result(Operation)
 		HTTP(func() {
-			PUT("/pkgs/tools/installed")
+			POST("/pkgs/tools/installed")
 			Response(StatusOK)
 		})
 	})

@@ -137,7 +137,7 @@ func DecodeInstalledResponse(decoder func(*http.Response) goahttp.Decoder, resto
 // set to call the "tools" service "install" endpoint
 func (c *Client) BuildInstallRequest(ctx context.Context, v interface{}) (*http.Request, error) {
 	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: InstallToolsPath()}
-	req, err := http.NewRequest("PUT", u.String(), nil)
+	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("tools", "install", u.String(), err)
 	}
