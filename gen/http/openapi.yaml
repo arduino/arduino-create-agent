@@ -122,7 +122,7 @@ paths:
             $ref: '#/definitions/ToolsToolResponseCollection'
       schemes:
       - http
-    put:
+    post:
       tags:
       - tools
       summary: install tools

@@ -54,7 +54,7 @@ func New(
 		Mounts: []*MountPoint{
 			{"Available", "GET", "/v2/pkgs/tools/available"},
 			{"Installed", "GET", "/v2/pkgs/tools/installed"},
-			{"Install", "PUT", "/v2/pkgs/tools/installed"},
+			{"Install", "POST", "/v2/pkgs/tools/installed"},
 			{"Remove", "DELETE", "/v2/pkgs/tools/installed/{packager}/{name}/{version}"},
 		},
 		Available: NewAvailableHandler(e.Available, mux, dec, enc, eh),
@@ -180,7 +180,7 @@ func MountInstallHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("PUT", "/v2/pkgs/tools/installed", f)
+	mux.Handle("POST", "/v2/pkgs/tools/installed", f)
 }
 
 // NewInstallHandler creates a HTTP handler which loads the HTTP request and

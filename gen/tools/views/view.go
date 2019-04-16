@@ -46,6 +46,33 @@ type OperationView struct {
 	Status *string
 }
 
+var (
+	// ToolCollectionMap is a map of attribute names in result type ToolCollection
+	// indexed by view name.
+	ToolCollectionMap = map[string][]string{
+		"default": []string{
+			"name",
+			"version",
+			"packager",
+		},
+	}
+	// OperationMap is a map of attribute names in result type Operation indexed by
+	// view name.
+	OperationMap = map[string][]string{
+		"default": []string{
+			"status",
+		},
+	}
+	// ToolMap is a map of attribute names in result type Tool indexed by view name.
+	ToolMap = map[string][]string{
+		"default": []string{
+			"name",
+			"version",
+			"packager",
+		},
+	}
+)
+
 // ValidateToolCollection runs the validations defined on the viewed result
 // type ToolCollection.
 func ValidateToolCollection(result ToolCollection) (err error) {
