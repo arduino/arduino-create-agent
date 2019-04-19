@@ -212,10 +212,9 @@ func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.
 
 func rename(base string) extract.Renamer {
 	return func(path string) string {
-		parts := strings.Split(path, string(filepath.Separator))
-		path = strings.Join(parts[1:], string(filepath.Separator))
+		parts := strings.Split(filepath.ToSlash(path), "/")
+		path = strings.Join(parts[1:], "/")
 		path = filepath.Join(base, path)
-
 		return path
 	}
 }
@@ -258,8 +257,9 @@ func writeInstalled(folder, path string) error {
 
 	parts := strings.Split(path, string(filepath.Separator))
 	tool := parts[len(parts)-2]
-
+	toolWithVersion := fmt.Sprint(tool, "-", parts[len(parts)-1])
 	installed[tool] = filepath.Join(folder, path)
+	installed[toolWithVersion] = filepath.Join(folder, path)
 
 	data, err = json.Marshal(installed)
 	if err != nil {
