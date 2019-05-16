@@ -301,6 +301,9 @@ func program(binary string, args []string, l Logger) error {
 	info(l, "Flashing with command:"+binary+extension+" "+strings.Join(args, " "))
 
 	err = cmd.Start()
+	if err != nil {
+		return errors.Wrapf(err, "Start command")
+	}
 
 	stdoutCopy := bufio.NewScanner(stdout)
 	stderrCopy := bufio.NewScanner(stderr)
