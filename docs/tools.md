@@ -27,7 +27,7 @@ Usage: You have to instantiate the struct by passing it the required parameters:
 
     _tools := tools.Tools{
         Directory: "/home/user/.arduino-create",
-        IndexURL: "http://downloads.arduino.cc/packages/package_index.json"
+        IndexURL: "https://downloads.arduino.cc/packages/package_index.json"
         Logger: log.Logger
     }
 

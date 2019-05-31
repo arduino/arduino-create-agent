@@ -253,7 +253,7 @@ func loop() {
 
 	extraOrigins := []string{
 		"https://create.arduino.cc",
-		"http://create.arduino.cc", "https://create-dev.arduino.cc", "http://create-dev.arduino.cc", "https://create-intel.arduino.cc", "http://create-intel.arduino.cc",
+		"https://create-dev.arduino.cc", "https://create-intel.arduino.cc",
 	}
 
 	for i := 8990; i < 9001; i++ {

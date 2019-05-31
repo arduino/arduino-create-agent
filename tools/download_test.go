@@ -40,12 +40,12 @@ func Test_findBaseDir(t *testing.T) {
 
 func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 	urls := []string{
-		"http://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-armhf-pc-linux-gnu.tar.bz2",
-		"http://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-aarch64-pc-linux-gnu.tar.bz2",
-		"http://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i386-apple-darwin11.tar.bz2",
-		"http://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-x86_64-pc-linux-gnu.tar.bz2",
-		"http://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-pc-linux-gnu.tar.bz2",
-		"http://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-w64-mingw32.zip",
+		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-armhf-pc-linux-gnu.tar.bz2",
+		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-aarch64-pc-linux-gnu.tar.bz2",
+		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i386-apple-darwin11.tar.bz2",
+		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-x86_64-pc-linux-gnu.tar.bz2",
+		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-pc-linux-gnu.tar.bz2",
+		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-w64-mingw32.zip",
 	}
 	expectedDirList := []string{"bin", "etc"}
 

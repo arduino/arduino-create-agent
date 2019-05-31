@@ -166,7 +166,7 @@ func setupSysTrayReal() {
 	go func() {
 		for {
 			<-mUrl.ClickedCh
-			open.Start("http://create.arduino.cc")
+			open.Start("https://create.arduino.cc")
 		}
 	}()
 }

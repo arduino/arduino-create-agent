@@ -84,7 +84,7 @@ var IndexPayload = Type("arduino.index", func() {
 	TypeName("IndexPayload")
 
 	Attribute("url", String, "The url of the index file", func() {
-		Example("http://downloads.arduino.cc/packages/package_index.json")
+		Example("https://downloads.arduino.cc/packages/package_index.json")
 	})
 	Required("url")
 })
