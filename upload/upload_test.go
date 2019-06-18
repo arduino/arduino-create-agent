@@ -45,13 +45,23 @@ var TestNetworkData = []struct {
 	Name        string
 	Port        string
 	Board       string
-	File        string
+	Files       []string
 	Commandline string
-	Auth        upload.Auth
+	Extra       upload.Extra
 }{
 	{
-		"yun", "", "", "",
-		``, upload.Auth{}},
+		"yun",
+		"",
+		"",
+		[]string{"filename"},
+		"",
+		upload.Extra{
+			Use1200bpsTouch:   true,
+			WaitForUploadPort: true,
+			Network:           true,
+			Auth:              upload.Auth{},
+		},
+	},
 }
 
 func TestNetwork(t *testing.T) {
@@ -62,27 +72,27 @@ func TestNetwork(t *testing.T) {
 
 	for _, test := range TestNetworkData {
 		commandline := strings.Replace(test.Commandline, "$HOME", home, -1)
-		err := upload.Network(test.Port, test.Board, test.File, commandline, test.Auth, logger)
+		err := upload.Network(test.Port, test.Board, test.Files, commandline, test.Extra.Auth, logger, test.Extra.SSH)
 		log.Println(err)
 	}
 }
 
 var TestResolveData = []struct {
-	Port        string
-	Board       string
-	File        string
-	Commandline string
-	Extra       upload.Extra
-	Result      string
+	Board        string
+	File         string
+	PlatformPath string
+	Commandline  string
+	Extra        upload.Extra
+	Result       string
 }{
-	{"/dev/ttyACM0", "arduino:avr:leonardo", "./upload_test.hex",
-		`"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf" {upload.verbose} {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`, upload.Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
-		`"$loc$loc{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf"  $loc{upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./upload_test.hex:i"`},
+	{"arduino:avr:leonardo", "./upload_test.hex", "",
+		`"{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf" -v {upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`, upload.Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
+		`"$loc$loc{runtime.tools.avrdude.path}/bin/avrdude" "-C{runtime.tools.avrdude.path}/etc/avrdude.conf" -v $loc{upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./upload_test.hex:i"`},
 }
 
 func TestResolve(t *testing.T) {
 	for _, test := range TestResolveData {
-		result, _ := upload.Resolve(test.Port, test.Board, test.File, test.Commandline, test.Extra, mockTools{})
+		result, _ := upload.PartiallyResolve(test.Board, test.File, test.PlatformPath, test.Commandline, test.Extra, mockTools{})
 		if result != test.Result {
 			t.Error("expected " + test.Result + ", got " + result)
 			continue

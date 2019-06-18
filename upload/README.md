@@ -113,9 +113,6 @@ type Extra struct {
     WaitForUploadPort bool   `json:"wait_for_upload_port"`
     Network           bool   `json:"network"`
     Auth              Auth   `json:"auth"`
-    Verbose           bool   `json:"verbose"`
-    ParamsVerbose     string `json:"params_verbose"`
-    ParamsQuiet       string `json:"params_quiet"`
 }
 ```
 Extra contains some options used during the upload
