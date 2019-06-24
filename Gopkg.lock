@@ -450,7 +450,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:04c834d4d75b1e3c678ffadb336e4c5f8b58786cb7bd1f3ee19a166d76aa9b56"
+  digest = "1:8a3011627983dfd0b3e094af7c0797370090d2c0a269d86268b4aca053b0845c"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -471,7 +471,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "cc06ce4a13d484c0101a9e92913248488a75786d"
 
 [[projects]]
   branch = "master"
@@ -489,9 +489,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f343f077a5b0bc3a3788b3a04e24dd417e3e25b2acb529c413e212d2c42416ef"
+  digest = "1:5a613be9198dc04fd2032ff2fe57b649b3e4121d0e4c3d1e5289a62f2204de64"
   name = "golang.org/x/sys"
   packages = [
+    "cpu",
     "unix",
     "windows",
   ]
