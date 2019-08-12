@@ -357,9 +357,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
 	            if (messages.length > 2000) {
 	                messages.shift();
 	            }
-	            var doScroll = log.scrollTop == log.scrollHeight - log.clientHeight;
 	            log.innerHTML = messages.join('<br>');
-	            if (autoscroll.checked && doScroll) {
+	            if (autoscroll.checked) {
 	                log.scrollTop = log.scrollHeight - log.clientHeight;
 	            }
 	        }
@@ -429,6 +428,7 @@ body {
 }
 
 .buttons {
+	align-items: center;
 	display: flex;
     padding: 0 .5em;
     margin: 0;
