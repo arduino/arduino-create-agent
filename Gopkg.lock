@@ -193,11 +193,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3eb026ba34d6dd12b45bb6abd63b4e917ebca8d8f3022a139c0881d900ad1bee"
+  digest = "1:f483103ef28d7e2628add0f383f2b9b0c76225767321b2a8a55080e78829e04e"
   name = "github.com/googollee/go-socket.io"
-  packages = ["."]
+  packages = [
+    ".",
+    "parser",
+  ]
   pruneopts = "UT"
-  revision = "c8aeb1ed9b49d7de8fef8662efb18f1d289c5f2e"
+  revision = "3f1229f016cfb51926a2ea99838fa869bd6b6246"
 
 [[projects]]
   digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
