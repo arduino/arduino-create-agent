@@ -3,6 +3,7 @@
 arduino-create-agent
 ====================
 
+
 ## GOA 2 refactoring
 The agent is currently transitioning to the v2 of the GOA framework for API management, please refer to the following 
 [documentation](https://github.com/goadesign/goa/tree/v2) in order to install tools and libraries
