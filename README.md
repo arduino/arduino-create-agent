@@ -18,18 +18,18 @@ goa gen github.com/arduino/arduino-create-agent/design
 Get the latest version of the Agent for all supported platforms:
 
 ### Windows
-* [Windows with Edge](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-edge.exe)
-* [Windows with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-chrome.exe)
-* [Windows with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-firefox.exe)
+* [Windows with Edge](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-edge.exe)
+* [Windows with Chrome](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-chrome.exe)
+* [Windows with Firefox](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-firefox.exe)
 
 ### MacOSX
-* [MacOSX with Safari](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-safari.dmg)
-* [MacOSX with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-chrome.dmg)
-* [MacOSX with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-firefox.dmg)
+* [MacOSX with Safari](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-safari.dmg)
+* [MacOSX with Chrome](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-chrome.dmg)
+* [MacOSX with Firefox](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-firefox.dmg)
 
 ### Linux
-* [Linux x64 with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-chrome.tar.gz)
-* [Linux x64 with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-firefox.tar.gz)
+* [Linux x64 with Chrome](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-chrome.tar.gz)
+* [Linux x64 with Firefox](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-firefox.tar.gz)
 
 arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
 
@@ -148,18 +148,18 @@ or in the location selected during the installation
 Please use the current latest version:
 
 ### Windows
-* [Windows with Edge dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-edge.exe)
-* [Windows with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
-* [Windows with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-firefox.exe)
+* [Windows with Edge dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-edge.exe)
+* [Windows with Chrome dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
+* [Windows with Firefox dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-firefox.exe)
 
 ### MacOSX
-* [MacOSX with Safari dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-safari.dmg)
-* [MacOSX with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-chrome.dmg)
-* [MacOSX with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-firefox.dmg)
+* [MacOSX with Safari dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-safari.dmg)
+* [MacOSX with Chrome dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-chrome.dmg)
+* [MacOSX with Firefox dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-firefox.dmg)
 
 ### Linux
-* [Linux x64 with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-chrome.run)
-* [Linux x64 with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-firefox.run)
+* [Linux x64 with Chrome dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-chrome.run)
+* [Linux x64 with Firefox dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-firefox.run)
 
 
 ## How to use it
