@@ -144,10 +144,10 @@ func strpoint(s string) *string {
 
 func url() string {
 	urls := map[string]string{
-		"linuxamd64":  "http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2",
-		"linux386":    "http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i686-pc-linux-gnu.tar.bz2",
-		"darwinamd64": "http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i386-apple-darwin11.tar.bz2",
-		"windows386":  "http://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i686-mingw32.zip",
+		"linuxamd64":  "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2",
+		"linux386":    "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i686-pc-linux-gnu.tar.bz2",
+		"darwinamd64": "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i386-apple-darwin11.tar.bz2",
+		"windows386":  "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i686-mingw32.zip",
 	}
 
 	return urls[runtime.GOOS+runtime.GOARCH]

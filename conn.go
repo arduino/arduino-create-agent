@@ -70,7 +70,7 @@ type Upload struct {
 	ExtraFiles  []AdditionalFile `json:"extrafiles"`
 }
 
-var uploadStatusStr string = "ProgrammerStatus"
+var uploadStatusStr = "ProgrammerStatus"
 
 func uploadHandler(c *gin.Context) {
 
@@ -156,7 +156,7 @@ func uploadHandler(c *gin.Context) {
 			return
 		}
 
-		l := PLogger{Verbose: data.Extra.Verbose}
+		l := PLogger{Verbose: true}
 
 		// Upload
 		if data.Extra.Network {
@@ -183,7 +183,7 @@ type PLogger struct {
 	Verbose bool
 }
 
-// Debug only sends messages if verbose is true
+// Debug only sends messages if verbose is true (always true for now)
 func (l PLogger) Debug(args ...interface{}) {
 	if l.Verbose {
 		l.Info(args...)

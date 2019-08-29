@@ -1,6 +1,8 @@
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 
 arduino-create-agent
 ====================
+
 
 ## GOA 2 refactoring
 The agent is currently transitioning to the v2 of the GOA framework for API management, please refer to the following 
@@ -16,18 +18,18 @@ goa gen github.com/arduino/arduino-create-agent/design
 Get the latest version of the Agent for all supported platforms:
 
 ### Windows
-* [Windows with Edge](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-edge.exe)
-* [Windows with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-chrome.exe)
-* [Windows with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-firefox.exe)
+* [Windows with Edge](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-edge.exe)
+* [Windows with Chrome](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-chrome.exe)
+* [Windows with Firefox](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-windows-installer-firefox.exe)
 
 ### MacOSX
-* [MacOSX with Safari](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-safari.dmg)
-* [MacOSX with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-chrome.dmg)
-* [MacOSX with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-firefox.dmg)
+* [MacOSX with Safari](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-safari.dmg)
+* [MacOSX with Chrome](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-chrome.dmg)
+* [MacOSX with Firefox](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-osx-installer-firefox.dmg)
 
 ### Linux
-* [Linux x64 with Chrome](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-chrome.tar.gz)
-* [Linux x64 with Firefox](http://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-firefox.tar.gz)
+* [Linux x64 with Chrome](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-chrome.tar.gz)
+* [Linux x64 with Firefox](https://downloads.arduino.cc/CreateBridgeStable/ArduinoCreateAgent-1.1-linux-x64-installer-firefox.tar.gz)
 
 arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
 
@@ -146,18 +148,18 @@ or in the location selected during the installation
 Please use the current latest version:
 
 ### Windows
-* [Windows with Edge dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-edge.exe)
-* [Windows with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
-* [Windows with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-firefox.exe)
+* [Windows with Edge dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-edge.exe)
+* [Windows with Chrome dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer.exe)
+* [Windows with Firefox dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-windows-installer-firefox.exe)
 
 ### MacOSX
-* [MacOSX with Safari dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-safari.dmg)
-* [MacOSX with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-chrome.dmg)
-* [MacOSX with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-firefox.dmg)
+* [MacOSX with Safari dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-safari.dmg)
+* [MacOSX with Chrome dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-chrome.dmg)
+* [MacOSX with Firefox dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-osx-installer-firefox.dmg)
 
 ### Linux
-* [Linux x64 with Chrome dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-chrome.run)
-* [Linux x64 with Firefox dev](http://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-firefox.run)
+* [Linux x64 with Chrome dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-chrome.run)
+* [Linux x64 with Firefox dev](https://downloads.arduino.cc/CreateBridge/staging/ArduinoCreateAgent-1.0-linux-x64-installer-firefox.run)
 
 
 ## How to use it
@@ -242,7 +244,7 @@ You will receive an object of all the boards connected with USB or over the netw
 }
 ```
 
-## Open/Close ports
+### Open/Close ports
 
 To read input from a board connected to USB you must first open the port with the command
 
@@ -350,7 +352,7 @@ The payload is a json object that looks like this:
 {
   "board":"arduino:avr:leonardo",
   "port":"/dev/ttyACM1",
-  "commandline":"\"{runtime.tools.avrdude.path}/bin/avrdude\" \"-C{runtime.tools.avrdude.path}/etc/avrdude.conf\" {upload.verbose} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D \"-Uflash:w:{build.path}/{build.project_name}.hex:i\"",
+  "commandline":"\"{runtime.tools.avrdude.path}/bin/avrdude\" \"-C{runtime.tools.avrdude.path}/etc/avrdude.conf\" -v -patmega32u4 -cavr109 -P{serial.port} -b57600 -D \"-Uflash:w:{build.path}/{build.project_name}.hex:i\"",
   "signature":"97db97ced2c",
   "hex":"OjEwMDAwMDAwMEM5NEU1MDAwQzk0MEQwMTBDOTQwRDAxMEM5NDBEMDE2MQ0KOjEwMDAxMDAwMEM5NDBEMDEwQzk0M",
   "filename":"Blink.ino.hex",
@@ -365,16 +367,13 @@ The payload is a json object that looks like this:
     "wait_for_upload_port":true,
     "use_1200bps_touch":true,
     "network":false,
-    "params_verbose":"-v",
-    "params_quiet":"-q -q",
-    "verbose":true
   }
 }
 ```
 
 - commandline is the command to execute to perform the upload. This is, for example, avrdude on a Leonardo.
 
-- hex contains the sketch hex encoded in base64
+- hex contains the sketch binary encoded in base64 (could decode in Intel hex or raw binary)
 
 - signature is the signature of the commandline signed with the private key that matches the public key contained in the config.ini of the arduino-create-agent
 
@@ -385,6 +384,10 @@ The results of the upload will be delivered via websocket with messages that loo
 {"Msg":"avrdude done. Thank you.","ProgrammerStatus":"Busy"}
 {"Flash":"Ok","ProgrammerStatus":"Done"}
 ```
+
+### Javacript client library
+
+You can install the [arduino-create-agent-js-client](https://github.com/arduino/arduino-create-agent-js-client) in your client application
 
 ---
 

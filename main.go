@@ -253,7 +253,7 @@ func loop() {
 
 	extraOrigins := []string{
 		"https://create.arduino.cc",
-		"http://create.arduino.cc", "https://create-dev.arduino.cc", "http://create-dev.arduino.cc", "https://create-intel.arduino.cc", "http://create-intel.arduino.cc",
+		"https://create-dev.arduino.cc", "https://create-intel.arduino.cc",
 	}
 
 	for i := 8990; i < 9001; i++ {
@@ -357,9 +357,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
 	            if (messages.length > 2000) {
 	                messages.shift();
 	            }
-	            var doScroll = log.scrollTop == log.scrollHeight - log.clientHeight;
 	            log.innerHTML = messages.join('<br>');
-	            if (autoscroll.checked && doScroll) {
+	            if (autoscroll.checked) {
 	                log.scrollTop = log.scrollHeight - log.clientHeight;
 	            }
 	        }
@@ -429,6 +428,7 @@ body {
 }
 
 .buttons {
+	align-items: center;
 	display: flex;
     padding: 0 .5em;
     margin: 0;
