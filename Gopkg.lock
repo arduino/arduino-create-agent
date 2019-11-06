@@ -143,12 +143,12 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:15e27372d379b45b18ac917b9dafc45c45485239490ece18cca97a12f9591146"
+  digest = "1:f8cc74710a11d041a34e84c1a1c127022fecd74d7e25d164ac166962e8d75839"
   name = "github.com/go-ini/ini"
   packages = ["."]
   pruneopts = "UT"
-  revision = "9c8236e659b76e87bf02044d06fde8683008ff3e"
-  version = "v1.39.0"
+  revision = "8ee0b789944d2b0a7297c671009b3e7bc977376f"
+  version = "v1.50.0"
 
 [[projects]]
   digest = "1:64a5a67c69b70c2420e607a8545d674a23778ed9c3e80607bfd17b77c6c87f6a"
