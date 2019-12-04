@@ -95,12 +95,11 @@ type SpPortMessageRaw struct {
 func (p *serport) reader() {
 
 	//var buf bytes.Buffer
+	ch := make([]byte, 1024)
 	timeCheckOpen := time.Now()
 	var buffered_ch bytes.Buffer
 
 	for {
-
-		ch := make([]byte, 1024)
 
 		n, err := p.portIo.Read(ch)
 
@@ -128,8 +127,11 @@ func (p *serport) reader() {
 			for i, w := 0, 0; i < n; i += w {
 				runeValue, width := utf8.DecodeRune(ch[i:n])
 				if runeValue == utf8.RuneError {
-					buffered_ch.Write(ch[i:n])
+					buffered_ch.Write(append(ch[i:n]))
 					break
+				}
+				if i == n {
+					buffered_ch.Reset()
 				}
 				data += string(runeValue)
 				w = width
