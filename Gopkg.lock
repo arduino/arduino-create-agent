@@ -59,14 +59,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8df8718256c87ae7984cbfa1304b9efdd8b5952dcb94a8a51cfe9d61f08785ee"
-  name = "github.com/facchinm/systray"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b32308b0b662e45cde7c5986bc29def5d48bafbb"
-
-[[projects]]
-  branch = "master"
   digest = "1:c3c09c0f941175181747b2d6948fd1add3ba82e66215aae78ec9b44d97d8ed40"
   name = "github.com/getlantern/context"
   packages = ["."]
@@ -80,14 +72,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "e24b7f4ff7c70be59bbefca6b7695d68cda8b399"
-
-[[projects]]
-  branch = "master"
-  digest = "1:99c1c515274e6c3ead7bf68dcc77f56131d0f937adeb6808ba86e0911adfdda7"
-  name = "github.com/getlantern/filepersist"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "c5f0cd24e7991579ba6f5f1bd20a1ad2c9f06cd4"
 
 [[projects]]
   branch = "master"
@@ -120,6 +104,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "37353306c90844c8e0591956f56611f46299d202"
+
+[[projects]]
+  branch = "master"
+  digest = "1:accd456d76fe39fcae377568ac240bab7e28fa8e85e640bc18583a7e9949a4d3"
+  name = "github.com/getlantern/systray"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9abdfb6448b30f1c5e481624786e85c510471c20"
 
 [[projects]]
   branch = "master"
@@ -262,6 +254,22 @@
   pruneopts = "UT"
   revision = "1455def202f6e05b95cc7bfc7e8ae67ae5141eba"
   version = "v0.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c268c9cb29af6c339397145f92283a5fe8657cc05e74a0c79a1b7d46ddcda9e4"
+  name = "github.com/lxn/walk"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "55ccb3a9f5c1dae7b1c94f70ea4f9db6afcb5021"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b6489f4fcbfa760e30380d192e70e846df0115330d4e60929bb331a408833dba"
+  name = "github.com/lxn/win"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2da648fda5b433b3d074415cf2c1b05038194fa0"
 
 [[projects]]
   branch = "master"
@@ -519,6 +527,14 @@
   revision = "b258f6da23835bf37e95cc50af792447c7c67fe4"
 
 [[projects]]
+  digest = "1:5d3e23515e7916c152cc665eda0f7eaf6fdf8fdfe7c3dbac97049bcbd649b33f"
+  name = "gopkg.in/Knetic/govaluate.v3"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d216395917cc49052c7c7094cf57f09657ca08a8"
+  version = "v3.0.0"
+
+[[projects]]
   digest = "1:1b4724d3c8125f6044925f02b485b74bfec9905cbf579d95aafd1a6c8f8447d3"
   name = "gopkg.in/go-playground/validator.v8"
   packages = ["."]
@@ -563,7 +579,7 @@
   input-imports = [
     "github.com/blang/semver",
     "github.com/codeclysm/extract",
-    "github.com/facchinm/systray",
+    "github.com/getlantern/systray",
     "github.com/gin-gonic/gin",
     "github.com/go-ini/ini",
     "github.com/googollee/go-socket.io",
