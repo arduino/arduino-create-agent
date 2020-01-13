@@ -95,6 +95,10 @@ required = ["goa.design/goa/codegen/generator"]
   branch = "master"
   name = "golang.org/x/crypto"
 
+[[override]]
+  branch = "master"
+  name = "github.com/lxn/walk"
+
 [[constraint]]
   branch = "v0"
   name = "gopkg.in/inconshreveable/go-update.v0"
