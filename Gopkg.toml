@@ -76,7 +76,7 @@ required = ["goa.design/goa/codegen/generator"]
 
 [[constraint]]
   name = "github.com/pkg/errors"
-  version = "0.8.0"
+  version = "0.9.1"
 
 [[constraint]]
   branch = "master"
