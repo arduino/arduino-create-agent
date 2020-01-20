@@ -279,12 +279,12 @@
   revision = "57fdcb988a5c543893cc61bce354a6e24ab70022"
 
 [[projects]]
-  digest = "1:7efe48dea4db6b35dcc15e15394b627247e5b3fb814242de986b746ba8e0abf0"
+  digest = "1:637e333ff910cbfb4c1be4a2875f594efff4006d919b76e09306e7ef149e8f7f"
   name = "github.com/mattn/go-shellwords"
   packages = ["."]
   pruneopts = "UT"
-  revision = "02e3cf038dcea8290e44424da473dd12be796a8a"
-  version = "v1.0.3"
+  revision = "15c6c4ba21242f0256740b9417601db2d57a263b"
+  version = "v1.0.9"
 
 [[projects]]
   digest = "1:b20d8767957e40b9302a8caaee88caa698513fbd972509a54555302c3aebfa04"
