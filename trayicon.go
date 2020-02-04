@@ -36,7 +36,7 @@ import (
 	"runtime"
 
 	"github.com/arduino/arduino-create-agent/icon"
-	"github.com/facchinm/systray"
+	"github.com/getlantern/systray"
 	"github.com/go-ini/ini"
 	"github.com/kardianos/osext"
 	log "github.com/sirupsen/logrus"
@@ -47,9 +47,9 @@ import (
 func setupSysTray() {
 	runtime.LockOSThread()
 	if *hibernate == true {
-		systray.Run(setupSysTrayHibernate)
+		systray.Run(setupSysTrayHibernate,nil)
 	} else {
-		systray.Run(setupSysTrayReal)
+		systray.Run(setupSysTrayReal,nil)
 	}
 }
 
