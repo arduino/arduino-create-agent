@@ -458,14 +458,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:04c834d4d75b1e3c678ffadb336e4c5f8b58786cb7bd1f3ee19a166d76aa9b56"
+  digest = "1:a8d589dedd154251ea97209959c6e5b8b88a56d405f13a10ef0528ad5ff7dc76"
   name = "golang.org/x/crypto"
   packages = [
+    "blowfish",
     "cast5",
+    "chacha20",
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
-    "internal/chacha20",
     "internal/subtle",
     "openpgp",
     "openpgp/armor",
@@ -476,10 +477,11 @@
     "poly1305",
     "ssh",
     "ssh/agent",
+    "ssh/internal/bcrypt_pbkdf",
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "86ce3cb696783b739e41e834e2eead3e1b4aa3fb"
 
 [[projects]]
   branch = "master"
@@ -497,9 +499,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c8faf148023f13e62a93d3ed6c01fc586b3c6b52a40c5c9b0f2220bae71f390a"
+  digest = "1:124b96293070788c11ba5f7c8c348b63312c3b7cc3db089311f4cf6333ad8867"
   name = "golang.org/x/sys"
   packages = [
+    "cpu",
     "unix",
     "windows",
   ]
