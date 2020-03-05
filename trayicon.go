@@ -102,9 +102,11 @@ func getConfigs() []ConfigIni {
 func setupSysTrayReal() {
 
 	systray.SetIcon(icon.GetIcon())
+	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
+	systray.AddSeparator()
 	mUrl := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
-	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
+	systray.AddSeparator()
 	mPause := systray.AddMenuItem("Pause Plugin", "")
 	var mConfigCheckbox []*systray.MenuItem
 
@@ -174,8 +176,9 @@ func setupSysTrayReal() {
 func setupSysTrayHibernate() {
 
 	systray.SetIcon(icon.GetIconHiber())
-	mOpen := systray.AddMenuItem("Open Plugin", "")
-	mQuit := systray.AddMenuItem("Kill Plugin", "")
+	mOpen := systray.AddMenuItem("Resume Plugin", "")
+	systray.AddSeparator()
+	mQuit := systray.AddMenuItem("Quit Plugin", "")
 
 	go func() {
 		<-mOpen.ClickedCh
