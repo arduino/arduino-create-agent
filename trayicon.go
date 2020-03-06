@@ -105,7 +105,7 @@ func setupSysTrayReal() {
 	menuVer := systray.AddMenuItem("Agent version "+version+"-"+git_revision, "")
 	systray.AddSeparator()
 	mUrl := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
-	mDebug := systray.AddMenuItem("Open debug console", "Debug console")
+	mDebug := systray.AddMenuItem("Open Debug Console", "Debug console")
 	systray.AddSeparator()
 	mPause := systray.AddMenuItem("Pause Plugin", "")
 	var mConfigCheckbox []*systray.MenuItem
