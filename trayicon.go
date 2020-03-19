@@ -106,8 +106,10 @@ func setupSysTrayReal() {
 	systray.AddSeparator()
 	mUrl := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open Debug Console", "Debug console")
-	systray.AddSeparator()
 	mPause := systray.AddMenuItem("Pause Plugin", "")
+	systray.AddSeparator()
+	mQuit := systray.AddMenuItem("Quit Plugin", "")
+
 	var mConfigCheckbox []*systray.MenuItem
 
 	configs := getConfigs()
@@ -150,11 +152,11 @@ func setupSysTrayReal() {
 		restart("")
 	}()
 
-	// go func() {
-	// 	<-mQuit.ClickedCh
-	// 	systray.Quit()
-	// 	exit()
-	// }()
+	go func() {
+		<-mQuit.ClickedCh
+		systray.Quit()
+		exit()
+	}()
 
 	go func() {
 		for {
