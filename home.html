@@ -94,36 +94,44 @@ body {
 #log {
     flex-grow: 1;
     font-family: "Roboto Mono", "Courier", "Lucida Grande", Verdana, sans-serif;
-    background: #DAE3E3;
-    margin: 15px 15px 0px;
+    background-color: #DAE3E3;
+    margin: 15px 15px 10px;
     padding: 8px 10px;
     overflow-y: auto;
 }
 
-#footer {
-    flex-shrink: 0;    
-	display: flex;
-	align-items: center;
+#footer {    
+    display: flex;    
+    flex-wrap: wrap;    
     justify-content: space-between;
-    margin: 10px 15px 10px;
-    overflow: hidden;
+    margin: 0px 15px 0px;    
 }
 
-#form {
-	display: inline-block;
+#form {    
+    display: flex;
+    flex-grow: 1;
+    margin-bottom: 15px;
 }
 
-#export {
-	float: right;
-	margin-left: auto;
+#input {
+    flex-grow: 1;
+}
+
+#secondary-controls div {
+    display: inline-block;        
+    padding: 10px 15px;    
 }
 
 #autoscroll,
 #list {
-	margin-left: 10px;
     vertical-align: middle;
     width: 20px;
     height: 20px;
+}
+
+
+#export {
+    margin-bottom: 15px;
 }
 
 .button {
@@ -167,26 +175,6 @@ body {
     outline: none;
 }
 
-/* 
-@media screen and (max-width: 950px) {
-	#form {
-		max-width: 60%;
-	}
-
-	#input {
-		max-width: 55%;
-	}
-}
-@media screen and (max-width: 825px) {
-	.buttons {
-		flex-direction: column;
-	}
-
-	#log {
-		bottom: 7em;
-	}
-    
-} */
 </style>
 </head>
     <body>
@@ -195,15 +183,19 @@ body {
             <div id="footer">
                 <form id="form">
                     <input type="submit" class="button" value="Send" />
-                    <input type="text" id="input" class="textfield" size="64" />
+                    <input type="text" id="input" class="textfield" />
                 </form>
-                <div id="options">
-                    <input name="pause" type="checkbox" checked id="autoscroll" />
-                    <label for="autoscroll">Autoscroll</label>
-                    <input name="list" type="checkbox" checked id="list" />
-                    <label for="list">List&nbsp;Command&nbsp;Enabled</label>
+                <div id="secondary-controls">
+                    <div>
+                        <input name="pause" type="checkbox" checked id="autoscroll" />
+                        <label for="autoscroll">Autoscroll</label>
+                    </div>
+                    <div>
+                        <input name="list" type="checkbox" checked id="list" />
+                        <label for="list">List&nbsp;Command&nbsp;Enabled</label>
+                    </div>
+                    <button id="export" class="button">Export&nbsp;Log</button>
                 </div>
-                <button id="export" class="button">Export&nbsp;Log</button>
             </div>
         </div>
     </body>
