@@ -51,6 +51,11 @@
     		link.click();
     	});
 
+        $('#clear').click(function() {
+            messages = [];
+            log.innerHTML = '';
+        });
+
 	    if (window['WebSocket']) {
 	        if (window.location.protocol === 'https:') {
 	            socket = io('https://{{$}}')
