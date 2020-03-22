@@ -389,6 +389,11 @@ const homeTemplateHtml = `<!DOCTYPE html>
     		link.click();
     	});
 
+        $('#clear').click(function() {
+            messages = [];
+            log.innerHTML = '';
+        });
+
 	    if (window['WebSocket']) {
 	        if (window.location.protocol === 'https:') {
 	            socket = io('https://{{$}}')
@@ -440,7 +445,8 @@ body {
 
 #footer {    
     display: flex;    
-    flex-wrap: wrap;    
+    flex-wrap: wrap;
+    align-items: flex-start;
     justify-content: space-between;
     margin: 0px 15px 0px;    
 }
@@ -468,8 +474,9 @@ body {
 }
 
 
-#export {
+#secondary-controls button {
     margin-bottom: 15px;
+    vertical-align: top;
 }
 
 .button {
@@ -477,6 +484,7 @@ body {
     border: 1px solid #b5c8c9;
     border-radius: 2px 2px 0 0;
     box-shadow: 0 4px #95a5a6;
+    margin-bottom: 4px;
     color: #000;
     cursor: pointer;    
     font-size: 14px;
@@ -490,13 +498,13 @@ body {
 }
 
 .button:hover {
-    box-shadow: 0 2px #95a5a6;
+    box-shadow: 0 2px #95a5a6;    
     outline: none;
     transform: translateY(2px);
 }
 
 .button:active {
-    box-shadow: none;
+    box-shadow: none;    
     transform: translateY(4px);
 }
 
@@ -530,8 +538,9 @@ body {
                     </div>
                     <div>
                         <input name="list" type="checkbox" checked id="list" />
-                        <label for="list">List&nbsp;Command&nbsp;Enabled</label>
+                        <label for="list">Enable&nbsp;List&nbsp;Command</label>
                     </div>
+                    <button id="clear" class="button">Clear&nbsp;Log</button>
                     <button id="export" class="button">Export&nbsp;Log</button>
                 </div>
             </div>
