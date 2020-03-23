@@ -340,6 +340,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
 <html>
 <head>
 <title>Arduino Create Agent Debug Console</title>
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,600,700&display=swap" rel="stylesheet">
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
 <script type="text/javascript">
@@ -350,11 +352,15 @@ const homeTemplateHtml = `<!DOCTYPE html>
 	    var autoscroll = document.getElementById('autoscroll');
 	    var listenabled = document.getElementById('list');
 	    var messages = [];
+        var MESSAGES_MAX_COUNT = 2000;
 
 	    function appendLog(msg) {
-	        if (listenabled.checked || (typeof msg === 'string' && msg.indexOf('{') !== 0 && msg.indexOf('list') !== 0)) {
+            var startsWithBracked = msg.indexOf('{') == 0;
+            var startsWithList = msg.indexOf('list') == 0;
+
+	        if (listenabled.checked || (typeof msg === 'string' && !startsWithBracked && !startsWithList)) {
 	            messages.push(msg);
-	            if (messages.length > 2000) {
+	            if (messages.length > MESSAGES_MAX_COUNT) {
 	                messages.shift();
 	            }
 	            log.innerHTML = messages.join('<br>');
@@ -383,6 +389,11 @@ const homeTemplateHtml = `<!DOCTYPE html>
     		link.click();
     	});
 
+        $('#clear').click(function() {
+            messages = [];
+            log.innerHTML = '';
+        });
+
 	    if (window['WebSocket']) {
 	        if (window.location.protocol === 'https:') {
 	            socket = io('https://{{$}}')
@@ -397,102 +408,146 @@ const homeTemplateHtml = `<!DOCTYPE html>
 	        });
 	    } else {
 	        appendLog($('<div><b>Your browser does not support WebSockets.</b></div>'))
-	    }
+        }
+        
+        $("#input").focus();
 	});
 </script>
 <style type="text/css">
-html {
+html, body {
     overflow: hidden;
+    height: 100%;
 }
 
-body {
-    overflow: hidden;
-    padding: 0;
-    margin: 0;
-    width: 100%;
+body {    
+    margin: 0px;
+    padding: 0px;
+    background: #F8F9F9;
+    font-size: 16px;
+    font-family: "Open Sans", "Lucida Grande", Lucida, Verdana, sans-serif;
+}
+
+#container {
+    display: flex;
+    flex-direction: column;    
     height: 100%;
-    background: #00979d;
-    font-family: 'Lucida Grande', Lucida, Verdana, sans-serif;
+    width: 100%;
 }
 
 #log {
-    background: white;
-    margin: 0;
-    padding: .5em;
-    position: absolute;
-    top: .5em;
-    left: .5em;
-    right: .5em;
-    bottom: 3em;
-    overflow: auto;
+    flex-grow: 1;
+    font-family: "Roboto Mono", "Courier", "Lucida Grande", Verdana, sans-serif;
+    background-color: #DAE3E3;
+    margin: 15px 15px 10px;
+    padding: 8px 10px;
+    overflow-y: auto;
 }
 
-.buttons {
-	align-items: center;
-	display: flex;
-    padding: 0 .5em;
-    margin: 0;
-    position: absolute;
-    bottom: 1em;
-    left: 0;
-    width: calc(100% - 1em);
-    overflow: hidden;
+#footer {    
+    display: flex;    
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin: 0px 15px 0px;    
 }
 
-#form {
-	display: inline-block;
+#form {    
+    display: flex;
+    flex-grow: 1;
+    margin-bottom: 15px;
 }
 
-#export {
-	float: right;
-	margin-left: auto;
+#input {
+    flex-grow: 1;
+}
+
+#secondary-controls div {
+    display: inline-block;        
+    padding: 10px 15px;    
 }
 
 #autoscroll,
 #list {
-	margin-left: 2em;
-	vertical-align: middle;
+    vertical-align: middle;
+    width: 20px;
+    height: 20px;
 }
 
-@media screen and (max-width: 950px) {
-	#form {
-		max-width: 60%;
-	}
 
-	#input {
-		max-width: 55%;
-	}
+#secondary-controls button {
+    margin-bottom: 15px;
+    vertical-align: top;
 }
-@media screen and (max-width: 825px) {
-	.buttons {
-		flex-direction: column;
-	}
 
-	#log {
-		bottom: 7em;
-	}
-
-	#autoscroll,
-	#list {
-		margin-left: 0;
-		margin-top: .5em;
-	}
+.button {
+    background-color: #b5c8c9;
+    border: 1px solid #b5c8c9;
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 4px #95a5a6;
+    margin-bottom: 4px;
+    color: #000;
+    cursor: pointer;    
+    font-size: 14px;
+    letter-spacing: 1.28px;
+    line-height: normal;
+    outline: none;
+    padding: 9px 18px;
+    text-align: center;
+    text-transform: uppercase;
+    transition: box-shadow .1s ease-out, transform .1s ease-out;
 }
+
+.button:hover {
+    box-shadow: 0 2px #95a5a6;    
+    outline: none;
+    transform: translateY(2px);
+}
+
+.button:active {
+    box-shadow: none;    
+    transform: translateY(4px);
+}
+
+.textfield {
+    background-color: #dae3e3;
+    width: auto;
+    height: auto;    
+    padding: 10px 8px;
+    margin-left: 8px;
+    vertical-align: top;
+    border: none;
+    font-family: "Open Sans", "Lucida Grande", Lucida, Verdana, sans-serif;
+    font-size: 1em;
+    outline: none;
+}
+
 </style>
 </head>
-<body>
-<div id="log"></div>
-<div class="buttons">
-	<form id="form">
-	    <input type="submit" value="Send" />
-	    <input type="text" id="input" size="64"/>
-	</form>
-	<div><input name="pause" type="checkbox" checked id="autoscroll"/> Autoscroll</div>
-	<div><input name="list" type="checkbox" checked id="list"/> Toggle List</div>
-	<button id="export">Export Log</button>
-</div>
-</body>
+    <body>
+        <div id="container">
+            <div id="log">This is some random text This is some random textThis is some random textThis is some random textThis is some random textThis is some random textThis is some random text<br />This is some random text<br />This is some random text<br /></div>
+            <div id="footer">
+                <form id="form">
+                    <input type="submit" class="button" value="Send" />
+                    <input type="text" id="input" class="textfield" />
+                </form>
+                <div id="secondary-controls">
+                    <div>
+                        <input name="pause" type="checkbox" checked id="autoscroll" />
+                        <label for="autoscroll">Autoscroll</label>
+                    </div>
+                    <div>
+                        <input name="list" type="checkbox" checked id="list" />
+                        <label for="list">Enable&nbsp;List&nbsp;Command</label>
+                    </div>
+                    <button id="clear" class="button">Clear&nbsp;Log</button>
+                    <button id="export" class="button">Export&nbsp;Log</button>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>
+
 `
 
 func parseIni(filename string) (args []string, err error) {
