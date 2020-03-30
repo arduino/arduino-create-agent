@@ -414,6 +414,36 @@ Other prerequisites are:
 * libappindicator (Linux only on Ubuntu `sudo apt-get install libappindicator1 libappindicator3-0.1-cil libappindicator3-0.1-cil-dev libappindicator3-1 libappindicator3-dev libgtk-3-0 libgtk-3-dev`)
 * [go-selfupdate] (https://github.com/sanbornm/go-selfupdate) if you want to test automatic updates
 
+### Windows
+Since we are using the https://github.com/lxn/walk library, we need to ship a manifest.xml file, otherwise the error would be:
+
+```
+panic: Unable to create main window: TTM_ADDTOOL failed
+```
+
+To do it make sure to install the required tool:
+
+```
+$ go get github.com/akavel/rsrc
+```
+
+and build it with
+
+```
+$ rsrc -arch=386 -manifest=manifest.xml
+$ go build
+```
+
+Keep in mind that the presence of rsrc.syso file will break other builds, for example
+
+```
+$ GOOS=linux go build
+# github.com/arduino/arduino-create-agent
+/usr/lib/go/pkg/tool/linux_amd64/link: running gcc failed: exit status 1
+/usr/sbin/ld: i386 architecture of input file `/tmp/go-link-084341451/000000.o' is incompatible with i386:x86-64 output
+collect2: error: ld returned 1 exit status
+```
+
 ## Submitting an issue
 
 Please attach the output of the commands running at the debug console if useful.
