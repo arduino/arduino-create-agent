@@ -15,9 +15,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/utilities"
-	"github.com/arduino/arduino-create-agent/v2"
+	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
 	cors "github.com/itsjamie/gin-cors"
@@ -67,7 +68,8 @@ var (
 
 // global clients
 var (
-	Tools tools.Tools
+	Tools   tools.Tools
+	Systray systray.Systray
 )
 
 type NullWriter int
@@ -107,7 +109,16 @@ func main() {
 	go loop()
 
 	// SetupSystray is the main thread
-	setupSysTray()
+	Systray = systray.Systray{
+		Hibernate: *hibernate,
+		Version:   version + "-" + git_revision,
+		DebugURL: func() string {
+			return "http://" + *address + port
+		},
+		AdditionalConfig: *additionalConfig,
+	}
+
+	Systray.Start()
 }
 
 func loop() {

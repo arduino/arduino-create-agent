@@ -61,5 +61,5 @@ func updateHandler(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
-	go restart(path)
+	Systray.Update(path)
 }

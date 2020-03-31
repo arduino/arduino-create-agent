@@ -32,7 +32,7 @@ func pauseHandler(c *gin.Context) {
 			spClose(element)
 		}
 		*hibernate = true
-		restart("")
+		Systray.Pause()
 	}()
 	c.JSON(200, nil)
 }
