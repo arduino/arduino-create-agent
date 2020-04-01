@@ -8,6 +8,7 @@ import (
 	"github.com/kardianos/osext"
 )
 
+// Systray manages the systray icon with its menu and actions. It also handles the pause/resume behaviour of the agent
 type Systray struct {
 	// Whether the Agent is in Pause mode
 	Hibernate bool

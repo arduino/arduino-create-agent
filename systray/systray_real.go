@@ -1,5 +1,6 @@
 // +build !cli
 
+// Systray_real gets compiled when the tag 'cli' is missing. This is the default case
 package systray
 
 import (

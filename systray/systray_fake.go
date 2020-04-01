@@ -1,5 +1,6 @@
 // +build cli
 
+// Systray_fake gets compiled when the tag 'cli' is present. This is useful to build an agent without trayicon functionalities
 package systray
 
 import "os"
