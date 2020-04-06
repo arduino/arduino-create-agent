@@ -25,16 +25,19 @@ type Systray struct {
 // Restart restarts the program
 // it works by finding the executable path and launching it before quitting
 func (s *Systray) Restart() {
+
+	fmt.Println(s.path)
+	fmt.Println(osext.Executable())
 	if s.path == "" {
 		var err error
 		s.path, err = osext.Executable()
 		if err != nil {
 			fmt.Printf("Error getting exe path using osext lib. err: %v\n", err)
 		}
-
-		// Trim newlines (needed on osx)
-		s.path = strings.Trim(s.path, "\n")
 	}
+
+	// Trim newlines (needed on osx)
+	s.path = strings.Trim(s.path, "\n")
 
 	// Build args
 	args := []string{"-ls", fmt.Sprintf("--hibernate=%v", s.Hibernate)}
@@ -42,8 +45,6 @@ func (s *Systray) Restart() {
 	if s.AdditionalConfig != "" {
 		args = append(args, fmt.Sprintf("--additional-config=%s", s.AdditionalConfig))
 	}
-
-	fmt.Println(s.path, args)
 
 	// Launch executable
 	cmd := exec.Command(s.path, args...)
