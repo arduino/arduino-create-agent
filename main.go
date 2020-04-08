@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -97,6 +98,9 @@ func launchSelfLater() {
 }
 
 func main() {
+	// prevents bad errors in OSX, such as [NS...] is only safe to invoke on the main thread.
+	runtime.LockOSThread()
+
 	// Parse regular flags
 	flag.Parse()
 
