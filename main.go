@@ -6,6 +6,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -116,6 +117,42 @@ func main() {
 			return "http://" + *address + port
 		},
 		AdditionalConfig: *additionalConfig,
+	}
+
+	path, err := osext.Executable()
+	if err != nil {
+		panic(err)
+	}
+
+	// If the executable is temporary, copy it to the full path, then restart
+	if strings.Contains(path, "-temp") {
+		correctPath := strings.Replace(path, "-temp", "", -1)
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(correctPath, data, 0755)
+		if err != nil {
+			panic(err)
+		}
+
+		Systray.Restart()
+	} else {
+		// Otherwise copy to a path with -temp suffix
+		correctPath := path
+		if filepath.Ext(path) == "exe" {
+			path = strings.Replace(path, ".exe", "-temp.exe", -1)
+		} else {
+			path = path + "-temp"
+		}
+		data, err := ioutil.ReadFile(correctPath)
+		if err != nil {
+			panic(err)
+		}
+		err = ioutil.WriteFile(path, data, 0755)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	Systray.Start()

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/kr/binarydist"
@@ -202,6 +203,12 @@ func (u *Updater) update() error {
 	if err != nil {
 		return err
 	}
+	if filepath.Ext(path) == "exe" {
+		path = strings.Replace(path, ".exe", "-temp.exe", -1)
+	} else {
+		path = path + "-temp"
+	}
+
 	old, err := os.Open(path)
 	if err != nil {
 		return err
@@ -241,6 +248,7 @@ func (u *Updater) update() error {
 	// it can't be renamed if a handle to the file is still open
 	old.Close()
 
+	up.TargetPath = path
 	err, errRecover := up.FromStream(bytes.NewBuffer(bin))
 	if errRecover != nil {
 		log.Errorf("update and recovery errors: %q %q", err, errRecover)
