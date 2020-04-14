@@ -6,9 +6,11 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -17,6 +19,7 @@ import (
 
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
+	"github.com/arduino/arduino-create-agent/updater"
 	"github.com/arduino/arduino-create-agent/utilities"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
@@ -96,6 +99,9 @@ func launchSelfLater() {
 }
 
 func main() {
+	// prevents bad errors in OSX, such as '[NS...] is only safe to invoke on the main thread'.
+	runtime.LockOSThread()
+
 	// Parse regular flags
 	flag.Parse()
 
@@ -118,7 +124,40 @@ func main() {
 		AdditionalConfig: *additionalConfig,
 	}
 
+	path, err := osext.Executable()
+	if err != nil {
+		panic(err)
+	}
+
+	// If the executable is temporary, copy it to the full path, then restart
+	if strings.Contains(path, "-temp") {
+		err := copyExe(path, updater.BinPath(path))
+		if err != nil {
+			panic(err)
+		}
+
+		Systray.Restart()
+	} else {
+		// Otherwise copy to a path with -temp suffix
+		err := copyExe(path, updater.TempPath(path))
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	Systray.Start()
+}
+
+func copyExe(from, to string) error {
+	data, err := ioutil.ReadFile(from)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(to, data, 0755)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func loop() {
