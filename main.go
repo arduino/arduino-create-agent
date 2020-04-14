@@ -98,7 +98,7 @@ func launchSelfLater() {
 }
 
 func main() {
-	// prevents bad errors in OSX, such as [NS...] is only safe to invoke on the main thread.
+	// prevents bad errors in OSX, such as '[NS...] is only safe to invoke on the main thread'.
 	runtime.LockOSThread()
 
 	// Parse regular flags
@@ -131,11 +131,7 @@ func main() {
 	// If the executable is temporary, copy it to the full path, then restart
 	if strings.Contains(path, "-temp") {
 		correctPath := strings.Replace(path, "-temp", "", -1)
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			panic(err)
-		}
-		err = ioutil.WriteFile(correctPath, data, 0755)
+		err := copyExe(path, correctPath)
 		if err != nil {
 			panic(err)
 		}
@@ -149,17 +145,25 @@ func main() {
 		} else {
 			path = path + "-temp"
 		}
-		data, err := ioutil.ReadFile(correctPath)
-		if err != nil {
-			panic(err)
-		}
-		err = ioutil.WriteFile(path, data, 0755)
+		err := copyExe(path, correctPath)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	Systray.Start()
+}
+
+func copyExe(from, to string) error {
+	data, err := ioutil.ReadFile(from)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(to, data, 0755)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func loop() {
