@@ -19,6 +19,7 @@ import (
 
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
+	"github.com/arduino/arduino-create-agent/updater"
 	"github.com/arduino/arduino-create-agent/utilities"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
@@ -130,8 +131,7 @@ func main() {
 
 	// If the executable is temporary, copy it to the full path, then restart
 	if strings.Contains(path, "-temp") {
-		correctPath := strings.Replace(path, "-temp", "", -1)
-		err := copyExe(path, correctPath)
+		err := copyExe(path, updater.BinPath(path))
 		if err != nil {
 			panic(err)
 		}
@@ -139,13 +139,7 @@ func main() {
 		Systray.Restart()
 	} else {
 		// Otherwise copy to a path with -temp suffix
-		correctPath := path
-		if filepath.Ext(path) == "exe" {
-			path = strings.Replace(path, ".exe", "-temp.exe", -1)
-		} else {
-			path = path + "-temp"
-		}
-		err := copyExe(path, correctPath)
+		err := copyExe(path, updater.TempPath(path))
 		if err != nil {
 			panic(err)
 		}

@@ -57,6 +57,22 @@ const devValidTime = 7 * 24 * time.Hour
 var errHashMismatch = errors.New("new file hash mismatch after patch")
 var up = update.New()
 
+// TempPath generates a temporary path for the executable
+func TempPath(path string) string {
+	if filepath.Ext(path) == "exe" {
+		path = strings.Replace(path, ".exe", "-temp.exe", -1)
+	} else {
+		path = path + "-temp"
+	}
+
+	return path
+}
+
+// TempPath generates the proper path for a temporary executable
+func BinPath(path string) string {
+	return strings.Replace(path, "-temp", "", -1)
+}
+
 // Updater is the configuration and runtime data for doing an update.
 //
 // Note that ApiURL, BinURL and DiffURL should have the same value if all files are available at the same location.
@@ -203,11 +219,8 @@ func (u *Updater) update() error {
 	if err != nil {
 		return err
 	}
-	if filepath.Ext(path) == "exe" {
-		path = strings.Replace(path, ".exe", "-temp.exe", -1)
-	} else {
-		path = path + "-temp"
-	}
+
+	path = TempPath(path)
 
 	old, err := os.Open(path)
 	if err != nil {

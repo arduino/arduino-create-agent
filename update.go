@@ -30,9 +30,6 @@
 package main
 
 import (
-	"path/filepath"
-	"strings"
-
 	"github.com/arduino/arduino-create-agent/updater"
 	"github.com/gin-gonic/gin"
 	"github.com/kardianos/osext"
@@ -63,11 +60,7 @@ func updateHandler(c *gin.Context) {
 		return
 	}
 
-	if filepath.Ext(path) == "exe" {
-		path = strings.Replace(path, ".exe", "-temp.exe", -1)
-	} else {
-		path = path + "-temp"
-	}
+	path = updater.TempPath(path)
 
 	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
 	Systray.Update(path)
