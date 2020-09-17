@@ -24,6 +24,10 @@ jobs:
         with:
           go-version: "1.14"
 
+      - name: Install Linux packages
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
+
       - name: Install Go deps
         # Since 10/23/2019 pwsh is the default shell
         # on Windows, but pwsh fails to install protoc-gen-go so
