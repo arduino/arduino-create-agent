@@ -125,7 +125,7 @@ tasks:
     desc: Check fmt and lint
     cmds:
       - go version
-      - cat bufferflow_default.go
+      - go fmt {{ default .DEFAULT_TARGETS .TARGETS }}
       - test -z $(go fmt {{ default .DEFAULT_TARGETS .TARGETS }})
       - echo 'test ok'
       - go vet {{ default .DEFAULT_TARGETS .TARGETS }}
