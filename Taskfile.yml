@@ -124,6 +124,7 @@ tasks:
   check:
     desc: Check fmt and lint
     cmds:
+      - cat bufferflow_default.go
       - test -z $(go fmt {{ default .DEFAULT_TARGETS .TARGETS }})
       - go vet {{ default .DEFAULT_TARGETS .TARGETS }}
       # FIXME: too many suggestions are failing the check, I'll fix these one in
