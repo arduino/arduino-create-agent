@@ -2,12 +2,13 @@ package tools
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_findBaseDir(t *testing.T) {
@@ -49,6 +50,12 @@ func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 	}
 	expectedDirList := []string{"bin", "etc"}
 
+	tmpDir, err := ioutil.TempDir("", "download_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
 	for _, url := range urls {
 		t.Log("Downloading tool from " + url)
 		resp, err := http.Get(url)
@@ -63,7 +70,7 @@ func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 			t.Errorf("%v", err)
 		}
 
-		location := path.Join("/tmp", dir(), "arduino", "avrdude", "6.3.0-arduino14")
+		location := path.Join(tmpDir, dir(), "arduino", "avrdude", "6.3.0-arduino14")
 		os.MkdirAll(location, os.ModePerm)
 		err = os.RemoveAll(location)
 
@@ -97,7 +104,6 @@ func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 		}
 
 		assert.ElementsMatchf(t, dirList, expectedDirList, "error message %s", "formatted")
-
 	}
 
 }
