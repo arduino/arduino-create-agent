@@ -70,7 +70,7 @@ func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 			t.Errorf("%v", err)
 		}
 
-		location := path.Join(tmpDir, dir(), "arduino", "avrdude", "6.3.0-arduino14")
+		location := path.Join(tmpDir, "username", "arduino", "avrdude", "6.3.0-arduino14")
 		os.MkdirAll(location, os.ModePerm)
 		err = os.RemoveAll(location)
 
