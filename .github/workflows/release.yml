@@ -44,8 +44,7 @@ jobs:
       - name: Install Taskfile
         uses: arduino/actions/setup-taskfile@master
         with:
-          with:
-            version: '3.x'
+          version: '3.x'
 
       - name: Check the code is good
         run: task check
