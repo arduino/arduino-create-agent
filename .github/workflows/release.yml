@@ -42,9 +42,10 @@ jobs:
         shell: bash
 
       - name: Install Taskfile
-        uses: Arduino/actions/setup-taskfile@master
+        uses: arduino/actions/setup-taskfile@master
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            version: '3.x'
 
       - name: Check the code is good
         run: task check
