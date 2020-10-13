@@ -49,8 +49,8 @@ func TestIndexes(t *testing.T) {
 
 	// Add a faulty index
 	_, err = service.Add(ctx, &indexes.IndexPayload{URL: ":"})
-	if err == nil || !strings.Contains(err.Error(), "parse :: missing protocol scheme") {
-		t.Fatalf("expected '%v' == '%v' (%s)", err, "parse :: missing protocol scheme", "err")
+	if err == nil || !strings.Contains(err.Error(), "missing protocol scheme") {
+		t.Fatalf("expected [%v] == [%v] (%s)", err, "missing protocol scheme", "err")
 	}
 
 	// Add a new index

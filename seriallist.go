@@ -59,7 +59,7 @@ func GetList(network bool) ([]OsSerialPort, error) {
 			if reFilter.MatchString(element.Name) {
 				newarrPorts = append(newarrPorts, element)
 			} else {
-				log.Debug("serial port did not match. port: %v\n", element)
+				log.Debugf("serial port did not match. port: %v\n", element)
 			}
 
 		}

@@ -84,7 +84,7 @@ func (c *Indexes) List(context.Context) ([]string, error) {
 	for _, file := range files {
 		// Select only files that begin with http
 		decodedFileName, _ := b64.URLEncoding.DecodeString(file.Name())
-		fileName:=string(decodedFileName)
+		fileName := string(decodedFileName)
 		if !strings.HasPrefix(fileName, "http") {
 			continue
 		}
