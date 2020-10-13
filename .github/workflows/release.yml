@@ -45,6 +45,8 @@ jobs:
         uses: arduino/actions/setup-taskfile@master
         with:
           version: '3.x'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check the code is good
         run: task check
