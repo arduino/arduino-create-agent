@@ -10,7 +10,8 @@ jobs:
   test:
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, windows-latest, macOS-latest]
+        # operating-system: [ubuntu-latest, windows-latest, macOS-latest]
+        operating-system: [macOS-latest]
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -54,6 +55,13 @@ jobs:
       - name: Run unit tests
         run: task test-unit
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.operating-system }}/arduino-create-agent
+          path: arduino-create-agent
+          if-no-files-found: error
+          
       # - name: Send unit tests coverage to Codecov
       #   if: >
       #     matrix.operating-system == 'ubuntu-latest' &&
@@ -85,10 +93,25 @@ jobs:
     needs: test
     strategy:
       matrix:
-        operating-system: [windows-latest, macOS-latest]
+        # operating-system: [windows-latest, macOS-latest]
+        operating-system: [macOS-latest]
 
     runs-on: ${{ matrix.operating-system }}
 
     steps:
       - name: Disable EOL conversions
         run: git config --global core.autocrlf false
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.operating-system }}/arduino-create-agent
+
+      - name: Download Gon
+        run: |
+          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.2/gon_0.2.2_macos.zip
+          unzip gon_0.2.2_macos.zip -d /usr/local/bin
+          rm -f gon_0.2.2_macos.zip
