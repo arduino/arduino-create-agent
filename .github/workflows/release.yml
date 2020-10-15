@@ -25,7 +25,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.14"
+          go-version: "1.15"
 
       - name: Install Dependencies (Linux)
         # run: sudo apt-get install ninja-build
@@ -45,17 +45,16 @@ jobs:
         uses: arduino/actions/setup-taskfile@master
         with:
           version: '3.x'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check the code is good
         run: task check
 
-      - name: Build the Agent
-        run: task build
-
       - name: Run unit tests
         run: task test-unit
+
+      - name: Build the Agent
+        run: task build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
