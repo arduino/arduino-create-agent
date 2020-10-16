@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+
+    <key>CFBundleIconFile</key>           <string>AppIcon.icns</string>
+
+    <key>CFBundleName</key>               <string>Arduino Create Agent</string>
+    <key>CFBundleExecutable</key>         <string>Arduino_Create_Bridge</string>
+    <key>CFBundleIdentifier</key>         <string>create.arduino.cc</string>
+
+    <key>CFBundleVersion</key>            <string>0.1</string>
+    <key>NSHumanReadableCopyright</key>   <string>© Copyright 2020 Arduino LLC</string>
+    <key>CFBundleShortVersionString</key> <string>0.1</string>
+    <key>LSUIElement</key>                <true/>
+    <!-- Needed for Apache Callback -->
+    <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>NSMainNibFile</key><string>MainMenu</string>
+
+</dict></plist>

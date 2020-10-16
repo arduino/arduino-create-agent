@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  test:
+  build:
     strategy:
       matrix:
         # operating-system: [ubuntu-latest, windows-latest, macOS-latest]
@@ -90,8 +90,8 @@ jobs:
       #     file: ./coverage_integ.txt
       #     flags: integ
 
-  sign-and-notarize:
-    needs: test
+  package-macOS:
+    needs: build
     strategy:
       matrix:
         # operating-system: [windows-latest, macOS-latest]
@@ -100,8 +100,8 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
 
     steps:
-      - name: Disable EOL conversions
-        run: git config --global core.autocrlf false
+      # - name: Disable EOL conversions
+      #   run: git config --global core.autocrlf false
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -110,9 +110,20 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: arduino-create-agent-${{ matrix.operating-system }}
+          path: arduino-create-agent
 
-      - name: Download Gon
+      - name: Build .app
         run: |
-          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.2/gon_0.2.2_macos.zip
-          unzip gon_0.2.2_macos.zip -d /usr/local/bin
-          rm -f gon_0.2.2_macos.zip
+          mkdir build
+          cp -r skel/ build
+          cp arduino-create-agent build/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge
+          cp config.ini build/ArduinoCreateAgent.app/Contents/MacOS/
+
+          find build
+        shell: bash      
+
+      # - name: Download Gon
+      #   run: |
+      #     wget -q https://github.com/mitchellh/gon/releases/download/v0.2.2/gon_0.2.2_macos.zip
+      #     unzip gon_0.2.2_macos.zip -d /usr/local/bin
+      #     rm -f gon_0.2.2_macos.zip
