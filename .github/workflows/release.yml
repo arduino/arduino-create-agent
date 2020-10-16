@@ -116,7 +116,7 @@ jobs:
         run: |
           mkdir build
           cp -r skel/ build
-          cp arduino-create-agent build/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge
+          cp arduino-create-agent/arduino-create-agent build/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge
           cp config.ini build/ArduinoCreateAgent.app/Contents/MacOS/
 
           find build

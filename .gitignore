@@ -10,3 +10,6 @@ artifacts*
 
 # IDEs config 
 .idea
+
+# macOS
+.DS_Store
