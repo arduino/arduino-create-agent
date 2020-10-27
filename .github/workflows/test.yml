@@ -51,6 +51,9 @@ jobs:
       - name: Run unit tests
         run: task test-unit
 
+      - name: Check dir content
+        run: ls
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
