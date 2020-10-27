@@ -82,14 +82,20 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: arduino-create-agent-ubuntu-latest
-          path: arduino-create-agent
+          path: artifacts/linux-386/
 
       - name: ls test
         run: ls -lah
 
       - name: Launch Bitrock installbuilder-20
-        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --setvars project.outputDirectory=$PWD project.version=${buildrevision} workspace=$PWD realname=${REALNAME}
+        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --license "${{ secrets.INSTALLER_LICENSE }}" --setvars project.outputDirectory=$PWD project.version=${buildrevision} workspace=$PWD realname=${REALNAME}
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ArduinoCreateAgent
+          path: ArduinoCreateAgent*
+          if-no-files-found: error
 
       # - name: Send unit tests coverage to Codecov
       #   if: >
