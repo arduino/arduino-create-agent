@@ -3,7 +3,7 @@ name: release
 on:
   push:
     branches:
-      - zmoog/*
+      - umbynos/*
 
 jobs:
 
@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         # operating-system: [ubuntu-latest, windows-latest, macOS-latest]
-        operating-system: [macOS-latest]
+        operating-system: [ubuntu-latest]
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -62,7 +62,27 @@ jobs:
           name: arduino-create-agent-${{ matrix.operating-system }}
           path: arduino-create-agent
           if-no-files-found: error
-          
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+
+    container:
+      image: floydpink/ubuntu-install-builder:latest
+      volumes:
+        - ${{ github.workspace }}:/agent
+
+    steps:
+      - name: ls test
+        run: ls -lah
+
+      - name: ls agent
+        run: ls agent
+
+      - name: Launch Bitrock
+        run: /opt/installbuilder-20.3.0/bin/builder
+
+
       # - name: Send unit tests coverage to Codecov
       #   if: >
       #     matrix.operating-system == 'ubuntu-latest' &&
@@ -90,37 +110,37 @@ jobs:
       #     file: ./coverage_integ.txt
       #     flags: integ
 
-  package-macOS:
-    needs: build
-    strategy:
-      matrix:
-        # operating-system: [windows-latest, macOS-latest]
-        operating-system: [macOS-latest]
+  # package-macOS:
+  #   needs: build
+  #   strategy:
+  #     matrix:
+  #       # operating-system: [windows-latest, macOS-latest]
+  #       operating-system: [macOS-latest]
 
-    runs-on: ${{ matrix.operating-system }}
+  #   runs-on: ${{ matrix.operating-system }}
 
-    steps:
-      # - name: Disable EOL conversions
-      #   run: git config --global core.autocrlf false
+  #   steps:
+  #     # - name: Disable EOL conversions
+  #     #   run: git config --global core.autocrlf false
 
-      - name: Checkout
-        uses: actions/checkout@v2
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: arduino-create-agent-${{ matrix.operating-system }}
-          path: arduino-create-agent
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: arduino-create-agent-${{ matrix.operating-system }}
+  #         path: arduino-create-agent
 
-      - name: Build .app
-        run: |
-          mkdir build
-          cp -r skel/ build
-          cp arduino-create-agent/arduino-create-agent build/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge
-          cp config.ini build/ArduinoCreateAgent.app/Contents/MacOS/
+  #     - name: Build .app
+  #       run: |
+  #         mkdir build
+  #         cp -r skel/ build
+  #         cp arduino-create-agent/arduino-create-agent build/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge
+  #         cp config.ini build/ArduinoCreateAgent.app/Contents/MacOS/
 
-          find build
-        shell: bash      
+  #         find build
+  #       shell: bash      
 
       # - name: Download Gon
       #   run: |
