@@ -73,11 +73,14 @@ jobs:
         - ${{ github.workspace }}:/agent
 
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: arduino-create-agent-ubuntu-latest
+          path: arduino-create-agent
+
       - name: ls test
         run: ls -lah
-
-      - name: ls agent
-        run: ls agent
 
       - name: Launch Bitrock
         run: /opt/installbuilder-20.3.0/bin/builder
