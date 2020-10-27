@@ -69,10 +69,15 @@ jobs:
 
     container:
       image: floydpink/ubuntu-install-builder:latest
-      volumes:
-        - ${{ github.workspace }}:/agent
 
     steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: 'bcmi-labs/arduino-create-agent-installer'
+          token: ${{ secrets.PAT_TEMP }}
+
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
@@ -82,8 +87,8 @@ jobs:
       - name: ls test
         run: ls -lah
 
-      - name: Launch Bitrock
-        run: /opt/installbuilder-20.3.0/bin/builder
+      - name: Launch Bitrock installbuilder-20
+        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --setvars project.outputDirectory=$PWD project.version=${buildrevision} workspace=$PWD realname=${REALNAME}
 
 
       # - name: Send unit tests coverage to Codecov
