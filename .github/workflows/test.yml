@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: arduino-create-agent-${{ matrix.operating-system }}
-          path: arduino-create-agent
+          path: arduino-create-agent*
           if-no-files-found: error
 
       # - name: Send unit tests coverage to Codecov
