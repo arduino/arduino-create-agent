@@ -87,8 +87,11 @@ jobs:
       - name: ls test
         run: ls -lah
 
+      - name: Save license to file
+        run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
+
       - name: Launch Bitrock installbuilder-20
-        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --license "${{ secrets.INSTALLER_LICENSE }}" --setvars project.outputDirectory=$PWD project.version=${buildrevision} workspace=$PWD realname=${REALNAME}
+        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --license /tmp/license.xml  --setvars project.outputDirectory=$PWD project.version=${buildrevision} workspace=$PWD realname=${REALNAME}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
