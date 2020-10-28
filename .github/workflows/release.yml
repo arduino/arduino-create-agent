@@ -67,6 +67,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
 
+    env:
+      INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF} workspace=$PWD realname=Arduino_Create_Bridge"
+      CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
+      NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
+      CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
+
     container:
       image: floydpink/ubuntu-install-builder:latest
 
@@ -91,7 +97,7 @@ jobs:
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
       - name: Launch Bitrock installbuilder-20
-        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --license /tmp/license.xml  --setvars project.outputDirectory=$PWD project.version=${buildrevision} workspace=$PWD realname=${REALNAME}
+        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
