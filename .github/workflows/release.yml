@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF} workspace=$PWD realname=Arduino_Create_Bridge"
+      INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_SHA} workspace=$PWD realname=Arduino_Create_Bridge"
       CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
       NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
       CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
