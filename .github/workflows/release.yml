@@ -90,8 +90,11 @@ jobs:
           name: arduino-create-agent-ubuntu-latest
           path: artifacts/linux-386/
 
-      - name: ls test
-        run: ls -lah
+      - name: Make executable
+        run: chmod +x artifacts/linux-386/arduino-create-agent
+
+      - name: Rename executable to Arduino_Create_Bridge
+        run: mv artifacts/linux-386/arduino-create-agent artifacts/linux-386/Arduino_Create_Bridge
 
       - name: Save license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
