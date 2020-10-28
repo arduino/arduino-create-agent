@@ -60,7 +60,9 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: arduino-create-agent-${{ matrix.operating-system }}
-          path: arduino-create-agent
+          path: |
+            arduino-create-agent
+            config.ini
           if-no-files-found: error
 
   package:
@@ -105,7 +107,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: ArduinoCreateAgent
+          name: ArduinoCreateAgent-linux
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
