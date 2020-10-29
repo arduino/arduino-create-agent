@@ -56,10 +56,11 @@ require (
 	go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87
 	go.bug.st/serial.v1 v0.0.0-20180827123349-5f7892a7bb45
 	goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4
-	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
-	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/sys v0.0.0-20200107162124-548cf772de50
-	golang.org/x/tools v0.0.0-20190116231616-b258f6da2383
+	golang.org/x/tools v0.0.0-20200130002326-2f3ba24bd6e7
 	gopkg.in/Knetic/govaluate.v3 v3.0.0
 	gopkg.in/go-playground/validator.v8 v8.18.1
 	gopkg.in/h2non/filetype.v1 v1.0.5
