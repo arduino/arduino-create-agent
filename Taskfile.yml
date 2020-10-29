@@ -41,14 +41,17 @@ vars:
   # build vars
   COMMIT:
     sh: echo ${TRAVIS_COMMIT:-`git log -n 1 --format=%h`}
+  TAG:
+    sh: echo `git describe --tags --abbrev=0`
   LDFLAGS: >
-    -ldflags '-X main.git_revision={{.COMMIT}}'
+    -ldflags '-X main.version={{.TAG}}
+    -X main.git_revision={{.COMMIT}}'
   # test vars
   GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
-  TEST_VERSIONSTRING: "0.0.0-test.preview"
+  TEST_VERSIONSTRING: "0.0.0-alpha"
   TEST_COMMIT: "deadbeef"
   TEST_LDFLAGS: >
-    -ldflags  '-X main.version={{.TEST_VERSIONSTRING}}
+    -ldflags '-X main.version={{.TEST_VERSIONSTRING}}
     -X main.git_revision={{.TEST_COMMIT}}'
   # check-lint vars
   GOLINTBIN:
