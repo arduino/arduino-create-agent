@@ -75,6 +75,32 @@ jobs:
       NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
       CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
 
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest, windows-latest, macOS-latest]
+
+        include:
+          - operating-system: ubuntu-latest
+            bowsers:
+              - firefox
+              - chrome
+            install-builder-name: linux
+            executable-path: artifacts/linux-386/
+          - operating-system: windows-latest
+            browsers:
+              - firefox
+              - chrome
+              - edge
+            install-builder-name: windows
+            executable-path: artifacts/windows/
+          - operating-system: macOS-latest
+            bowsers:
+              - firefox
+              - chrome
+              - safari
+            install-builder-name: osx
+            executable-path: ''  # TBD
+
     container:
       image: floydpink/ubuntu-install-builder:latest
 
@@ -84,30 +110,30 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'bcmi-labs/arduino-create-agent-installer'
-          token: ${{ secrets.PAT_TEMP }}
+          token: ${{ secrets.PAT_TEMP }}  # use token organization instead
 
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
-          name: arduino-create-agent-ubuntu-latest
-          path: artifacts/linux-386/
+          name: arduino-create-agent-${{ matrix.operating-system }}
+          path: ${{ matrix.executable-path }}
 
       - name: Make executable
-        run: chmod +x artifacts/linux-386/arduino-create-agent
+        run: chmod +x ${{ matrix.executable-path }}arduino-create-agent
 
       - name: Rename executable to Arduino_Create_Bridge
-        run: mv artifacts/linux-386/arduino-create-agent artifacts/linux-386/Arduino_Create_Bridge
+        run: mv ${{ matrix.executable-path }}arduino-create-agent ${{ matrix.executable-path }}/Arduino_Create_Bridge
 
       - name: Save license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
       - name: Launch Bitrock installbuilder-20
-        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml linux --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
+        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}  # TODO: fix certs install
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: ArduinoCreateAgent-linux
+          name: ArduinoCreateAgent-${{ matrix.install-builder-name }}
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
