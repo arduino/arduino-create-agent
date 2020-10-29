@@ -10,8 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        # operating-system: [ubuntu-latest, windows-latest, macOS-latest]
-        operating-system: [ubuntu-latest]
+        operating-system: [ubuntu-latest, windows-latest, macOS-latest]
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -61,7 +60,7 @@ jobs:
         with:
           name: arduino-create-agent-${{ matrix.operating-system }}
           path: |
-            arduino-create-agent
+            arduino-create-agent*
             config.ini
           if-no-files-found: error
 
@@ -76,6 +75,7 @@ jobs:
       CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
 
     strategy:
+      fail-fast: false  # if one os is failing continue nonetheless
       matrix:
         operating-system: [ubuntu-latest, windows-latest, macOS-latest]
 
@@ -86,6 +86,7 @@ jobs:
               - chrome
             install-builder-name: linux
             executable-path: artifacts/linux-386/
+            extension: ''
           - operating-system: windows-latest
             browsers:
               - firefox
@@ -93,6 +94,7 @@ jobs:
               - edge
             install-builder-name: windows
             executable-path: artifacts/windows/
+            extension: .exe
           - operating-system: macOS-latest
             bowsers:
               - firefox
@@ -100,6 +102,7 @@ jobs:
               - safari
             install-builder-name: osx
             executable-path: ''  # TBD
+            extension: ''
 
     container:
       image: floydpink/ubuntu-install-builder:latest
@@ -120,9 +123,10 @@ jobs:
 
       - name: Make executable
         run: chmod +x ${{ matrix.executable-path }}arduino-create-agent
+        if: matrix.operating-system == 'ubuntu-latest' || matrix.operating-system == 'macOS-latest'
 
       - name: Rename executable to Arduino_Create_Bridge
-        run: mv ${{ matrix.executable-path }}arduino-create-agent ${{ matrix.executable-path }}/Arduino_Create_Bridge
+        run: mv ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge${{ matrix.extension }}
 
       - name: Save license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
