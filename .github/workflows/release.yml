@@ -132,8 +132,17 @@ jobs:
       - name: Save license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
-      - name: Launch Bitrock installbuilder-20
-        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}  # TODO: fix certs install
+        # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
+      - name: Launch Bitrock installbuilder-20 with CERT_INSTALL && CHOICE_CERT_INSTALL
+        run: |
+          /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.CERT_INSTALL }}
+          /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.CHOICE_CERT_INSTALL }}
+        if: matrix.operating-system == 'windows-latest' || matrix.operating-system == 'macOS-latest'
+
+        # linux
+      - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
+        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
+        if: matrix.operating-system == 'ubuntu-latest'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
