@@ -82,28 +82,20 @@ jobs:
 
         include:
           - operating-system: ubuntu-latest
-            bowsers:
-              - firefox
-              - chrome
+            bowser: ''
             install-builder-name: linux
             executable-path: artifacts/linux-386/
             extension: ''
           - operating-system: windows-latest
-            browsers:
-              - firefox
-              - chrome
-              - edge
+            browser: edge
             install-builder-name: windows
             executable-path: artifacts/windows/
             extension: .exe
           - operating-system: macOS-latest
-            bowsers:
-              - firefox
-              - chrome
-              - safari
+            bowser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
-            extension: ''
+            extension: ''  # fix this
 
     container:
       image: floydpink/ubuntu-install-builder:latest
@@ -136,12 +128,24 @@ jobs:
       - name: Launch Bitrock installbuilder-20 with CERT_INSTALL && CHOICE_CERT_INSTALL
         run: |
           /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.CERT_INSTALL }}
+          ls -lah
+          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CI${{matrix.extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-${{matrix.browser}}${{matrix.extension}}
           /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.CHOICE_CERT_INSTALL }}
+          cp ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CC${{matrix.extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-chrome${{matrix.extension}}
+          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CC${{matrix.extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-firefox${{matrix.extension}}
+          ls -lah
         if: matrix.operating-system == 'windows-latest' || matrix.operating-system == 'macOS-latest'
 
         # linux
       - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
-        run: /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
+        run: |
+          /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
+          ls -lah
+          cp ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CS.run ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-chrome.run
+          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CS.run ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-firefox.run
+          cp ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-chrome.tar.gz
+          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-firefox.tar.gz
+          ls -lah
         if: matrix.operating-system == 'ubuntu-latest'
 
       - name: Upload artifacts
