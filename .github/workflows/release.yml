@@ -73,6 +73,7 @@ jobs:
       CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
       NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
       CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
+      CREATE_OSX_BUNDLED_MG: 1
 
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
@@ -101,7 +102,7 @@ jobs:
               - chrome
               - safari
             install-builder-name: osx
-            executable-path: ''  # TBD
+            executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
             extension: ''
 
     container:
