@@ -86,16 +86,19 @@ jobs:
             install-builder-name: linux
             executable-path: artifacts/linux-386/
             extension: ''
+            installer-extension: ''
           - operating-system: windows-latest
             browser: edge
             install-builder-name: windows
             executable-path: artifacts/windows/
             extension: .exe
+            installer-extension: .exe
           - operating-system: macOS-latest
             bowser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
-            extension: ''  # fix this
+            extension: ''
+            installer-extension: .dmg
 
     container:
       image: floydpink/ubuntu-install-builder:latest
@@ -129,11 +132,12 @@ jobs:
         run: |
           /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.CERT_INSTALL }}
           ls -lah
-          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CI${{matrix.extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-${{matrix.browser}}${{matrix.extension}}
+          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CI${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-${{matrix.browser}}${{matrix.installer-extension}}
           /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.CHOICE_CERT_INSTALL }}
-          cp ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CC${{matrix.extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-chrome${{matrix.extension}}
-          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CC${{matrix.extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-firefox${{matrix.extension}}
+          cp ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-chrome${{matrix.installer-extension}}
+          mv ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-firefox${{matrix.installer-extension}}
           ls -lah
+          rm ArduinoCreateAgent-${GITHUB_SHA}-${{ matrix.install-builder-name }}-installer-*.tar.gz
         if: matrix.operating-system == 'windows-latest' || matrix.operating-system == 'macOS-latest'
 
         # linux
