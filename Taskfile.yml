@@ -49,17 +49,19 @@ vars:
   WIN_FLAGS: "-H=windowsgui"
   COMMIT:
     sh: echo ${TRAVIS_COMMIT:-`git log -n 1 --format=%h`}
+  TAG:
+    sh: echo `git describe --tags --abbrev=0`
   LDFLAGS: >
     -ldflags '-X github.com/arduino/arduino-create-agent/version.commit={{.COMMIT}}'
   WIN_LDFLAGS: >
     -ldflags '-X github.com/arduino/arduino-create-agent/version.commit={{.COMMIT}} {{.WIN_FLAGS}}'
   # test vars
   GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
-  TEST_VERSIONSTRING: "0.0.0-test.preview"
+  TEST_VERSIONSTRING: "0.0.0-alpha"
   TEST_COMMIT: "deadbeef"
   TEST_LDFLAGS: >
-    -ldflags  '-X github.com/arduino/arduino-create-agent/version.versionString={{.TEST_VERSIONSTRING}}
-    -X github.com/arduino/arduino-create-agent/version.commit={{.TEST_COMMIT}}'
+    -ldflags '-X main.version={{.TEST_VERSIONSTRING}}
+    -X main.git_revision={{.TEST_COMMIT}}'
   # check-lint vars
   GOLINTBIN:
     sh: go list -f {{"{{"}}".Target{{"}}"}}" golang.org/x/lint/golint
