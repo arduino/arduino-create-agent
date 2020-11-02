@@ -45,8 +45,13 @@ jobs:
       - name: Check the code is good
         run: task check
 
+      - name: Buld the Agent for win
+        run: task build-win
+        if: matrix.operating-system == 'windows-latest'
+
       - name: Build the Agent
         run: task build
+        if: matrix.operating-system != 'windows-latest'
 
       - name: Run unit tests
         run: task test-unit
