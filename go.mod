@@ -3,6 +3,7 @@ module github.com/arduino/arduino-create-agent
 go 1.14
 
 require (
+	github.com/akavel/rsrc v0.9.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract v2.0.0+incompatible
 	github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d
