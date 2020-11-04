@@ -130,7 +130,7 @@ jobs:
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
       - name: Save Win signing certificate to file
-        run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode  > /tmp/ArduinoCerts2020.pfx
+        run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 -di  > /tmp/ArduinoCerts2020.pfx
         if: matrix.operating-system == 'windows-latest'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
