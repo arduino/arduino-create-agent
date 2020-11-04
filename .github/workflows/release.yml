@@ -83,7 +83,7 @@ jobs:
         include:
           - operating-system: ubuntu-latest
             bowser: ''
-            install-builder-name: linux
+            install-builder-name: linux-x64
             executable-path: artifacts/linux-386/
             extension: ''
             installer-extension: ''
