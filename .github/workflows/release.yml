@@ -74,6 +74,8 @@ jobs:
       NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
       CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
       CREATE_OSX_BUNDLED_MG: 1
+      INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
+      INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
 
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
@@ -124,8 +126,12 @@ jobs:
       - name: Rename executable to Arduino_Create_Bridge
         run: mv ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge${{ matrix.extension }}
 
-      - name: Save license to file
+      - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
+
+      - name: Save Win signing certificate to file
+        run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode  > /tmp/ArduinoCerts2020.pfx
+        if: matrix.operating-system == 'windows-latest'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
       - name: Launch Bitrock installbuilder-20 with CERT_INSTALL && CHOICE_CERT_INSTALL
