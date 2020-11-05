@@ -91,7 +91,7 @@ jobs:
           - operating-system: ubuntu-latest
             bowser: ''
             install-builder-name: linux-x64
-            executable-path: artifacts/linux-386/
+            executable-path: artifacts/linux-amd64/
             extension: ''
             installer-extension: ''
           - operating-system: windows-latest
