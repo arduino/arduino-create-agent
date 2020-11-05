@@ -56,6 +56,10 @@ jobs:
         run: task build
         if: matrix.operating-system != 'windows-latest'
 
+      - name: Build the Agent-cli
+        run: task build-cli
+        if: matrix.operating-system == 'ubuntu-latest'
+
       - name: Build the Agent for win
         run: task build-win
         if: matrix.operating-system == 'windows-latest'
@@ -125,11 +129,15 @@ jobs:
           path: ${{ matrix.executable-path }}
 
       - name: Make executable
-        run: chmod +x ${{ matrix.executable-path }}arduino-create-agent
+        run: chmod +x ${{ matrix.executable-path }}arduino-create-agent*
         if: matrix.operating-system == 'ubuntu-latest' || matrix.operating-system == 'macOS-latest'
 
       - name: Rename executable to Arduino_Create_Bridge
         run: mv ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge${{ matrix.extension }}
+
+      - name: Rename executable to Arduino_Create_Bridge_cli
+        run: mv ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge_cli${{ matrix.extension }}
+        if: matrix.operating-system == 'ubuntu-latest'
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml

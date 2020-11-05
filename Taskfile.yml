@@ -7,6 +7,11 @@ tasks:
     cmds:
       - go build -v -i {{.LDFLAGS}}
 
+  build-cli:
+    desc: Build the project without tray support
+    cmds:
+      - go build -v -i -tags cli -o {{.APP_NAME}}_cli {{.LDFLAGS}}
+
   build-win:
     desc: Build the project for win
     cmds:
@@ -47,6 +52,7 @@ vars:
   DEFAULT_TARGETS:
     sh: echo `go list ./... | grep -v 'arduino-create-agent/gen/' | tr '\n' ' '`
   # build vars
+  APP_NAME: arduino-create-agent
   WIN_FLAGS: -H=windowsgui
   COMMIT:
     sh: echo ${TRAVIS_COMMIT:-`git log -n 1 --format=%h`}
