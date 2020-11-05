@@ -15,7 +15,8 @@ tasks:
   build-win32:
     desc: Build the project for win 32 bit
     cmds:
-      - set GOARCH=386
+      - export GOOS=windows
+      - export GOARCH=386
       - go get github.com/akavel/rsrc
       - rsrc -arch=386 -manifest=manifest.xml
       - go build -v -i {{.WIN_LDFLAGS}}
