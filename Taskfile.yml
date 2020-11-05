@@ -12,8 +12,8 @@ tasks:
     cmds:
       - go build -v -i -tags cli -o {{.APP_NAME}}_cli {{.LDFLAGS}}
 
-  build-win:
-    desc: Build the project for win
+  build-win32:
+    desc: Build the project for win 32 bit
     cmds:
       - go get github.com/akavel/rsrc
       - rsrc -arch=386 -manifest=manifest.xml

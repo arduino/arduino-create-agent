@@ -60,8 +60,11 @@ jobs:
         run: task build-cli
         if: matrix.operating-system == 'ubuntu-latest'
 
-      - name: Build the Agent for win
-        run: task build-win
+      - name: Build the Agent for win32
+        env:
+          GOARCH: 386  # 32bit architecture
+          GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
+        run: task build-win32
         if: matrix.operating-system == 'windows-latest'
 
       - name: Upload artifacts
