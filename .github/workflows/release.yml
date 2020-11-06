@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - umbynos/*
+      - zmoog/notarize
 
 jobs:
 
