@@ -122,7 +122,7 @@ jobs:
         run: |
           # copy executable into the 'notatization area'
           # cp skel/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge /tmp/Arduino_Create_Bridge
-          gon gon.config.hcl -log-level=debug -log-json ./gon.json
+          gon -log-level=debug -log-json gon.config.hcl 
           # copy the notirized executable back into the app bundle
           # cp /tmp/Arduino_Create_Bridge skel/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge 
         env:
