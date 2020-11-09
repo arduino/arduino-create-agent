@@ -239,12 +239,6 @@ jobs:
         browser: [safari, firefox, chrome]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          repository: 'bcmi-labs/arduino-create-agent-installer'
-          token: ${{ secrets.PAT_TEMP }}  # use token organization instead
-          ref: 'umbynos/gon_installer'  # TODO: only for test
 
       - name: Download artifacts
         uses: actions/download-artifact@v2
@@ -265,6 +259,23 @@ jobs:
           brew tap mitchellh/gon
           brew install mitchellh/gon/gon
 
+      - name: Write gon config to file
+        #  gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
+        run: |
+          cat > gon.config_installer.hcl <<EOF
+          source = ["ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"]
+          bundle_id = "cc.arduino.arduino-agent-installer"
+
+          sign {
+            application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
+          }
+
+          dmg {
+            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.dmg"
+            volume_name = "ArduinoCreateAgent"
+          }
+          EOF
+
       - name: Code sign and notarize app
         run: |
           echo "gon will notarize executable ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${BROWSER}.app"
@@ -272,7 +283,6 @@ jobs:
         env:
           AC_USERNAME: ${{ secrets.AC_USERNAME }}
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
-          BROWSER: ${{ matrix.browser }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
