@@ -147,7 +147,7 @@ jobs:
 
         include:
           - operating-system: ubuntu-latest
-            bowser: ''
+            browser: ''
             install-builder-name: linux-x64
             executable-path: artifacts/linux-amd64/
             extension: ''
@@ -159,7 +159,7 @@ jobs:
             extension: .exe
             installer-extension: .exe
           - operating-system: macOS-latest
-            bowser: safari
+            browser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
             extension: ''
