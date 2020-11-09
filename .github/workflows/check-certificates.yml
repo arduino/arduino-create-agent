@@ -11,7 +11,7 @@ on:
 
 env:
   # Begin notifications when there are less than this many days remaining before expiration
-  EXPIRATION_WARNING_PERIOD: 2000
+  EXPIRATION_WARNING_PERIOD: 30
 
 jobs:
   check-certificates:
@@ -59,7 +59,6 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.TEAM_CREATE_CHANNEL_SLACK_WEBHOOK }}
           SLACK_MESSAGE: |
             :warning::warning::warning::warning:
-            ONLY A TEST DON'T PANIC
             WARNING: ${{ github.repository }} ${{ matrix.certificate.identifier }} verification failed!!!
             :warning::warning::warning::warning:
           SLACK_COLOR: danger
@@ -109,7 +108,6 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.TEAM_CREATE_CHANNEL_SLACK_WEBHOOK }}
           SLACK_MESSAGE: |
             :warning::warning::warning::warning:
-            ONLY A TEST DON'T PANIC
             WARNING: ${{ github.repository }} ${{ matrix.certificate.identifier }} will expire in ${{ steps.get-days-before-expiration.outputs.days }} days!!!
             :warning::warning::warning::warning:
           SLACK_COLOR: danger
