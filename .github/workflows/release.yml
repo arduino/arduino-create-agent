@@ -11,8 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        # operating-system: [ubuntu-latest, windows-latest, macOS-latest]
-        operating-system: [macOS-latest]
+        operating-system: [ubuntu-latest, windows-latest, macOS-latest]
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -29,7 +28,6 @@ jobs:
           go-version: "1.15"
 
       - name: Install Dependencies (Linux)
-        # run: sudo apt-get install ninja-build
         run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
         if: matrix.operating-system == 'ubuntu-latest'
 
@@ -76,7 +74,7 @@ jobs:
           if-no-files-found: error
 
 
-  code-sign:
+  code-sign-mac-executable:
     needs: build
     runs-on: macOS-latest
     env:
@@ -126,7 +124,7 @@ jobs:
           if-no-files-found: error
 
   package:
-    needs: code-sign
+    needs: code-sign-mac-executable
     runs-on: ubuntu-latest
 
     env:
@@ -134,7 +132,7 @@ jobs:
       CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
       NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
       CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
-      CREATE_OSX_BUNDLED_MG: 1
+      CREATE_OSX_BUNDLED_MG: 0  # do not create the DMG, gon will take care of that
       INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
       INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
       INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
@@ -147,11 +145,8 @@ jobs:
 
         include:
           - operating-system: ubuntu-latest
-            browser: ''
             install-builder-name: linux-x64
             executable-path: artifacts/linux-amd64/
-            extension: ''
-            installer-extension: ''
           - operating-system: windows-latest
             browser: edge
             install-builder-name: windows
@@ -162,8 +157,7 @@ jobs:
             browser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
-            extension: ''
-            installer-extension: .dmg
+            installer-extension: .app
 
     container:
       image: floydpink/ubuntu-install-builder:latest
@@ -205,6 +199,7 @@ jobs:
         if: matrix.operating-system == 'macOS-latest'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
+        # installbuilder reads the env vars with certs paths and use it to sign the installer.
       - name: Launch Bitrock installbuilder-20 with CERT_INSTALL && CHOICE_CERT_INSTALL
         run: |
           /opt/installbuilder-20.3.0/bin/builder build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.CERT_INSTALL }}
@@ -232,67 +227,56 @@ jobs:
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
-      # - name: Send unit tests coverage to Codecov
-      #   if: >
-      #     matrix.operating-system == 'ubuntu-latest' &&
-      #     github.event_name == 'push'
-      #   uses: codecov/codecov-action@v1
-      #   with:
-      #     file: ./coverage_unit.txt
-      #     flags: unit
+  code-sign-mac-installers:
+    needs: package
+    runs-on: macOS-latest
+    env:
+      INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
+      INSTALLER_CERT_MAC_P12: "/tmp/ArduinoCerts2020.p12"
 
-      # - name: Send legacy tests coverage to Codecov
-      #   if: >
-      #     matrix.operating-system == 'ubuntu-latest' &&
-      #     github.event_name == 'push'
-      #   uses: codecov/codecov-action@v1
-      #   with:
-      #     file: ./coverage_legacy.txt
-      #     flags: unit
+    strategy:
+      matrix:
+        browser: [safari, firefox, chrome]
 
-      # - name: Send integration tests coverage to Codecov
-      #   if: >
-      #     matrix.operating-system == 'ubuntu-latest' &&
-      #     github.event_name == 'push'
-      #   uses: codecov/codecov-action@v1
-      #   with:
-      #     file: ./coverage_integ.txt
-      #     flags: integ
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: 'bcmi-labs/arduino-create-agent-installer'
+          token: ${{ secrets.PAT_TEMP }}  # use token organization instead
+          ref: 'umbynos/gon_installer'  # TODO: only for test
 
-  # package-macOS:
-  #   needs: build
-  #   strategy:
-  #     matrix:
-  #       # operating-system: [windows-latest, macOS-latest]
-  #       operating-system: [macOS-latest]
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ArduinoCreateAgent-osx
+          path: $PWD
 
-  #   runs-on: ${{ matrix.operating-system }}
+      - name: Import Code-Signing Certificates
+        uses: Apple-Actions/import-codesign-certs@v1
+        with:
+          # The certificates in a PKCS12 file encoded as a base64 string
+          p12-file-base64: ${{ secrets.INSTALLER_CERT_MAC_P12 }}
+          # The password used to import the PKCS12 file.
+          p12-password: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
 
-  #   steps:
-  #     # - name: Disable EOL conversions
-  #     #   run: git config --global core.autocrlf false
+      - name: Install gon via HomeBrew for code signing and app notarization
+        run: |
+          brew tap mitchellh/gon
+          brew install mitchellh/gon/gon
 
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+      - name: Code sign and notarize app
+        run: |
+          echo "gon will notarize executable ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${BROWSER}.app"
+          gon -log-level=debug -log-json gon.config_installer.hcl
+        env:
+          AC_USERNAME: ${{ secrets.AC_USERNAME }}
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+          BROWSER: ${{ matrix.browser }}
 
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: arduino-create-agent-${{ matrix.operating-system }}
-  #         path: arduino-create-agent
-
-  #     - name: Build .app
-  #       run: |
-  #         mkdir build
-  #         cp -r skel/ build
-  #         cp arduino-create-agent/arduino-create-agent build/ArduinoCreateAgent.app/Contents/MacOS/Arduino_Create_Bridge
-  #         cp config.ini build/ArduinoCreateAgent.app/Contents/MacOS/
-
-  #         find build
-  #       shell: bash      
-
-      # - name: Download Gon
-      #   run: |
-      #     wget -q https://github.com/mitchellh/gon/releases/download/v0.2.2/gon_0.2.2_macos.zip
-      #     unzip gon_0.2.2_macos.zip -d /usr/local/bin
-      #     rm -f gon_0.2.2_macos.zip
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ArduinoCreateAgent-osx
+          path: ArduinoCreateAgent*.dmg
+          if-no-files-found: error
