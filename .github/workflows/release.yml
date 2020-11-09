@@ -244,7 +244,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: ArduinoCreateAgent-osx
-          path: $PWD
+          path: ArduinoCreateAgent-osx
 
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
@@ -263,7 +263,7 @@ jobs:
         #  gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
-          source = ["ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"]
+          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"]
           bundle_id = "cc.arduino.arduino-agent-installer"
 
           sign {
@@ -278,7 +278,7 @@ jobs:
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${BROWSER}.app"
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"
           gon -log-level=debug -log-json gon.config_installer.hcl
         env:
           AC_USERNAME: ${{ secrets.AC_USERNAME }}
