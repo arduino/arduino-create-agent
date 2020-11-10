@@ -246,6 +246,9 @@ jobs:
           name: ArduinoCreateAgent-osx
           path: ArduinoCreateAgent-osx
 
+      - name: Make executable
+        run: chmod +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app/Contents/MacOS/*
+
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
         with:
@@ -284,9 +287,12 @@ jobs:
           AC_USERNAME: ${{ secrets.AC_USERNAME }}
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
 
+      - name: Tar files to keep permissions
+        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.dmg
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: ArduinoCreateAgent-osx
-          path: ArduinoCreateAgent*.dmg
+          path: ArduinoCreateAgent*.tar
           if-no-files-found: error
