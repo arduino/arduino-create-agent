@@ -177,7 +177,7 @@ jobs:
           path: ${{ matrix.executable-path }}
 
       - name: Make executable
-        run: chmod +x ${{ matrix.executable-path }}arduino-create-agent*
+        run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
         if: matrix.operating-system == 'ubuntu-latest' || matrix.operating-system == 'macOS-latest'
 
       - name: Rename executable to Arduino_Create_Bridge
@@ -247,7 +247,7 @@ jobs:
           path: ArduinoCreateAgent-osx
 
       - name: Make executable
-        run: chmod +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app/Contents/MacOS/*
+        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app/Contents/MacOS/*
 
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
