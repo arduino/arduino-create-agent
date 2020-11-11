@@ -60,6 +60,12 @@ jobs:
         run: task build-cli
         if: matrix.operating-system == 'ubuntu-latest'
 
+      - name: Embed manifest in win binary
+        run: |
+          go get github.com/akavel/rsrc
+          rsrc -arch=386 -manifest=manifest.xml
+        if: matrix.operating-system == 'windows-latest'
+
       - name: Build the Agent for win32
         env:
           GOARCH: 386  # 32bit architecture

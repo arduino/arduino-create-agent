@@ -15,10 +15,7 @@ tasks:
   build-win32:
     desc: Build the project for win 32 bit
     cmds:
-      - go get github.com/akavel/rsrc
-      - rsrc -arch=386 -manifest=manifest.xml
       - go build -v -i {{.WIN_LDFLAGS}}
-      - rm rsrc.syso
 
   test:
     desc: Run the full testsuite, `legacy` will be skipped
