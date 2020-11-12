@@ -209,11 +209,11 @@ jobs:
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
       - name: Save Win signing certificate to file
-        run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode  > /tmp/ArduinoCerts2020.pfx
+        run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_PFX}}
         if: matrix.operating-system == 'windows-latest'
 
       - name: Save macOS signing certificate to file
-        run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > /tmp/ArduinoCerts2020.p12
+        run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
         if: matrix.operating-system == 'macOS-latest'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
