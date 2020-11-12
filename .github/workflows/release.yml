@@ -63,7 +63,7 @@ jobs:
       - name: Embed manifest in win binary
         run: |
           go get github.com/akavel/rsrc
-          rsrc -arch=386 -manifest=manifest.xml
+          rsrc -arch 386 -manifest manifest.xml
         if: matrix.operating-system == 'windows-latest'
 
       - name: Build the Agent for win32
