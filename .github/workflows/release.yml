@@ -7,7 +7,7 @@ on:
       - zmoog/notarize
 
 jobs:
-
+  # The build job is responsible for: configuring the environment, testing and compiling process
   build:
     strategy:
       matrix:
@@ -27,6 +27,7 @@ jobs:
         with:
           go-version: "1.15"
 
+        # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
         run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
         if: matrix.operating-system == 'ubuntu-latest'
@@ -56,23 +57,28 @@ jobs:
         run: task build
         if: matrix.operating-system != 'windows-latest'
 
+        # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
         run: task build-cli
         if: matrix.operating-system == 'ubuntu-latest'
 
+        # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
+        # rsrc will produce *.syso files that should get automatically recognized by go build command and linked into an executable.
       - name: Embed manifest in win binary
         run: |
           go get github.com/akavel/rsrc
           rsrc -arch 386 -manifest manifest.xml
         if: matrix.operating-system == 'windows-latest'
 
+        # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
         env:
-          GOARCH: 386  # 32bit architecture
+          GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win32
         if: matrix.operating-system == 'windows-latest'
 
+        # config.ini is required by the executable when it's run
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -82,22 +88,19 @@ jobs:
             config.ini
           if-no-files-found: error
 
-
+  # The code-sign-mac-executable job will download the macOS artifact from the previous job, sign e notarize the binary and re-upload it.
   code-sign-mac-executable:
     needs: build
     runs-on: macOS-latest
-    env:
-      INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-      INSTALLER_CERT_MAC_P12: "/tmp/ArduinoCerts2020.p12"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          repository: 'bcmi-labs/arduino-create-agent-installer'
-          token: ${{ secrets.PAT_TEMP }}  # use token organization instead
+          repository: 'bcmi-labs/arduino-create-agent-installer' # the repo which contains gon.config.hcl
+          token: ${{ secrets.PAT_TEMP }}  # TODO use token organization instead
 
-      - name: Download artifacts
+      - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: arduino-create-agent-macOS-latest
@@ -117,31 +120,36 @@ jobs:
           brew install mitchellh/gon/gon
 
       - name: Code sign and notarize app
+        env:
+          AC_USERNAME: ${{ secrets.AC_USERNAME }}
+          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         run: |
           gon -log-level=debug -log-json gon.config.hcl
           # gon will notarize ezecutable in "arduino-create-agent-macOS-latest/arduino-create-agent
           # The CI will ignore the zip output, using the signed binary only.
-        env:
-          AC_USERNAME: ${{ secrets.AC_USERNAME }}
-          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
 
-      - name: Upload artifacts
+        # This step will overwrite the non signed mac artifact (arduino-create-agent-macOS-latest)
+      - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: arduino-create-agent-macOS-latest
           path: arduino-create-agent-macOS-latest
           if-no-files-found: error
 
+  # This job is responsible for generating the installers (using installbuilder)
   package:
     needs: code-sign-mac-executable
     runs-on: ubuntu-latest
 
     env:
+      # vars used by installbuilder
       INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Bridge"
+      # vars passed to installbuilder to install https certs automatically
       CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
       NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
       CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
-      CREATE_OSX_BUNDLED_MG: 0  # do not create the DMG, gon will take care of that
+      CREATE_OSX_BUNDLED_MG: 0  # tell installbuilder to not create the DMG, gon will take care of that later
+      # installbuilder will read this vars automatically (defined in installer.xml):
       INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
       INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
       INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
@@ -149,7 +157,7 @@ jobs:
 
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
-      matrix:
+      matrix:  # used to generate installers for different OS and not for runs-on
         operating-system: [ubuntu-latest, windows-latest, macOS-latest]
 
         include:
@@ -176,15 +184,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          repository: 'bcmi-labs/arduino-create-agent-installer'
-          token: ${{ secrets.PAT_TEMP }}  # use token organization instead
+          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains install.xml
+          token: ${{ secrets.PAT_TEMP }}  # TODO use token organization instead
 
-      - name: Download artifacts
+      - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: arduino-create-agent-${{ matrix.operating-system }}
-          path: ${{ matrix.executable-path }}
+          path: ${{ matrix.executable-path }}  # path expected by installbuilder
 
+        # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
         if: matrix.operating-system == 'ubuntu-latest' || matrix.operating-system == 'macOS-latest'
@@ -236,12 +245,10 @@ jobs:
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
+  # This job will sign and notarize mac installers
   code-sign-mac-installers:
     needs: package
     runs-on: macOS-latest
-    env:
-      INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-      INSTALLER_CERT_MAC_P12: "/tmp/ArduinoCerts2020.p12"
 
     strategy:
       matrix:
@@ -249,12 +256,13 @@ jobs:
 
     steps:
 
-      - name: Download artifacts
+      - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: ArduinoCreateAgent-osx
           path: ArduinoCreateAgent-osx
 
+        # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app/Contents/MacOS/*
 
@@ -272,7 +280,7 @@ jobs:
           brew install mitchellh/gon/gon
 
       - name: Write gon config to file
-        #  gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
+        # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
           source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"]
@@ -289,13 +297,14 @@ jobs:
           EOF
 
       - name: Code sign and notarize app
-        run: |
-          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"
-          gon -log-level=debug -log-json gon.config_installer.hcl
         env:
           AC_USERNAME: ${{ secrets.AC_USERNAME }}
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+        run: |
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"
+          gon -log-level=debug -log-json gon.config_installer.hcl
 
+      #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
         run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.dmg
 
