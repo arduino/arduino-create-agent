@@ -324,3 +324,61 @@ jobs:
           name: ArduinoCreateAgent-osx
           path: ArduinoCreateAgent*.tar
           if-no-files-found: error
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: code-sign-mac-installers
+
+    steps:
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: ArduinoCreateAgent-*  # download all the archives containing installers
+          path: ArduinoCreateAgent
+
+      # - name: Read CHANGELOG
+      #   id: changelog
+      #   run: |
+      #     body=$(cat dist/CHANGELOG.md)
+      #     body="${body//'%'/'%25'}"
+      #     body="${body//$'\n'/'%0A'}"
+      #     body="${body//$'\r'/'%0D'}"
+      #     echo $body
+      #     echo "::set-output name=BODY::$body"
+
+      # - name: Identify Prerelease
+      #   # This is a workaround while waiting for create-release action
+      #   # to implement auto pre-release based on tag
+      #   id: prerelease
+      #   run: |
+      #     wget -q -P /tmp https://github.com/fsaintjacques/semver-tool/archive/3.0.0.zip
+      #     unzip -p /tmp/3.0.0.zip semver-tool-3.0.0/src/semver >/tmp/semver && chmod +x /tmp/semver
+      #     if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
+
+      - name: Create Github Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true  # only for test
+          prerelease: true  # see later how to handle this (maybe just a check on "-dev" will be sufficient)
+          body: "THIS IS A TEST RELEASE"
+
+      - name: Upload release files on Github
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file_glob: true  # If set to true, the file argument can be a glob pattern
+          file: ArduinoCreateAgent/*
+
+      # - name: Upload release files on Arduino downloads servers
+      #   uses: docker://plugins/s3
+      #   env:
+      #     PLUGIN_SOURCE: "dist/*"
+      #     PLUGIN_TARGET: "/arduino-cli/"
+      #     PLUGIN_STRIP_PREFIX: "dist/"
+      #     PLUGIN_BUCKET: ${{ secrets.DOWNLOADS_BUCKET }}
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
