@@ -332,10 +332,7 @@ jobs:
     steps:
 
       - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: ArduinoCreateAgent-*  # download all the archives containing installers
-          path: ArduinoCreateAgent
+        uses: actions/download-artifact@v2 # download all the artifacts
 
       # - name: Read CHANGELOG
       #   id: changelog
@@ -371,7 +368,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
           file_glob: true  # If set to true, the file argument can be a glob pattern
-          file: ArduinoCreateAgent/*
+          file: ArduinoCreateAgent*
 
       # - name: Upload release files on Arduino downloads servers
       #   uses: docker://plugins/s3
