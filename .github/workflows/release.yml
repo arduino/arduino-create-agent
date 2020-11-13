@@ -98,7 +98,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'bcmi-labs/arduino-create-agent-installer' # the repo which contains gon.config.hcl
-          token: ${{ secrets.PAT_TEMP }}  # TODO use token organization instead
+          token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
         uses: actions/download-artifact@v2
@@ -191,7 +191,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains install.xml
-          token: ${{ secrets.PAT_TEMP }}  # TODO use token organization instead
+          token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
         uses: actions/download-artifact@v2
