@@ -131,6 +131,7 @@ jobs:
           gon -log-level=debug -log-json gon.config.hcl
           # gon will notarize ezecutable in "arduino-create-agent-macOS-latest/arduino-create-agent
           # The CI will ignore the zip output, using the signed binary only.
+        timeout-minutes: 30
 
         # This step will overwrite the non signed mac artifact (arduino-create-agent-macOS-latest)
       - name: Upload artifact
@@ -312,6 +313,7 @@ jobs:
         run: |
           echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"
           gon -log-level=debug -log-json gon.config_installer.hcl
+        timeout-minutes: 30
 
       #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
