@@ -334,12 +334,13 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2 # download all the artifacts
 
+      #  mandatory step because upload-release-action does not support multiple folders
       - name: prepare artifacts for the release
         run: |
           mkdir release
           chmod -v +x ArduinoCreateAgent-linux-x64/*.run
           mv -v ArduinoCreateAgent-linux-x64/* release/
-          cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C /release
+          cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C release/
           mv -v ArduinoCreateAgent-windows/* release/
 
       # - name: Read CHANGELOG
