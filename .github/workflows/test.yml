@@ -38,9 +38,8 @@ jobs:
         shell: bash
 
       - name: Install Taskfile
-        uses: arduino/actions/setup-taskfile@master
+        uses: arduino/actions/setup-taskfile@rsora/update
         with:
-          version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check the code is good
