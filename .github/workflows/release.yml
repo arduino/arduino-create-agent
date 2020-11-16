@@ -334,6 +334,14 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2 # download all the artifacts
 
+      - name: prepare artifacts for the release
+        run: |
+          mkdir release
+          chmod -v +x ArduinoCreateAgent-linux-x64/*.run
+          mv -v ArduinoCreateAgent-linux-x64/* release/
+          cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C /release
+          mv -v ArduinoCreateAgent-windows/* release/
+
       # - name: Read CHANGELOG
       #   id: changelog
       #   run: |
@@ -360,9 +368,9 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
-          draft: true  # only for test
-          prerelease: true  # see later how to handle this (maybe just a check on "-dev" will be sufficient)
           body: "THIS IS A TEST RELEASE"
+          draft: false
+          prerelease: true  # see later how to handle this (maybe just a check on "-dev" will be sufficient)
 
       - name: Upload release files on Github
         uses: svenstaro/upload-release-action@v2
@@ -370,7 +378,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
           file_glob: true  # If set to true, the file argument can be a glob pattern
-          file: ArduinoCreateAgent*
+          file: release/*
 
       # - name: Upload release files on Arduino downloads servers
       #   uses: docker://plugins/s3
