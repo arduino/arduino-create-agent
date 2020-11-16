@@ -21,10 +21,10 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: "1.14"
+          go-version: "1.15"
 
+        # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
-        # run: sudo apt-get install ninja-build
         run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
         if: matrix.operating-system == 'ubuntu-latest'
 
@@ -38,29 +38,50 @@ jobs:
         shell: bash
 
       - name: Install Taskfile
-        uses: Arduino/actions/setup-taskfile@master
+        uses: arduino/actions/setup-taskfile@master
         with:
+          version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check the code is good
         run: task check
 
+      - name: Run unit tests
+        run: task test-unit
+
       - name: Build the Agent
         run: task build
         if: matrix.operating-system != 'windows-latest'
 
+        # build the agent without GUI support (no tray icon)
+      - name: Build the Agent-cli
+        run: task build-cli
+        if: matrix.operating-system == 'ubuntu-latest'
+
+        # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
+        # rsrc will produce *.syso files that should get automatically recognized by go build command and linked into an executable.
+      - name: Embed manifest in win binary
+        run: |
+          go get github.com/akavel/rsrc
+          rsrc -arch 386 -manifest manifest.xml
+        if: matrix.operating-system == 'windows-latest'
+
+        # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
+        env:
+          GOARCH: 386  # 32bit architecture (for support)
+          GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win32
         if: matrix.operating-system == 'windows-latest'
 
-      - name: Run unit tests
-        run: task test-unit
-
+        # config.ini is required by the executable when it's run
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: arduino-create-agent-${{ matrix.operating-system }}
-          path: arduino-create-agent*
+          path: |
+            arduino-create-agent*
+            config.ini
           if-no-files-found: error
 
       # - name: Send unit tests coverage to Codecov
