@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, windows-latest, macOS-latest]
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -87,10 +87,10 @@ jobs:
             config.ini
           if-no-files-found: error
 
-  # The code-sign-mac-executable job will download the macOS artifact from the previous job, sign e notarize the binary and re-upload it.
+  # The code-sign-mac-executable job will download the macos artifact from the previous job, sign e notarize the binary and re-upload it.
   code-sign-mac-executable:
     needs: build
-    runs-on: macOS-latest
+    runs-on: macos-latest
 
     steps:
       - name: Checkout
@@ -102,8 +102,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: arduino-create-agent-macOS-latest
-          path: arduino-create-agent-macOS-latest
+          name: arduino-create-agent-macos-latest
+          path: arduino-create-agent-macos-latest
 
       - name: Import Code-Signing Certificates
         env:
@@ -128,16 +128,16 @@ jobs:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         run: |
           gon -log-level=debug -log-json gon.config.hcl
-          # gon will notarize executable in "arduino-create-agent-macOS-latest/arduino-create-agent
+          # gon will notarize executable in "arduino-create-agent-macos-latest/arduino-create-agent
           # The CI will ignore the zip output, using the signed binary only.
         timeout-minutes: 30
 
-        # This step will overwrite the non signed mac artifact (arduino-create-agent-macOS-latest)
+        # This step will overwrite the non signed mac artifact (arduino-create-agent-macos-latest)
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: arduino-create-agent-macOS-latest
-          path: arduino-create-agent-macOS-latest
+          name: arduino-create-agent-macos-latest
+          path: arduino-create-agent-macos-latest
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -163,7 +163,7 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-        operating-system: [ubuntu-latest, windows-latest, macOS-latest]
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
 
         include:
           - operating-system: ubuntu-latest
@@ -175,7 +175,7 @@ jobs:
             executable-path: artifacts/windows/
             extension: .exe
             installer-extension: .exe
-          - operating-system: macOS-latest
+          - operating-system: macos-latest
             browser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
@@ -201,7 +201,7 @@ jobs:
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
-        if: matrix.operating-system == 'ubuntu-latest' || matrix.operating-system == 'macOS-latest'
+        if: matrix.operating-system == 'ubuntu-latest' || matrix.operating-system == 'macos-latest'
 
       - name: Rename executable to Arduino_Create_Bridge
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge${{ matrix.extension }}
@@ -217,9 +217,9 @@ jobs:
         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_PFX}}
         if: matrix.operating-system == 'windows-latest'
 
-      - name: Save macOS signing certificate to file
+      - name: Save macos signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
-        if: matrix.operating-system == 'macOS-latest'
+        if: matrix.operating-system == 'macos-latest'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
@@ -231,7 +231,7 @@ jobs:
           cp -vr ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-chrome${{matrix.installer-extension}}
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-firefox${{matrix.installer-extension}}
           rm -r ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-C*
-        if: matrix.operating-system == 'windows-latest' || matrix.operating-system == 'macOS-latest'
+        if: matrix.operating-system == 'windows-latest' || matrix.operating-system == 'macos-latest'
 
         # linux
       - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
@@ -253,7 +253,7 @@ jobs:
   # This job will sign and notarize mac installers
   code-sign-mac-installers:
     needs: package
-    runs-on: macOS-latest
+    runs-on: macos-latest
 
     strategy:
       matrix:
