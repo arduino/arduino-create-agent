@@ -128,7 +128,7 @@ jobs:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         run: |
           gon -log-level=debug -log-json gon.config.hcl
-          # gon will notarize ezecutable in "arduino-create-agent-macOS-latest/arduino-create-agent
+          # gon will notarize executable in "arduino-create-agent-macOS-latest/arduino-create-agent
           # The CI will ignore the zip output, using the signed binary only.
         timeout-minutes: 30
 
