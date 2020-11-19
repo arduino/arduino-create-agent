@@ -334,6 +334,14 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2 # download all the artifacts
 
+      - name: Identify Prerelease
+        # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
+        id: prerelease
+        run: |
+          wget -q -P /tmp https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip
+          unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
+          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
+
       #  mandatory step because upload-release-action does not support multiple folders
       - name: prepare artifacts for the release
         run: |
@@ -352,7 +360,7 @@ jobs:
           release_name: ${{ github.ref }}
           body: "THIS IS A TEST RELEASE"
           draft: false
-          prerelease: true  # see later how to handle this (maybe just a check on "-dev" will be sufficient)
+          prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
 
       - name: Upload release files on Github
         uses: svenstaro/upload-release-action@v2
