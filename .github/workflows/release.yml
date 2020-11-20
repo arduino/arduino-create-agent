@@ -351,21 +351,32 @@ jobs:
           cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C release/
           mv -v ArduinoCreateAgent-windows/* release/
 
-      - name: Create Github Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: "THIS IS A TEST RELEASE"
-          draft: false
-          prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
+      # - name: Create Github Release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.ref }}
+      #     release_name: ${{ github.ref }}
+      #     body: "THIS IS A TEST RELEASE"
+      #     draft: false
+      #     prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
 
-      - name: Upload release files on Github
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref }}
-          file_glob: true  # If set to true, the file argument can be a glob pattern
-          file: release/*
+      # - name: Upload release files on Github
+      #   uses: svenstaro/upload-release-action@v2
+      #   with:
+      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
+      #     tag: ${{ github.ref }}
+      #     file_glob: true  # If set to true, the file argument can be a glob pattern
+      #     file: release/*
+
+      - name: Upload release files on Arduino downloads servers
+        uses: docker://plugins/s3
+        env:
+          PLUGIN_SOURCE: "release/*"
+          PLUGIN_TARGET: "/tmp/CreateBridge/staging/"
+          PLUGIN_STRIP_PREFIX: "release/"
+          PLUGIN_BUCKET: ${{ secrets.DOWNLOADS_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        if: steps.prerelease.outputs.IS_PRE != 'true'
