@@ -349,6 +349,7 @@ jobs:
           chmod -v +x ArduinoCreateAgent-linux-x64/*.run
           mv -v ArduinoCreateAgent-linux-x64/* release/
           cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C release/
+          rm _ArduinoCreateAgent*.dmg
           mv -v ArduinoCreateAgent-windows/* release/
 
       # - name: Create Github Release
