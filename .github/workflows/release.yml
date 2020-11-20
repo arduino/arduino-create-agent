@@ -372,12 +372,9 @@ jobs:
       #     file: release/*
 
       - name: Upload release files on Arduino downloads servers
-        uses: docker://plugins/s3
         env:
-          PLUGIN_SOURCE: "release/*"
           PLUGIN_TARGET: "/tmp/CreateBridge/staging/"
-          PLUGIN_STRIP_PREFIX: "release/"
-          PLUGIN_BUCKET: ${{ secrets.DOWNLOADS_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.PLUGIN_TARGET }} --include "*"
         if: steps.prerelease.outputs.IS_PRE != 'true'
