@@ -381,6 +381,6 @@ jobs:
 
       - name: Update release file version
         run: |
-          echo '{"Version": "${GITHUB_REF##*/}"}' > /tmp/installer-version
+          echo '{"Version": "'${GITHUB_REF##*/}'"}' > /tmp/installer-version
           aws s3 cp /tmp/installer-version s3://arduino-create-static/agent-metadata/agent-installer-version.json
         if: steps.prerelease.outputs.IS_PRE != 'true'
