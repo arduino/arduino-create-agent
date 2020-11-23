@@ -328,6 +328,10 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     needs: code-sign-mac-installers
+    env:
+      PLUGIN_TARGET: "/tmp/CreateBridgeStable/"  # TODO remove tmp
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
 
@@ -372,9 +376,11 @@ jobs:
       #     file: release/*
 
       - name: Upload release files on Arduino downloads servers
-        env:
-          PLUGIN_TARGET: "/tmp/CreateBridge/staging/"
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.PLUGIN_TARGET }} --include "*"
+        if: steps.prerelease.outputs.IS_PRE != 'true'
+
+      - name: Update release file version
+        run: |
+          echo '{"Version": "${GITHUB_REF##*/}"}' > /tmp/installer-version
+          aws s3 cp /tmp/installer-version s3://arduino-create-static/agent-metadata/agent-installer-version.json
         if: steps.prerelease.outputs.IS_PRE != 'true'
