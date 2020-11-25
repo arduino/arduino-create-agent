@@ -1,7 +1,8 @@
 
 bufferflow_tinyg_old.md
 
-arduino-create-agent
+arduino-create-agent*
+rsrc.syso
 
 snapshot/*
 public/
@@ -9,3 +10,6 @@ artifacts*
 
 # IDEs config 
 .idea
+
+# macOS
+.DS_Store
