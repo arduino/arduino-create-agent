@@ -46,12 +46,6 @@ jobs:
           version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check the code is good
-        run: task check
-
-      - name: Run unit tests
-        run: task test-unit
-
       - name: Build the Agent
         run: task build
         if: matrix.operating-system != 'windows-latest'
