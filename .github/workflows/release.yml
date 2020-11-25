@@ -345,7 +345,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: code-sign-mac-installers
     env:
-      PLUGIN_TARGET: "/tmp/CreateBridgeStable/"  # TODO remove tmp
+      PLUGIN_TARGET: "/CreateBridgeStable/"
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -372,24 +372,24 @@ jobs:
           rm -v release/._ArduinoCreateAgent*.dmg
           mv -v ArduinoCreateAgent-windows/* release/
 
-      # - name: Create Github Release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: ${{ github.ref }}
-      #     release_name: ${{ github.ref }}
-      #     body: "THIS IS A TEST RELEASE"
-      #     draft: false
-      #     prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
+      - name: Create Github Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: ""
+          draft: false
+          prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
 
-      # - name: Upload release files on Github
-      #   uses: svenstaro/upload-release-action@v2
-      #   with:
-      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
-      #     tag: ${{ github.ref }}
-      #     file_glob: true  # If set to true, the file argument can be a glob pattern
-      #     file: release/*
+      - name: Upload release files on Github
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file_glob: true  # If set to true, the file argument can be a glob pattern
+          file: release/*
 
       - name: Upload release files on Arduino downloads servers
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.PLUGIN_TARGET }} --include "*"
