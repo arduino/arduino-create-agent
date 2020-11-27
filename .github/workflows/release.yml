@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+        operating-system: [ubuntu-18.04, windows-2019, macos-10.15]
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -29,7 +29,7 @@ jobs:
         # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
         run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
-        if: matrix.operating-system == 'ubuntu-latest'
+        if: matrix.operating-system == 'ubuntu-18.04'
 
       - name: Install Go deps
         # Since 10/23/2019 pwsh is the default shell
@@ -54,12 +54,12 @@ jobs:
 
       - name: Build the Agent
         run: task build
-        if: matrix.operating-system != 'windows-latest'
+        if: matrix.operating-system != 'windows-2019'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
         run: task build-cli
-        if: matrix.operating-system == 'ubuntu-latest'
+        if: matrix.operating-system == 'ubuntu-18.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
         # rsrc will produce *.syso files that should get automatically recognized by go build command and linked into an executable.
@@ -67,7 +67,7 @@ jobs:
         run: |
           go get github.com/akavel/rsrc
           rsrc -arch 386 -manifest manifest.xml
-        if: matrix.operating-system == 'windows-latest'
+        if: matrix.operating-system == 'windows-2019'
 
         # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
@@ -75,7 +75,7 @@ jobs:
           GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win32
-        if: matrix.operating-system == 'windows-latest'
+        if: matrix.operating-system == 'windows-2019'
 
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
@@ -90,7 +90,9 @@ jobs:
   # The code-sign-mac-executable job will download the macos artifact from the previous job, sign e notarize the binary and re-upload it.
   code-sign-mac-executable:
     needs: build
-    runs-on: macos-latest
+    runs-on: macos-10.15
+    env:
+      RUNS_ON: macos-10.15  # used to parametrize filenames
 
     steps:
       - name: Checkout
@@ -102,8 +104,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: arduino-create-agent-macos-latest
-          path: arduino-create-agent-macos-latest
+          name: arduino-create-agent-${{ env.RUNS_ON }}
+          path: arduino-create-agent-${{ env.RUNS_ON }}
 
       - name: Import Code-Signing Certificates
         env:
@@ -128,22 +130,22 @@ jobs:
           AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         run: |
           gon -log-level=debug -log-json gon.config.hcl
-          # gon will notarize executable in "arduino-create-agent-macos-latest/arduino-create-agent
+          # gon will notarize executable in "arduino-create-agent-${{ env.RUNS_ON }}/arduino-create-agent
           # The CI will ignore the zip output, using the signed binary only.
         timeout-minutes: 30
 
-        # This step will overwrite the non signed mac artifact (arduino-create-agent-macos-latest)
+        # This step will overwrite the non signed mac artifact (arduino-create-agent-${{ env.RUNS_ON }})
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: arduino-create-agent-macos-latest
-          path: arduino-create-agent-macos-latest
+          name: arduino-create-agent-${{ env.RUNS_ON }}
+          path: arduino-create-agent-${{ env.RUNS_ON }}
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
   package:
     needs: code-sign-mac-executable
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     env:
       # vars used by installbuilder
@@ -163,19 +165,19 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+        operating-system: [ubuntu-18.04, windows-2019, macos-10.15]
 
         include:
-          - operating-system: ubuntu-latest
+          - operating-system: ubuntu-18.04
             install-builder-name: linux-x64
             executable-path: artifacts/linux-amd64/
-          - operating-system: windows-latest
+          - operating-system: windows-2019
             browser: edge
             install-builder-name: windows
             executable-path: artifacts/windows/
             extension: .exe
             installer-extension: .exe
-          - operating-system: macos-latest
+          - operating-system: macos-10.15
             browser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
@@ -211,25 +213,25 @@ jobs:
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
-        if: matrix.operating-system == 'ubuntu-latest' || matrix.operating-system == 'macos-latest'
+        if: matrix.operating-system == 'ubuntu-18.04' || matrix.operating-system == 'macos-10.15'
 
       - name: Rename executable to Arduino_Create_Bridge
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge${{ matrix.extension }}
 
       - name: Rename executable to Arduino_Create_Bridge_cli
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge_cli${{ matrix.extension }}
-        if: matrix.operating-system == 'ubuntu-latest'
+        if: matrix.operating-system == 'ubuntu-18.04'
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
       - name: Save Win signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_PFX}}
-        if: matrix.operating-system == 'windows-latest'
+        if: matrix.operating-system == 'windows-2019'
 
       - name: Save macos signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
-        if: matrix.operating-system == 'macos-latest'
+        if: matrix.operating-system == 'macos-10.15'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
@@ -241,7 +243,7 @@ jobs:
           cp -vr ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-chrome${{matrix.installer-extension}}
           mv -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-firefox${{matrix.installer-extension}}
           rm -r ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-C*
-        if: matrix.operating-system == 'windows-latest' || matrix.operating-system == 'macos-latest'
+        if: matrix.operating-system == 'windows-2019' || matrix.operating-system == 'macos-10.15'
 
         # linux
       - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
@@ -251,7 +253,7 @@ jobs:
           mv -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CS.run ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-firefox.run
           cp -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-chrome.tar.gz
           mv -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-firefox.tar.gz
-        if: matrix.operating-system == 'ubuntu-latest'
+        if: matrix.operating-system == 'ubuntu-18.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -263,7 +265,7 @@ jobs:
   # This job will sign and notarize mac installers
   code-sign-mac-installers:
     needs: package
-    runs-on: macos-latest
+    runs-on: macos-10.15
 
     strategy:
       matrix:
@@ -342,7 +344,7 @@ jobs:
           if-no-files-found: error
 
   create-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     needs: code-sign-mac-installers
     env:
       PLUGIN_TARGET: "/CreateBridgeStable/"
