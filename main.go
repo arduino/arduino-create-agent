@@ -111,6 +111,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	// function used to save panic to a file (WIP)
+	defer panicToFile()
+
 	// Launch main loop in a goroutine
 	go loop()
 
@@ -146,6 +149,24 @@ func main() {
 	}
 
 	Systray.Start()
+}
+
+func panicToFile() {
+	if r := recover(); r != nil {
+		fileName := "crashreport_" + time.Now().Format("20060102150405") + ".txt"
+		currDir, err := osext.ExecutableFolder()
+		if err != nil {
+			panic(err)
+		}
+
+		crashreport := []byte("stacktrace from panic: \n" + string(debug.Stack()))
+
+		err = ioutil.WriteFile(filepath.Join(currDir, fileName), crashreport, 0644)
+		if err != nil {
+			panic(err)
+		}
+		panic(r)
+	}
 }
 
 func copyExe(from, to string) error {
