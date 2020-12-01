@@ -111,6 +111,18 @@ func main() {
 		os.Exit(0)
 	}
 
+	// save crashreport to file
+	logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".txt"
+	currDir, err := osext.ExecutableFolder()
+	if err != nil {
+		panic(err)
+	}
+	logFile, err := os.OpenFile(filepath.Join(currDir, logFilename), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
+	if err != nil {
+		log.Print("Cannot create file used for crash-report")
+	}
+	redirectStderr(logFile)
+
 	// Launch main loop in a goroutine
 	go loop()
 
