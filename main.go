@@ -112,7 +112,7 @@ func main() {
 	}
 
 	// save crashreport to file
-	logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".txt"
+	logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
 	currDir, err := osext.ExecutableFolder()
 	if err != nil {
 		panic(err)
