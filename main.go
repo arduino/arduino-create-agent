@@ -225,7 +225,7 @@ func loop() {
 
 	log.SetLevel(log.InfoLevel)
 
-	log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
