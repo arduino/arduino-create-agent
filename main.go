@@ -117,11 +117,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	logFile, err := os.OpenFile(filepath.Join(currDir, logFilename), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
+	// handle logs directory creation
+	logsDir := filepath.Join(currDir, "logs")
+	if _, err := os.Stat(logsDir); os.IsNotExist(err) {
+		os.Mkdir(logsDir, 0700)
+	}
+	logFile, err := os.OpenFile(filepath.Join(logsDir, logFilename), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
 	if err != nil {
 		log.Print("Cannot create file used for crash-report")
+	} else {
+		redirectStderr(logFile)
 	}
-	redirectStderr(logFile)
 
 	// Launch main loop in a goroutine
 	go loop()
