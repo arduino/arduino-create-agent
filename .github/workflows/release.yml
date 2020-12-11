@@ -52,9 +52,9 @@ jobs:
       - name: Run unit tests
         run: task test-unit
 
-      - name: Build the Agent
+      - name: Build the Agent for linux
         run: task build
-        if: matrix.operating-system != 'windows-2019'
+        if: matrix.operating-system == 'ubuntu-18.04'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
@@ -76,6 +76,12 @@ jobs:
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win32
         if: matrix.operating-system == 'windows-2019'
+
+      - name: Build the Agent for macos
+        env:
+          MACOSX_DEPLOYMENT_TARGET: 10.9 # minimum supported version for mac
+        run: task build
+        if: matrix.operating-system == 'macos-10.15'
 
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
