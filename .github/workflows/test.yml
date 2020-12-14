@@ -76,7 +76,9 @@ jobs:
 
       - name: Build the Agent for macos
         env:
-          MACOSX_DEPLOYMENT_TARGET: 10.9 # minimum supported version for mac
+          MACOSX_DEPLOYMENT_TARGET: 10.12 # minimum supported version for mac
+          CGO_CFLAGS: -mmacosx-version-min=10.12
+          CGO_LDFLAGS: -mmacosx-version-min=10.12
         run: task build
         if: matrix.operating-system == 'macos-10.15'
 
