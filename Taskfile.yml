@@ -5,17 +5,17 @@ tasks:
   build:
     desc: Build the project
     cmds:
-      - go build -v -i {{.LDFLAGS}}
+      - go build -v -i -o {{.APP_NAME}} {{.LDFLAGS}}
 
   build-cli:
     desc: Build the project without tray support
     cmds:
       - go build -v -i -tags cli -o {{.APP_NAME}}_cli {{.LDFLAGS}}
 
-  build-win32:
-    desc: Build the project for win 32 bit
+  build-win:
+    desc: Build the project for win
     cmds:
-      - go build -v -i {{.WIN_LDFLAGS}}
+      - go build -v -i -o {{.APP_NAME}}_{{.GOARCH}} {{.WIN_LDFLAGS}}
 
   test:
     desc: Run the full testsuite, `legacy` will be skipped
@@ -50,11 +50,15 @@ vars:
     sh: echo `go list ./... | grep -v 'arduino-create-agent/gen/' | tr '\n' ' '`
   # build vars
   APP_NAME: arduino-create-agent
+  GOARCH:
+    sh: go env GOARCH
   WIN_FLAGS: -H=windowsgui
   COMMIT:
     sh: echo ${TRAVIS_COMMIT:-`git log -n 1 --format=%h`}
+  TEST_COMMIT: "deadbeef"
   TAG:
     sh: echo `git describe --tags --abbrev=0`
+  TEST_TAG: "0.0.0-dev"
   LDFLAGS: >
     -ldflags '-X main.version={{.TAG}}
     -X main.git_revision={{.COMMIT}}'
@@ -62,13 +66,14 @@ vars:
     -ldflags '-X main.version={{.TAG}}
     -X main.git_revision={{.COMMIT}}
     {{.WIN_FLAGS}}'
-  # test vars
-  GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
-  TEST_VERSIONSTRING: "0.0.0-alpha"
-  TEST_COMMIT: "deadbeef"
   TEST_LDFLAGS: >
-    -ldflags '-X main.version={{.TEST_VERSIONSTRING}}
+    -ldflags '-X main.version={{.TEST_TAG}}
     -X main.git_revision={{.TEST_COMMIT}}'
+  TEST_TEST_LDFLAGS: >
+    -ldflags '-X main.version={{.TEST_TAG}}
+    -X main.git_revision={{.TEST_COMMIT}}'
+
+  GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
   # check-lint vars
   GOLINTBIN:
     sh: go list -f {{"{{"}}".Target{{"}}"}}" golang.org/x/lint/golint

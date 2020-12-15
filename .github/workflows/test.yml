@@ -59,11 +59,10 @@ jobs:
         if: matrix.operating-system == 'ubuntu-18.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
-        # rsrc will produce *.syso files that should get automatically recognized by go build command and linked into an executable.
-      - name: Embed manifest in win binary
+        # rsrc will produce a *.syso file that should get automatically recognized by go build command and linked into an executable.
+      - name: Download tool to embed manifest in win binary
         run: |
           go get github.com/akavel/rsrc
-          rsrc -arch 386 -manifest manifest.xml
         if: matrix.operating-system == 'windows-2019'
 
         # building the agent for win requires a different task because of an extra flag
@@ -71,7 +70,17 @@ jobs:
         env:
           GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
-        run: task build-win32
+        run: |
+          rsrc -arch 386 -manifest manifest.xml
+          task build-win
+          rm *.syso
+        if: matrix.operating-system == 'windows-2019'
+
+      - name: Build the Agent for win64
+        run: |
+          rsrc -arch amd64 -manifest manifest.xml
+          task build-win
+          rm *.syso
         if: matrix.operating-system == 'windows-2019'
 
       - name: Build the Agent for macos
