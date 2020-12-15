@@ -17,6 +17,22 @@ tasks:
     cmds:
       - go build -v -i -o {{.APP_NAME}}_{{.GOARCH}} {{.WIN_LDFLAGS}}
 
+  test:build:
+    desc: Build the project for test.yml
+    env:
+    cmds:
+      - go build -v -i -o {{.APP_NAME}} {{.TEST_LDFLAGS}}
+
+  test:build-cli:
+    desc: Build the project without tray support for test.yml
+    cmds:
+      - go build -v -i -tags cli -o {{.APP_NAME}}_cli {{.TEST_LDFLAGS}}
+
+  test:build-win:
+    desc: Build the project for win for test.yml
+    cmds:
+      - go build -v -i -o {{.APP_NAME}}_{{.GOARCH}} {{.TEST_WIN_LDFLAGS}}
+
   test:
     desc: Run the full testsuite, `legacy` will be skipped
     cmds:
@@ -55,7 +71,6 @@ vars:
   WIN_FLAGS: -H=windowsgui
   COMMIT:
     sh: echo ${TRAVIS_COMMIT:-`git log -n 1 --format=%h`}
-  TEST_COMMIT: "deadbeef"
   TAG:
     sh: echo `git describe --tags --abbrev=0`
   TEST_TAG: "0.0.0-dev"
@@ -68,10 +83,11 @@ vars:
     {{.WIN_FLAGS}}'
   TEST_LDFLAGS: >
     -ldflags '-X main.version={{.TEST_TAG}}
-    -X main.git_revision={{.TEST_COMMIT}}'
-  TEST_TEST_LDFLAGS: >
+    -X main.git_revision={{.COMMIT}}'
+  TEST_WIN_LDFLAGS: >
     -ldflags '-X main.version={{.TEST_TAG}}
-    -X main.git_revision={{.TEST_COMMIT}}'
+    -X main.git_revision={{.COMMIT}}
+    {{.WIN_FLAGS}}'
 
   GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
   # check-lint vars

@@ -50,12 +50,12 @@ jobs:
         run: task test-unit
 
       - name: Build the Agent for linux
-        run: task build
+        run: task test:build
         if: matrix.operating-system == 'ubuntu-18.04'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
-        run: task build-cli
+        run: task test:build-cli
         if: matrix.operating-system == 'ubuntu-18.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
@@ -72,14 +72,14 @@ jobs:
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: |
           rsrc -arch 386 -manifest manifest.xml
-          task build-win
+          task test:build-win
           rm *.syso
         if: matrix.operating-system == 'windows-2019'
 
       - name: Build the Agent for win64
         run: |
           rsrc -arch amd64 -manifest manifest.xml
-          task build-win
+          task test:build-win
           rm *.syso
         if: matrix.operating-system == 'windows-2019'
 
@@ -88,7 +88,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 10.11 # minimum supported version for mac
           CGO_CFLAGS: -mmacosx-version-min=10.11
           CGO_LDFLAGS: -mmacosx-version-min=10.11
-        run: task build
+        run: task test:build
         if: matrix.operating-system == 'macos-10.15'
 
         # config.ini is required by the executable when it's run
