@@ -1,42 +1,35 @@
-version: "2"
+version: '3'
 
 tasks:
 
   build:
-    desc: Build the project
+    desc: Build the project, to use a specific version use `task build TAG_VERSION=x.x.x`
     cmds:
-      - go build -v -i -o {{.APP_NAME}} {{.LDFLAGS}}
+      - go build -v -i {{default "" .ADDITIONAL_FLAGS}} -o {{default "arduino-create-agent" .APP_NAME}} -ldflags '-X main.version={{default .TAG_TEST .TAG_VERSION}} -X main.git_revision={{.COMMIT}} {{default "" .WIN_FLAGS}}'
+    vars:
+      COMMIT:
+        sh: git log -n 1 --format=%h
 
   build-cli:
     desc: Build the project without tray support
     cmds:
-      - go build -v -i -tags cli -o {{.APP_NAME}}_cli {{.LDFLAGS}}
+      - task: build
+        vars:
+          APP_NAME: arduino-create-agent_cli
+          ADDITIONAL_FLAGS: -tags cli
 
   build-win:
-    desc: Build the project for win
+    desc: Build the project for win, to build 32bit `export GOARCH=386` and for 64 bit `export GOARCH=amd64` before `task build-win`
     cmds:
-      - go build -v -i -o {{.APP_NAME}}_{{.GOARCH}} {{.WIN_LDFLAGS}}
-
-  test:build:
-    desc: Build the project for test.yml
-    env:
-    cmds:
-      - go build -v -i -o {{.APP_NAME}} {{.TEST_LDFLAGS}}
-
-  test:build-cli:
-    desc: Build the project without tray support for test.yml
-    cmds:
-      - go build -v -i -tags cli -o {{.APP_NAME}}_cli {{.TEST_LDFLAGS}}
-
-  test:build-win:
-    desc: Build the project for win for test.yml
-    cmds:
-      - go build -v -i -o {{.APP_NAME}}_{{.GOARCH}} {{.TEST_WIN_LDFLAGS}}
-
-  test:
-    desc: Run the full testsuite, `legacy` will be skipped
-    cmds:
-      - task: test-unit
+        # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
+      - go get github.com/akavel/rsrc
+        # rsrc will produce a *.syso file that should get automatically recognized by go build command and linked into an executable.
+      - rsrc -arch {{.GOARCH}} -manifest manifest.xml # GOARCH shoud be either amd64 or 386
+      - task: build
+        vars:
+          APP_NAME: arduino-create-agent_{{.GOARCH}}
+          WIN_FLAGS: -H=windowsgui
+      - rm *.syso # rm file to avoid compilation problems on other platforms
 
   test-unit:
     desc: Run unit tests only
@@ -59,43 +52,16 @@ tasks:
       # - task: python:check
       # - task: docs:check
       # - task: config:check
-
+      
 vars:
+  TAG_TEST: "0.0.0-dev"
+  GOARCH:
+    sh: go env GOARCH
   # all modules of this project except for "gen/..." module
   DEFAULT_TARGETS:
     sh: echo `go list ./... | grep -v 'arduino-create-agent/gen/' | tr '\n' ' '`
-  # build vars
-  APP_NAME: arduino-create-agent
-  GOARCH:
-    sh: go env GOARCH
-  WIN_FLAGS: -H=windowsgui
-  COMMIT:
-    sh: echo ${TRAVIS_COMMIT:-`git log -n 1 --format=%h`}
-  TAG:
-    sh: echo `git describe --tags --abbrev=0`
-  TEST_TAG: "0.0.0-dev"
-  LDFLAGS: >
-    -ldflags '-X main.version={{.TAG}}
-    -X main.git_revision={{.COMMIT}}'
-  WIN_LDFLAGS: >
-    -ldflags '-X main.version={{.TAG}}
-    -X main.git_revision={{.COMMIT}}
-    {{.WIN_FLAGS}}'
-  TEST_LDFLAGS: >
-    -ldflags '-X main.version={{.TEST_TAG}}
-    -X main.git_revision={{.COMMIT}}'
-  TEST_WIN_LDFLAGS: >
-    -ldflags '-X main.version={{.TEST_TAG}}
-    -X main.git_revision={{.COMMIT}}
-    {{.WIN_FLAGS}}'
-
   GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
   # check-lint vars
   GOLINTBIN:
     sh: go list -f {{"{{"}}".Target{{"}}"}}" golang.org/x/lint/golint
   GOLINTFLAGS: "-min_confidence 0.8 -set_exit_status"
-  # # docs versioning
-  # DOCS_VERSION: dev
-  # DOCS_ALIAS: ""
-  # DOCS_REMOTE: "origin"
-  PRETTIER: prettier@2.0.5
