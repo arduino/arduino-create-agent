@@ -24,7 +24,7 @@ tasks:
       - rsrc -arch {{.GOARCH}} -manifest manifest.xml # GOARCH shoud be either amd64 or 386
       - task: build
         vars:
-          APP_NAME: arduino-create-agent_{{.GOARCH}}
+          APP_NAME: arduino-create-agent_{{.GOARCH}}.exe
           WIN_FLAGS: -H=windowsgui
       - rm *.syso # rm file to avoid compilation problems on other platforms
 
