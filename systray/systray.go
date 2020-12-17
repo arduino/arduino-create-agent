@@ -64,7 +64,7 @@ func (s *Systray) Pause() {
 	s.Restart()
 }
 
-// Pause restarts the program with the hibernate flag set to false
+// Resume restarts the program with the hibernate flag set to false
 func (s *Systray) Resume() {
 	s.Hibernate = false
 	s.Restart()

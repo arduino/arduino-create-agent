@@ -67,6 +67,7 @@ var (
 	signatureKey = iniConf.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
 	updateUrl    = iniConf.String("updateUrl", "", "")
 	verbose      = iniConf.Bool("v", true, "show debug logging")
+	crashreport  = iniConf.Bool("crashreport", false, "enable crashreport logging")
 )
 
 // global clients
@@ -213,7 +214,7 @@ func loop() {
 
 	log.SetLevel(log.InfoLevel)
 
-	log.SetOutput(os.Stderr)
+	log.SetOutput(os.Stdout)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
@@ -286,6 +287,26 @@ func loop() {
 	if !*verbose {
 		log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
 		log.SetOutput(new(NullWriter)) //route all logging to nullwriter
+	}
+
+	// save crashreport to file
+	if *crashreport {
+		logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
+		currDir, err := osext.ExecutableFolder()
+		if err != nil {
+			panic(err)
+		}
+		// handle logs directory creation
+		logsDir := filepath.Join(currDir, "logs")
+		if _, err := os.Stat(logsDir); os.IsNotExist(err) {
+			os.Mkdir(logsDir, 0700)
+		}
+		logFile, err := os.OpenFile(filepath.Join(logsDir, logFilename), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
+		if err != nil {
+			log.Print("Cannot create file used for crash-report")
+		} else {
+			redirectStderr(logFile)
+		}
 	}
 
 	// launch the hub routine which is the singleton for the websocket server

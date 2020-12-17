@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/getlantern/systray"
 	"github.com/go-ini/ini"
@@ -41,6 +43,10 @@ func (s *Systray) start() {
 	mUrl := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open Debug Console", "Debug console")
 
+	// Remove crash-reports
+	mRmCrashes := systray.AddMenuItem("Remove crash reports", "")
+	s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
+
 	// Add pause/quit
 	mPause := systray.AddMenuItem("Pause Plugin", "")
 	systray.AddSeparator()
@@ -57,6 +63,9 @@ func (s *Systray) start() {
 				_ = open.Start("https://create.arduino.cc")
 			case <-mDebug.ClickedCh:
 				_ = open.Start(s.DebugURL())
+			case <-mRmCrashes.ClickedCh:
+				s.RemoveCrashes()
+				s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:
@@ -64,6 +73,43 @@ func (s *Systray) start() {
 			}
 		}
 	}()
+}
+
+// updateMenuItem will enable or disable an item in the tray icon menu id disable is true
+func (s *Systray) updateMenuItem(item *systray.MenuItem, disable bool) {
+	if disable {
+		item.Disable()
+	} else {
+		item.Enable()
+	}
+}
+
+// CrashesIsEmpty checks if the folder containing crash-reports is empty
+func (s *Systray) CrashesIsEmpty() bool {
+	currDir, err := osext.ExecutableFolder()
+	if err != nil {
+		log.Error("Cannot determine executable path: ", err)
+	}
+	logsDir := filepath.Join(currDir, "logs")
+	if _, err := os.Stat(string(logsDir)); os.IsNotExist(err) {
+		return true
+	}
+	return false
+}
+
+// RemoveCrashes removes the crash-reports from `logs` folder
+func (s *Systray) RemoveCrashes() {
+	currDir, err := osext.ExecutableFolder()
+	if err != nil {
+		log.Error("Cannot determine executable path: ", err)
+	}
+	logsDir := filepath.Join(currDir, "logs")
+	pathErr := os.RemoveAll(logsDir)
+	if pathErr != nil {
+		log.Error("Cannot remove crashreports: ", pathErr)
+	} else {
+		log.Info("Removed crashreports inside: ", logsDir)
+	}
 }
 
 // starthibernate creates a systray icon with menu options to resume/quit the agent
