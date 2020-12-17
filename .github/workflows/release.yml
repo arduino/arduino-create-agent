@@ -13,9 +13,9 @@ jobs:
         include:
         - operating-system: ubuntu-18.04
         - operating-system: windows-2019
-          arch: 386
+          arch: -386
         - operating-system: windows-2019
-          arch: amd64
+          arch: -amd64
         - operating-system: macos-10.15
 
     runs-on: ${{ matrix.operating-system }}
@@ -81,11 +81,11 @@ jobs:
           GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win
-        if: matrix.operating-system == 'windows-2019' && matrix.arch == '386'
+        if: matrix.operating-system == 'windows-2019' && matrix.arch == '-386'
 
       - name: Build the Agent for win64
         run: task build-win # GOARCH=amd64 by default on the runners
-        if: matrix.operating-system == 'windows-2019' && matrix.arch == 'amd64'
+        if: matrix.operating-system == 'windows-2019' && matrix.arch == '-amd64'
 
       - name: Build the Agent for macos
         env:
@@ -192,13 +192,20 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-        operating-system: [ubuntu-18.04, windows-2019, macos-10.15]
 
         include:
           - operating-system: ubuntu-18.04
             install-builder-name: linux-x64
             executable-path: artifacts/linux-amd64/
           - operating-system: windows-2019
+            arch: -386
+            browser: edge
+            install-builder-name: windows
+            executable-path: artifacts/windows/
+            extension: .exe
+            installer-extension: .exe
+          - operating-system: windows-2019
+            arch: -amd64
             browser: edge
             install-builder-name: windows
             executable-path: artifacts/windows/
@@ -234,7 +241,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: arduino-create-agent-${{ matrix.operating-system }}
+          name: arduino-create-agent-${{ matrix.operating-system }}${{ matrix.arch }}
           path: ${{ matrix.executable-path }}  # path expected by installbuilder
 
         # zip artifacts do not mantain executable permission
@@ -265,10 +272,10 @@ jobs:
       - name: Launch Bitrock installbuilder-20 with CERT_INSTALL && CHOICE_CERT_INSTALL
         run: |
           ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${INSTALLER_VARS} ${{ env.CERT_INSTALL }}
-          mv -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CI${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-${{matrix.browser}}${{matrix.installer-extension}}
+          mv -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CI${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-${{matrix.browser}}${{matrix.installer-extension}}
           ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${INSTALLER_VARS} ${{ env.CHOICE_CERT_INSTALL }}
-          cp -vr ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-chrome${{matrix.installer-extension}}
-          mv -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-firefox${{matrix.installer-extension}}
+          cp -vr ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome${{matrix.installer-extension}}
+          mv -v ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox${{matrix.installer-extension}}
           rm -r ArduinoCreateAgent-${VERSION%.*}-${{ matrix.install-builder-name }}-installer-C*
         if: matrix.operating-system == 'windows-2019' || matrix.operating-system == 'macos-10.15'
 
@@ -285,7 +292,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: ArduinoCreateAgent-${{ matrix.install-builder-name }}
+          name: ArduinoCreateAgent-${{ matrix.install-builder-name }}${{ matrix.arch }}
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
@@ -399,7 +406,7 @@ jobs:
           mv -v ArduinoCreateAgent-linux-x64/* release/
           cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C release/
           rm -v release/._ArduinoCreateAgent*.dmg
-          mv -v ArduinoCreateAgent-windows/* release/
+          mv -v ArduinoCreateAgent-windows*/* release/
 
       - name: Create Github Release
         uses: actions/create-release@v1
