@@ -10,7 +10,13 @@ jobs:
   build:
     strategy:
       matrix:
-        operating-system: [ubuntu-18.04, windows-2019, macos-10.15]
+        include:
+        - operating-system: ubuntu-18.04
+        - operating-system: windows-2019
+          arch: 386
+        - operating-system: windows-2019
+          arch: amd64
+        - operating-system: macos-10.15
 
     runs-on: ${{ matrix.operating-system }}
     env:
@@ -75,11 +81,11 @@ jobs:
           GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win
-        if: matrix.operating-system == 'windows-2019'
+        if: matrix.operating-system == 'windows-2019' && matrix.arch == '386'
 
       - name: Build the Agent for win64
         run: task build-win # GOARCH=amd64 by default on the runners
-        if: matrix.operating-system == 'windows-2019'
+        if: matrix.operating-system == 'windows-2019' && matrix.arch == 'amd64'
 
       - name: Build the Agent for macos
         env:
@@ -93,7 +99,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: arduino-create-agent-${{ matrix.operating-system }}
+          name: arduino-create-agent-${{ matrix.operating-system }}${{ matrix.arch }}
           path: |
             arduino-create-agent*
             config.ini
