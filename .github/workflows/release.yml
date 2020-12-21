@@ -21,6 +21,10 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
 
     steps:
+      - name: Set version
+        run: echo "TAG_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        shell: bash
+
       - name: Disable EOL conversions
         run: git config --global core.autocrlf false
 
@@ -59,12 +63,12 @@ jobs:
         run: task test-unit
 
       - name: Build the Agent for linux
-        run: task build TAG_VERSION=${GITHUB_REF##*/} 
+        run: task build
         if: matrix.operating-system == 'ubuntu-18.04'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
-        run: task build-cli TAG_VERSION=${GITHUB_REF##*/}
+        run: task build-cli
         if: matrix.operating-system == 'ubuntu-18.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
@@ -78,11 +82,11 @@ jobs:
         env:
           GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
-        run: task build-win TAG_VERSION=${GITHUB_REF##*/}
+        run: task build-win
         if: matrix.operating-system == 'windows-2019' && matrix.arch == '-386'
 
       - name: Build the Agent for win64
-        run: task build-win TAG_VERSION=${GITHUB_REF##*/} # GOARCH=amd64 by default on the runners
+        run: task build-win # GOARCH=amd64 by default on the runners
         if: matrix.operating-system == 'windows-2019' && matrix.arch == '-amd64'
 
       - name: Build the Agent for macos
@@ -90,7 +94,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 10.11 # minimum supported version for mac
           CGO_CFLAGS: -mmacosx-version-min=10.11
           CGO_LDFLAGS: -mmacosx-version-min=10.11
-        run: task build TAG_VERSION=${GITHUB_REF##*/}
+        run: task build
         if: matrix.operating-system == 'macos-10.15'
 
         # config.ini is required by the executable when it's run
