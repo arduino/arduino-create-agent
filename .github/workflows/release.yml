@@ -410,6 +410,16 @@ jobs:
           rm -v release/._ArduinoCreateAgent*.dmg
           mv -v ArduinoCreateAgent-windows*/* release/
 
+      - name: VirusTotal Scan
+        uses: crazy-max/ghaction-virustotal@v2
+        with:
+          vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
+          vt_monitor: true
+          files: |
+            release/*.exe
+            arduino-create-agent-windows-2019-386/arduino-create-agent.exe
+            arduino-create-agent-windows-2019-amd64/arduino-create-agent.exe
+
       - name: Create Github Release
         uses: actions/create-release@v1
         env:
