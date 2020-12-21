@@ -17,7 +17,7 @@ require (
 	github.com/getlantern/hex v0.0.0-20190417191902-c6586a6fe0b7
 	github.com/getlantern/hidden v0.0.0-20190325191715-f02dbb02be55
 	github.com/getlantern/ops v0.0.0-20190325191751-d70cb0d6f85f
-	github.com/getlantern/systray v0.0.0-20200109124156-9abdfb6448b3
+	github.com/getlantern/systray v1.1.0
 	github.com/gin-contrib/sse v0.1.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-ini/ini v1.39.0
