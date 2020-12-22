@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: VirusTotal Scan
-        uses: crazy-max/ghaction-virustotal@v2.3.0
+        uses: crazy-max/ghaction-virustotal@fix-maxbodylength
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
