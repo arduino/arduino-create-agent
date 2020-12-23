@@ -425,9 +425,10 @@ jobs:
       - name: Organize release body message #use sed to clean and format the output markdown style
         id: release_body
         run: |
+          vt_title="## VirusTotal analysis 🛡: %0A"
           vt_links="$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')"
           vt_links="${vt_links//$'\n'/'%0A'}" # replace \n with a special character -> generates a single lines, \n will be reintroduced later
-          echo "::set-output name=RBODY::$vt_links"
+          echo "::set-output name=RBODY::$vt_title$vt_links"
 
       - name: Create Github Release
         uses: actions/create-release@v1
