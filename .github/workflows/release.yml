@@ -426,6 +426,7 @@ jobs:
         id: release_body
         run: |
           vt_links="$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')"
+          vt_links="${vt_links//$'\n'/'%0A'}" # replace \n with a special character -> generates a single lines, \n will be reintroduced later
           echo "::set-output name=RBODY::$vt_links"
 
       - name: Create Github Release
