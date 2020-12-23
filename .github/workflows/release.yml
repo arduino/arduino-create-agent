@@ -427,9 +427,9 @@ jobs:
           vt_title_pre="<details close>\n<summary>VirusTotal analysis 🛡</summary>\n\n"
           vt_links="$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')"
           vt_title_post="\n</details>"
-          vt_title_pre="${vt_title_pre//$'\n'/'%0A'}"
+          vt_title_pre="${vt_title_pre//'\n'/'%0A'}"
           vt_links="${vt_links//$'\n'/'%0A'}" # replace \n with a special character -> generates a single lines, \n will be reintroduced later
-          vt_title_post="${vt_title_post//$'\n'/'%0A'}"
+          vt_title_post="${vt_title_post//'\n'/'%0A'}"
           echo "::set-output name=RBODY::$vt_title_pre$vt_links$vt_title_post"
 
       - name: Create Github Release
