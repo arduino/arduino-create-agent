@@ -48,9 +48,9 @@ func (s *Systray) start() {
 	s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
 
 	// Add pause/quit
-	mPause := systray.AddMenuItem("Pause Plugin", "")
+	mPause := systray.AddMenuItem("Pause Agent", "")
 	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("Quit Plugin", "")
+	mQuit := systray.AddMenuItem("Quit Agent", "")
 
 	// Add configs
 	s.addConfigs()
@@ -116,9 +116,9 @@ func (s *Systray) RemoveCrashes() {
 func (s *Systray) startHibernate() {
 	systray.SetIcon(icon.GetIconHiber())
 
-	mResume := systray.AddMenuItem("Resume Plugin", "")
+	mResume := systray.AddMenuItem("Resume Agent", "")
 	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("Quit Plugin", "")
+	mQuit := systray.AddMenuItem("Quit Agent", "")
 
 	// listen for events
 	go func() {

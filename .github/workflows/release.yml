@@ -383,7 +383,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: code-sign-mac-installers
     env:
-      PLUGIN_TARGET: "/CreateBridgeStable/"
+      TARGET: "/CreateBridgeStable/"
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -452,5 +452,5 @@ jobs:
           file: release/*
 
       - name: Upload release files on Arduino downloads servers
-        run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.PLUGIN_TARGET }} --include "*"
+        run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --include "*"
         if: steps.prerelease.outputs.IS_PRE != 'true'
