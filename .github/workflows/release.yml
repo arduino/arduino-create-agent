@@ -179,7 +179,7 @@ jobs:
     env:
       # vars used by installbuilder
       INSTALLBUILDER_PATH: "/opt/installbuilder-20.9.0/bin/builder"
-      # INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Bridge"
+      # INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
       # vars passed to installbuilder to install https certs automatically
       CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
       NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
@@ -232,7 +232,7 @@ jobs:
 
       - name: Set installer env vars
         run: |
-          echo INSTALLER_VARS="project.outputDirectory=$PWD project.version=${VERSION%.*} workspace=$PWD realname=Arduino_Create_Bridge" >> $GITHUB_ENV
+          echo INSTALLER_VARS="project.outputDirectory=$PWD project.version=${VERSION%.*} workspace=$PWD realname=Arduino_Create_Agent" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -251,11 +251,11 @@ jobs:
         run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
         if: matrix.operating-system == 'ubuntu-18.04' || matrix.operating-system == 'macos-10.15'
 
-      - name: Rename executable to Arduino_Create_Bridge
-        run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge${{ matrix.extension }}
+      - name: Rename executable to Arduino_Create_Agent
+        run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
 
-      - name: Rename executable to Arduino_Create_Bridge_cli
-        run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Bridge_cli${{ matrix.extension }}
+      - name: Rename executable to Arduino_Create_Agent_cli
+        run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
         if: matrix.operating-system == 'ubuntu-18.04'
 
       - name: Save InstallBuilder license to file
