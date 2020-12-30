@@ -68,7 +68,7 @@ func TempPath(path string) string {
 	return path
 }
 
-// TempPath generates the proper path for a temporary executable
+// BinPath generates the proper path for a temporary executable (removing "-temp")
 func BinPath(path string) string {
 	return strings.Replace(path, "-temp", "", -1)
 }
