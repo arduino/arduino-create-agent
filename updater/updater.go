@@ -55,9 +55,10 @@ const (
 const devValidTime = 7 * 24 * time.Hour
 
 var errHashMismatch = errors.New("new file hash mismatch after patch")
+var errDiffUrlUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
 var up = update.New()
 
-// TempPath generates a temporary path for the executable
+// TempPath generates a temporary path for the executable (adding "-temp")
 func TempPath(path string) string {
 	if filepath.Ext(path) == "exe" {
 		path = strings.Replace(path, ".exe", "-temp.exe", -1)
@@ -141,6 +142,9 @@ func verifySha(bin []byte, sha []byte) bool {
 }
 
 func (u *Updater) fetchAndApplyPatch(old io.Reader) ([]byte, error) {
+	if u.DiffURL == "" {
+		return nil, errDiffUrlUndefined
+	}
 	r, err := fetch(u.DiffURL + u.CmdName + "/" + u.CurrentVersion + "/" + u.Info.Version + "/" + plat)
 	if err != nil {
 		return nil, err
@@ -238,12 +242,13 @@ func (u *Updater) update() error {
 	}
 	bin, err := u.fetchAndVerifyPatch(old)
 	if err != nil {
-		if err == errHashMismatch {
+		switch err {
+		case errHashMismatch:
 			log.Println("update: hash mismatch from patched binary")
-		} else {
-			if u.DiffURL != "" {
-				log.Println("update: patching binary,", err)
-			}
+		case errDiffUrlUndefined:
+			log.Println("update: ", err)
+		default:
+			log.Println("update: patching binary, ", err)
 		}
 
 		bin, err = u.fetchAndVerifyFullBin()
