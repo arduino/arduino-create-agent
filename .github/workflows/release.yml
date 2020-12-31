@@ -14,16 +14,30 @@ jobs:
         - operating-system: ubuntu-18.04
         - operating-system: windows-2019
           arch: -386
+          ext: ".exe"
         - operating-system: windows-2019
           arch: -amd64
+          ext: ".exe"
         - operating-system: macos-10.15
 
     runs-on: ${{ matrix.operating-system }}
+    env:
+      TARGET: "/CreateBridge/"
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
       - name: Set version
         run: echo "TAG_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
         shell: bash
+
+      - name: Identify Prerelease
+        # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
+        id: prerelease
+        run: |
+          wget -q -P /tmp https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip
+          unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
+          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
 
       - name: Disable EOL conversions
         run: git config --global core.autocrlf false
@@ -48,6 +62,7 @@ jobs:
         run: |
           go get github.com/golangci/govet
           go get golang.org/x/lint/golint
+          go get -u github.com/sanbornm/go-selfupdate/...
         shell: bash
 
       - name: Install Taskfile
@@ -96,6 +111,14 @@ jobs:
           CGO_LDFLAGS: -mmacosx-version-min=10.11
         run: task build
         if: matrix.operating-system == 'macos-10.15'
+
+      - name: Create autoupdate files
+        run: ${GOPATH}/bin/go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION} # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
+        if: steps.prerelease.outputs.IS_PRE != 'true'
+
+      - name: Upload autoupdate files to Arduino downloads servers
+        run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --include "*"
+        if: steps.prerelease.outputs.IS_PRE != 'true'
 
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
