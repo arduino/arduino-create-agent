@@ -132,30 +132,33 @@ func main() {
 
 	// If the executable is temporary, copy it to the full path, then restart
 	if strings.Contains(path, "-temp") {
-		err := copyExe(path, updater.BinPath(path))
+		newPath := updater.BinPath(path)
+		err := copyExe(path, newPath)
 		if err != nil {
+			log.Println("Copy error: ", err)
 			panic(err)
 		}
 
-		Systray.Restart()
+		Systray.Update(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
 		err := copyExe(path, updater.TempPath(path))
 		if err != nil {
 			panic(err)
 		}
+		Systray.Start()
 	}
-
-	Systray.Start()
 }
 
 func copyExe(from, to string) error {
 	data, err := ioutil.ReadFile(from)
 	if err != nil {
+		log.Println("Cannot read file: ", from)
 		return err
 	}
 	err = ioutil.WriteFile(to, data, 0755)
 	if err != nil {
+		log.Println("Cannot write file: ", to)
 		return err
 	}
 	return nil

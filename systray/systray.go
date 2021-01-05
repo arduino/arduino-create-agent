@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/kardianos/osext"
 )
 
@@ -26,14 +28,15 @@ type Systray struct {
 // it works by finding the executable path and launching it before quitting
 func (s *Systray) Restart() {
 
-	fmt.Println(s.path)
-	fmt.Println(osext.Executable())
 	if s.path == "" {
+		log.Println("Update binary path not set")
 		var err error
 		s.path, err = osext.Executable()
 		if err != nil {
-			fmt.Printf("Error getting exe path using osext lib. err: %v\n", err)
+			log.Printf("Error getting exe path using osext lib. err: %v\n", err)
 		}
+	} else {
+		log.Println("Starting updated binary: ", s.path)
 	}
 
 	// Trim newlines (needed on osx)
@@ -50,7 +53,7 @@ func (s *Systray) Restart() {
 	cmd := exec.Command(s.path, args...)
 	err := cmd.Start()
 	if err != nil {
-		fmt.Printf("Error restarting process: %v\n", err)
+		log.Printf("Error restarting process: %v\n", err)
 		return
 	}
 
