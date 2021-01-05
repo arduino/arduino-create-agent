@@ -27,8 +27,10 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
-      - name: Set version
-        run: echo "TAG_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Set env vars
+        run: |
+          echo "TAG_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          echo $(go env GOPATH)/bin >> $GITHUB_PATH
         shell: bash
 
       - name: Identify Prerelease
@@ -113,7 +115,7 @@ jobs:
         if: matrix.operating-system == 'macos-10.15'
 
       - name: Create autoupdate files
-        run: ${GOPATH}/bin/go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION} # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
+        run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION} # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
         # if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
