@@ -26,14 +26,15 @@ type Systray struct {
 // it works by finding the executable path and launching it before quitting
 func (s *Systray) Restart() {
 
-	fmt.Println(s.path)
-	fmt.Println(osext.Executable())
 	if s.path == "" {
+		fmt.Println("Update binary path not set")
 		var err error
 		s.path, err = osext.Executable()
 		if err != nil {
 			fmt.Printf("Error getting exe path using osext lib. err: %v\n", err)
 		}
+	} else {
+		fmt.Println("Starting updated binary: ", s.path)
 	}
 
 	// Trim newlines (needed on osx)
