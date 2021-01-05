@@ -22,7 +22,7 @@ jobs:
 
     runs-on: ${{ matrix.operating-system }}
     env:
-      TARGET: "/CreateBridge/"
+      TARGET: "/CreateAgent/"
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -114,11 +114,11 @@ jobs:
 
       - name: Create autoupdate files
         run: ${GOPATH}/bin/go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION} # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
-        if: steps.prerelease.outputs.IS_PRE != 'true'
+        # if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --include "*"
-        if: steps.prerelease.outputs.IS_PRE != 'true'
+        # if: steps.prerelease.outputs.IS_PRE != 'true'
 
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
