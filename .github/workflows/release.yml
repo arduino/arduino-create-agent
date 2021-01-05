@@ -20,6 +20,10 @@ jobs:
           ext: ".exe"
         - operating-system: macos-10.15
 
+    defaults:
+      run:
+        shell: bash
+
     runs-on: ${{ matrix.operating-system }}
     env:
       TARGET: "/CreateAgent/"
@@ -31,7 +35,6 @@ jobs:
         run: |
           echo "TAG_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
           echo $(go env GOPATH)/bin >> $GITHUB_PATH
-        shell: bash
 
       - name: Identify Prerelease
         # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
@@ -65,7 +68,6 @@ jobs:
           go get github.com/golangci/govet
           go get golang.org/x/lint/golint
           go get -u github.com/sanbornm/go-selfupdate/...
-        shell: bash
 
       - name: Install Taskfile
         uses: arduino/actions/setup-taskfile@master
@@ -114,8 +116,9 @@ jobs:
         run: task build
         if: matrix.operating-system == 'macos-10.15'
 
+        # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
-        run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION} # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
+        run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
         # if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
