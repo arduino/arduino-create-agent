@@ -146,9 +146,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		Systray.Start()
 	}
-
-	Systray.Start()
 }
 
 func copyExe(from, to string) error {
