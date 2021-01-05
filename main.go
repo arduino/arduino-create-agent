@@ -132,12 +132,13 @@ func main() {
 
 	// If the executable is temporary, copy it to the full path, then restart
 	if strings.Contains(path, "-temp") {
-		err := copyExe(path, updater.BinPath(path))
+		newPath := updater.BinPath(path)
+		err := copyExe(path, newPath)
 		if err != nil {
 			panic(err)
 		}
 
-		Systray.Restart()
+		Systray.Update(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
 		err := copyExe(path, updater.TempPath(path))
