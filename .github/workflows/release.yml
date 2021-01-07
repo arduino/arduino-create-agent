@@ -123,9 +123,7 @@ jobs:
         if: matrix.arch != '-386'
 
       - name: Create autoupdate files for win32
-        env: 
-          GOARCH: 386
-        run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
+        run: go-selfupdate -platform windows${{ matrix.arch }} arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch == '-386'
 
       - name: Upload autoupdate files to Arduino downloads servers
