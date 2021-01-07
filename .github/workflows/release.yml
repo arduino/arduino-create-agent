@@ -14,6 +14,7 @@ jobs:
         - operating-system: ubuntu-18.04
         - operating-system: windows-2019
           arch: -386
+          goarch: 386 # 32bit architecture (for support)
           ext: ".exe"
         - operating-system: windows-2019
           arch: -amd64
@@ -35,7 +36,8 @@ jobs:
       - name: Set env vars
         run: |
           echo "TAG_VERSION=${GITHUB_REF##*/}" >> $GITHUB_ENV
-          echo $(go env GOPATH)/bin >> $GITHUB_PATH
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          echo "GOARCH:=${{ matrix.goarch }}" >> $GITHUB_ENV
 
       - name: Identify Prerelease
         # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
@@ -100,7 +102,6 @@ jobs:
         # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
         env:
-          GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win
         if: matrix.operating-system == 'windows-2019' && matrix.arch == '-386'
