@@ -35,7 +35,7 @@ jobs:
         # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
         id: prerelease
         run: |
-          wget -q -P /tmp https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip
+          curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip 
           unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
           if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
 
@@ -400,7 +400,7 @@ jobs:
         # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
         id: prerelease
         run: |
-          wget -q -P /tmp https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip
+          curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip
           unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
           if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
 
