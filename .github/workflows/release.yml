@@ -29,6 +29,7 @@ jobs:
       TARGET: "/CreateAgent/"
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: true #https://github.com/aws/aws-cli/issues/5623
 
     steps:
       - name: Set env vars
@@ -122,7 +123,7 @@ jobs:
         # if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
-        run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --include "*"
+        run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --debug
         # if: steps.prerelease.outputs.IS_PRE != 'true'
 
         # config.ini is required by the executable when it's run
