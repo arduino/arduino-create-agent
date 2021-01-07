@@ -127,7 +127,7 @@ jobs:
         if: matrix.arch == '-386'
 
       - name: Upload autoupdate files to Arduino downloads servers
-        run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --debug
+        run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
         # if: steps.prerelease.outputs.IS_PRE != 'true'
 
         # config.ini is required by the executable when it's run
