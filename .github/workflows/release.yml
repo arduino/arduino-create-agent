@@ -120,7 +120,13 @@ jobs:
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
         run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
-        # if: steps.prerelease.outputs.IS_PRE != 'true'
+        if: matrix.arch != '-386' && # steps.prerelease.outputs.IS_PRE != 'true'
+
+      - name: Create autoupdate files for win32
+        env: 
+          GOARCH: 386
+        run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
+        if: matrix.arch == '-386' && # steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --debug
