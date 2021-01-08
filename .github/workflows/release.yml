@@ -132,7 +132,7 @@ jobs:
 
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows${{ matrix.arch }} arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
-        if: matrix.arch == '-386' && steps.prerelease.outputs.IS_PRE != 'true'
+        if: matrix.arch == '-386' && matrix.operating-system == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: |
