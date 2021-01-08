@@ -5,6 +5,16 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+*"
 
+env:
+  TARGET: "/CreateAgent/"
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
+  KEYCHAIN: "sign.keychain"
+  INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
+  AC_USERNAME: ${{ secrets.AC_USERNAME }}
+  AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+
 jobs:
   # The build job is responsible for: configuring the environment, testing and compiling process
   build:
@@ -25,11 +35,6 @@ jobs:
         shell: bash
 
     runs-on: ${{ matrix.operating-system }}
-    env:
-      TARGET: "/CreateAgent/"
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
 
     steps:
       - name: Set env vars
@@ -155,9 +160,6 @@ jobs:
           path: arduino-create-agent-${{ env.RUNS_ON }}
 
       - name: Import Code-Signing Certificates
-        env:
-          KEYCHAIN: "sign.keychain"
-          INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
         run: |
           echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > ${{ env.INSTALLER_CERT_MAC_PATH }}
           security create-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
@@ -188,9 +190,6 @@ jobs:
           EOF
 
       - name: Code sign and notarize app
-        env:
-          AC_USERNAME: ${{ secrets.AC_USERNAME }}
-          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         run: |
           echo "gon will notarize executable in arduino-create-agent-${{ env.RUNS_ON }}/arduino-create-agent"
           gon -log-level=debug -log-json gon.config.hcl
@@ -341,9 +340,6 @@ jobs:
         run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app/Contents/MacOS/*
 
       - name: Import Code-Signing Certificates
-        env:
-          KEYCHAIN: "sign.keychain"
-          INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
         run: |
           echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > ${{ env.INSTALLER_CERT_MAC_PATH }}
           security create-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
@@ -375,9 +371,6 @@ jobs:
           EOF
 
       - name: Code sign and notarize app
-        env:
-          AC_USERNAME: ${{ secrets.AC_USERNAME }}
-          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
         run: |
           echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"
           gon -log-level=debug -log-json gon.config_installer.hcl
@@ -397,10 +390,6 @@ jobs:
   create-release:
     runs-on: ubuntu-18.04
     needs: code-sign-mac-installers
-    env:
-      TARGET: "/CreateBridgeStable/"
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
       - name: Download artifact
