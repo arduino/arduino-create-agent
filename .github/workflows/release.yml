@@ -23,6 +23,7 @@ jobs:
       matrix:
         include:
         - operating-system: ubuntu-18.04
+          arch: -amd64
         - operating-system: windows-2019
           arch: -386
           ext: ".exe"
@@ -30,6 +31,7 @@ jobs:
           arch: -amd64
           ext: ".exe"
         - operating-system: macos-10.15
+          arch: -amd64
 
     defaults:
       run:
@@ -151,16 +153,20 @@ jobs:
   # The code-sign-mac-executable job will download the macos artifact from the previous job, sign e notarize the binary and re-upload it.
   code-sign-mac-executable:
     needs: build
-    runs-on: macos-10.15
-    env:
-      RUNS_ON: macos-10.15  # used to parametrize filenames
+    strategy:
+      matrix: # to allow support for future architectures
+        include:
+        - os: macos-10.15
+          arch: -amd64
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: arduino-create-agent-${{ env.RUNS_ON }}
-          path: arduino-create-agent-${{ env.RUNS_ON }}
+          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          path: arduino-create-agent
 
       - name: Import Code-Signing Certificates
         run: |
@@ -180,7 +186,7 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config.hcl <<EOF
-          source = ["arduino-create-agent-${{ env.RUNS_ON }}/arduino-create-agent"]
+          source = ["arduino-create-agent/arduino-create-agent"]
           bundle_id = "cc.arduino.arduino-agent"
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
@@ -194,7 +200,7 @@ jobs:
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable in arduino-create-agent-${{ env.RUNS_ON }}/arduino-create-agent"
+          echo "gon will notarize executable in arduino-create-agent/arduino-create-agent"
           gon -log-level=debug -log-json gon.config.hcl
         timeout-minutes: 30
 
@@ -202,8 +208,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: arduino-create-agent-${{ env.RUNS_ON }}
-          path: arduino-create-agent-${{ env.RUNS_ON }}
+          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          path: |
+            arduino-create-agent
+            !arduino-create-agent.zip
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -229,10 +237,10 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-
         include:
           - operating-system: ubuntu-18.04
-            install-builder-name: linux-x64
+            arch: -amd64
+            install-builder-name: linux
             executable-path: artifacts/linux-amd64/
           - operating-system: windows-2019
             arch: -386
@@ -249,6 +257,7 @@ jobs:
             extension: .exe
             installer-extension: .exe
           - operating-system: macos-10.15
+            arch: -amd64
             browser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
@@ -308,11 +317,11 @@ jobs:
         # linux
       - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
         run: |
-          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
-          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-chrome.run
-          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-firefox.run
-          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-chrome.tar.gz
-          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-firefox.tar.gz
+          ${{ env.INSTALLBUILDER_PATH }} build installer.xml linux-x64 --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
+          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome.run
+          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.run
+          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome.tar.gz
+          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.tar.gz
         if: matrix.operating-system == 'ubuntu-18.04'
 
       - name: Upload artifacts
@@ -325,22 +334,22 @@ jobs:
   # This job will sign and notarize mac installers
   code-sign-mac-installers:
     needs: package
-    runs-on: macos-10.15
-
     strategy:
       matrix:
         browser: [safari, firefox, chrome]
+        arch: -amd64
 
+    runs-on: macos-10.15
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: ArduinoCreateAgent-osx
+          name: ArduinoCreateAgent-osx${{ matrix.arch }}
           path: ArduinoCreateAgent-osx
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
-        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app/Contents/MacOS/*
+        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app/Contents/MacOS/*
 
       - name: Import Code-Signing Certificates
         run: |
@@ -360,7 +369,7 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
-          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"]
+          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"]
           bundle_id = "cc.arduino.arduino-agent-installer"
 
           sign {
@@ -368,25 +377,25 @@ jobs:
           }
 
           dmg {
-            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.dmg"
+            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.dmg"
             volume_name = "ArduinoCreateAgent"
           }
           EOF
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"
           gon -log-level=debug -log-json gon.config_installer.hcl
         timeout-minutes: 30
 
       #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
-        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.dmg
+        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.dmg
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: ArduinoCreateAgent-osx
+          name: ArduinoCreateAgent-osx${{ matrix.arch }}
           path: ArduinoCreateAgent*.tar
           if-no-files-found: error
 
@@ -410,9 +419,9 @@ jobs:
       - name: prepare artifacts for the release
         run: |
           mkdir release
-          chmod -v +x ArduinoCreateAgent-linux-x64/*.run
-          mv -v ArduinoCreateAgent-linux-x64/* release/
-          cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C release/
+          chmod -v +x ArduinoCreateAgent-linux-amd64/*.run
+          mv -v ArduinoCreateAgent-linux-amd64/* release/
+          cat ArduinoCreateAgent-osx-amd64/*.tar | tar -xvf - -i -C release/
           rm -v release/._ArduinoCreateAgent*.dmg
           mv -v ArduinoCreateAgent-windows*/* release/
 
