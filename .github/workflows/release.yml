@@ -7,6 +7,7 @@ on:
 
 env:
   TARGET: "/CreateAgent/Stable"
+  OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
@@ -132,7 +133,9 @@ jobs:
         if: matrix.arch == '-386' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
-        run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        run: |
+          aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+          aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.OLD_TARGET }}      
         if: steps.prerelease.outputs.IS_PRE != 'true'
 
         # config.ini is required by the executable when it's run
