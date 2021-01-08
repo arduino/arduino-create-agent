@@ -14,6 +14,9 @@ jobs:
         - operating-system: windows-2019
           arch: -amd64
         - operating-system: macos-10.15
+    defaults:
+      run:
+        shell: bash
 
     runs-on: ${{ matrix.operating-system }}
 
@@ -41,7 +44,6 @@ jobs:
         run: |
           go get github.com/golangci/govet
           go get golang.org/x/lint/golint
-        shell: bash
 
       - name: Install Taskfile
         uses: arduino/actions/setup-taskfile@master
