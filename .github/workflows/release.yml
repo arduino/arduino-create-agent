@@ -430,7 +430,7 @@ jobs:
         uses: crazy-max/ghaction-virustotal@v2
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
-          update_release_body: false # `true` won't work becasue trigger type is not release
+          update_release_body: false # `true` won't work because trigger type is not release
           files: |
             release/*.exe
             arduino-create-agent-windows-2019-386/arduino-create-agent.exe
