@@ -12,8 +12,8 @@ env:
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
   KEYCHAIN: "sign.keychain"
   INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
-  AC_USERNAME: ${{ secrets.AC_USERNAME }}
-  AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
+  AC_USERNAME: ${{ secrets.AC_USERNAME }} # used by gon
+  AC_PASSWORD: ${{ secrets.AC_PASSWORD }} # used by gon
 
 jobs:
   # The build job is responsible for: configuring the environment, testing and compiling process
@@ -125,15 +125,15 @@ jobs:
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
         run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
-        if: matrix.arch != '-386'
+        if: matrix.arch != '-386' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows${{ matrix.arch }} arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
-        if: matrix.arch == '-386'
+        if: matrix.arch == '-386' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
-        # if: steps.prerelease.outputs.IS_PRE != 'true'
+        if: steps.prerelease.outputs.IS_PRE != 'true'
 
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
