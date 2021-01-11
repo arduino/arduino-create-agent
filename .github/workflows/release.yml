@@ -8,6 +8,7 @@ on:
 env:
   TARGET: "/CreateAgent/Stable"
   OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
+  VERSION_TARGET: "arduino-create-static/agent-metadata/"
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
@@ -463,4 +464,10 @@ jobs:
 
       - name: Upload release files on Arduino downloads servers
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        if: steps.prerelease.outputs.IS_PRE != 'true'
+
+      - name: Update version file (used by frontend to trigger autoupdate and create filename)
+        run: |
+          echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
+          aws s3 sync /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
         if: steps.prerelease.outputs.IS_PRE != 'true'
