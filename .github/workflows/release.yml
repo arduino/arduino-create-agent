@@ -6,7 +6,9 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+*"
 
 env:
-  TARGET: "/CreateAgent/"
+  TARGET: "/CreateAgent/Stable"
+  OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
+  VERSION_TARGET: "arduino-create-static/agent-metadata/"
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
@@ -20,21 +22,20 @@ jobs:
   build:
     strategy:
       matrix:
+        os: [ubuntu-18.04, windows-2019, macos-10.15]
+        arch: [-amd64]
         include:
-        - operating-system: ubuntu-18.04
-        - operating-system: windows-2019
+        - os: windows-2019
           arch: -386
           ext: ".exe"
-        - operating-system: windows-2019
-          arch: -amd64
+        - os: windows-2019
           ext: ".exe"
-        - operating-system: macos-10.15
 
     defaults:
       run:
         shell: bash
 
-    runs-on: ${{ matrix.operating-system }}
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Set env vars
@@ -64,7 +65,7 @@ jobs:
         # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
         run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
-        if: matrix.operating-system == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-18.04'
 
       - name: Install Go deps
         # Since 10/23/2019 pwsh is the default shell
@@ -89,18 +90,18 @@ jobs:
 
       - name: Build the Agent for linux
         run: task build
-        if: matrix.operating-system == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-18.04'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
         run: task build-cli
-        if: matrix.operating-system == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-18.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
         # rsrc will produce a *.syso file that should get automatically recognized by go build command and linked into an executable.
       - name: Download tool to embed manifest in win binary
         run: go get github.com/akavel/rsrc
-        if: matrix.operating-system == 'windows-2019'
+        if: matrix.os == 'windows-2019'
 
         # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
@@ -108,11 +109,11 @@ jobs:
           GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task build-win
-        if: matrix.operating-system == 'windows-2019' && matrix.arch == '-386'
+        if: matrix.os == 'windows-2019' && matrix.arch == '-386'
 
       - name: Build the Agent for win64
         run: task build-win # GOARCH=amd64 by default on the runners
-        if: matrix.operating-system == 'windows-2019' && matrix.arch == '-amd64'
+        if: matrix.os == 'windows-2019' && matrix.arch == '-amd64'
 
       - name: Build the Agent for macos
         env:
@@ -120,7 +121,7 @@ jobs:
           CGO_CFLAGS: -mmacosx-version-min=10.11
           CGO_LDFLAGS: -mmacosx-version-min=10.11
         run: task build
-        if: matrix.operating-system == 'macos-10.15'
+        if: matrix.os == 'macos-10.15'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
@@ -129,17 +130,19 @@ jobs:
 
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows${{ matrix.arch }} arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
-        if: matrix.arch == '-386' && steps.prerelease.outputs.IS_PRE != 'true'
+        if: matrix.arch == '-386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
-        run: aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        run: |
+          aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+          aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.OLD_TARGET }}      
         if: steps.prerelease.outputs.IS_PRE != 'true'
 
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: arduino-create-agent-${{ matrix.operating-system }}${{ matrix.arch }}
+          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
             arduino-create-agent*
             config.ini
@@ -148,16 +151,19 @@ jobs:
   # The code-sign-mac-executable job will download the macos artifact from the previous job, sign e notarize the binary and re-upload it.
   code-sign-mac-executable:
     needs: build
-    runs-on: macos-10.15
-    env:
-      RUNS_ON: macos-10.15  # used to parametrize filenames
+    strategy:
+      matrix: # to allow support for future architectures
+        os: [macos-10.15]
+        arch: [-amd64]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: arduino-create-agent-${{ env.RUNS_ON }}
-          path: arduino-create-agent-${{ env.RUNS_ON }}
+          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          path: arduino-create-agent
 
       - name: Import Code-Signing Certificates
         run: |
@@ -177,7 +183,7 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config.hcl <<EOF
-          source = ["arduino-create-agent-${{ env.RUNS_ON }}/arduino-create-agent"]
+          source = ["arduino-create-agent/arduino-create-agent"]
           bundle_id = "cc.arduino.arduino-agent"
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
@@ -191,7 +197,7 @@ jobs:
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable in arduino-create-agent-${{ env.RUNS_ON }}/arduino-create-agent"
+          echo "gon will notarize executable in arduino-create-agent/arduino-create-agent"
           gon -log-level=debug -log-json gon.config.hcl
         timeout-minutes: 30
 
@@ -199,8 +205,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: arduino-create-agent-${{ env.RUNS_ON }}
-          path: arduino-create-agent-${{ env.RUNS_ON }}
+          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          path: |
+            arduino-create-agent
+            !arduino-create-agent.zip
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -226,26 +234,26 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-
+        os: [ubuntu-18.04, windows-2019, macos-10.15]
+        arch: [-amd64]
         include:
-          - operating-system: ubuntu-18.04
-            install-builder-name: linux-x64
+          - os: ubuntu-18.04
+            install-builder-name: linux
             executable-path: artifacts/linux-amd64/
-          - operating-system: windows-2019
+          - os: windows-2019
             arch: -386
             browser: edge
             install-builder-name: windows
             executable-path: artifacts/windows/
             extension: .exe
             installer-extension: .exe
-          - operating-system: windows-2019
-            arch: -amd64
+          - os: windows-2019
             browser: edge
             install-builder-name: windows
             executable-path: artifacts/windows/
             extension: .exe
             installer-extension: .exe
-          - operating-system: macos-10.15
+          - os: macos-10.15
             browser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
@@ -264,31 +272,31 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: arduino-create-agent-${{ matrix.operating-system }}${{ matrix.arch }}
+          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: ${{ matrix.executable-path }}  # path expected by installbuilder
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
-        if: matrix.operating-system == 'ubuntu-18.04' || matrix.operating-system == 'macos-10.15'
+        if: matrix.os == 'ubuntu-18.04' || matrix.os == 'macos-10.15'
 
       - name: Rename executable to Arduino_Create_Agent
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
 
       - name: Rename executable to Arduino_Create_Agent_cli
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
-        if: matrix.operating-system == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-18.04'
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
       - name: Save Win signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_PFX}}
-        if: matrix.operating-system == 'windows-2019'
+        if: matrix.os == 'windows-2019'
 
       - name: Save macos signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
-        if: matrix.operating-system == 'macos-10.15'
+        if: matrix.os == 'macos-10.15'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
@@ -300,17 +308,17 @@ jobs:
           cp -vr ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome${{matrix.installer-extension}}
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox${{matrix.installer-extension}}
           rm -r ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-C*
-        if: matrix.operating-system == 'windows-2019' || matrix.operating-system == 'macos-10.15'
+        if: matrix.os == 'windows-2019' || matrix.os == 'macos-10.15'
 
         # linux
       - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
         run: |
-          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
-          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-chrome.run
-          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-firefox.run
-          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-chrome.tar.gz
-          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-firefox.tar.gz
-        if: matrix.operating-system == 'ubuntu-18.04'
+          ${{ env.INSTALLBUILDER_PATH }} build installer.xml linux-x64 --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} ${{ env.NO_CERT_INSTALL }}
+          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome.run
+          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.run
+          cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome.tar.gz
+          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.tar.gz
+        if: matrix.os == 'ubuntu-18.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -322,22 +330,22 @@ jobs:
   # This job will sign and notarize mac installers
   code-sign-mac-installers:
     needs: package
-    runs-on: macos-10.15
-
     strategy:
       matrix:
         browser: [safari, firefox, chrome]
+        arch: [-amd64]
 
+    runs-on: macos-10.15
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: ArduinoCreateAgent-osx
+          name: ArduinoCreateAgent-osx${{ matrix.arch }}
           path: ArduinoCreateAgent-osx
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
-        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app/Contents/MacOS/*
+        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app/Contents/MacOS/*
 
       - name: Import Code-Signing Certificates
         run: |
@@ -357,7 +365,7 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
-          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"]
+          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"]
           bundle_id = "cc.arduino.arduino-agent-installer"
 
           sign {
@@ -365,25 +373,25 @@ jobs:
           }
 
           dmg {
-            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.dmg"
+            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.dmg"
             volume_name = "ArduinoCreateAgent"
           }
           EOF
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.app"
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"
           gon -log-level=debug -log-json gon.config_installer.hcl
         timeout-minutes: 30
 
       #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
-        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-installer-${{ matrix.browser }}.dmg
+        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.dmg
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: ArduinoCreateAgent-osx
+          name: ArduinoCreateAgent-osx${{ matrix.arch }}
           path: ArduinoCreateAgent*.tar
           if-no-files-found: error
 
@@ -407,9 +415,9 @@ jobs:
       - name: prepare artifacts for the release
         run: |
           mkdir release
-          chmod -v +x ArduinoCreateAgent-linux-x64/*.run
-          mv -v ArduinoCreateAgent-linux-x64/* release/
-          cat ArduinoCreateAgent-osx/*.tar | tar -xvf - -i -C release/
+          chmod -v +x ArduinoCreateAgent-linux-amd64/*.run
+          mv -v ArduinoCreateAgent-linux-amd64/* release/
+          cat ArduinoCreateAgent-osx-amd64/*.tar | tar -xvf - -i -C release/
           rm -v release/._ArduinoCreateAgent*.dmg
           mv -v ArduinoCreateAgent-windows*/* release/
 
@@ -418,7 +426,7 @@ jobs:
         uses: crazy-max/ghaction-virustotal@v2
         with:
           vt_api_key: ${{ secrets.VIRUSTOTAL_API_KEY }}
-          update_release_body: false # `true` won't work becasue trigger type is not release
+          update_release_body: false # `true` won't work because trigger type is not release
           files: |
             release/*.exe
             arduino-create-agent-windows-2019-386/arduino-create-agent.exe
@@ -455,5 +463,11 @@ jobs:
           file: release/*
 
       - name: Upload release files on Arduino downloads servers
-        run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }} --include "*"
+        run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        if: steps.prerelease.outputs.IS_PRE != 'true'
+
+      - name: Update version file (used by frontend to trigger autoupdate and create filename)
+        run: |
+          echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
+          aws s3 sync /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
         if: steps.prerelease.outputs.IS_PRE != 'true'
