@@ -193,10 +193,14 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 
 	// Check if it already exists
 	if behaviour == "keep" {
+		t.mutex.RLock()
 		location, ok := t.installed[key]
+		t.mutex.RUnlock()
 		if ok && pathExists(location) {
 			// overwrite the default tool with this one
+			t.mutex.Lock()
 			t.installed[correctTool.Name] = location
+			t.mutex.Unlock()
 			t.Logger("The tool is already present on the system")
 			return t.writeMap()
 		}
@@ -267,8 +271,10 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	// Update the tool map
 	t.Logger("Updating map with location " + location)
 
+	t.mutex.Lock()
 	t.installed[name] = location
 	t.installed[name+"-"+correctTool.Version] = location
+	t.mutex.Unlock()
 	return t.writeMap()
 }
 
