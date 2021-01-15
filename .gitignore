@@ -10,6 +10,10 @@ artifacts*
 
 # IDEs config 
 .idea
+.vscode
 
 # macOS
 .DS_Store
+
+# Python
+__pycache__

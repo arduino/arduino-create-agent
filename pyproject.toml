@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "arduino-create-agent"
+version = "0.1.0"
+description = "Project used to run end-to-end test for the Arduino Create Agent"
+authors = ["Umberto Baldi <u.baldi@arduino.cc>", "Maurizio Branca <m.branca@arduino.cc>"]
+license = "GPLv2"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.1"
+requests = "^2.25.1"
+invoke = "^1.5.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
