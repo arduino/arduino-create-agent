@@ -26,7 +26,9 @@ def agent(pytestconfig):
     cd_command = "cd"
     with run_context.prefix(f'{cd_command} ..'):
         runner.run(cli_full_line, echo=True, hide=True, warn=True, env=env, asynchronous=True)
-        print("cli_full_line", cli_full_line)
+        
+        # we give some time to the agent to start and listen to
+        # incoming requests
         time.sleep(.5)
 
         # we block here until the test function using this fixture has returned
