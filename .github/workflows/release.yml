@@ -469,5 +469,5 @@ jobs:
       - name: Update version file (used by frontend to trigger autoupdate and create filename)
         run: |
           echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
-          aws s3 sync /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
+          aws s3 cp /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
         if: steps.prerelease.outputs.IS_PRE != 'true'
