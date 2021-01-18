@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Interactive docs for pkgs api</title>
+</head>
+
+<body>
+    <p>pkgs api manage the indexes and tools installed on the system.</p>
+
+    <h1>Indexes</h1>
+    <p>An index file contains the info about a core and its tools. You can see an example at <a href="" target="_blank">https://downloads.arduino.cc/packages/package_index.json</a></p>
+
+    <p>index files are saved (with an urlencoded filename) in the folder <code>~/.arduino-create/indexes</code></p>
+
+    <h2>List Indexes</h2>
+    <p>You can list the indexes installed in the system with this simple GET</p>
+    <textarea cols="100" id="indexesList">
+fetch('http://localhost:8991/v2/pkgs/indexes')
+    </textarea><br>
+    <textarea cols="100" rows="10" id="indexesListRes"></textarea><br>
+    <button onclick="tryCode('indexesList', 'indexesListRes');">Try</button>
+
+    <h2>Add Indexes</h2>
+    <p>You can add a new index with a POST request</p>
+    <textarea cols="100" rows="5" id="indexesCreate">
+fetch('http://localhost:8991/v2/pkgs/indexes/add', {
+    method: "POST",
+    body: '{"url": "https://downloads.arduino.cc/packages/package_index.json"}'
+})
+    </textarea><br>
+    <textarea cols="100" rows="10" id="indexesCreateRes">
+
+    </textarea><br>
+    <button onclick="tryCode('indexesCreate', 'indexesCreateRes');">Try</button>
+
+    <p>You can now check if the new package_index was downloaded by repeating List Indexes.</p>
+
+    <h2>Remove Indexes</h2>
+    <p>You can add a new index with a POST request</p>
+    <textarea cols="100" rows="5" id="indexesRemove">
+fetch('http://localhost:8991/v2/pkgs/indexes/delete', {
+    method: "POST",
+    body: '{"url": "https://downloads.arduino.cc/packages/package_index.json"}'
+})
+    </textarea><br>
+    <textarea cols="100" rows="10" id="indexesRemoveRes">
+
+    </textarea><br>
+    <button onclick="tryCode('indexesRemove', 'indexesRemoveRes');">Try</button>
+
+    <p>You can now check if the new package_index was removed by repeating List Indexes.</p>
+
+
+    <h1>Tools</h1>
+    <p>A tool is an executable that can be used to program a board.</p>
+
+    <p>tools are saved in the folder <code>~/.arduino-create</code> with a structure like <code>{packager}/{name}/{version}</code></p>
+
+    <h2>List Available Tools</h2>
+    <p>You can list the available tools that could be installed from an index with this simple GET. (Remember to add
+        indexes)</p>
+    <textarea cols="100" id="toolsAvailable">
+fetch('http://localhost:8991/v2/pkgs/tools/available')
+    </textarea><br>
+    <textarea cols="100" rows="10" id="toolsAvailableRes"></textarea><br>
+    <button onclick="tryCode('toolsAvailable', 'toolsAvailableRes');">Try</button>
+
+    <h2>List Installed Tools</h2>
+    <p>You can list the tools installed in the system with this simple GET</p>
+    <textarea cols="100" id="toolsList">
+fetch('http://localhost:8991/v2/pkgs/tools/installed')
+    </textarea><br>
+    <textarea cols="100" rows="10" id="toolsListRes"></textarea><br>
+    <button onclick="tryCode('toolsList', 'toolsListRes');">Try</button>
+
+
+    <h2>Install a tool from an index file</h2>
+    <p>You can install one of the available tools with a PUT request</p>
+    <textarea cols="100" rows="5" id="toolsInstall">
+fetch('http://localhost:8991/v2/pkgs/tools/installed', {
+    method: "PUT",
+    body: '{"name":"sketchUploader","version":"1.6.2+1.0","packager":"Intel"}'
+})
+    </textarea><br>
+    <textarea cols="100" rows="10" id="toolsInstallRes"></textarea><br>
+    <button onclick="tryCode('toolsInstall', 'toolsInstallRes');">Try</button>
+
+
+    <h2>Remove an installed tool</h2>
+    <p>You can remove one of the installed tools with a DELETE request</p>
+    <textarea cols="100" rows="5" id="toolsRemove">
+fetch('http://localhost:8991/v2/pkgs/tools/installed/Intel/sketchUploader/1.6.2+1.0', {
+    method: "DELETE",
+})
+    </textarea><br>
+    <textarea cols="100" rows="10" id="toolsRemoveRes"></textarea><br>
+    <button onclick="tryCode('toolsRemove', 'toolsRemoveRes');">Try</button>
+
+</body>
+
+<script>
+    function tryCode(code, target) {
+        code = document.getElementById(code).textContent;
+        target = document.getElementById(target);
+
+        var result = eval(code);
+        result.then(function (res) {
+            target.innerHTML = res.statusText + "\n"; return res.text();
+        }).then(function (body) {
+            target.innerHTML = target.innerHTML + body;
+        }).catch(function (err) {
+
+            console.log(err)
+
+            target.innerText = err;
+        })
+
+        console.debug(code, target, result)
+    }
+</script>
+
+</html>

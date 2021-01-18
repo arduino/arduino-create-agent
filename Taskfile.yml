@@ -1,0 +1,64 @@
+version: '3'
+
+tasks:
+
+  build:
+    desc: Build the project, to use a specific version use `task build TAG_VERSION=x.x.x`
+    cmds:
+      - go build -v -i {{default "" .ADDITIONAL_FLAGS}} -o {{default "arduino-create-agent" .APP_NAME}} -ldflags '-X main.version={{default .TAG_TEST .TAG_VERSION}} -X main.git_revision={{.COMMIT}} {{default "" .WIN_FLAGS}}'
+    vars:
+      COMMIT:
+        sh: git log -n 1 --format=%h
+
+  build-cli:
+    desc: Build the project without tray support
+    cmds:
+      - task: build
+        vars:
+          APP_NAME: arduino-create-agent_cli
+          ADDITIONAL_FLAGS: -tags cli
+
+  build-win:
+    desc: Build the project for win, to build 32bit `export GOARCH=386` and for 64 bit `export GOARCH=amd64` before `task build-win`
+    cmds:
+      - rsrc -arch {{.GOARCH}} -manifest manifest.xml # GOARCH shoud be either amd64 or 386
+      - task: build
+        vars:
+          APP_NAME: arduino-create-agent.exe
+          WIN_FLAGS: -H=windowsgui
+      - rm *.syso # rm file to avoid compilation problems on other platforms
+
+  test-unit:
+    desc: Run unit tests only
+    cmds:
+      - go test -short -run '{{ default ".*" .TEST_REGEX }}' {{ default "-v" .GOFLAGS }} -coverprofile=coverage_unit.txt {{ default .DEFAULT_TARGETS .TARGETS }} {{.TEST_LDFLAGS}}
+
+  check:
+    desc: Check fmt and lint
+    cmds:
+      - go version
+      - go fmt {{ default .DEFAULT_TARGETS .TARGETS }}
+      - test -z $(go fmt {{ default .DEFAULT_TARGETS .TARGETS }})
+      - echo 'test ok'
+      - go vet {{ default .DEFAULT_TARGETS .TARGETS }}
+      - echo 'vet ok'
+      # FIXME: too many suggestions are failing the check, I'll fix these one in
+      # another PR.
+      # - "'{{.GOLINTBIN}}' {{.GOLINTFLAGS}} {{ default .DEFAULT_TARGETS .TARGETS }}"
+      # - task: i18n:check
+      # - task: python:check
+      # - task: docs:check
+      # - task: config:check
+      
+vars:
+  TAG_TEST: "0.0.0-dev"
+  GOARCH:
+    sh: go env GOARCH
+  # all modules of this project except for "gen/..." module
+  DEFAULT_TARGETS:
+    sh: echo `go list ./... | grep -v 'arduino-create-agent/gen/' | tr '\n' ' '`
+  GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
+  # check-lint vars
+  GOLINTBIN:
+    sh: go list -f {{"{{"}}".Target{{"}}"}}" golang.org/x/lint/golint
+  GOLINTFLAGS: "-min_confidence 0.8 -set_exit_status"

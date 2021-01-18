@@ -24,9 +24,14 @@ if [ ! -f "$1" ]; then
     exit
 fi    
 
-OUTPUT=iconunix.go
+if [ -z "$2" ]; then
+    OUTPUT="$1.go"
+else
+    OUTPUT=$2
+fi
+
 echo Generating $OUTPUT
-echo "//+build linux darwin" > $OUTPUT
+echo "// +build linux darwin" > $OUTPUT
 echo >> $OUTPUT
 cat "$1" | $GOPATH/bin/2goarray Data icon >> $OUTPUT
 if [ $? -ne 0 ]; then

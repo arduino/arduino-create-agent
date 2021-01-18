@@ -12,11 +12,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/inconshreveable/go-update.v0"
 	"github.com/kr/binarydist"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/inconshreveable/go-update.v0"
 
 	"github.com/kardianos/osext"
 )
@@ -54,7 +55,24 @@ const (
 const devValidTime = 7 * 24 * time.Hour
 
 var errHashMismatch = errors.New("new file hash mismatch after patch")
+var errDiffUrlUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
 var up = update.New()
+
+// TempPath generates a temporary path for the executable (adding "-temp")
+func TempPath(path string) string {
+	if filepath.Ext(path) == "exe" {
+		path = strings.Replace(path, ".exe", "-temp.exe", -1)
+	} else {
+		path = path + "-temp"
+	}
+
+	return path
+}
+
+// BinPath generates the proper path for a temporary executable (removing "-temp")
+func BinPath(path string) string {
+	return strings.Replace(path, "-temp", "", -1)
+}
 
 // Updater is the configuration and runtime data for doing an update.
 //
@@ -124,6 +142,9 @@ func verifySha(bin []byte, sha []byte) bool {
 }
 
 func (u *Updater) fetchAndApplyPatch(old io.Reader) ([]byte, error) {
+	if u.DiffURL == "" {
+		return nil, errDiffUrlUndefined
+	}
 	r, err := fetch(u.DiffURL + u.CmdName + "/" + u.CurrentVersion + "/" + u.Info.Version + "/" + plat)
 	if err != nil {
 		return nil, err
@@ -202,6 +223,9 @@ func (u *Updater) update() error {
 	if err != nil {
 		return err
 	}
+
+	path = TempPath(path)
+
 	old, err := os.Open(path)
 	if err != nil {
 		return err
@@ -218,12 +242,13 @@ func (u *Updater) update() error {
 	}
 	bin, err := u.fetchAndVerifyPatch(old)
 	if err != nil {
-		if err == errHashMismatch {
+		switch err {
+		case errHashMismatch:
 			log.Println("update: hash mismatch from patched binary")
-		} else {
-			if u.DiffURL != "" {
-				log.Println("update: patching binary,", err)
-			}
+		case errDiffUrlUndefined:
+			log.Println("update: ", err)
+		default:
+			log.Println("update: patching binary, ", err)
 		}
 
 		bin, err = u.fetchAndVerifyFullBin()
@@ -241,6 +266,7 @@ func (u *Updater) update() error {
 	// it can't be renamed if a handle to the file is still open
 	old.Close()
 
+	up.TargetPath = path
 	err, errRecover := up.FromStream(bytes.NewBuffer(bin))
 	if errRecover != nil {
 		log.Errorf("update and recovery errors: %q %q", err, errRecover)

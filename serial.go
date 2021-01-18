@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/upload"
 )
 
@@ -68,17 +67,17 @@ var sh = serialhub{
 
 func (sh *serialhub) run() {
 
-	log.Print("Inside run of serialhub")
+	//log.Print("Inside run of serialhub")
 	//cmdIdCtr := 0
 
 	for {
 		select {
 		case p := <-sh.register:
-			log.Print("Registering a port: ", p.portConf.Name)
+			//log.Print("Registering a port: ", p.portConf.Name)
 			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + ",\"BufferType\":\"" + p.BufferType + "\"}")
 			sh.ports[p] = true
 		case p := <-sh.unregister:
-			log.Print("Unregistering a port: ", p.portConf.Name)
+			//log.Print("Unregistering a port: ", p.portConf.Name)
 			h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
 			delete(sh.ports, p)
 			close(p.sendBuffered)
@@ -92,10 +91,10 @@ func (sh *serialhub) run() {
 
 func write(wr writeRequest, id string) {
 	if wr.buffer {
-		log.Println("Send was normal send, so sending to wr.p.sendBuffered")
+		//log.Println("Send was normal send, so sending to wr.p.sendBuffered")
 		wr.p.sendBuffered <- wr.d
 	} else {
-		log.Println("Send was sendnobuf, so sending to wr.p.sendNoBuf")
+		//log.Println("Send was sendnobuf, so sending to wr.p.sendNoBuf")
 		wr.p.sendNoBuf <- wr.d
 	}
 }
@@ -110,7 +109,7 @@ func spList(network bool) {
 	}
 	ls, err := json.MarshalIndent(list, "", "\t")
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 		h.broadcastSys <- []byte("Error creating json on port list " +
 			err.Error())
 	} else {
@@ -146,8 +145,8 @@ func spListDual(network bool) {
 	// call our os specific implementation of getting the serial list
 	list, err := GetList(network)
 
-	log.Println(list)
-	log.Println(err)
+	//log.Println(list)
+	//log.Println(err)
 
 	if err != nil {
 		// avoid reporting dummy data if an error occurred
@@ -187,11 +186,12 @@ func spListDual(network bool) {
 	spl := SpPortList{make([]SpPortItem, n, n), network}
 
 	ctr := 0
+
 	for _, item := range list {
 
 		spl.Ports[ctr] = SpPortItem{
 			Name:            item.Name,
-			SerialNumber:    item.SerialNumber,
+			SerialNumber:    item.ISerial,
 			DeviceClass:     item.DeviceClass,
 			IsOpen:          false,
 			IsPrimary:       false,
@@ -223,7 +223,7 @@ func spListDual(network bool) {
 }
 
 func spErr(err string) {
-	log.Println("Sending err back: ", err)
+	//log.Println("Sending err back: ", err)
 	//h.broadcastSys <- []byte(err)
 	h.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
 }
@@ -247,13 +247,13 @@ func spClose(portname string) {
 
 func spWrite(arg string) {
 	// we will get a string of comXX asdf asdf asdf
-	log.Println("Inside spWrite arg: " + arg)
+	//log.Println("Inside spWrite arg: " + arg)
 	arg = strings.TrimPrefix(arg, " ")
 	//log.Println("arg after trim: " + arg)
 	args := strings.SplitN(arg, " ", 3)
 	if len(args) != 3 {
 		errstr := "Could not parse send command: " + arg
-		log.Println(errstr)
+		//log.Println(errstr)
 		spErr(errstr)
 		return
 	}
@@ -280,7 +280,7 @@ func spWrite(arg string) {
 		// we were just given a "send" so buffer it
 		wr.buffer = true
 	} else {
-		log.Println("sendnobuf specified so wr.buffer is false")
+		//log.Println("sendnobuf specified so wr.buffer is false")
 		wr.buffer = false
 	}
 

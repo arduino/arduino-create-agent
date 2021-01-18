@@ -1,8 +1,15 @@
 
 bufferflow_tinyg_old.md
 
-serial-port-json-server
+arduino-create-agent*
+rsrc.syso
 
 snapshot/*
 public/
 artifacts*
+
+# IDEs config 
+.idea
+
+# macOS
+.DS_Store

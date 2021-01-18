@@ -1,20 +1,16 @@
 package main
 
 import (
-	"fmt"
-
 	"encoding/json"
 	"io"
 	"os"
-	"os/exec"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/upload"
-	"github.com/kardianos/osext"
+	log "github.com/sirupsen/logrus"
 )
 
 type hub struct {
@@ -210,9 +206,9 @@ func checkCmd(m []byte) {
 		go logAction(sl)
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
-		restart("")
+		Systray.Restart()
 	} else if strings.HasPrefix(sl, "exit") {
-		exit()
+		Systray.Quit()
 	} else if strings.HasPrefix(sl, "memstats") {
 		memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
@@ -266,57 +262,4 @@ func garbageCollection() {
 	log.Printf("Done with garbageCollection()\n")
 	h.broadcastSys <- []byte("{\"gc\":\"done\"}")
 	memoryStats()
-}
-
-func exit() {
-	quitSysTray()
-	log.Println("Starting new spjs process")
-	h.broadcastSys <- []byte("{\"Exiting\" : true}")
-	log.Fatal("Exited current spjs cuz asked to")
-
-}
-
-func restart(path string) {
-	log.Println("called restart", path)
-	quitSysTray()
-	// relaunch ourself and exit
-	// the relaunch works because we pass a cmdline in
-	// that has serial-port-json-server only initialize 5 seconds later
-	// which gives us time to exit and unbind from serial ports and TCP/IP
-	// sockets like :8989
-	log.Println("Starting new spjs process")
-	h.broadcastSys <- []byte("{\"Restarting\" : true}")
-
-	// figure out current path of executable so we know how to restart
-	// this process using osext
-	exePath, err3 := osext.Executable()
-	if err3 != nil {
-		log.Printf("Error getting exe path using osext lib. err: %v\n", err3)
-	}
-
-	if path == "" {
-		log.Printf("exePath using osext: %v\n", exePath)
-	} else {
-		exePath = path
-	}
-
-	exePath = strings.Trim(exePath, "\n")
-
-	hiberString := ""
-	if *hibernate == true {
-		hiberString = "-hibernate"
-	}
-
-	cmd := exec.Command(exePath, "-ls", "-regex", *regExpFilter, "-gc", *gcType, hiberString)
-
-	fmt.Println(cmd)
-
-	err := cmd.Start()
-	if err != nil {
-		log.Printf("Got err restarting spjs: %v\n", err)
-		h.broadcastSys <- []byte("{\"Error\" : \"" + fmt.Sprintf("%v", err) + "\"}")
-	} else {
-		h.broadcastSys <- []byte("{\"Restarted\" : true}")
-	}
-	log.Fatal("Exited current spjs for restart")
 }

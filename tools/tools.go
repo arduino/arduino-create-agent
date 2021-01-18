@@ -2,6 +2,7 @@ package tools
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -25,7 +26,7 @@ import (
 // You have to instantiate the struct by passing it the required parameters:
 //     _tools := tools.Tools{
 //         Directory: "/home/user/.arduino-create",
-//         IndexURL: "http://downloads.arduino.cc/packages/package_index.json"
+//         IndexURL: "https://downloads.arduino.cc/packages/package_index.json"
 //         Logger: log.Logger
 //     }
 type Tools struct {
@@ -59,6 +60,16 @@ func (t *Tools) GetLocation(command string) (string, error) {
 
 	var location string
 	var ok bool
+
+	// Load installed
+	fmt.Println(t.installed)
+
+	err := t.readMap()
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println(t.installed)
 
 	// use string similarity to resolve a runtime var with a "similar" map element
 	if location, ok = t.installed[command]; !ok {

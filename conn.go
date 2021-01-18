@@ -15,13 +15,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
 	socketio "github.com/googollee/go-socket.io"
+	log "github.com/sirupsen/logrus"
 )
 
 type connection struct {
@@ -69,14 +70,14 @@ type Upload struct {
 	ExtraFiles  []AdditionalFile `json:"extrafiles"`
 }
 
-var uploadStatusStr string = "ProgrammerStatus"
+var uploadStatusStr = "ProgrammerStatus"
 
 func uploadHandler(c *gin.Context) {
 
 	data := new(Upload)
 	c.BindJSON(data)
 
-	log.Printf("%+v", data)
+	log.Printf("%+v %+v %+v %+v %+v %+v", data.Port, data.Board, data.Rewrite, data.Commandline, data.Extra, data.Filename)
 
 	if data.Port == "" {
 		c.String(http.StatusBadRequest, "port is required")
@@ -119,13 +120,27 @@ func uploadHandler(c *gin.Context) {
 	var filePaths []string
 	filePaths = append(filePaths, filePath)
 
+	tmpdir, err := ioutil.TempDir("", "extrafiles")
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
 	for _, extraFile := range data.ExtraFiles {
-		path := filepath.Join(filepath.Dir(filePath), extraFile.Filename)
+		path := filepath.Join(tmpdir, extraFile.Filename)
 		filePaths = append(filePaths, path)
 		log.Printf("Saving %s on %s", extraFile.Filename, path)
+
+		err = os.MkdirAll(filepath.Dir(path), 0744)
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
+
 		err := ioutil.WriteFile(path, extraFile.Hex, 0644)
 		if err != nil {
-			log.Printf(err.Error())
+			c.String(http.StatusBadRequest, err.Error())
+			return
 		}
 	}
 
@@ -135,13 +150,13 @@ func uploadHandler(c *gin.Context) {
 
 	go func() {
 		// Resolve commandline
-		commandline, err := upload.PartiallyResolve(data.Board, filePath, data.Commandline, data.Extra, &Tools)
+		commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, &Tools)
 		if err != nil {
 			send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 			return
 		}
 
-		l := PLogger{Verbose: data.Extra.Verbose}
+		l := PLogger{Verbose: true}
 
 		// Upload
 		if data.Extra.Network {
@@ -168,7 +183,7 @@ type PLogger struct {
 	Verbose bool
 }
 
-// Debug only sends messages if verbose is true
+// Debug only sends messages if verbose is true (always true for now)
 func (l PLogger) Debug(args ...interface{}) {
 	if l.Verbose {
 		l.Info(args...)

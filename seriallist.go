@@ -7,13 +7,12 @@ import (
 	"regexp"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial.v1/enumerator"
 )
 
 type OsSerialPort struct {
 	Name         string
-	SerialNumber string
 	DeviceClass  string
 	Manufacturer string
 	Product      string
@@ -60,7 +59,7 @@ func GetList(network bool) ([]OsSerialPort, error) {
 			if reFilter.MatchString(element.Name) {
 				newarrPorts = append(newarrPorts, element)
 			} else {
-				log.Debug("serial port did not match. port: %v\n", element)
+				log.Debugf("serial port did not match. port: %v\n", element)
 			}
 
 		}
