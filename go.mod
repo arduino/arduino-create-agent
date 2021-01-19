@@ -40,7 +40,7 @@ require (
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-shellwords v1.0.3
-	github.com/miekg/dns v1.0.15
+	github.com/miekg/dns v1.1.35
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
@@ -62,7 +62,7 @@ require (
 	goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
+	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 	golang.org/x/sys v0.0.0-20201202213521-69691e467435
 	golang.org/x/tools v0.0.0-20200130002326-2f3ba24bd6e7
 	google.golang.org/protobuf v1.25.0 // indirect
