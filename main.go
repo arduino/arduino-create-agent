@@ -446,12 +446,12 @@ const homeTemplateHtml = `<!DOCTYPE html>
                 if (jsonMsg.Ports) {
                     const validKeys = ['Name', 'SerialNumber', 'IsOpen', 'VendorID', 'ProductID'];
                     if (jsonMsg.Network) {
-                        printMsg = "<b>Network Ports</b>:<br>${JSON.stringify(jsonMsg.Ports, validKeys, 2)}"
+                        printMsg = "<b>Network Ports</b>:<br>"+JSON.stringify(jsonMsg.Ports, validKeys, 2);
                     } else {
-                        printMsg = "<b>Serial Ports</b>:<br>${JSON.stringify(jsonMsg.Ports, validKeys, 2)}"
+                        printMsg = "<b>Serial Ports</b>:<br>"+JSON.stringify(jsonMsg.Ports, validKeys, 2);
                     }
                 } else if (Object.keys(jsonMsg).length !== 0) {
-                    printMsg = "${JSON.stringify(jsonMsg, undefined, 2)}";
+                    printMsg = JSON.stringify(jsonMsg, undefined, 2);
                 }
                 messages.push(printMsg);
                 if (messages.length > MESSAGES_MAX_COUNT) {
@@ -462,7 +462,6 @@ const homeTemplateHtml = `<!DOCTYPE html>
                     log.scrollTop = log.scrollHeight - log.clientHeight;
                 }
             }
-            
 	    }
 
 	    $('#form').submit(function(e) {
