@@ -21,7 +21,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-ini/ini v1.39.0
-	github.com/go-ole/go-ole v1.2.1
+	github.com/go-ole/go-ole v1.2.5
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/go-stack/stack v1.8.0
 	github.com/golang/protobuf v1.4.3
