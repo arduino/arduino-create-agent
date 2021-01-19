@@ -8,6 +8,7 @@ github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/codeclysm/extract v2.0.0+incompatible h1:+b4WsD7YuZ5u3iW5T5TWbO764zUyEpQZSH5tZbjAxXQ=
 github.com/codeclysm/extract v2.0.0+incompatible/go.mod h1:2nhFMPHiU9At61hz+12bfrlpXSUrOnK+wR+KlGO4Uks=
+github.com/codeclysm/extract v2.2.0+incompatible/go.mod h1:2nhFMPHiU9At61hz+12bfrlpXSUrOnK+wR+KlGO4Uks=
 github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d h1:6o8WW5zZ+Ny9sbk69epnAPmBzrBaRnvci+l4+pqleeY=
 github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d/go.mod h1:gHrIcH/9UZDn2qgeTUeW5K9eZsVYCH6/60J/FHysWyE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
