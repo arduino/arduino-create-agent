@@ -67,7 +67,7 @@ require (
 	golang.org/x/tools v0.0.0-20200130002326-2f3ba24bd6e7
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/Knetic/govaluate.v3 v3.0.0
-	gopkg.in/go-playground/validator.v8 v8.18.1
+	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/h2non/filetype.v1 v1.0.5
 	gopkg.in/inconshreveable/go-update.v0 v0.0.0-20150814200126-d8b0b1d421aa
 	gopkg.in/yaml.v2 v2.4.0
