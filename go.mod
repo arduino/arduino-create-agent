@@ -6,6 +6,7 @@ require (
 	github.com/akavel/rsrc v0.9.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract v2.0.0+incompatible
+	github.com/codeclysm/extract/v3 v3.0.2
 	github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d
 	github.com/davecgh/go-spew v1.1.1
 	github.com/davidmz/go-pageant v1.0.1
@@ -28,9 +29,10 @@ require (
 	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb
 	github.com/googollee/go-socket.io v0.0.0-20181101151912-c8aeb1ed9b49
 	github.com/gorilla/websocket v1.4.0
+	github.com/h2non/filetype v1.1.0 // indirect
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
 	github.com/json-iterator/go v1.1.10
-	github.com/juju/errors v0.0.0-20181118221551-089d3ea4e4d5
+	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3
 	github.com/kr/binarydist v0.1.0
