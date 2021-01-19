@@ -32,7 +32,7 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/errors v0.0.0-20181118221551-089d3ea4e4d5
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
-	github.com/konsorten/go-windows-terminal-sequences v1.0.1
+	github.com/konsorten/go-windows-terminal-sequences v1.0.3
 	github.com/kr/binarydist v0.1.0
 	github.com/kr/fs v0.1.0
 	github.com/lxn/walk v0.0.0-20191128110447-55ccb3a9f5c1
