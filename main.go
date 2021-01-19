@@ -412,7 +412,7 @@ var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
 // If you navigate to this server's homepage, you'll get this HTML
 // so you can directly interact with the serial port server
 const homeTemplateHtml = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <title>Arduino Create Agent Debug Console</title>
 <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap" rel="stylesheet">
@@ -430,19 +430,39 @@ const homeTemplateHtml = `<!DOCTYPE html>
         var MESSAGES_MAX_COUNT = 2000;
 
 	    function appendLog(msg) {
-            var startsWithBracked = msg.indexOf('{') == 0;
+            let jsonMsg = {};
+            let portListing = false;
+            try {
+                jsonMsg = JSON.parse(msg);
+                portsListing = jsonMsg.Ports;
+            } catch {
+                // no valid json
+            }
+
             var startsWithList = msg.indexOf('list') == 0;
 
-	        if (listenabled.checked || (typeof msg === 'string' && !startsWithBracked && !startsWithList)) {
-	            messages.push(msg);
-	            if (messages.length > MESSAGES_MAX_COUNT) {
-	                messages.shift();
-	            }
-	            log.innerHTML = messages.join('<br>');
-	            if (autoscroll.checked) {
-	                log.scrollTop = log.scrollHeight - log.clientHeight;
-	            }
-	        }
+            if (listenabled.checked || (!portsListing && !startsWithList)) {
+                let printMsg = msg;
+                if (jsonMsg.Ports) {
+                    const validKeys = ['Name', 'SerialNumber', 'IsOpen', 'VendorID', 'ProductID'];
+                    if (jsonMsg.Network) {
+                        printMsg = "<b>Network Ports</b>:<br>${JSON.stringify(jsonMsg.Ports, validKeys, 2)}"
+                    } else {
+                        printMsg = "<b>Serial Ports</b>:<br>${JSON.stringify(jsonMsg.Ports, validKeys, 2)}"
+                    }
+                } else if (Object.keys(jsonMsg).length !== 0) {
+                    printMsg = "${JSON.stringify(jsonMsg, undefined, 2)}";
+                }
+                messages.push(printMsg);
+                if (messages.length > MESSAGES_MAX_COUNT) {
+                    messages.shift();
+                }
+                log.innerHTML = messages.join('<br><br>');
+                if (autoscroll.checked) {
+                    log.scrollTop = log.scrollHeight - log.clientHeight;
+                }
+            }
+            
 	    }
 
 	    $('#form').submit(function(e) {
@@ -505,7 +525,7 @@ body {
 #container {
     display: flex;
     flex-direction: column;    
-    height: 100%;
+    height: 100vh;
     width: 100%;
 }
 
@@ -513,6 +533,7 @@ body {
     flex-grow: 1;
     font-family: "Roboto Mono", "Courier", "Lucida Grande", Verdana, sans-serif;
     background-color: #DAE3E3;
+    height: calc(100vh - 61px);
     margin: 15px 15px 10px;
     padding: 8px 10px;
     overflow-y: auto;
@@ -595,16 +616,15 @@ body {
     font-size: 1em;
     outline: none;
 }
-
 </style>
 </head>
     <body>
         <div id="container">
-            <div id="log">This is some random text This is some random textThis is some random textThis is some random textThis is some random textThis is some random textThis is some random text<br />This is some random text<br />This is some random text<br /></div>
+            <pre id="log"></pre>
             <div id="footer">
                 <form id="form">
                     <input type="submit" class="button" value="Send" />
-                    <input type="text" id="input" class="textfield" />
+                    <input type="text" id="input" class="textfield" aria-label="send command" />
                 </form>
                 <div id="secondary-controls">
                     <div>
@@ -622,7 +642,6 @@ body {
         </div>
     </body>
 </html>
-
 `
 
 func parseIni(filename string) (args []string, err error) {
