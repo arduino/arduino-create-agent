@@ -91,6 +91,17 @@ jobs:
         run: task build
         if: matrix.os == 'macos-10.15'
 
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          architecture: 'x64'
+
+      - name: Run e2e tests
+        run: |
+          pip install poetry
+          task test-e2e
+
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

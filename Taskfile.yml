@@ -33,6 +33,12 @@ tasks:
     cmds:
       - go test -short -run '{{ default ".*" .TEST_REGEX }}' {{ default "-v" .GOFLAGS }} -coverprofile=coverage_unit.txt {{ default .DEFAULT_TARGETS .TARGETS }} {{.TEST_LDFLAGS}}
 
+  test-e2e:
+    desc: Run end 2 end tests
+    cmds:
+      - poetry install --no-root
+      - poetry run pytest test
+
   check:
     desc: Check fmt and lint
     cmds:
