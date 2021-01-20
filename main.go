@@ -478,8 +478,8 @@ const homeTemplateHtml = `<!DOCTYPE html>
 	    $('#export').click(function() {
 	    	var link = document.createElement('a');
 	    	link.setAttribute('download', 'agent-log.txt');
-			var text = log.innerHTML.replace(/<br>/g, '\n');
-			text = text.replace(/<b>|<\/b>/g, '');
+	    	var text = log.innerHTML.replace(/<br>/g, '\n');
+	    	text = text.replace(/<b>|<\/b>/g, '');
 	    	link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     		link.click();
     	});
