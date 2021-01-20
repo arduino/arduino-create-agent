@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
-	"github.com/codeclysm/extract"
+	"github.com/codeclysm/extract/v3"
 	"github.com/xrash/smetrics"
 )
 
