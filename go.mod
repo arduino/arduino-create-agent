@@ -27,7 +27,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb
 	github.com/googollee/go-socket.io v0.0.0-20181101151912-c8aeb1ed9b49
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/errors v0.0.0-20181118221551-089d3ea4e4d5
