@@ -128,11 +128,13 @@ jobs:
         with:
           python-version: '3.9'
           architecture: 'x64'
+        if: matrix.os == 'ubuntu-18.04'
 
       - name: Run e2e tests
         run: |
           pip install poetry
           task test-e2e
+        if: matrix.os == 'ubuntu-18.04'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files

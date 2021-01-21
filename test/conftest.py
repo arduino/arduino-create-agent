@@ -12,7 +12,7 @@ from invoke.context import Context
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
     
-    cli_full_line = str(Path(pytestconfig.rootdir) / "arduino-create-agent")
+    agent_cli = str(Path(pytestconfig.rootdir) / "arduino-create-agent_cli")
     env = {
         # "ARDUINO_DATA_DIR": data_dir,
         # "ARDUINO_DOWNLOADS_DIR": downloads_dir,
@@ -20,12 +20,11 @@ def agent(pytestconfig):
     }
     run_context = Context()
 
-    # TODO: wtf is this?
-    runner = Local(run_context)
+    runner = Local(run_context) # execute a command on the local filesystem
     
     cd_command = "cd"
     with run_context.prefix(f'{cd_command} ..'):
-        runner.run(cli_full_line, echo=True, hide=True, warn=True, env=env, asynchronous=True)
+        runner.run(command=agent_cli, echo=True, hide=True, warn=True, env=env, asynchronous=True)
         
         # we give some time to the agent to start and listen to
         # incoming requests
