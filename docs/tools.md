@@ -10,7 +10,8 @@
 ```go
 type Tools struct {
 	Directory string
-	IndexURL  string
+    IndexURL  string
+    LastRefresh time.Time
 	Logger    log.StdLogger
 }
 ```
@@ -20,6 +21,7 @@ to download a tool from the arduino servers.
 
 - *Directory* contains the location where the tools are downloaded.
 - *IndexURL* contains the url where the tools description is contained.
+- *LastRefresh* contains the last update time
 - *Logger* is a StdLogger used for reporting debug and info messages
 - *installed* contains a map of the tools and their exact location
 
