@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/xrash/smetrics"
@@ -35,21 +36,30 @@ type Tools struct {
 	LastRefresh time.Time
 	Logger      func(msg string)
 	installed   map[string]string
+	mutex       sync.RWMutex
 }
 
 // Init creates the Installed map and populates it from a file in .arduino-create
 func (t *Tools) Init(APIlevel string) {
 	createDir(t.Directory)
+	t.mutex.Lock()
 	t.installed = make(map[string]string)
+	t.mutex.Unlock()
 	t.readMap()
+	t.mutex.RLock()
 	if t.installed["apilevel"] != APIlevel {
+		t.mutex.RUnlock()
 		// wipe the folder and reinitialize the data
 		os.RemoveAll(t.Directory)
 		createDir(t.Directory)
+		t.mutex.Lock()
 		t.installed = make(map[string]string)
 		t.installed["apilevel"] = APIlevel
+		t.mutex.Unlock()
 		t.writeMap()
 		t.readMap()
+	} else {
+		t.mutex.RUnlock()
 	}
 }
 
@@ -62,13 +72,17 @@ func (t *Tools) GetLocation(command string) (string, error) {
 	var ok bool
 
 	// Load installed
+	t.mutex.RLock()
 	fmt.Println(t.installed)
+	t.mutex.RUnlock()
 
 	err := t.readMap()
 	if err != nil {
 		return "", err
 	}
 
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	fmt.Println(t.installed)
 
 	// use string similarity to resolve a runtime var with a "similar" map element
@@ -82,12 +96,14 @@ func (t *Tools) GetLocation(command string) (string, error) {
 			}
 		}
 	}
-
 	return filepath.ToSlash(location), nil
 }
 
+// writeMap() writes installed map to the json file "installed.json"
 func (t *Tools) writeMap() error {
+	t.mutex.RLock()
 	b, err := json.Marshal(t.installed)
+	t.mutex.RUnlock()
 	if err != nil {
 		return err
 	}
@@ -95,12 +111,15 @@ func (t *Tools) writeMap() error {
 	return ioutil.WriteFile(filePath, b, 0644)
 }
 
+// readMap() reads the installed map from json file "installed.json"
 func (t *Tools) readMap() error {
 	filePath := path.Join(dir(), "installed.json")
 	b, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	return json.Unmarshal(b, &t.installed)
 }
 
