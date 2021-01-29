@@ -22,8 +22,8 @@ import (
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/sfreiberg/simplessh"
-	serial "go.bug.st/serial.v1"
-	"go.bug.st/serial.v1/enumerator"
+	serial "go.bug.st/serial"
+	"go.bug.st/serial/enumerator"
 )
 
 // Busy tells wether the programmer is doing something

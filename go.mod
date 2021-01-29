@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.0.2
-	github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d // indirect
 	github.com/davidmz/go-pageant v1.0.1 // indirect
 	github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 // indirect
 	github.com/dimfeld/httptreemux v5.0.1+incompatible // indirect
@@ -23,7 +22,6 @@ require (
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
-	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/kr/binarydist v0.1.0
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d // indirect
 	github.com/manveru/gobdd v0.0.0-20131210092515-f1a17fdd710b // indirect
@@ -44,7 +42,7 @@ require (
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
 	github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea // indirect
 	go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87
-	go.bug.st/serial.v1 v0.0.0-20180827123349-5f7892a7bb45
+	go.bug.st/serial v1.1.1
 	goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392
 	golang.org/x/sys v0.0.0-20201202213521-69691e467435

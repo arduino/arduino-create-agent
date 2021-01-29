@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"go.bug.st/serial.v1"
+	"go.bug.st/serial"
 )
 
 func infoHandler(c *gin.Context) {
