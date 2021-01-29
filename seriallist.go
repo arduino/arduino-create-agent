@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"go.bug.st/serial.v1/enumerator"
+	"go.bug.st/serial/enumerator"
 )
 
 type OsSerialPort struct {
