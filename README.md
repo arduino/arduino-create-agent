@@ -3,19 +3,26 @@
 arduino-create-agent
 ====================
 
+The Arduino Create Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create Web Editor](https://create.arduino.cc/editor) to seamlessly upload code, to an USB connected Arduino board, directly from the browser.
+
 ## Installation
-Get the [latest version](https://github.com/arduino/arduino-create-agent/releases) of the Agent for all supported platforms
+Get the [latest version](https://github.com/arduino/arduino-create-agent/releases) of the Agent for all supported platforms or complete the [Getting Started](https://create.arduino.cc/getting-started/plugin/welcome).
 
-arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
+## Documentation
+The documentation has been moved to the [wiki](https://github.com/arduino/arduino-create-agent/wiki) page. There you can find:
+- [Advanced usage](https://github.com/arduino/arduino-create-agent/wiki/Advanced-usage): explaining how to use multiple configurations and how to use the agent with a proxy.
+- [Agent Beta Program](https://github.com/arduino/arduino-create-agent/wiki/Agent-Beta-Program)
+- [Developement](https://github.com/arduino/arduino-create-agent/wiki/Developement): containing useful info helping in developement
+- [Disable Autostart](https://github.com/arduino/arduino-create-agent/wiki/Disable-Autostart)
+- [How to compile on Raspberry Pi](https://github.com/arduino/arduino-create-agent/wiki/How-to-compile-on-Raspberry-Pi)
+- [How to use crashreport functionality](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality)
+- [How to use the agent](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-the-agent)
 
-The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
+## Contributing
+### Submitting an issue
+When submitting a new issue please search search for duplicates before creating a new one. Help up with usefull context and information. Please attach the output of the commands running at the debug console or attach a [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
 
-## Submitting an issue
-
-Please attach the output of the commands running at the debug console if useful.
-
-## Submitting a pull request
-
+### Submitting a pull request
 We are glad you want to contribute with code: that's the best way to help this software.
 
 Your contribution is adding or modifying existing behaviour, please always refer to an existing issue or open a new one before contributing. We are trying to use [Test Driven Development](https://en.wikipedia.org/wiki/Test-driven_development) in the near future: please add one or more tests that prove that your contribution is good and is working as expected, it will help us a lot.
@@ -26,6 +33,12 @@ Also, for your contribution to be accepted, every one of your commits must be "S
 
 By signing off your commits, you agree to the following agreement, also known as [Developer Certificate of Origin](http://developercertificate.org/): it assures everyone that the code you're submitting is yours or that you have rights to submit it.
 
+## Authors and acknowledgment
+arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
+
+The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
+
+## License
 ```
 Developer Certificate of Origin
 Version 1.1
