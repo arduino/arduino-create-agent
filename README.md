@@ -3,76 +3,12 @@
 arduino-create-agent
 ====================
 
-
-## GOA 2 refactoring
-The agent is currently transitioning to the v2 of the GOA framework for API management, please refer to the following 
-[documentation](https://github.com/goadesign/goa/tree/v2) in order to install tools and libraries
-
-
-i.e. to regenerate code from design use:
-```bash
-goa gen github.com/arduino/arduino-create-agent/design
-```
-
 ## Installation
 Get the [latest version](https://github.com/arduino/arduino-create-agent/releases) of the Agent for all supported platforms
 
 arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
 
 The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
-
-## Development
-
-Please remember that for compile the project, you need go version >= 1.10.x (older versions are not supported for compile)
-
-To clone the repository, run the following command:
-```
-go get github.com/arduino/arduino-create-agent
-```
-
-This will clone the repository into your [Go workspace](https://golang.org/doc/code.html#Workspaces) or create a new workspace, if one doesn't exist. You can set `$GOPATH` to define where your Go workspace is located.
-
-Now you can go to the project directory and compile it:
-```
-cd $GOPATH/src/github.com/arduino/arduino-create-agent
-go build
-```
-
-This will create the `arduino-create-agent` binary.
-
-Other prerequisites are:
-* libappindicator (Linux only on Ubuntu `sudo apt-get install libappindicator1 libappindicator3-0.1-cil libappindicator3-0.1-cil-dev libappindicator3-1 libappindicator3-dev libgtk-3-0 libgtk-3-dev`)
-* [go-selfupdate] (https://github.com/sanbornm/go-selfupdate) if you want to test automatic updates
-
-### Windows
-Since we are using the https://github.com/lxn/walk library, we need to ship a manifest.xml file, otherwise the error would be:
-
-```
-panic: Unable to create main window: TTM_ADDTOOL failed
-```
-
-To do it make sure to install the required tool:
-
-```
-$ go get github.com/akavel/rsrc
-```
-
-and build it with
-
-```
-$ rsrc -arch=386 -manifest=manifest.xml
-$ go build
-```
-
-Keep in mind that the presence of rsrc.syso file will break other builds, for example
-
-```
-$ GOOS=linux go build
-# github.com/arduino/arduino-create-agent
-/usr/lib/go/pkg/tool/linux_amd64/link: running gcc failed: exit status 1
-/usr/sbin/ld: i386 architecture of input file `/tmp/go-link-084341451/000000.o' is incompatible with i386:x86-64 output
-collect2: error: ld returned 1 exit status
-```
 
 ## Submitting an issue
 
