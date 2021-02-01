@@ -21,51 +21,6 @@ arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [
 
 The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
 
-
-
-## Using multiple configurations
-
-The agent supports multiple configuration files. When multiple configurations are found by the agent, the tray icon menu is expanded to contain the different configurations:
-
-![Agent multiple configuration tray icon](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/tray-icon-multiple-profiles.png)
-
-The default `config.ini` file contains common configurations, every other config file inherit from it.
-
-To create multiple configuration files:
-- stop the agent: tray bar icon -> pause then tray bar icon -> kill
-- find the `config.ini` file that is present in the `arduino-create-agent` installation folder 
-- copy `config.ini` or create a new ini file (e.g. `example.ini`) with content:
-    ```ini
-    name = your configuration name
-    ```
-    add in this file other configuration options (you can override inherited values from `config.ini`)
-- restart the agent
-- click the tray bar icon and select the new configuration
-
-**Tip**: you can also use the multiple configurations feature to create a new configuration with the proxy settings. This way you can have multiple proxies configured and disable proxy configuration with ease.
-
-## When behind a proxy
-
-The agent supports working behind a proxy, but manual configuration is required (there is no support for automatic proxy discovery).
-
-To add proxy configuration:
-- stop the agent: tray bar icon -> pause then tray bar icon -> kill
-- find the `config.ini` file that is present in the `arduino-create-agent` installation folder
-- copy `config.ini` to a new file (e.g. `proxy.ini`) with content:
-    ```ini
-    name = Proxy Enabled
-    [env]
-    http_proxy=your.proxy.here
-    https_proxy=your.https.proxyhere
-    ```
-- please note spaces are not allowed before and after the string `http_proxy`
-- restart the agent
-- select the proper Proxy profile as in the image
-- your agent will now work behind a proxy
-
-![Agent multiple configuration tray icon](https://raw.githubusercontent.com/arduino/arduino-create-agent/devel/images/linux/tray-icon-multiple-profiles.png)
-   
-
 ## Disable Autostart
 
 ### Windows
