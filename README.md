@@ -3,7 +3,7 @@
 arduino-create-agent
 ====================
 
-The Arduino Create Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create applications](https://create.arduino.cc) to seamlessly upload code, to an USB connected Arduino board (or Yún in LAN), directly from the browser.
+The Arduino Create Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create applications](https://create.arduino.cc) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
 
 ## Architecture
 ```
@@ -26,7 +26,7 @@ Get the [latest version](https://github.com/arduino/arduino-create-agent/release
 The documentation has been moved to the [wiki](https://github.com/arduino/arduino-create-agent/wiki) page. There you can find:
 - [Advanced usage](https://github.com/arduino/arduino-create-agent/wiki/Advanced-usage): explaining how to use multiple configurations and how to use the agent with a proxy.
 - [Agent Beta Program](https://github.com/arduino/arduino-create-agent/wiki/Agent-Beta-Program)
-- [Developement](https://github.com/arduino/arduino-create-agent/wiki/Developement): containing useful info helping in developement
+- [Developement](https://github.com/arduino/arduino-create-agent/wiki/Developement): containing useful info to help in development
 - [Disable Autostart](https://github.com/arduino/arduino-create-agent/wiki/Disable-Autostart)
 - [How to compile on Raspberry Pi](https://github.com/arduino/arduino-create-agent/wiki/How-to-compile-on-Raspberry-Pi)
 - [How to use crashreport functionality](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality)
@@ -34,7 +34,8 @@ The documentation has been moved to the [wiki](https://github.com/arduino/arduin
 
 ## Contributing
 ### Submitting an issue
-When submitting a new issue please search for duplicates before creating a new one. Help up with useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
+
+When submitting a new issue please search for duplicates before creating a new one. Help us by providing  useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
 
 ### Submitting a pull request
 We are glad you want to contribute with code: that's the best way to help this software.
