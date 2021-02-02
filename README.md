@@ -34,7 +34,7 @@ The documentation has been moved to the [wiki](https://github.com/arduino/arduin
 
 ## Contributing
 ### Submitting an issue
-When submitting a new issue please search search for duplicates before creating a new one. Help up with usefull context and information. Please attach the output of the commands running at the debug console or attach a [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
+When submitting a new issue please search for duplicates before creating a new one. Help up with useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
 
 ### Submitting a pull request
 We are glad you want to contribute with code: that's the best way to help this software.
