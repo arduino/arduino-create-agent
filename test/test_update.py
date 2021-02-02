@@ -1,8 +1,10 @@
 # import json
 import psutil
 import requests
+import pytest
 
 # test if the update process succeeds in terminating the binary
+@pytest.mark.skip(reason="no way of currently testing this")
 def test_update_shutdown(base_url, agent):
 
     procs=[]
@@ -20,6 +22,7 @@ def on_terminate(proc):
     assert True
 
 # the version currently running is the latest available
+@pytest.mark.skip(reason="no way of currently testing this")
 def test_latest_version(base_url, agent):
     resp = requests.get(f"{base_url}/info")
     assert resp.status_code == 200
