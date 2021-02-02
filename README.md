@@ -3,7 +3,7 @@
 arduino-create-agent
 ====================
 
-The Arduino Create Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create Web Editor](https://create.arduino.cc/editor) to seamlessly upload code, to an USB connected Arduino board, directly from the browser.
+The Arduino Create Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create applications](https://create.arduino.cc) to seamlessly upload code, to an USB connected Arduino board (or Yún in LAN), directly from the browser.
 
 ## Architecture
 ```
