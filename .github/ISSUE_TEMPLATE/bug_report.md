@@ -20,6 +20,7 @@ about: Create a report to help us improve
  - Browser [e.g. chrome, safari]:
  - Browser Version:
  - Agent Version [e.g. 1.0.0]:
+ - CPU architecture [e.g. amd64]
 
 ## Additional context
 <!--Add any other context about the problem here.-->
