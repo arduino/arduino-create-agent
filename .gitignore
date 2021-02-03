@@ -7,9 +7,14 @@ rsrc.syso
 snapshot/*
 public/
 artifacts*
+logs/
 
 # IDEs config 
 .idea
+.vscode
 
 # macOS
 .DS_Store
+
+# Python
+__pycache__
