@@ -300,6 +300,33 @@ jobs:
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
         if: matrix.os == 'ubuntu-18.04'
 
+      - name: get year
+        run: echo "YEAR=$(date "+%Y")" >> $GITHUB_ENV
+        if: matrix.os == 'macos-10.15'
+
+      -name: Generate Info.plist for MacOS
+        run: |
+          cat > skel/ArduinoCreateAgent.app/Contents/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+
+              <key>CFBundleIconFile</key>           <string>AppIcon.icns</string>
+
+              <key>CFBundleName</key>               <string>Arduino Create Agent</string>
+              <key>CFBundleExecutable</key>         <string>Arduino_Create_Agent</string>
+              <key>CFBundleIdentifier</key>         <string>create.arduino.cc</string>
+
+              <key>CFBundleVersion</key>            <string>${GITHUB_REF##*/}</string>
+              <key>NSHumanReadableCopyright</key>   <string>© Copyright ${{ env.YEAR }} Arduino LLC</string>
+              <key>CFBundleShortVersionString</key> <string>${GITHUB_REF##*/}</string>
+              <key>LSUIElement</key>                <true/>
+              <!-- Needed for Apache Callback -->
+              <key>NSPrincipalClass</key><string>NSApplication</string>
+              <key>NSMainNibFile</key><string>MainMenu</string>
+
+          </dict></plist>
+          EOF
+        if: matrix.os == 'macos-10.15'
+
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
