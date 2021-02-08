@@ -13,6 +13,6 @@ jobs:
           close-issue-message: 'This issue has been closed becasue has been stale for 7 days. If you think this issue deserves some attention feel free to reopen it'
           days-before-stale: 14
           days-before-close: 7
-          days-before-pr-close: -1 // never close PR
-          only-labels: waiting for feedback // only issues marked with this label will be affected
+          days-before-pr-close: -1
+          only-labels: 'waiting for feedback'
           debug-only: true
