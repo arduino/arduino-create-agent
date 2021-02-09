@@ -34,7 +34,7 @@ func (b *BufferflowTimed) Init() {
 				bufferedOutput = bufferedOutput + data
 			case <-b.ticker.C:
 				if bufferedOutput != "" {
-					m := SpPortMessage{bufferedOutput}
+					m := SpPortMessage{b.Port, bufferedOutput}
 					buf, _ := json.Marshal(m)
 					// data is now encoded in base64 format
 					// need a decoder on the other side
