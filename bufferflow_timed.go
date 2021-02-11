@@ -18,11 +18,13 @@ type BufferflowTimed struct {
 
 var (
 	bufferedOutput string
+	sPort string
 )
 
 func (b *BufferflowTimed) Init() {
 	log.Println("Initting timed buffer flow (output once every 16ms)")
 	bufferedOutput = ""
+	sPort = ""
 
 	go func() {
 		b.ticker = time.NewTicker(16 * time.Millisecond)
@@ -32,14 +34,16 @@ func (b *BufferflowTimed) Init() {
 			select {
 			case data := <-b.Input:
 				bufferedOutput = bufferedOutput + data
+				sPort = b.Port
 			case <-b.ticker.C:
 				if bufferedOutput != "" {
-					m := SpPortMessage{bufferedOutput}
+					m := SpPortMessage{sPort, bufferedOutput}
 					buf, _ := json.Marshal(m)
 					// data is now encoded in base64 format
 					// need a decoder on the other side
 					b.Output <- []byte(buf)
 					bufferedOutput = ""
+					sPort = ""
 				}
 			case <-b.done:
 				break Loop
