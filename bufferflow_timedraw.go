@@ -32,7 +32,7 @@ func (b *BufferflowTimedRaw) Init() {
 		b.ticker = time.NewTicker(16 * time.Millisecond)
 		for _ = range b.ticker.C {
 			if len(bufferedOutputRaw) != 0 {
-				m := SpPortMessageRaw{bufferedOutputRaw}
+				m := SpPortMessageRaw{b.Port, bufferedOutputRaw}
 				buf, _ := json.Marshal(m)
 				// data is now encoded in base64 format
 				// need a decoder on the other side
