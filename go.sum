@@ -187,6 +187,7 @@ go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87 h1:8W/hwyrc25HrXxbtG8Ghi
 go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87/go.mod h1:OUL7bexo6Ir+BRE5E7Cs3qUvO6ZgJL5Hjk/qwiy6Ze0=
 go.bug.st/serial v1.1.1 h1:5J1DpaIaSIruBi7jVnKXnhRS+YQ9+2PLJMtIZKoIgnc=
 go.bug.st/serial v1.1.1/go.mod h1:VmYBeyJWp5BnJ0tw2NUJHZdJTGl2ecBGABHlzRK1knY=
+go.bug.st/serial v1.1.2/go.mod h1:VmYBeyJWp5BnJ0tw2NUJHZdJTGl2ecBGABHlzRK1knY=
 goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4 h1:+qjyw15FIXxmcA/QmrDrofQPLMAav6X2v+UYH/pQq8A=
 goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4/go.mod h1:NnzBwdNktihbNek+pPiFMQP9PPFsUt8MMPPyo9opDSo=
 golang.org/x/crypto v0.0.0-20180214000028-650f4a345ab4/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
