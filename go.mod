@@ -34,7 +34,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0 // indirect
 	github.com/sfreiberg/simplessh v0.0.0-20180301191542-495cbb862a9c
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.0
 	github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.7.0
