@@ -88,13 +88,28 @@ jobs:
       - name: Run unit tests
         run: task test-unit
 
-      - name: Build the Agent for linux
-        run: task build
-        if: matrix.os == 'ubuntu-18.04'
-
-        # build the agent without GUI support (no tray icon)
+        # build the agent without GUI support (no tray icon) for e2e testing
       - name: Build the Agent-cli
         run: task build-cli
+        if: matrix.os != 'windows-2019'
+
+      - name: Build the Agent-cli for win
+        run: task build-win-cli
+        if: matrix.os == 'windows-2019'
+
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          architecture: 'x64'
+
+      - name: Run e2e tests
+        run: |
+          pip install poetry
+          task test-e2e
+
+      - name: Build the Agent for linux
+        run: task build
         if: matrix.os == 'ubuntu-18.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
@@ -123,19 +138,6 @@ jobs:
         run: task build
         if: matrix.os == 'macos-10.15'
 
-      - name: Install Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-          architecture: 'x64'
-        if: matrix.os == 'macos-10.15'
-
-      - name: Run e2e tests
-        run: |
-          pip install poetry
-          task test-e2e
-        if: matrix.os == 'macos-10.15'
-
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
         run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
@@ -158,6 +160,7 @@ jobs:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
             arduino-create-agent*
+            !arduino-create-agent_cli*
             config.ini
           if-no-files-found: error
 
