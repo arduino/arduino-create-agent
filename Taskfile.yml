@@ -28,6 +28,14 @@ tasks:
           WIN_FLAGS: -H=windowsgui
       - rm *.syso # rm file to avoid compilation problems on other platforms
 
+  build-win-cli:
+    desc: Build the project without tray support
+    cmds:
+      - task: build
+        vars:
+          APP_NAME: arduino-create-agent_cli.exe
+          ADDITIONAL_FLAGS: -tags cli
+
   test-unit:
     desc: Run unit tests only
     cmds:
