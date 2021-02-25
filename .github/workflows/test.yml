@@ -112,7 +112,7 @@ jobs:
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
-            !arduino-create-agent_cli*
             arduino-create-agent*
+            !arduino-create-agent_cli*
             config.ini
           if-no-files-found: error
