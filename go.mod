@@ -42,7 +42,7 @@ require (
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
 	github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea // indirect
 	go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87
-	go.bug.st/serial v1.1.2
+	go.bug.st/serial v1.1.3
 	goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
