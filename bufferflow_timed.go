@@ -51,7 +51,6 @@ func (b *BufferflowTimed) Init() {
 		}
 
 		close(b.Input)
-		close(b.done)
 
 	}()
 
@@ -112,4 +111,5 @@ func (b *BufferflowTimed) IsBufferGloballySendingBackIncomingData() bool {
 func (b *BufferflowTimed) Close() {
 	b.ticker.Stop()
 	b.done <- true
+	close(b.done)
 }
