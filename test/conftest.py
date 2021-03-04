@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 from invoke import Local
 from invoke.context import Context
-
+import socketio as io
+import asyncio
 
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
@@ -43,3 +44,10 @@ def agent(pytestconfig):
 @pytest.fixture(scope="session")
 def base_url():
     return "http://127.0.0.1:8991"
+
+@pytest.fixture(scope="session")
+def socketio(base_url, data=""):
+    sio = io.Client()
+    sio.connect(base_url)
+    yield sio
+    sio.disconnect()
