@@ -40,6 +40,14 @@ The documentation has been moved to the [wiki](https://github.com/arduino/arduin
 
 When submitting a new issue please search for duplicates before creating a new one. Help us by providing  useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
 
+#### Security
+
+If you think you found a vulnerability or other security-related bug in this project, please read our
+[security policy](https://github.com/arduino/arduino-create-agent/security/policy) and report the bug to our Security Team 🛡️
+Thank you!
+
+e-mail contact: security@arduino.cc
+
 ### Submitting a pull request
 We are glad you want to contribute with code: that's the best way to help this software.
 
