@@ -17,6 +17,7 @@ import (
 	"text/template"
 	"time"
 
+	cors "github.com/andela/gin-cors"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
@@ -24,7 +25,6 @@ import (
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
-	cors "github.com/itsjamie/gin-cors"
 	"github.com/kardianos/osext"
 	log "github.com/sirupsen/logrus"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily

@@ -3,6 +3,7 @@ module github.com/arduino/arduino-create-agent
 go 1.14
 
 require (
+	github.com/andela/gin-cors v0.0.0-20160928171741-e8c3436a37e2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.0.2
 	github.com/davidmz/go-pageant v1.0.1 // indirect
@@ -18,7 +19,6 @@ require (
 	github.com/googollee/go-socket.io v0.0.0-20181101151912-c8aeb1ed9b49
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/h2non/filetype v1.1.0 // indirect
-	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
