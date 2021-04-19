@@ -150,10 +150,13 @@ func Kill() {
 // sometimes) and an error (usually because the port listing failed)
 func reset(port string, wait bool, l Logger) (string, error) {
 	info(l, "Restarting in bootloader mode")
-	port, err := serialutils.Reset(port, wait, nil) // TODO use callbacks to print as the cli does
+	newPort, err := serialutils.Reset(port, wait, nil) // TODO use callbacks to print as the cli does
 	if err != nil {
 		info(l, err)
 		return "", err
+	}
+	if newPort != "" {
+		port = newPort
 	}
 	return port, nil
 }
