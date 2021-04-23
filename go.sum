@@ -13,6 +13,8 @@ github.com/arduino/arduino-cli v0.0.0-20210413144851-088d4276190d h1:M/AWWjUQiY7
 github.com/arduino/arduino-cli v0.0.0-20210413144851-088d4276190d/go.mod h1:5dWroFPvaWuBNVuYMV0X8osqIhyUG5otRgJlRHN831E=
 github.com/arduino/arduino-cli v0.0.0-20210419093035-6ca680d235a3 h1:QTdhyXMl5coZIKxCh0yX0H5vj5XJ9zI2hLiFDHyTWbU=
 github.com/arduino/arduino-cli v0.0.0-20210419093035-6ca680d235a3/go.mod h1:5dWroFPvaWuBNVuYMV0X8osqIhyUG5otRgJlRHN831E=
+github.com/arduino/arduino-cli v0.0.0-20210422154105-5aa424818026 h1:YzxiXS2tBkotw65inAy9hYkXEHcCmszj9mRNQXNEEnU=
+github.com/arduino/arduino-cli v0.0.0-20210422154105-5aa424818026/go.mod h1:5dWroFPvaWuBNVuYMV0X8osqIhyUG5otRgJlRHN831E=
 github.com/arduino/board-discovery v0.0.0-20180823133458-1ba29327fb0c h1:agh2JT96G8egU7FEb13L4dq3fnCN7lxXhJ86t69+W7s=
 github.com/arduino/board-discovery v0.0.0-20180823133458-1ba29327fb0c/go.mod h1:HK7SpkEax/3P+0w78iRQx1sz1vCDYYw9RXwHjQTB5i8=
 github.com/arduino/go-paths-helper v1.0.1/go.mod h1:HpxtKph+g238EJHq4geEPv9p+gl3v5YYu35Yb+w31Ck=

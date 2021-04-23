@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/andela/gin-cors v0.0.0-20160928171741-e8c3436a37e2
-	github.com/arduino/arduino-cli v0.0.0-20210419093035-6ca680d235a3
+	github.com/arduino/arduino-cli v0.0.0-20210422154105-5aa424818026
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.0.2
 	github.com/davidmz/go-pageant v1.0.1 // indirect
