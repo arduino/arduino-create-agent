@@ -16,13 +16,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/arduino/arduino-cli/arduino/serialutils"
 	"github.com/arduino/arduino-create-agent/utilities"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/sfreiberg/simplessh"
-	serial "go.bug.st/serial"
 	"go.bug.st/serial/enumerator"
 )
 
@@ -146,111 +145,20 @@ func Kill() {
 	}
 }
 
-// reset opens the port at 1200bps. It returns the new port name (which could change
+// reset wraps arduino-cli's serialutils
+// it opens the port at 1200bps. It returns the new port name (which could change
 // sometimes) and an error (usually because the port listing failed)
 func reset(port string, wait bool, l Logger) (string, error) {
 	info(l, "Restarting in bootloader mode")
-
-	// Get port list before reset
-	ports, err := serial.GetPortsList()
-	info(l, "Get port list before reset")
+	newPort, err := serialutils.Reset(port, wait, nil) // TODO use callbacks to print as the cli does
 	if err != nil {
-		return "", errors.Wrapf(err, "Get port list before reset")
-	} else {
-		info(l, ports)
+		info(l, err)
+		return "", err
 	}
-
-	// Touch port at 1200bps
-	err = touchSerialPortAt1200bps(port, l)
-	if err != nil {
-		return "", errors.Wrapf(err, "1200bps Touch")
+	if newPort != "" {
+		port = newPort
 	}
-
-	// Wait for port to disappear and reappear
-	if wait {
-		port = waitReset(ports, l, port)
-	}
-
 	return port, nil
-}
-
-func touchSerialPortAt1200bps(port string, l Logger) error {
-	info(l, "Touching port ", port, " at 1200bps")
-
-	// Open port
-	p, err := serial.Open(port, &serial.Mode{BaudRate: 1200})
-	if err != nil {
-		return errors.Wrapf(err, "Open port %s", port)
-	}
-	defer p.Close()
-
-	// Set DTR
-	err = p.SetDTR(false)
-	info(l, "Set DTR off")
-	if err != nil {
-		return errors.Wrapf(err, "Can't set DTR")
-	}
-
-	// Wait a bit to allow restart of the board
-	time.Sleep(200 * time.Millisecond)
-
-	return nil
-}
-
-// waitReset is meant to be called just after a reset. It watches the ports connected
-// to the machine until a port disappears and reappears. The port name could be different
-// so it returns the name of the new port.
-func waitReset(beforeReset []string, l Logger, originalPort string) string {
-	var port string
-	timeout := false
-
-	go func() {
-		time.Sleep(10 * time.Second)
-		timeout = true
-	}()
-
-	// Wait for the port to disappear
-	debug(l, "Wait for the port to disappear")
-	for {
-		ports, err := serial.GetPortsList()
-		port = differ(ports, beforeReset)
-		debug(l, beforeReset, " -> ", ports)
-
-		if port != "" {
-			break
-		}
-		if timeout {
-			debug(l, ports, err, port)
-			break
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
-
-	// Wait for the port to reappear
-	debug(l, "Wait for the port to reappear")
-	afterReset, _ := serial.GetPortsList()
-	for {
-		ports, _ := serial.GetPortsList()
-		port = differ(ports, afterReset)
-		debug(l, afterReset, " -> ", ports)
-		if port != "" {
-			debug(l, "Found upload port: ", port)
-			time.Sleep(time.Millisecond * 500)
-			break
-		}
-		if timeout {
-			debug(l, "timeout")
-			break
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
-
-	// try to upload on the existing port if the touch was ineffective
-	if port == "" {
-		port = originalPort
-	}
-
-	return port
 }
 
 // program spawns the given binary with the given args, logging the sdtout and stderr
