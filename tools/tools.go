@@ -101,9 +101,9 @@ func (t *Tools) GetLocation(command string) (string, error) {
 
 // writeMap() writes installed map to the json file "installed.json"
 func (t *Tools) writeMap() error {
-	t.mutex.RLock()
+	t.mutex.Lock()
 	b, err := json.Marshal(t.installed)
-	t.mutex.RUnlock()
+	defer t.mutex.Unlock()
 	if err != nil {
 		return err
 	}
