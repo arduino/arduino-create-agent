@@ -113,13 +113,13 @@ func (t *Tools) writeMap() error {
 
 // readMap() reads the installed map from json file "installed.json"
 func (t *Tools) readMap() error {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	filePath := path.Join(dir(), "installed.json")
 	b, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
 	return json.Unmarshal(b, &t.installed)
 }
 
