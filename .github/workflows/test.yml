@@ -45,9 +45,8 @@ jobs:
           go get golang.org/x/lint/golint
 
       - name: Install Taskfile
-        uses: arduino/actions/setup-taskfile@master
+        uses: arduino/setup-task@v1
         with:
-          version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check the code is good
