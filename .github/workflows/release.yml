@@ -77,7 +77,7 @@ jobs:
           go get -u github.com/sanbornm/go-selfupdate/...
 
       - name: Install Taskfile
-        uses: arduino/actions/setup-taskfile@master
+        uses: arduino/setup-task@v1
         with:
           version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
