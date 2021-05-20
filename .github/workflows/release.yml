@@ -440,6 +440,11 @@ jobs:
     needs: code-sign-mac-installers
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # fetch all history for the create changelog step to work properly
+
       - name: Download artifact
         uses: actions/download-artifact@v2 # download all the artifacts
 
