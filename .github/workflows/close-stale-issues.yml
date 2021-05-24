@@ -14,5 +14,5 @@ jobs:
           days-before-stale: 14
           days-before-close: 7
           days-before-pr-close: -1
-          only-labels: 'waiting for feedback'
+          only-labels: 'status: waiting for information'
           debug-only: false
