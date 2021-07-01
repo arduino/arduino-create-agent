@@ -380,6 +380,7 @@ go.bug.st/relaxed-semver v0.0.0-20190922224835-391e10178d18/go.mod h1:Cx1VqMtEhE
 go.bug.st/serial v1.1.2/go.mod h1:VmYBeyJWp5BnJ0tw2NUJHZdJTGl2ecBGABHlzRK1knY=
 go.bug.st/serial v1.1.3 h1:YEBxJa9pKS9Wdg46B/jiaKbvvbUrjhZZZITfJHEJhaE=
 go.bug.st/serial v1.1.3/go.mod h1:8TT7u/SwwNIpJ8QaG4s+HTjFt9ReXs2cdOU7ZEk50Dk=
+go.bug.st/serial v1.2.0/go.mod h1:8TT7u/SwwNIpJ8QaG4s+HTjFt9ReXs2cdOU7ZEk50Dk=
 go.bug.st/serial.v1 v0.0.0-20180827123349-5f7892a7bb45 h1:mACY1anK6HNCZtm/DK2Rf2ZPHggVqeB0+7rY9Gl6wyI=
 go.bug.st/serial.v1 v0.0.0-20180827123349-5f7892a7bb45/go.mod h1:dRSl/CVCTf56CkXgJMDOdSwNfo2g1orOGE/gBGdvjZw=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
