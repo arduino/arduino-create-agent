@@ -231,7 +231,7 @@ jobs:
 
     env:
       # vars used by installbuilder
-      INSTALLBUILDER_PATH: "/opt/installbuilder-20.9.0/bin/builder"
+      INSTALLBUILDER_PATH: "/opt/installbuilder-21.6.0/bin/builder"
       INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
       # vars passed to installbuilder to install https certs automatically
       CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
@@ -273,7 +273,7 @@ jobs:
             installer-extension: .app
 
     container:
-      image: floydpink/ubuntu-install-builder:20.9.0
+      image: floydpink/ubuntu-install-builder:21.6.0
 
     steps:
       - name: Checkout
