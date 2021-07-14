@@ -182,7 +182,7 @@ func getConfigs() []configIni {
 	err := filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
 		if !f.IsDir() {
 			if filepath.Ext(path) == ".ini" {
-				cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, filepath.Join(dest, f.Name()))
+				cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true, AllowPythonMultilineValues: true}, filepath.Join(dest, f.Name()))
 				if err != nil {
 					return err
 				}
