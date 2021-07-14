@@ -644,7 +644,7 @@ body {
 `
 
 func parseIni(filename string) (args []string, err error) {
-	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false}, filename)
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false, AllowPythonMultilineValues: true}, filename)
 	if err != nil {
 		return nil, err
 	}
