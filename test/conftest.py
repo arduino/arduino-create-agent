@@ -7,12 +7,13 @@ from pathlib import Path
 import pytest
 from invoke import Local
 from invoke.context import Context
-
+import socketio as io
+import asyncio
 
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
     
-    agent_cli = str(Path(pytestconfig.rootdir) / "arduino-create-agent")
+    agent_cli = str(Path(pytestconfig.rootdir) / "arduino-create-agent_cli")
     env = {
         # "ARDUINO_DATA_DIR": data_dir,
         # "ARDUINO_DOWNLOADS_DIR": downloads_dir,
@@ -23,6 +24,9 @@ def agent(pytestconfig):
     runner = Local(run_context) # execute a command on the local filesystem
     
     cd_command = "cd"
+    if platform.system() == "Windows":
+        cd_command += " /d"
+
     with run_context.prefix(f'{cd_command} ..'):
         runner.run(agent_cli, echo=True, hide=True, warn=True, env=env, asynchronous=True)
         
@@ -43,3 +47,10 @@ def agent(pytestconfig):
 @pytest.fixture(scope="session")
 def base_url():
     return "http://127.0.0.1:8991"
+
+@pytest.fixture(scope="session")
+def socketio(base_url, data=""):
+    sio = io.Client()
+    sio.connect(base_url)
+    yield sio
+    sio.disconnect()
