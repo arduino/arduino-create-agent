@@ -92,7 +92,7 @@ type SpPortMessageRaw struct {
 	D []byte // the data, i.e. G0 X0 Y0
 }
 
-func (p *serport) reader() {
+func (p *serport) reader(buftype string) {
 
 	//var buf bytes.Buffer
 	ch := make([]byte, 1024)
@@ -120,21 +120,24 @@ func (p *serport) reader() {
 		// read can return legitimate bytes as well as an error
 		// so process the bytes if n > 0
 		if n > 0 {
-			//log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
+			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
 
 			data := ""
-
-			for i, w := 0, 0; i < n; i += w {
-				runeValue, width := utf8.DecodeRune(ch[i:n])
-				if runeValue == utf8.RuneError {
-					buffered_ch.Write(append(ch[i:n]))
-					break
+			if buftype == "timedraw" {
+				data = string(ch[:n])
+			} else {
+				for i, w := 0, 0; i < n; i += w {
+					runeValue, width := utf8.DecodeRune(ch[i:n])
+					if runeValue == utf8.RuneError {
+						buffered_ch.Write(append(ch[i:n]))
+						break
+					}
+					if i == n {
+						buffered_ch.Reset()
+					}
+					data += string(runeValue)
+					w = width
 				}
-				if i == n {
-					buffered_ch.Reset()
-				}
-				data += string(runeValue)
-				w = width
 			}
 
 			//log.Print("The data i will convert to json is:")
@@ -344,7 +347,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	go p.writerBuffered()
 	// this is thread to send to serial port regardless of block
 	go p.writerNoBuf()
-	p.reader()
+	p.reader(buftype)
 
 	spListDual(false)
 	spList(false)
