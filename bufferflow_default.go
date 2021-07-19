@@ -20,6 +20,10 @@ func (b *BufferflowDefault) BlockUntilReady(cmd string, id string) (bool, bool) 
 	return true, false
 }
 
+// not implemented, we are gonna use OnIncomingData
+func (b *BufferflowDefault) OnIncomingDataBinary(data []byte) {
+}
+
 func (b *BufferflowDefault) OnIncomingData(data string) {
 	//log.Printf("OnIncomingData() start. data:%v\n", data)
 }

@@ -5,7 +5,7 @@ import (
 //"time"
 )
 
-var availableBufferAlgorithms = []string{"default", "timed", "timedraw"}
+var availableBufferAlgorithms = []string{"default", "timed", "timedraw", "timedbinary"}
 
 type BufferMsg struct {
 	Cmd                string
@@ -19,6 +19,7 @@ type Bufferflow interface {
 	Init()
 	BlockUntilReady(cmd string, id string) (bool, bool) // implement this method
 	//JustQueue(cmd string, id string) bool                     // implement this method
+	OnIncomingDataBinary(data []byte)
 	OnIncomingData(data string)                               // implement this method
 	ClearOutSemaphore()                                       // implement this method
 	BreakApartCommands(cmd string) []string                   // implement this method

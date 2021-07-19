@@ -148,7 +148,11 @@ func (p *serport) reader(buftype string) {
 			// writes to the serialport. each bufferflow type will decide
 			// this on its own based on its logic, i.e. tinyg vs grbl vs others
 			//p.b.bufferwatcher..OnIncomingData(data)
-			p.bufferwatcher.OnIncomingData(data)
+			if buftype == "timedbinary" {
+				p.bufferwatcher.OnIncomingDataBinary(ch[:n])
+			} else {
+				p.bufferwatcher.OnIncomingData(data)
+			}
 
 			// see if the OnIncomingData handled the broadcast back
 			// to the user. this option was added in case the OnIncomingData wanted
@@ -330,6 +334,8 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 		bw = &BufferflowTimed{Name: "timed", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
 	} else if buftype == "timedraw" {
 		bw = &BufferflowTimedRaw{Name: "timedraw", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
+	} else if buftype == "timedbinary" {
+		bw = &BufferflowTimedBinary{Name: "timedbinary", Port: portname, Output: h.broadcastSys, Input: make(chan []byte)}
 	} else {
 		bw = &BufferflowDefault{Port: portname}
 	}

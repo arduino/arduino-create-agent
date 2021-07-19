@@ -18,7 +18,7 @@ type BufferflowTimed struct {
 
 var (
 	bufferedOutput string
-	sPort string
+	sPort          string
 )
 
 func (b *BufferflowTimed) Init() {
@@ -59,6 +59,10 @@ func (b *BufferflowTimed) Init() {
 func (b *BufferflowTimed) BlockUntilReady(cmd string, id string) (bool, bool) {
 	//log.Printf("BlockUntilReady() start\n")
 	return true, false
+}
+
+// not implemented, we are gonna use OnIncomingData
+func (b *BufferflowTimed) OnIncomingDataBinary(data []byte) {
 }
 
 func (b *BufferflowTimed) OnIncomingData(data string) {
