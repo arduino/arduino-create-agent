@@ -127,7 +127,7 @@ func checkCmd(m []byte) {
 		}
 		// pass in buffer type now as string. if user does not
 		// ask for a buffer type pass in empty string
-		bufferAlgorithm := ""
+		bufferAlgorithm := "default" // use the default buffer if none is specified
 		if len(args) > 3 {
 			// cool. we got a buffer type request
 			buftype := strings.Replace(args[3], "\n", "", -1)

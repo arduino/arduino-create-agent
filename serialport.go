@@ -103,7 +103,7 @@ func (p *serport) reader(buftype string) {
 
 		n, err := p.portIo.Read(ch)
 
-		//if we detect that port is closing, break out o this for{} loop.
+		//if we detect that port is closing, break out of this for{} loop.
 		if p.isClosing {
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
@@ -118,16 +118,20 @@ func (p *serport) reader(buftype string) {
 		}
 
 		// read can return legitimate bytes as well as an error
-		// so process the bytes if n > 0
+		// so process the n bytes if n > 0
 		if n > 0 {
 			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
 
 			data := ""
-			if buftype == "timedraw" {
+			switch buftype {
+			case "timedraw", "timed": // data is handled differently inside BufferFlowTimed (bufferedOutput is string) and BufferFlowTimedRaw (bufferedOutputRaw is []byte)
 				data = string(ch[:n])
-			} else {
+				p.bufferwatcher.OnIncomingData(data)
+			case "timedbinary":
+				p.bufferwatcher.OnIncomingDataBinary(ch[:n])
+			case "default":
 				for i, w := 0, 0; i < n; i += w {
-					runeValue, width := utf8.DecodeRune(ch[i:n])
+					runeValue, width := utf8.DecodeRune(ch[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed lenght)
 					if runeValue == utf8.RuneError {
 						buffered_ch.Write(append(ch[i:n]))
 						break
@@ -138,20 +142,14 @@ func (p *serport) reader(buftype string) {
 					data += string(runeValue)
 					w = width
 				}
-			}
-
-			//log.Print("The data i will convert to json is:")
-			//log.Print(data)
-
-			// give the data to our bufferflow so it can do it's work
-			// to read/translate the data to see if it wants to block
-			// writes to the serialport. each bufferflow type will decide
-			// this on its own based on its logic, i.e. tinyg vs grbl vs others
-			//p.b.bufferwatcher..OnIncomingData(data)
-			if buftype == "timedbinary" {
-				p.bufferwatcher.OnIncomingDataBinary(ch[:n])
-			} else {
+				// give the data to our bufferflow so it can do it's work
+				// to read/translate the data to see if it wants to block
+				// writes to the serialport. each bufferflow type will decide
+				// this on its own based on its logic, i.e. tinyg vs grbl vs others
+				//p.b.bufferwatcher..OnIncomingData(data)
 				p.bufferwatcher.OnIncomingData(data)
+			default:
+				log.Panicf("unknown buffer type %s", buftype)
 			}
 
 			// see if the OnIncomingData handled the broadcast back
@@ -330,14 +328,17 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 
 	var bw Bufferflow
 
-	if buftype == "timed" {
+	switch buftype {
+	case "timed":
 		bw = &BufferflowTimed{Name: "timed", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
-	} else if buftype == "timedraw" {
+	case "timedraw":
 		bw = &BufferflowTimedRaw{Name: "timedraw", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
-	} else if buftype == "timedbinary" {
+	case "timedbinary":
 		bw = &BufferflowTimedBinary{Name: "timedbinary", Port: portname, Output: h.broadcastSys, Input: make(chan []byte)}
-	} else {
+	case "default":
 		bw = &BufferflowDefault{Port: portname}
+	default:
+		log.Panicf("unknown buffer type: %s", buftype)
 	}
 
 	bw.Init()
