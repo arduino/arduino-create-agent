@@ -1,16 +1,15 @@
-import socketio
 import time
 
-def test_ws_connection(agent, socketio):
+def test_ws_connection(socketio):
     print('my sid is', socketio.sid)
     assert socketio.sid is not None
 
-def test_list(agent, socketio):
+def test_list(socketio):
     socketio.on('message', message_handler)
     socketio.emit('command', 'list')
     time.sleep(.1)
 
-def test__open_serial_default(agent, socketio):
+def test__open_serial_default(socketio):
     socketio.on('message', message_handler)
     socketio.emit('command', 'open /dev/ttyACM0 9600')
     time.sleep(.1)

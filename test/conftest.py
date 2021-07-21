@@ -45,8 +45,8 @@ def agent(pytestconfig):
 def base_url():
     return "http://127.0.0.1:8991"
 
-@pytest.fixture(scope="session")
-def socketio(base_url, data=""):
+@pytest.fixture(scope="function")
+def socketio(base_url, agent):
     sio = io.Client()
     sio.connect(base_url)
     yield sio
