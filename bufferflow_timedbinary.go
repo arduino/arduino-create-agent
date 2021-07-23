@@ -33,13 +33,13 @@ func (b *BufferflowTimedBinary) Init() {
 		for {
 			select {
 			case data := <-b.Input:
-				bufferedOutputBinary = append(bufferedOutputBinary, []byte(data)...)
+				bufferedOutputBinary = append(bufferedOutputBinary, data...)
 				sPortBinary = b.Port
 			case <-b.ticker.C:
 				if bufferedOutputBinary != nil {
 					m := SpPortMessageRaw{sPortBinary, bufferedOutputBinary}
 					buf, _ := json.Marshal(m)
-					b.Output <- []byte(buf)
+					b.Output <- buf
 					bufferedOutputBinary = nil
 					sPortBinary = ""
 				}
