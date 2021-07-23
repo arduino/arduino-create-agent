@@ -95,12 +95,11 @@ type SpPortMessageRaw struct {
 func (p *serport) reader(buftype string) {
 
 	//var buf bytes.Buffer
-	ch := make([]byte, 1024)
 	timeCheckOpen := time.Now()
 	var buffered_ch bytes.Buffer
 
 	for {
-
+		ch := make([]byte, 1024) //a new array of bytes is initilized everytime because we pass it (as a pointer) in a channel, it can be improved
 		n, err := p.portIo.Read(ch)
 
 		//if we detect that port is closing, break out of this for{} loop.
@@ -111,16 +110,11 @@ func (p *serport) reader(buftype string) {
 			break
 		}
 
-		if err == nil {
-			ch = append(buffered_ch.Bytes(), ch[:n]...)
-			n += len(buffered_ch.Bytes())
-			buffered_ch.Reset()
-		}
-
 		// read can return legitimate bytes as well as an error
-		// so process the n bytes if n > 0
-		if n > 0 {
-			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
+		// so process the n bytes red, if n > 0
+		if n > 0 && err == nil {
+
+			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch[:n]))
 
 			data := ""
 			switch buftype {
@@ -129,11 +123,15 @@ func (p *serport) reader(buftype string) {
 				p.bufferwatcher.OnIncomingData(data)
 			case "timedbinary":
 				p.bufferwatcher.OnIncomingDataBinary(ch[:n])
-			case "default":
+			case "default": // the bufferbuftype is actually called default 🤷‍♂️
+				// save the left out bytes for the next iteration due to UTF-8 encoding
+				ch = append(buffered_ch.Bytes(), ch[:n]...) // TODO ch is not handled correctly: doing this way it's length is messed up. Use ch2
+				n += len(buffered_ch.Bytes())
+				buffered_ch.Reset()
 				for i, w := 0, 0; i < n; i += w {
 					runeValue, width := utf8.DecodeRune(ch[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed lenght)
 					if runeValue == utf8.RuneError {
-						buffered_ch.Write(append(ch[i:n]))
+						buffered_ch.Write(ch[i:n])
 						break
 					}
 					if i == n {
@@ -146,7 +144,6 @@ func (p *serport) reader(buftype string) {
 				// to read/translate the data to see if it wants to block
 				// writes to the serialport. each bufferflow type will decide
 				// this on its own based on its logic, i.e. tinyg vs grbl vs others
-				//p.b.bufferwatcher..OnIncomingData(data)
 				p.bufferwatcher.OnIncomingData(data)
 			default:
 				log.Panicf("unknown buffer type %s", buftype)
