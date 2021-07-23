@@ -38,6 +38,22 @@ var h = hub{
 	connections:  make(map[*connection]bool),
 }
 
+const commands = "{\"Commands\": [" +
+	"\"list\", " +
+	"\"open < portName > < baud > [bufferAlgorithm: ({default}, timed, timedraw, timedbinary)]\", " +
+	"\"send < portName > < cmd >\", " +
+	"\"sendnobuf < portName > < cmd >\", " +
+	"\"close < portName >\", " +
+	"\"restart\", " +
+	"\"exit\", " +
+	"\"killupload\", " +
+	"\"downloadtool < tool > < toolVersion: {latest} > < pack: {arduino} > < behaviour: {keep} >\", " +
+	"\"log\", " +
+	"\"memorystats\", " +
+	"\"gc\", " +
+	"\"hostname\", " +
+	"\"version\"]} "
+
 func (h *hub) run() {
 	for {
 		select {
@@ -45,7 +61,7 @@ func (h *hub) run() {
 			h.connections[c] = true
 			// send supported commands
 			c.send <- []byte("{\"Version\" : \"" + version + "\"} ")
-			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud] [bufferAlgorithm (optional)]\", \"send [portName] [cmd]\", \"sendnobuf [portName] [cmd]\", \"close [portName]\", \"restart\", \"exit\", \"program [portName] [board:name] [$path/to/filename/without/extension]\", \"programfromurl [portName] [board:name] [urlToHexFile]\"]} ")
+			c.send <- []byte(commands)
 			c.send <- []byte("{\"Hostname\" : \"" + *hostname + "\"} ")
 			c.send <- []byte("{\"OS\" : \"" + runtime.GOOS + "\"} ")
 		case c := <-h.unregister:
