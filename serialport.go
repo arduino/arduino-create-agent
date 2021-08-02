@@ -125,11 +125,11 @@ func (p *serport) reader(buftype string) {
 				p.bufferwatcher.OnIncomingDataBinary(ch[:n])
 			case "default": // the bufferbuftype is actually called default 🤷‍♂️
 				// save the left out bytes for the next iteration due to UTF-8 encoding
-				ch = append(buffered_ch.Bytes(), ch[:n]...) // TODO ch is not handled correctly: doing this way it's length is messed up. Use ch2
+				ch = append(buffered_ch.Bytes(), ch[:n]...) // TODO ch is not handled correctly: doing this way its length is messed up. Use ch2
 				n += len(buffered_ch.Bytes())
 				buffered_ch.Reset()
 				for i, w := 0, 0; i < n; i += w {
-					runeValue, width := utf8.DecodeRune(ch[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed lenght)
+					runeValue, width := utf8.DecodeRune(ch[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed length)
 					if runeValue == utf8.RuneError {
 						buffered_ch.Write(ch[i:n])
 						break

@@ -59,7 +59,7 @@ def general_test_serial(socketio, buffertype):
     message = []
     #in message var we will find the "response"
     socketio.on('message', message_handler)
-    #open a new serial connection with the specified buffertype, if buffertype s empty it will use the default one
+    #open a new serial connection with the specified buffertype, if buffertype is empty it will use the default one
     socketio.emit('command', 'open ' + port + ' 9600 ' + buffertype)
     # give time to the message var to be filled
     time.sleep(.5)
@@ -109,7 +109,7 @@ def message_handler(msg):
     global message
     message.append(msg)
 
-# helper function used to extract serial data from it's json representation
+# helper function used to extract serial data from its JSON representation
 # NOTE make sure to pass a clean message (maybe reinitialize the message global var before populating it)
 def extract_serial_data(msg):
     serial_data = ""
