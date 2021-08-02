@@ -20,7 +20,7 @@ def test_list(socketio):
     assert any("Ports" in i for i in message)
     assert any("Network" in i for i in message)
 
-# NOTE run the following tests on linux with a board connected to the PC and with this sketch on it: https://gist.github.com/Protoneer/96db95bfb87c3befe46e
+# NOTE run the following tests on linux with a board connected to the PC and with the sketch found in test/testdata/SerialEcho.ino on it
 @pytest.mark.skipif(
     running_on_ci(),
     reason="VMs have no serial ports",
