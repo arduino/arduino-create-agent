@@ -38,21 +38,24 @@ var h = hub{
 	connections:  make(map[*connection]bool),
 }
 
-const commands = "{\"Commands\": [" +
-	"\"list\", " +
-	"\"open < portName > < baud > [bufferAlgorithm: ({default}, timed, timedraw, timedbinary)]\", " +
-	"\"send < portName > < cmd >\", " +
-	"\"sendnobuf < portName > < cmd >\", " +
-	"\"close < portName >\", " +
-	"\"restart\", " +
-	"\"exit\", " +
-	"\"killupload\", " +
-	"\"downloadtool < tool > < toolVersion: {latest} > < pack: {arduino} > < behaviour: {keep} >\", " +
-	"\"log\", " +
-	"\"memorystats\", " +
-	"\"gc\", " +
-	"\"hostname\", " +
-	"\"version\"]} "
+const commands = `{
+	"Commands": [
+		"list",
+		"open < portName > < baud > [bufferAlgorithm: ({default}, timed, timedraw, timedbinary)]",
+		"send < portName > < cmd >",
+		"sendnobuf < portName > < cmd >",
+		"close < portName >",
+		"restart",
+		"exit",
+		"killupload",
+		"downloadtool < tool > < toolVersion: {latest} > < pack: {arduino} > < behaviour: {keep} >",
+		"log",
+		"memorystats",
+		"gc",
+		"hostname",
+		"version"
+	]
+}`
 
 func (h *hub) unregisterConnection(c *connection) {
 	if _, contains := h.connections[c]; !contains {
