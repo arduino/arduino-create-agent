@@ -54,6 +54,27 @@ const commands = "{\"Commands\": [" +
 	"\"hostname\", " +
 	"\"version\"]} "
 
+func (h *hub) unregisterConnection(c *connection) {
+	if _, contains := h.connections[c]; !contains {
+		return
+	}
+	delete(h.connections, c)
+	close(c.send)
+}
+
+func (h *hub) sendToRegisteredConnections(data []byte) {
+	for c := range h.connections {
+		select {
+		case c.send <- data:
+			//log.Print("did broadcast to ")
+			//log.Print(c.ws.RemoteAddr())
+			//c.send <- []byte("hello world")
+		default:
+			h.unregisterConnection(c)
+		}
+	}
+}
+
 func (h *hub) run() {
 	for {
 		select {
@@ -65,49 +86,14 @@ func (h *hub) run() {
 			c.send <- []byte("{\"Hostname\" : \"" + *hostname + "\"} ")
 			c.send <- []byte("{\"OS\" : \"" + runtime.GOOS + "\"} ")
 		case c := <-h.unregister:
-			delete(h.connections, c)
-			// put close in func cuz it was creating panics and want
-			// to isolate
-			func() {
-				// this method can panic if websocket gets disconnected
-				// from users browser and we see we need to unregister a couple
-				// of times, i.e. perhaps from incoming data from serial triggering
-				// an unregister. (NOT 100% sure why seeing c.send be closed twice here)
-				defer func() {
-					if e := recover(); e != nil {
-						log.Println("Got panic: ", e)
-					}
-				}()
-				close(c.send)
-			}()
+			h.unregisterConnection(c)
 		case m := <-h.broadcast:
 			if len(m) > 0 {
 				checkCmd(m)
-
-				for c := range h.connections {
-					select {
-					case c.send <- m:
-						//log.Print("did broadcast to ")
-						//log.Print(c.ws.RemoteAddr())
-						//c.send <- []byte("hello world")
-					default:
-						delete(h.connections, c)
-						close(c.send)
-					}
-				}
+				h.sendToRegisteredConnections(m)
 			}
 		case m := <-h.broadcastSys:
-			for c := range h.connections {
-				select {
-				case c.send <- m:
-					//log.Print("did broadcast to ")
-					//log.Print(c.ws.RemoteAddr())
-					//c.send <- []byte("hello world")
-				default:
-					delete(h.connections, c)
-					close(c.send)
-				}
-			}
+			h.sendToRegisteredConnections(m)
 		}
 	}
 }
