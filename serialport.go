@@ -118,11 +118,9 @@ func (p *serport) reader(buftype string) {
 
 			data := ""
 			switch buftype {
-			case "timedraw", "timed": // data is handled differently inside BufferFlowTimed (bufferedOutput is string) and BufferFlowTimedRaw (bufferedOutputRaw is []byte)
+			case "timedraw", "timed", "timedbinary":
 				data = string(ch[:n])
 				p.bufferwatcher.OnIncomingData(data)
-			case "timedbinary":
-				p.bufferwatcher.OnIncomingDataBinary(ch[:n])
 			case "default": // the bufferbuftype is actually called default 🤷‍♂️
 				// save the left out bytes for the next iteration due to UTF-8 encoding
 				ch = append(buffered_ch.Bytes(), ch[:n]...) // TODO ch is not handled correctly: doing this way its length is messed up. Use ch2

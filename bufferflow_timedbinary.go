@@ -57,12 +57,9 @@ func (b *BufferflowTimedBinary) BlockUntilReady(cmd string, id string) (bool, bo
 	return true, false
 }
 
-func (b *BufferflowTimedBinary) OnIncomingDataBinary(data []byte) {
-	b.Input <- data
-}
-
 // not implemented, we are gonna use OnIncomingDataBinary
 func (b *BufferflowTimedBinary) OnIncomingData(data string) {
+	b.Input <- []byte(data)
 }
 
 // Clean out b.sem so it can truly block

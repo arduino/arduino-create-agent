@@ -61,10 +61,6 @@ func (b *BufferflowTimed) BlockUntilReady(cmd string, id string) (bool, bool) {
 	return true, false
 }
 
-// not implemented, we are gonna use OnIncomingData
-func (b *BufferflowTimed) OnIncomingDataBinary(data []byte) {
-}
-
 func (b *BufferflowTimed) OnIncomingData(data string) {
 	b.Input <- data
 }
