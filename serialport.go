@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"strconv"
 	"time"
@@ -121,6 +120,10 @@ func (p *serport) reader(buftype string) {
 			switch buftype {
 			case "timedraw", "timed", "timedbinary":
 				data = string(bufferPart[:n])
+				// give the data to our bufferflow so it can do it's work
+				// to read/translate the data to see if it wants to block
+				// writes to the serialport. each bufferflow type will decide
+				// this on its own based on its logic
 				p.bufferwatcher.OnIncomingData(data)
 			case "default": // the bufferbuftype is actually called default 🤷‍♂️
 				// save the left out bytes for the next iteration due to UTF-8 encoding
@@ -139,40 +142,9 @@ func (p *serport) reader(buftype string) {
 					data += string(runeValue)
 					w = width
 				}
-				// give the data to our bufferflow so it can do it's work
-				// to read/translate the data to see if it wants to block
-				// writes to the serialport. each bufferflow type will decide
-				// this on its own based on its logic, i.e. tinyg vs grbl vs others
 				p.bufferwatcher.OnIncomingData(data)
 			default:
 				log.Panicf("unknown buffer type %s", buftype)
-			}
-
-			// see if the OnIncomingData handled the broadcast back
-			// to the user. this option was added in case the OnIncomingData wanted
-			// to do something fancier or implementation specific, i.e. TinyG Buffer
-			// actually sends back data on a perline basis rather than our method
-			// where we just send the moment we get it. the reason for this is that
-			// the browser was sometimes getting back packets out of order which
-			// of course would screw things up when parsing
-
-			if p.bufferwatcher.IsBufferGloballySendingBackIncomingData() == false {
-				//m := SpPortMessage{"Alice", "Hello"}
-				m := SpPortMessage{p.portConf.Name, data}
-				//log.Print("The m obj struct is:")
-				//log.Print(m)
-
-				//b, err := json.MarshalIndent(m, "", "\t")
-				b, err := json.Marshal(m)
-				if err != nil {
-					log.Println(err)
-					h.broadcastSys <- []byte("Error creating json on " + p.portConf.Name + " " +
-						err.Error() + " The data we were trying to convert is: " + string(ch[:n]))
-					break
-				}
-				//log.Print("Printing out json byte data...")
-				//log.Print(string(b))
-				h.broadcastSys <- b
 			}
 		}
 
@@ -332,7 +304,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	case "timedbinary":
 		bw = NewBufferflowTimedBinary(portname, h.broadcastSys)
 	case "default":
-		bw = NewBufferflowDefault(portname)
+		bw = NewBufferflowDefault(portname, h.broadcastSys)
 	default:
 		log.Panicf("unknown buffer type: %s", buftype)
 	}

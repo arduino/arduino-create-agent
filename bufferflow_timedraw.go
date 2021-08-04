@@ -68,10 +68,6 @@ func (b *BufferflowTimedRaw) OnIncomingData(data string) {
 	b.input <- data
 }
 
-func (b *BufferflowTimedRaw) IsBufferGloballySendingBackIncomingData() bool {
-	return true
-}
-
 func (b *BufferflowTimedRaw) Close() {
 	b.ticker.Stop()
 	b.done <- true
