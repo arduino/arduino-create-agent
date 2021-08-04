@@ -8,47 +8,50 @@ import (
 )
 
 type BufferflowTimedBinary struct {
-	Name   string
-	Port   string
-	Output chan []byte
-	Input  chan []byte
-	done   chan bool
-	ticker *time.Ticker
-}
-
-var (
+	port                 string
+	output               chan []byte
+	input                chan []byte
+	done                 chan bool
+	ticker               *time.Ticker
 	bufferedOutputBinary []byte
 	sPortBinary          string
-)
+}
+
+func NewBufferflowTimedBinary(port string, output chan []byte) *BufferflowTimedBinary {
+	return &BufferflowTimedBinary{
+		port:                 port,
+		output:               output,
+		input:                make(chan []byte),
+		done:                 make(chan bool),
+		ticker:               time.NewTicker(16 * time.Millisecond),
+		bufferedOutputBinary: nil,
+		sPortBinary:          "",
+	}
+}
 
 func (b *BufferflowTimedBinary) Init() {
 	log.Println("Initting timed buffer binary flow (output once every 16ms)")
-	bufferedOutputBinary = nil
-	sPortBinary = ""
-
 	go func() {
-		b.ticker = time.NewTicker(16 * time.Millisecond)
-		b.done = make(chan bool)
 	Loop:
 		for {
 			select {
-			case data := <-b.Input:
-				bufferedOutputBinary = append(bufferedOutputBinary, data...)
-				sPortBinary = b.Port
+			case data := <-b.input:
+				b.bufferedOutputBinary = append(b.bufferedOutputBinary, data...)
+				b.sPortBinary = b.port
 			case <-b.ticker.C:
-				if bufferedOutputBinary != nil {
-					m := SpPortMessageRaw{sPortBinary, bufferedOutputBinary}
+				if b.bufferedOutputBinary != nil {
+					m := SpPortMessageRaw{b.sPortBinary, b.bufferedOutputBinary}
 					buf, _ := json.Marshal(m)
-					b.Output <- buf
-					bufferedOutputBinary = nil
-					sPortBinary = ""
+					b.output <- buf
+					b.bufferedOutputBinary = nil
+					b.sPortBinary = ""
 				}
 			case <-b.done:
 				break Loop
 			}
 		}
 
-		close(b.Input)
+		close(b.input)
 	}()
 }
 
@@ -57,48 +60,8 @@ func (b *BufferflowTimedBinary) BlockUntilReady(cmd string, id string) (bool, bo
 	return true, false
 }
 
-// not implemented, we are gonna use OnIncomingDataBinary
 func (b *BufferflowTimedBinary) OnIncomingData(data string) {
-	b.Input <- []byte(data)
-}
-
-// Clean out b.sem so it can truly block
-func (b *BufferflowTimedBinary) ClearOutSemaphore() {
-}
-
-func (b *BufferflowTimedBinary) BreakApartCommands(cmd string) []string {
-	return []string{cmd}
-}
-
-func (b *BufferflowTimedBinary) Pause() {
-	return
-}
-
-func (b *BufferflowTimedBinary) Unpause() {
-	return
-}
-
-func (b *BufferflowTimedBinary) SeeIfSpecificCommandsShouldSkipBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedBinary) SeeIfSpecificCommandsShouldPauseBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedBinary) SeeIfSpecificCommandsShouldUnpauseBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedBinary) SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedBinary) SeeIfSpecificCommandsReturnNoResponse(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedBinary) ReleaseLock() {
+	b.input <- []byte(data)
 }
 
 func (b *BufferflowTimedBinary) IsBufferGloballySendingBackIncomingData() bool {
@@ -107,5 +70,5 @@ func (b *BufferflowTimedBinary) IsBufferGloballySendingBackIncomingData() bool {
 
 func (b *BufferflowTimedBinary) Close() {
 	b.ticker.Stop()
-	close(b.Input)
+	close(b.input)
 }

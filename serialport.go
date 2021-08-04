@@ -325,13 +325,13 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 
 	switch buftype {
 	case "timed":
-		bw = &BufferflowTimed{Name: "timed", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
+		bw = NewBufferflowTimed(portname, h.broadcastSys)
 	case "timedraw":
-		bw = &BufferflowTimedRaw{Name: "timedraw", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
+		bw = NewBufferflowTimedRaw(portname, h.broadcastSys)
 	case "timedbinary":
-		bw = &BufferflowTimedBinary{Name: "timedbinary", Port: portname, Output: h.broadcastSys, Input: make(chan []byte)}
+		bw = NewBufferflowTimedBinary(portname, h.broadcastSys)
 	case "default":
-		bw = &BufferflowDefault{Port: portname}
+		bw = NewBufferflowDefault(portname)
 	default:
 		log.Panicf("unknown buffer type: %s", buftype)
 	}

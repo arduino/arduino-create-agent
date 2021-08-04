@@ -8,49 +8,53 @@ import (
 )
 
 type BufferflowTimedRaw struct {
-	Name   string
-	Port   string
-	Output chan []byte
-	Input  chan string
-	done   chan bool
-	ticker *time.Ticker
-}
-
-var (
+	port              string
+	output            chan []byte
+	input             chan string
+	done              chan bool
+	ticker            *time.Ticker
 	bufferedOutputRaw []byte
 	sPortRaw          string
-)
+}
+
+func NewBufferflowTimedRaw(port string, output chan []byte) *BufferflowTimedRaw {
+	return &BufferflowTimedRaw{
+		port:              port,
+		output:            output,
+		input:             make(chan string),
+		done:              make(chan bool),
+		ticker:            time.NewTicker(16 * time.Millisecond),
+		bufferedOutputRaw: nil,
+		sPortRaw:          "",
+	}
+}
 
 func (b *BufferflowTimedRaw) Init() {
 	log.Println("Initting timed buffer raw flow (output once every 16ms)")
-	bufferedOutputRaw = nil
-	sPortRaw = ""
 
 	go func() {
-		b.ticker = time.NewTicker(16 * time.Millisecond)
-		b.done = make(chan bool)
 	Loop:
 		for {
 			select {
-			case data := <-b.Input:
-				bufferedOutputRaw = append(bufferedOutputRaw, []byte(data)...)
-				sPortRaw = b.Port
+			case data := <-b.input:
+				b.bufferedOutputRaw = append(b.bufferedOutputRaw, []byte(data)...)
+				b.sPortRaw = b.port
 			case <-b.ticker.C:
-				if bufferedOutputRaw != nil {
-					m := SpPortMessageRaw{sPortRaw, bufferedOutputRaw}
+				if b.bufferedOutputRaw != nil {
+					m := SpPortMessageRaw{b.sPortRaw, b.bufferedOutputRaw}
 					buf, _ := json.Marshal(m)
 					// data is now encoded in base64 format
 					// need a decoder on the other side
-					b.Output <- []byte(buf)
-					bufferedOutputRaw = nil
-					sPortRaw = ""
+					b.output <- []byte(buf)
+					b.bufferedOutputRaw = nil
+					b.sPortRaw = ""
 				}
 			case <-b.done:
 				break Loop
 			}
 		}
 
-		close(b.Input)
+		close(b.input)
 	}()
 }
 
@@ -60,46 +64,7 @@ func (b *BufferflowTimedRaw) BlockUntilReady(cmd string, id string) (bool, bool)
 }
 
 func (b *BufferflowTimedRaw) OnIncomingData(data string) {
-	b.Input <- data
-}
-
-// Clean out b.sem so it can truly block
-func (b *BufferflowTimedRaw) ClearOutSemaphore() {
-}
-
-func (b *BufferflowTimedRaw) BreakApartCommands(cmd string) []string {
-	return []string{cmd}
-}
-
-func (b *BufferflowTimedRaw) Pause() {
-	return
-}
-
-func (b *BufferflowTimedRaw) Unpause() {
-	return
-}
-
-func (b *BufferflowTimedRaw) SeeIfSpecificCommandsShouldSkipBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedRaw) SeeIfSpecificCommandsShouldPauseBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedRaw) SeeIfSpecificCommandsShouldUnpauseBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedRaw) SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedRaw) SeeIfSpecificCommandsReturnNoResponse(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimedRaw) ReleaseLock() {
+	b.input <- data
 }
 
 func (b *BufferflowTimedRaw) IsBufferGloballySendingBackIncomingData() bool {
@@ -108,5 +73,5 @@ func (b *BufferflowTimedRaw) IsBufferGloballySendingBackIncomingData() bool {
 
 func (b *BufferflowTimedRaw) Close() {
 	b.ticker.Stop()
-	close(b.Input)
+	close(b.input)
 }
