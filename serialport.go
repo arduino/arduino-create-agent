@@ -98,9 +98,10 @@ func (p *serport) reader(buftype string) {
 	timeCheckOpen := time.Now()
 	var buffered_ch bytes.Buffer
 
+	serialBuffer := make([]byte, 1024)
 	for {
-		ch := make([]byte, 1024) //a new array of bytes is initilized everytime because we pass it (as a pointer) in a channel, it can be improved
-		n, err := p.portIo.Read(ch)
+		n, err := p.portIo.Read(serialBuffer)
+		bufferPart := serialBuffer[:n]
 
 		//if we detect that port is closing, break out of this for{} loop.
 		if p.isClosing {
@@ -114,22 +115,22 @@ func (p *serport) reader(buftype string) {
 		// so process the n bytes red, if n > 0
 		if n > 0 && err == nil {
 
-			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch[:n]))
+			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(bufferPart[:n]))
 
 			data := ""
 			switch buftype {
 			case "timedraw", "timed", "timedbinary":
-				data = string(ch[:n])
+				data = string(bufferPart[:n])
 				p.bufferwatcher.OnIncomingData(data)
 			case "default": // the bufferbuftype is actually called default 🤷‍♂️
 				// save the left out bytes for the next iteration due to UTF-8 encoding
-				ch = append(buffered_ch.Bytes(), ch[:n]...) // TODO ch is not handled correctly: doing this way its length is messed up. Use ch2
+				bufferPart = append(buffered_ch.Bytes(), bufferPart[:n]...)
 				n += len(buffered_ch.Bytes())
 				buffered_ch.Reset()
 				for i, w := 0, 0; i < n; i += w {
-					runeValue, width := utf8.DecodeRune(ch[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed length)
+					runeValue, width := utf8.DecodeRune(bufferPart[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed length)
 					if runeValue == utf8.RuneError {
-						buffered_ch.Write(ch[i:n])
+						buffered_ch.Write(bufferPart[i:n])
 						break
 					}
 					if i == n {
