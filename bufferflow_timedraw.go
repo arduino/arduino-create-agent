@@ -71,5 +71,5 @@ func (b *BufferflowTimedRaw) OnIncomingData(data string) {
 func (b *BufferflowTimedRaw) Close() {
 	b.ticker.Stop()
 	b.done <- true
-	close(b.input)
+	close(b.done)
 }

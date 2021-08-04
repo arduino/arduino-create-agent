@@ -75,5 +75,5 @@ func (b *BufferflowTimedBinary) IsBufferGloballySendingBackIncomingData() bool {
 func (b *BufferflowTimedBinary) Close() {
 	b.ticker.Stop()
 	b.done <- true
-	close(b.input)
+	close(b.done)
 }
