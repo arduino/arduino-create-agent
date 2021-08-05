@@ -9,7 +9,7 @@ import (
 
 type BufferflowTimedRaw struct {
 	port              string
-	output            chan []byte
+	output            chan<- []byte
 	input             chan string
 	done              chan bool
 	ticker            *time.Ticker
@@ -17,7 +17,7 @@ type BufferflowTimedRaw struct {
 	sPortRaw          string
 }
 
-func NewBufferflowTimedRaw(port string, output chan []byte) *BufferflowTimedRaw {
+func NewBufferflowTimedRaw(port string, output chan<- []byte) *BufferflowTimedRaw {
 	return &BufferflowTimedRaw{
 		port:              port,
 		output:            output,

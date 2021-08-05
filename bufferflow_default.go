@@ -8,12 +8,12 @@ import (
 
 type BufferflowDefault struct {
 	port   string
-	output chan []byte
+	output chan<- []byte
 	input  chan string
 	done   chan bool
 }
 
-func NewBufferflowDefault(port string, output chan []byte) *BufferflowDefault {
+func NewBufferflowDefault(port string, output chan<- []byte) *BufferflowDefault {
 	return &BufferflowDefault{
 		port:   port,
 		output: output,

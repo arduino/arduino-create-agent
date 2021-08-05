@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"runtime"
@@ -84,10 +85,10 @@ func (h *hub) run() {
 		case c := <-h.register:
 			h.connections[c] = true
 			// send supported commands
-			c.send <- []byte("{\"Version\" : \"" + version + "\"} ")
+			c.send <- []byte(fmt.Sprintf(`{"Version" : "%s"} `, version))
 			c.send <- []byte(commands)
-			c.send <- []byte("{\"Hostname\" : \"" + *hostname + "\"} ")
-			c.send <- []byte("{\"OS\" : \"" + runtime.GOOS + "\"} ")
+			c.send <- []byte(fmt.Sprintf(`{"Hostname" : "%s"} `, *hostname))
+			c.send <- []byte(fmt.Sprintf(`{"OS" : "%s"} `, runtime.GOOS))
 		case c := <-h.unregister:
 			h.unregisterConnection(c)
 		case m := <-h.broadcast:

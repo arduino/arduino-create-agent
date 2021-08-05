@@ -9,7 +9,7 @@ import (
 
 type BufferflowTimedBinary struct {
 	port                 string
-	output               chan []byte
+	output               chan<- []byte
 	input                chan []byte
 	done                 chan bool
 	ticker               *time.Ticker
@@ -17,7 +17,7 @@ type BufferflowTimedBinary struct {
 	sPortBinary          string
 }
 
-func NewBufferflowTimedBinary(port string, output chan []byte) *BufferflowTimedBinary {
+func NewBufferflowTimedBinary(port string, output chan<- []byte) *BufferflowTimedBinary {
 	return &BufferflowTimedBinary{
 		port:                 port,
 		output:               output,
@@ -66,10 +66,6 @@ func (b *BufferflowTimedBinary) BlockUntilReady(cmd string, id string) (bool, bo
 
 func (b *BufferflowTimedBinary) OnIncomingData(data string) {
 	b.input <- []byte(data)
-}
-
-func (b *BufferflowTimedBinary) IsBufferGloballySendingBackIncomingData() bool {
-	return true
 }
 
 func (b *BufferflowTimedBinary) Close() {
