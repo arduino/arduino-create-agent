@@ -45,14 +45,6 @@ def test_open_serial_timedraw(socketio):
     general_test_serial(socketio, "timedraw")
 
 
-@pytest.mark.skipif(
-    running_on_ci(),
-    reason="VMs have no serial ports",
-)
-def test_open_serial_timedbinary(socketio):
-    general_test_serial(socketio, "timedbinary")
-
-
 def general_test_serial(socketio, buffertype):
     port = "/dev/ttyACM0"
     global message
@@ -75,7 +67,7 @@ def general_test_serial(socketio, buffertype):
     # check if the send command has been registered
     assert any("send " + port + " /\"ciao/\"" in i for i in message)
     #check if message has been sent back by the connected board
-    if buffertype in ("timedbinary", "timedraw"):
+    if buffertype == "timedraw":
         output =  decode_output(extract_serial_data(message))
     elif buffertype in ("default", "timed"):
         output = extract_serial_data(message)
@@ -89,7 +81,7 @@ def general_test_serial(socketio, buffertype):
     print(message)
     # check if the send command has been registered
     assert any("send " + port + " /\"🧀🧀🧀🧀🧀🧀🧀🧀🧀🧀/\"" in i for i in message)
-    if buffertype in ("timedbinary", "timedraw"):
+    if buffertype == "timedraw":
         output =  decode_output(extract_serial_data(message))
     elif buffertype in ("default", "timed"):
         output = extract_serial_data(message)

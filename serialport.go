@@ -118,7 +118,7 @@ func (p *serport) reader(buftype string) {
 
 			data := ""
 			switch buftype {
-			case "timedraw", "timed", "timedbinary":
+			case "timedraw", "timed":
 				data = string(bufferPart[:n])
 				// give the data to our bufferflow so it can do it's work
 				// to read/translate the data to see if it wants to block
@@ -301,8 +301,6 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 		bw = NewBufferflowTimed(portname, h.broadcastSys)
 	case "timedraw":
 		bw = NewBufferflowTimedRaw(portname, h.broadcastSys)
-	case "timedbinary":
-		bw = NewBufferflowTimedBinary(portname, h.broadcastSys)
 	case "default":
 		bw = NewBufferflowDefault(portname, h.broadcastSys)
 	default:
