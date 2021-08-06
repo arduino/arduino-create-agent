@@ -43,7 +43,7 @@ var h = hub{
 const commands = `{
   "Commands": [
     "list",
-    "open <portName> <baud> [bufferAlgorithm: ({default}, timed, timedraw, timedbinary)]",
+    "open <portName> <baud> [bufferAlgorithm: ({default}, timed, timedraw)]",
     "send <portName> <cmd>",
     "sendnobuf <portName> <cmd>",
     "close <portName>",
