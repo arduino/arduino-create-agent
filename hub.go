@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"os"
 	"runtime"
@@ -40,22 +41,22 @@ var h = hub{
 }
 
 const commands = `{
-	"Commands": [
-		"list",
-		"open < portName > < baud > [bufferAlgorithm: ({default}, timed, timedraw, timedbinary)]",
-		"send < portName > < cmd >",
-		"sendnobuf < portName > < cmd >",
-		"close < portName >",
-		"restart",
-		"exit",
-		"killupload",
-		"downloadtool < tool > < toolVersion: {latest} > < pack: {arduino} > < behaviour: {keep} >",
-		"log",
-		"memorystats",
-		"gc",
-		"hostname",
-		"version"
-	]
+  "Commands": [
+    "list",
+    "open <portName> <baud> [bufferAlgorithm: ({default}, timed, timedraw, timedbinary)]",
+    "send <portName> <cmd>",
+    "sendnobuf <portName> <cmd>",
+    "close <portName>",
+    "restart",
+    "exit",
+    "killupload",
+    "downloadtool <tool> <toolVersion: {latest}> <pack: {arduino}> <behaviour: {keep}>",
+    "log",
+    "memorystats",
+    "gc",
+    "hostname",
+    "version"
+  ]
 }`
 
 func (h *hub) unregisterConnection(c *connection) {
@@ -86,7 +87,7 @@ func (h *hub) run() {
 			h.connections[c] = true
 			// send supported commands
 			c.send <- []byte(fmt.Sprintf(`{"Version" : "%s"} `, version))
-			c.send <- []byte(commands)
+			c.send <- []byte(html.EscapeString(commands))
 			c.send <- []byte(fmt.Sprintf(`{"Hostname" : "%s"} `, *hostname))
 			c.send <- []byte(fmt.Sprintf(`{"OS" : "%s"} `, runtime.GOOS))
 		case c := <-h.unregister:
