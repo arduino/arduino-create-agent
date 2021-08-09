@@ -15,7 +15,6 @@ type writeRequest struct {
 	p      *serport
 	d      string
 	buffer bool
-	id     string
 }
 
 type serialhub struct {
@@ -84,12 +83,12 @@ func (sh *serialhub) run() {
 			close(p.sendNoBuf)
 		case wr := <-sh.write:
 			// if user sent in the commands as one text mode line
-			write(wr, "")
+			write(wr)
 		}
 	}
 }
 
-func write(wr writeRequest, id string) {
+func write(wr writeRequest) {
 	if wr.buffer {
 		//log.Println("Send was normal send, so sending to wr.p.sendBuffered")
 		wr.p.sendBuffered <- wr.d
