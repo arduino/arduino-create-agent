@@ -12,19 +12,8 @@ import (
 )
 
 type SerialConfig struct {
-	Name string
-	Baud int
-
-	// Size     int // 0 get translated to 8
-	// Parity   SomeNewTypeToGetCorrectDefaultOf_None
-	// StopBits SomeNewTypeToGetCorrectDefaultOf_1
-
-	// RTSFlowControl bool
-	// DTRFlowControl bool
-	// XONFlowControl bool
-
-	// CRLFTranslate bool
-	// TimeoutStuff int
+	Name  string
+	Baud  int
 	RtsOn bool
 	DtrOn bool
 }
@@ -33,8 +22,6 @@ type serport struct {
 	// The serial port connection.
 	portConf *SerialConfig
 	portIo   io.ReadWriteCloser
-
-	done chan bool // signals the end of this request
 
 	// Keep track of whether we're being actively closed
 	// just so we don't show scary error messages
@@ -57,30 +44,6 @@ type serport struct {
 	bufferwatcher Bufferflow
 }
 
-type Cmd struct {
-	data                       string
-	id                         string
-	skippedBuffer              bool
-	willHandleCompleteResponse bool
-}
-
-type CmdComplete struct {
-	Cmd     string
-	Id      string
-	P       string
-	BufSize int    `json:"-"`
-	D       string `json:"-"`
-}
-
-type qwReport struct {
-	Cmd  string
-	QCnt int
-	Id   string
-	D    string `json:"-"`
-	Buf  string `json:"-"`
-	P    string
-}
-
 type SpPortMessage struct {
 	P string // the port, i.e. com22
 	D string // the data, i.e. G0 X0 Y0
@@ -93,7 +56,6 @@ type SpPortMessageRaw struct {
 
 func (p *serport) reader(buftype string) {
 
-	//var buf bytes.Buffer
 	timeCheckOpen := time.Now()
 	var buffered_ch bytes.Buffer
 
@@ -324,10 +286,6 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 
 	spListDual(false)
 	spList(false)
-
-	//go p.reader()
-	//p.done = make(chan bool)
-	//<-p.done
 }
 
 func spHandlerClose(p *serport) {
