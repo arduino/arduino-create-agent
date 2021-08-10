@@ -36,7 +36,7 @@ type serport struct {
 	sendBuffered chan string
 
 	// unbuffered channel of outbound messages that bypass internal serial port buffer
-	sendNoBuf chan string
+	sendNoBuf chan []byte
 
 	// Do we have an extra channel/thread to watch our buffer?
 	BufferType string
@@ -180,7 +180,7 @@ func (p *serport) writerBuffered() {
 		} else {
 			// send to the non-buffered serial port writer
 			//log.Println("About to send to p.sendNoBuf channel")
-			p.sendNoBuf <- data
+			p.sendNoBuf <- []byte(data)
 		}
 	}
 	msgstr := "writerBuffered just got closed. make sure you make a new one. port:" + p.portConf.Name
@@ -204,7 +204,7 @@ func (p *serport) writerNoBuf() {
 
 		// FINALLY, OF ALL THE CODE IN THIS PROJECT
 		// WE TRULY/FINALLY GET TO WRITE TO THE SERIAL PORT!
-		n2, err := p.portIo.Write([]byte(data))
+		n2, err := p.portIo.Write(data)
 
 		log.Print("Just wrote ", n2, " bytes to serial: ", string(data))
 		if err != nil {
@@ -254,7 +254,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan string), portConf: conf, portIo: sp, BufferType: buftype}
+	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan []byte), portConf: conf, portIo: sp, BufferType: buftype}
 
 	var bw Bufferflow
 
