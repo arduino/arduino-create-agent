@@ -133,7 +133,10 @@ def general_send_serial(socketio, close_port, serial_port, baudrate, buffertype)
     assert "/\"🧀🧀🧀🧀🧀🧀🧀🧀🧀🧀/\"" in output
     # the serial connection is closed by close_port() fixture: even if in case of test failure
 
-
+@pytest.mark.skipif(
+    running_on_ci(),
+    reason="VMs have no serial ports",
+)
 def test_sendraw_serial(socketio, close_port, serial_port, baudrate):
     global message
     message = []
