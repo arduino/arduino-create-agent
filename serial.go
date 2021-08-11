@@ -14,7 +14,7 @@ import (
 type writeRequest struct {
 	p      *serport
 	d      string
-	buffer bool
+	buffer string
 }
 
 type serialhub struct {
@@ -89,13 +89,15 @@ func (sh *serialhub) run() {
 }
 
 func write(wr writeRequest) {
-	if wr.buffer {
-		//log.Println("Send was normal send, so sending to wr.p.sendBuffered")
+	switch wr.buffer {
+	case "send":
 		wr.p.sendBuffered <- wr.d
-	} else {
-		//log.Println("Send was sendnobuf, so sending to wr.p.sendNoBuf")
-		wr.p.sendNoBuf <- wr.d
+	case "sendnobuf":
+		wr.p.sendNoBuf <- []byte(wr.d)
+	case "sendraw":
+		wr.p.sendRaw <- wr.d
 	}
+	// no default since we alredy verified in spWrite()
 }
 
 // spList broadcasts a Json representation of the ports found
@@ -274,13 +276,13 @@ func spWrite(arg string) {
 	var wr writeRequest
 	wr.p = myport
 
-	// see if args[0] is send or sendnobuf
-	if args[0] != "sendnobuf" {
-		// we were just given a "send" so buffer it
-		wr.buffer = true
-	} else {
-		//log.Println("sendnobuf specified so wr.buffer is false")
-		wr.buffer = false
+	// see if args[0] is send or sendnobuf or sendraw
+	switch args[0] {
+	case "send", "sendnobuf", "sendraw":
+		wr.buffer = args[0]
+	default:
+		spErr("Unsupported send command:" + args[0] + ". Please specify a valid one")
+		return
 	}
 
 	// include newline or not in the write? that is the question.

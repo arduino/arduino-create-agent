@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"io"
 	"strconv"
 	"time"
@@ -37,6 +38,9 @@ type serport struct {
 
 	// unbuffered channel of outbound messages that bypass internal serial port buffer
 	sendNoBuf chan []byte
+
+	// channel containing raw base64 encoded binary data (outbound messages)
+	sendRaw chan string
 
 	// Do we have an extra channel/thread to watch our buffer?
 	BufferType string
@@ -222,6 +226,46 @@ func (p *serport) writerNoBuf() {
 	spList(false)
 }
 
+// this method runs as its own thread because it's instantiated
+// as a "go" method. so if it blocks inside, it is ok
+func (p *serport) writerRaw() {
+	// this method can panic if user closes serial port and something is
+	// in BlockUntilReady() and then a send occurs on p.sendNoBuf
+
+	defer func() {
+		if e := recover(); e != nil {
+			log.Println("Got panic: ", e)
+		}
+	}()
+
+	// this for loop blocks on p.sendRaw until that channel
+	// sees something come in
+	for data := range p.sendRaw {
+
+		// Decode stuff
+		sDec, err := base64.StdEncoding.DecodeString(data)
+		if err != nil {
+			log.Println("Decoding error:", err)
+		}
+		log.Println(string(sDec))
+
+		// we want to block here if we are being asked to pause.
+		goodToGo, _ := p.bufferwatcher.BlockUntilReady(string(data), "")
+
+		if goodToGo == false {
+			log.Println("We got back from BlockUntilReady() but apparently we must cancel this cmd")
+			// since we won't get a buffer decrement in p.sendNoBuf, we must do it here
+			p.itemsInBuffer--
+		} else {
+			// send to the non-buffered serial port writer
+			p.sendNoBuf <- sDec
+		}
+	}
+	msgstr := "writerRaw just got closed. make sure you make a new one. port:" + p.portConf.Name
+	log.Println(msgstr)
+	h.broadcastSys <- []byte(msgstr)
+}
+
 func spHandlerOpen(portname string, baud int, buftype string) {
 
 	log.Print("Inside spHandler")
@@ -254,7 +298,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan []byte), portConf: conf, portIo: sp, BufferType: buftype}
+	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan []byte), sendRaw: make(chan string), portConf: conf, portIo: sp, BufferType: buftype}
 
 	var bw Bufferflow
 
@@ -282,6 +326,9 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	go p.writerBuffered()
 	// this is thread to send to serial port regardless of block
 	go p.writerNoBuf()
+	// this is thread to send to serial port but with base64 decoding
+	go p.writerRaw()
+
 	p.reader(buftype)
 
 	spListDual(false)

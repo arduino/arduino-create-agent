@@ -44,8 +44,7 @@ const commands = `{
   "Commands": [
     "list",
     "open <portName> <baud> [bufferAlgorithm: ({default}, timed, timedraw)]",
-    "send <portName> <cmd>",
-    "sendnobuf <portName> <cmd>",
+    "(send, sendnobuf, sendraw) <portName> <cmd>",
     "close <portName>",
     "restart",
     "exit",
@@ -160,7 +159,7 @@ func checkCmd(m []byte) {
 		}()
 
 	} else if strings.HasPrefix(sl, "send") {
-		// will catch send and sendnobuf
+		// will catch send and sendnobuf and sendraw
 		go spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
 		go spList(false)

@@ -51,3 +51,21 @@ def socketio(base_url, agent):
     sio.connect(base_url)
     yield sio
     sio.disconnect()
+
+@pytest.fixture(scope="session")
+def serial_port():
+    return "/dev/ttyACM0" # maybe this could be enhanced by calling arduino-cli
+
+@pytest.fixture(scope="session")
+def baudrate():
+    return "9600"
+
+# open_port cannot be coced as a fixture because of the buffertype parameter
+
+# at the end of the test closes the serial port
+@pytest.fixture(scope="function")
+def close_port(socketio, serial_port):
+    yield socketio
+    socketio.emit('command', 'close ' + serial_port)
+    time.sleep(.5)
+
