@@ -45,8 +45,7 @@ Loop:
 			if b.bufferedOutputRaw != nil {
 				m := SpPortMessageRaw{b.sPortRaw, b.bufferedOutputRaw}
 				buf, _ := json.Marshal(m)
-				// data is now encoded in base64 format
-				// need a decoder on the other side
+				// since bufferedOutputRaw is a []byte is base64-encoded by json.Marshal() function automatically
 				b.output <- buf
 				// reset the buffer and the port
 				b.bufferedOutputRaw = nil

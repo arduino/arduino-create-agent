@@ -34,8 +34,6 @@ Loop:
 		case data := <-b.input:
 			m := SpPortMessage{b.port, data}
 			message, _ := json.Marshal(m)
-			// data is now encoded in base64 format
-			// need a decoder on the other side
 			b.output <- message
 		case <-b.done:
 			break Loop //this is required, a simple break statement would only exit the innermost switch statement
