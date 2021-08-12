@@ -8,7 +8,6 @@ import pytest
 from invoke import Local
 from invoke.context import Context
 import socketio as io
-import asyncio
 
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
@@ -69,3 +68,17 @@ def close_port(socketio, serial_port):
     socketio.emit('command', 'close ' + serial_port)
     time.sleep(.5)
 
+
+@pytest.fixture(scope="function")
+def message(socketio):
+    global message
+    message = []
+    #in message var we will find the "response"
+    socketio.on('message', message_handler)
+    return message
+
+# callback  called by socketio when a message is received
+def message_handler(msg):
+    # print('Received message: ', msg)
+    global message
+    message.append(msg)
