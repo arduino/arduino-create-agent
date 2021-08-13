@@ -9,13 +9,13 @@ on:
     paths:
       - ".github/workflows/check-certificates.ya?ml"
   schedule:
-    # run every 10 hours
+    # Run every 10 hours.
     - cron: "0 */10 * * *"
   workflow_dispatch:
   repository_dispatch:
 
 env:
-  # Begin notifications when there are less than this many days remaining before expiration
+  # Begin notifications when there are less than this many days remaining before expiration.
   EXPIRATION_WARNING_PERIOD: 30
 
 jobs:
@@ -31,9 +31,10 @@ jobs:
 
       matrix:
         certificate:
-          - identifier: macOS signing certificate # Text used to identify the certificate in notifications
-            certificate-secret: INSTALLER_CERT_MAC_P12  # The name of the secret that contains the certificate
-            password-secret: INSTALLER_CERT_MAC_PASSWORD  # The name of the secret that contains the certificate password
+          # Additional certificate definitions can be added to this list.
+          - identifier: macOS signing certificate # Text used to identify certificate in notifications.
+            certificate-secret: INSTALLER_CERT_MAC_P12  # Name of the secret that contains the certificate.
+            password-secret: INSTALLER_CERT_MAC_PASSWORD  # Name of the secret that contains the certificate password.
           - identifier: Windows signing certificate
             certificate-secret: INSTALLER_CERT_WINDOWS_PFX
             password-secret: INSTALLER_CERT_WINDOWS_PASSWORD
@@ -41,7 +42,7 @@ jobs:
     steps:
       - name: Set certificate path environment variable
         run: |
-          # See: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
+          # See: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
           echo "CERTIFICATE_PATH=${{ runner.temp }}/certificate.p12" >> "$GITHUB_ENV"
       - name: Decode certificate
         env:
@@ -60,7 +61,6 @@ jobs:
             echo "::error::Verification of ${{ matrix.certificate.identifier }} failed!!!"
             exit 1
           )
-      # See: https://github.com/rtCamp/action-slack-notify
       - name: Slack notification of certificate verification failure
         if: failure()
         uses: rtCamp/action-slack-notify@v2
@@ -98,7 +98,7 @@ jobs:
             )
           )"
           DAYS_BEFORE_EXPIRATION="$((($(date --utc --date="$EXPIRATION_DATE" +%s) - $(date --utc +%s)) / 60 / 60 / 24))"
-          # Display the expiration information in the log
+          # Display the expiration information in the log.
           echo "Certificate expiration date: $EXPIRATION_DATE"
           echo "Days remaining before expiration: $DAYS_BEFORE_EXPIRATION"
           echo "::set-output name=days::$DAYS_BEFORE_EXPIRATION"
@@ -110,7 +110,7 @@ jobs:
             exit 1
           fi
       - name: Slack notification of pending certificate expiration
-        # Don't send spurious expiration notification if verification fails
+        # Don't send spurious expiration notification if verification fails.
         if: failure() && steps.check-expiration.outcome == 'failure'
         uses: rtCamp/action-slack-notify@v2
         env:
