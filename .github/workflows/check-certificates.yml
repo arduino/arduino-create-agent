@@ -45,11 +45,13 @@ jobs:
         run: |
           # See: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
           echo "CERTIFICATE_PATH=${{ runner.temp }}/certificate.p12" >> "$GITHUB_ENV"
+
       - name: Decode certificate
         env:
           CERTIFICATE: ${{ secrets[matrix.certificate.certificate-secret] }}
         run: |
           echo "${{ env.CERTIFICATE }}" | base64 --decode > "${{ env.CERTIFICATE_PATH }}"
+
       - name: Verify certificate
         env:
           CERTIFICATE_PASSWORD: ${{ secrets[matrix.certificate.password-secret] }}
@@ -62,9 +64,9 @@ jobs:
             echo "::error::Verification of ${{ matrix.certificate.identifier }} failed!!!"
             exit 1
           )
+
       - name: Slack notification of certificate verification failure
         if: failure()
-        uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.TEAM_CREATE_CHANNEL_SLACK_WEBHOOK }}
           SLACK_MESSAGE: |
@@ -73,6 +75,7 @@ jobs:
             :warning::warning::warning::warning:
           SLACK_COLOR: danger
           MSG_MINIMAL: true
+        uses: rtCamp/action-slack-notify@v2
 
       - name: Get days remaining before certificate expiration date
         env:
@@ -98,11 +101,15 @@ jobs:
                 'notAfter=(\K.*)'
             )
           )"
+
           DAYS_BEFORE_EXPIRATION="$((($(date --utc --date="$EXPIRATION_DATE" +%s) - $(date --utc +%s)) / 60 / 60 / 24))"
+
           # Display the expiration information in the log.
           echo "Certificate expiration date: $EXPIRATION_DATE"
           echo "Days remaining before expiration: $DAYS_BEFORE_EXPIRATION"
+
           echo "::set-output name=days::$DAYS_BEFORE_EXPIRATION"
+
       - name: Check if expiration notification period has been reached
         id: check-expiration
         run: |
@@ -110,10 +117,10 @@ jobs:
             echo "::error::${{ matrix.certificate.identifier }} will expire in ${{ steps.get-days-before-expiration.outputs.days }} days!!!"
             exit 1
           fi
+
       - name: Slack notification of pending certificate expiration
         # Don't send spurious expiration notification if verification fails.
         if: failure() && steps.check-expiration.outcome == 'failure'
-        uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.TEAM_CREATE_CHANNEL_SLACK_WEBHOOK }}
           SLACK_MESSAGE: |
@@ -122,3 +129,4 @@ jobs:
             :warning::warning::warning::warning:
           SLACK_COLOR: danger
           MSG_MINIMAL: true
+        uses: rtCamp/action-slack-notify@v2
