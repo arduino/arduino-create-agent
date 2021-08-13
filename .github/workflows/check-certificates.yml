@@ -2,6 +2,12 @@ name: Check Certificates
 
 # See: https://docs.github.com/en/actions/reference/events-that-trigger-workflows
 on:
+  push:
+    paths:
+      - ".github/workflows/check-certificates.ya?ml"
+  pull_request:
+    paths:
+      - ".github/workflows/check-certificates.ya?ml"
   schedule:
     # run every 10 hours
     - cron: "0 */10 * * *"
@@ -14,6 +20,10 @@ env:
 
 jobs:
   check-certificates:
+    # Only run when the workflow will have access to the certificate secrets.
+    if: >
+      (github.event_name != 'pull_request' && github.repository == 'arduino/arduino-create-agent') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'arduino/arduino-create-agent')
     runs-on: ubuntu-18.04
 
     strategy:
