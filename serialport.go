@@ -174,18 +174,10 @@ func (p *serport) writerBuffered() {
 	// sees something come in
 	for data := range p.sendBuffered {
 
-		// we want to block here if we are being asked to pause.
-		goodToGo, _ := p.bufferwatcher.BlockUntilReady(string(data), "")
+		// send to the non-buffered serial port writer
+		//log.Println("About to send to p.sendNoBuf channel")
+		p.sendNoBuf <- []byte(data)
 
-		if goodToGo == false {
-			log.Println("We got back from BlockUntilReady() but apparently we must cancel this cmd")
-			// since we won't get a buffer decrement in p.sendNoBuf, we must do it here
-			p.itemsInBuffer--
-		} else {
-			// send to the non-buffered serial port writer
-			//log.Println("About to send to p.sendNoBuf channel")
-			p.sendNoBuf <- []byte(data)
-		}
 	}
 	msgstr := "writerBuffered just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
@@ -249,17 +241,9 @@ func (p *serport) writerRaw() {
 		}
 		log.Println(string(sDec))
 
-		// we want to block here if we are being asked to pause.
-		goodToGo, _ := p.bufferwatcher.BlockUntilReady(string(data), "")
+		// send to the non-buffered serial port writer
+		p.sendNoBuf <- sDec
 
-		if goodToGo == false {
-			log.Println("We got back from BlockUntilReady() but apparently we must cancel this cmd")
-			// since we won't get a buffer decrement in p.sendNoBuf, we must do it here
-			p.itemsInBuffer--
-		} else {
-			// send to the non-buffered serial port writer
-			p.sendNoBuf <- sDec
-		}
 	}
 	msgstr := "writerRaw just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)

@@ -42,11 +42,6 @@ Loop:
 	close(b.input) // close the input channel at the end of the computation
 }
 
-func (b *BufferflowDefault) BlockUntilReady(cmd string, id string) (bool, bool) {
-	//log.Printf("BlockUntilReady() start\n")
-	return true, false
-}
-
 func (b *BufferflowDefault) OnIncomingData(data string) {
 	b.input <- data
 }

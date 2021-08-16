@@ -57,11 +57,6 @@ Loop:
 	close(b.input)
 }
 
-func (b *BufferflowTimed) BlockUntilReady(cmd string, id string) (bool, bool) {
-	//log.Printf("BlockUntilReady() start\n")
-	return true, false
-}
-
 func (b *BufferflowTimed) OnIncomingData(data string) {
 	b.input <- data
 }
