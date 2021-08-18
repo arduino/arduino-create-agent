@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/base64"
 	"io"
 	"strconv"
 	"time"
@@ -13,19 +13,8 @@ import (
 )
 
 type SerialConfig struct {
-	Name string
-	Baud int
-
-	// Size     int // 0 get translated to 8
-	// Parity   SomeNewTypeToGetCorrectDefaultOf_None
-	// StopBits SomeNewTypeToGetCorrectDefaultOf_1
-
-	// RTSFlowControl bool
-	// DTRFlowControl bool
-	// XONFlowControl bool
-
-	// CRLFTranslate bool
-	// TimeoutStuff int
+	Name  string
+	Baud  int
 	RtsOn bool
 	DtrOn bool
 }
@@ -34,8 +23,6 @@ type serport struct {
 	// The serial port connection.
 	portConf *SerialConfig
 	portIo   io.ReadWriteCloser
-
-	done chan bool // signals the end of this request
 
 	// Keep track of whether we're being actively closed
 	// just so we don't show scary error messages
@@ -50,36 +37,15 @@ type serport struct {
 	sendBuffered chan string
 
 	// unbuffered channel of outbound messages that bypass internal serial port buffer
-	sendNoBuf chan string
+	sendNoBuf chan []byte
+
+	// channel containing raw base64 encoded binary data (outbound messages)
+	sendRaw chan string
 
 	// Do we have an extra channel/thread to watch our buffer?
 	BufferType string
 	//bufferwatcher *BufferflowDummypause
 	bufferwatcher Bufferflow
-}
-
-type Cmd struct {
-	data                       string
-	id                         string
-	skippedBuffer              bool
-	willHandleCompleteResponse bool
-}
-
-type CmdComplete struct {
-	Cmd     string
-	Id      string
-	P       string
-	BufSize int    `json:"-"`
-	D       string `json:"-"`
-}
-
-type qwReport struct {
-	Cmd  string
-	QCnt int
-	Id   string
-	D    string `json:"-"`
-	Buf  string `json:"-"`
-	P    string
 }
 
 type SpPortMessage struct {
@@ -92,18 +58,17 @@ type SpPortMessageRaw struct {
 	D []byte // the data, i.e. G0 X0 Y0
 }
 
-func (p *serport) reader() {
+func (p *serport) reader(buftype string) {
 
-	//var buf bytes.Buffer
-	ch := make([]byte, 1024)
 	timeCheckOpen := time.Now()
 	var buffered_ch bytes.Buffer
 
+	serialBuffer := make([]byte, 1024)
 	for {
+		n, err := p.portIo.Read(serialBuffer)
+		bufferPart := serialBuffer[:n]
 
-		n, err := p.portIo.Read(ch)
-
-		//if we detect that port is closing, break out o this for{} loop.
+		//if we detect that port is closing, break out of this for{} loop.
 		if p.isClosing {
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
@@ -111,67 +76,41 @@ func (p *serport) reader() {
 			break
 		}
 
-		if err == nil {
-			ch = append(buffered_ch.Bytes(), ch[:n]...)
-			n += len(buffered_ch.Bytes())
-			buffered_ch.Reset()
-		}
-
 		// read can return legitimate bytes as well as an error
-		// so process the bytes if n > 0
-		if n > 0 {
-			//log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(ch))
+		// so process the n bytes red, if n > 0
+		if n > 0 && err == nil {
+
+			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(bufferPart[:n]))
 
 			data := ""
-
-			for i, w := 0, 0; i < n; i += w {
-				runeValue, width := utf8.DecodeRune(ch[i:n])
-				if runeValue == utf8.RuneError {
-					buffered_ch.Write(append(ch[i:n]))
-					break
+			switch buftype {
+			case "timedraw", "timed":
+				data = string(bufferPart[:n])
+				// give the data to our bufferflow so it can do it's work
+				// to read/translate the data to see if it wants to block
+				// writes to the serialport. each bufferflow type will decide
+				// this on its own based on its logic
+				p.bufferwatcher.OnIncomingData(data)
+			case "default": // the bufferbuftype is actually called default 🤷‍♂️
+				// save the left out bytes for the next iteration due to UTF-8 encoding
+				bufferPart = append(buffered_ch.Bytes(), bufferPart[:n]...)
+				n += len(buffered_ch.Bytes())
+				buffered_ch.Reset()
+				for i, w := 0, 0; i < n; i += w {
+					runeValue, width := utf8.DecodeRune(bufferPart[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed length)
+					if runeValue == utf8.RuneError {
+						buffered_ch.Write(bufferPart[i:n])
+						break
+					}
+					if i == n {
+						buffered_ch.Reset()
+					}
+					data += string(runeValue)
+					w = width
 				}
-				if i == n {
-					buffered_ch.Reset()
-				}
-				data += string(runeValue)
-				w = width
-			}
-
-			//log.Print("The data i will convert to json is:")
-			//log.Print(data)
-
-			// give the data to our bufferflow so it can do it's work
-			// to read/translate the data to see if it wants to block
-			// writes to the serialport. each bufferflow type will decide
-			// this on its own based on its logic, i.e. tinyg vs grbl vs others
-			//p.b.bufferwatcher..OnIncomingData(data)
-			p.bufferwatcher.OnIncomingData(data)
-
-			// see if the OnIncomingData handled the broadcast back
-			// to the user. this option was added in case the OnIncomingData wanted
-			// to do something fancier or implementation specific, i.e. TinyG Buffer
-			// actually sends back data on a perline basis rather than our method
-			// where we just send the moment we get it. the reason for this is that
-			// the browser was sometimes getting back packets out of order which
-			// of course would screw things up when parsing
-
-			if p.bufferwatcher.IsBufferGloballySendingBackIncomingData() == false {
-				//m := SpPortMessage{"Alice", "Hello"}
-				m := SpPortMessage{p.portConf.Name, data}
-				//log.Print("The m obj struct is:")
-				//log.Print(m)
-
-				//b, err := json.MarshalIndent(m, "", "\t")
-				b, err := json.Marshal(m)
-				if err != nil {
-					log.Println(err)
-					h.broadcastSys <- []byte("Error creating json on " + p.portConf.Name + " " +
-						err.Error() + " The data we were trying to convert is: " + string(ch[:n]))
-					break
-				}
-				//log.Print("Printing out json byte data...")
-				//log.Print(string(b))
-				h.broadcastSys <- b
+				p.bufferwatcher.OnIncomingData(data)
+			default:
+				log.Panicf("unknown buffer type %s", buftype)
 			}
 		}
 
@@ -235,18 +174,10 @@ func (p *serport) writerBuffered() {
 	// sees something come in
 	for data := range p.sendBuffered {
 
-		// we want to block here if we are being asked to pause.
-		goodToGo, _ := p.bufferwatcher.BlockUntilReady(string(data), "")
+		// send to the non-buffered serial port writer
+		//log.Println("About to send to p.sendNoBuf channel")
+		p.sendNoBuf <- []byte(data)
 
-		if goodToGo == false {
-			log.Println("We got back from BlockUntilReady() but apparently we must cancel this cmd")
-			// since we won't get a buffer decrement in p.sendNoBuf, we must do it here
-			p.itemsInBuffer--
-		} else {
-			// send to the non-buffered serial port writer
-			//log.Println("About to send to p.sendNoBuf channel")
-			p.sendNoBuf <- data
-		}
 	}
 	msgstr := "writerBuffered just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
@@ -269,7 +200,7 @@ func (p *serport) writerNoBuf() {
 
 		// FINALLY, OF ALL THE CODE IN THIS PROJECT
 		// WE TRULY/FINALLY GET TO WRITE TO THE SERIAL PORT!
-		n2, err := p.portIo.Write([]byte(data))
+		n2, err := p.portIo.Write(data)
 
 		log.Print("Just wrote ", n2, " bytes to serial: ", string(data))
 		if err != nil {
@@ -285,6 +216,38 @@ func (p *serport) writerNoBuf() {
 	p.portIo.Close()
 	spListDual(false)
 	spList(false)
+}
+
+// this method runs as its own thread because it's instantiated
+// as a "go" method. so if it blocks inside, it is ok
+func (p *serport) writerRaw() {
+	// this method can panic if user closes serial port and something is
+	// in BlockUntilReady() and then a send occurs on p.sendNoBuf
+
+	defer func() {
+		if e := recover(); e != nil {
+			log.Println("Got panic: ", e)
+		}
+	}()
+
+	// this for loop blocks on p.sendRaw until that channel
+	// sees something come in
+	for data := range p.sendRaw {
+
+		// Decode stuff
+		sDec, err := base64.StdEncoding.DecodeString(data)
+		if err != nil {
+			log.Println("Decoding error:", err)
+		}
+		log.Println(string(sDec))
+
+		// send to the non-buffered serial port writer
+		p.sendNoBuf <- sDec
+
+	}
+	msgstr := "writerRaw just got closed. make sure you make a new one. port:" + p.portConf.Name
+	log.Println(msgstr)
+	h.broadcastSys <- []byte(msgstr)
 }
 
 func spHandlerOpen(portname string, baud int, buftype string) {
@@ -319,16 +282,19 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan string), portConf: conf, portIo: sp, BufferType: buftype}
+	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan []byte), sendRaw: make(chan string), portConf: conf, portIo: sp, BufferType: buftype}
 
 	var bw Bufferflow
 
-	if buftype == "timed" {
-		bw = &BufferflowTimed{Name: "timed", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
-	} else if buftype == "timedraw" {
-		bw = &BufferflowTimedRaw{Name: "timedraw", Port: portname, Output: h.broadcastSys, Input: make(chan string)}
-	} else {
-		bw = &BufferflowDefault{Port: portname}
+	switch buftype {
+	case "timed":
+		bw = NewBufferflowTimed(portname, h.broadcastSys)
+	case "timedraw":
+		bw = NewBufferflowTimedRaw(portname, h.broadcastSys)
+	case "default":
+		bw = NewBufferflowDefault(portname, h.broadcastSys)
+	default:
+		log.Panicf("unknown buffer type: %s", buftype)
 	}
 
 	bw.Init()
@@ -344,14 +310,13 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	go p.writerBuffered()
 	// this is thread to send to serial port regardless of block
 	go p.writerNoBuf()
-	p.reader()
+	// this is thread to send to serial port but with base64 decoding
+	go p.writerRaw()
+
+	p.reader(buftype)
 
 	spListDual(false)
 	spList(false)
-
-	//go p.reader()
-	//p.done = make(chan bool)
-	//<-p.done
 }
 
 func spHandlerClose(p *serport) {

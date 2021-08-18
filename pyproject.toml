@@ -8,11 +8,14 @@ license = "GPLv2"
 [tool.poetry.dependencies]
 python = "^3.9"
 psutil = "^5.8.0"
-
-[tool.poetry.dev-dependencies]
-pytest = "^6.2.1"
+pytest = "^6.2.2"
 requests = "^2.25.1"
 invoke = "^1.5.0"
+pathlib = "^1.0.1"
+asyncio = "^3.4.3"
+python-socketio = "^4"
+
+[tool.poetry.dev-dependencies]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

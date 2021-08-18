@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"html"
 	"io"
 	"os"
 	"runtime"
@@ -38,60 +40,64 @@ var h = hub{
 	connections:  make(map[*connection]bool),
 }
 
+const commands = `{
+  "Commands": [
+    "list",
+    "open <portName> <baud> [bufferAlgorithm: ({default}, timed, timedraw)]",
+    "(send, sendnobuf, sendraw) <portName> <cmd>",
+    "close <portName>",
+    "restart",
+    "exit",
+    "killupload",
+    "downloadtool <tool> <toolVersion: {latest}> <pack: {arduino}> <behaviour: {keep}>",
+    "log",
+    "memorystats",
+    "gc",
+    "hostname",
+    "version"
+  ]
+}`
+
+func (h *hub) unregisterConnection(c *connection) {
+	if _, contains := h.connections[c]; !contains {
+		return
+	}
+	delete(h.connections, c)
+	close(c.send)
+}
+
+func (h *hub) sendToRegisteredConnections(data []byte) {
+	for c := range h.connections {
+		select {
+		case c.send <- data:
+			//log.Print("did broadcast to ")
+			//log.Print(c.ws.RemoteAddr())
+			//c.send <- []byte("hello world")
+		default:
+			h.unregisterConnection(c)
+		}
+	}
+}
+
 func (h *hub) run() {
 	for {
 		select {
 		case c := <-h.register:
 			h.connections[c] = true
 			// send supported commands
-			c.send <- []byte("{\"Version\" : \"" + version + "\"} ")
-			c.send <- []byte("{\"Commands\" : [\"list\", \"open [portName] [baud] [bufferAlgorithm (optional)]\", \"send [portName] [cmd]\", \"sendnobuf [portName] [cmd]\", \"close [portName]\", \"bufferalgorithms\", \"baudrates\", \"restart\", \"exit\", \"program [portName] [board:name] [$path/to/filename/without/extension]\", \"programfromurl [portName] [board:name] [urlToHexFile]\"]} ")
-			c.send <- []byte("{\"Hostname\" : \"" + *hostname + "\"} ")
-			c.send <- []byte("{\"OS\" : \"" + runtime.GOOS + "\"} ")
+			c.send <- []byte(fmt.Sprintf(`{"Version" : "%s"} `, version))
+			c.send <- []byte(html.EscapeString(commands))
+			c.send <- []byte(fmt.Sprintf(`{"Hostname" : "%s"} `, *hostname))
+			c.send <- []byte(fmt.Sprintf(`{"OS" : "%s"} `, runtime.GOOS))
 		case c := <-h.unregister:
-			delete(h.connections, c)
-			// put close in func cuz it was creating panics and want
-			// to isolate
-			func() {
-				// this method can panic if websocket gets disconnected
-				// from users browser and we see we need to unregister a couple
-				// of times, i.e. perhaps from incoming data from serial triggering
-				// an unregister. (NOT 100% sure why seeing c.send be closed twice here)
-				defer func() {
-					if e := recover(); e != nil {
-						log.Println("Got panic: ", e)
-					}
-				}()
-				close(c.send)
-			}()
+			h.unregisterConnection(c)
 		case m := <-h.broadcast:
 			if len(m) > 0 {
 				checkCmd(m)
-
-				for c := range h.connections {
-					select {
-					case c.send <- m:
-						//log.Print("did broadcast to ")
-						//log.Print(c.ws.RemoteAddr())
-						//c.send <- []byte("hello world")
-					default:
-						delete(h.connections, c)
-						close(c.send)
-					}
-				}
+				h.sendToRegisteredConnections(m)
 			}
 		case m := <-h.broadcastSys:
-			for c := range h.connections {
-				select {
-				case c.send <- m:
-					//log.Print("did broadcast to ")
-					//log.Print(c.ws.RemoteAddr())
-					//c.send <- []byte("hello world")
-				default:
-					delete(h.connections, c)
-					close(c.send)
-				}
-			}
+			h.sendToRegisteredConnections(m)
 		}
 	}
 }
@@ -127,7 +133,7 @@ func checkCmd(m []byte) {
 		}
 		// pass in buffer type now as string. if user does not
 		// ask for a buffer type pass in empty string
-		bufferAlgorithm := ""
+		bufferAlgorithm := "default" // use the default buffer if none is specified
 		if len(args) > 3 {
 			// cool. we got a buffer type request
 			buftype := strings.Replace(args[3], "\n", "", -1)
@@ -153,7 +159,7 @@ func checkCmd(m []byte) {
 		}()
 
 	} else if strings.HasPrefix(sl, "send") {
-		// will catch send and sendnobuf
+		// will catch send and sendnobuf and sendraw
 		go spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
 		go spList(false)

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from invoke import Local
 from invoke.context import Context
-
+import socketio as io
 
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
@@ -43,3 +43,42 @@ def agent(pytestconfig):
 @pytest.fixture(scope="session")
 def base_url():
     return "http://127.0.0.1:8991"
+
+@pytest.fixture(scope="function")
+def socketio(base_url, agent):
+    sio = io.Client()
+    sio.connect(base_url)
+    yield sio
+    sio.disconnect()
+
+@pytest.fixture(scope="session")
+def serial_port():
+    return "/dev/ttyACM0" # maybe this could be enhanced by calling arduino-cli
+
+@pytest.fixture(scope="session")
+def baudrate():
+    return "9600"
+
+# open_port cannot be coced as a fixture because of the buffertype parameter
+
+# at the end of the test closes the serial port
+@pytest.fixture(scope="function")
+def close_port(socketio, serial_port):
+    yield socketio
+    socketio.emit('command', 'close ' + serial_port)
+    time.sleep(.5)
+
+
+@pytest.fixture(scope="function")
+def message(socketio):
+    global message
+    message = []
+    #in message var we will find the "response"
+    socketio.on('message', message_handler)
+    return message
+
+# callback  called by socketio when a message is received
+def message_handler(msg):
+    # print('Received message: ', msg)
+    global message
+    message.append(msg)
