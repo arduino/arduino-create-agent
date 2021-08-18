@@ -8,104 +8,57 @@ import (
 )
 
 type BufferflowTimed struct {
-	Name   string
-	Port   string
-	Output chan []byte
-	Input  chan string
-	done   chan bool
-	ticker *time.Ticker
+	port           string
+	output         chan<- []byte
+	input          chan string
+	done           chan bool
+	ticker         *time.Ticker
+	sPort          string
+	bufferedOutput string
 }
 
-var (
-	bufferedOutput string
-	sPort string
-)
+func NewBufferflowTimed(port string, output chan<- []byte) *BufferflowTimed {
+	return &BufferflowTimed{
+		port:           port,
+		output:         output,
+		input:          make(chan string),
+		done:           make(chan bool),
+		ticker:         time.NewTicker(16 * time.Millisecond),
+		sPort:          "",
+		bufferedOutput: "",
+	}
+}
 
 func (b *BufferflowTimed) Init() {
 	log.Println("Initting timed buffer flow (output once every 16ms)")
-	bufferedOutput = ""
-	sPort = ""
-
-	go func() {
-		b.ticker = time.NewTicker(16 * time.Millisecond)
-		b.done = make(chan bool)
-	Loop:
-		for {
-			select {
-			case data := <-b.Input:
-				bufferedOutput = bufferedOutput + data
-				sPort = b.Port
-			case <-b.ticker.C:
-				if bufferedOutput != "" {
-					m := SpPortMessage{sPort, bufferedOutput}
-					buf, _ := json.Marshal(m)
-					// data is now encoded in base64 format
-					// need a decoder on the other side
-					b.Output <- []byte(buf)
-					bufferedOutput = ""
-					sPort = ""
-				}
-			case <-b.done:
-				break Loop
-			}
-		}
-
-		close(b.Input)
-
-	}()
-
+	go b.consumeInput()
 }
 
-func (b *BufferflowTimed) BlockUntilReady(cmd string, id string) (bool, bool) {
-	//log.Printf("BlockUntilReady() start\n")
-	return true, false
+func (b *BufferflowTimed) consumeInput() {
+Loop:
+	for {
+		select {
+		case data := <-b.input: // use the buffer and append data to it
+			b.bufferedOutput = b.bufferedOutput + data
+			b.sPort = b.port
+		case <-b.ticker.C: // after 16ms send the buffered output message
+			if b.bufferedOutput != "" {
+				m := SpPortMessage{b.sPort, b.bufferedOutput}
+				buf, _ := json.Marshal(m)
+				b.output <- buf
+				// reset the buffer and the port
+				b.bufferedOutput = ""
+				b.sPort = ""
+			}
+		case <-b.done:
+			break Loop //this is required, a simple break statement would only exit the innermost switch statement
+		}
+	}
+	close(b.input)
 }
 
 func (b *BufferflowTimed) OnIncomingData(data string) {
-	b.Input <- data
-}
-
-// Clean out b.sem so it can truly block
-func (b *BufferflowTimed) ClearOutSemaphore() {
-}
-
-func (b *BufferflowTimed) BreakApartCommands(cmd string) []string {
-	return []string{cmd}
-}
-
-func (b *BufferflowTimed) Pause() {
-	return
-}
-
-func (b *BufferflowTimed) Unpause() {
-	return
-}
-
-func (b *BufferflowTimed) SeeIfSpecificCommandsShouldSkipBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimed) SeeIfSpecificCommandsShouldPauseBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimed) SeeIfSpecificCommandsShouldUnpauseBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimed) SeeIfSpecificCommandsShouldWipeBuffer(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimed) SeeIfSpecificCommandsReturnNoResponse(cmd string) bool {
-	return false
-}
-
-func (b *BufferflowTimed) ReleaseLock() {
-}
-
-func (b *BufferflowTimed) IsBufferGloballySendingBackIncomingData() bool {
-	return true
+	b.input <- data
 }
 
 func (b *BufferflowTimed) Close() {
