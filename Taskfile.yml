@@ -28,10 +28,19 @@ tasks:
           WIN_FLAGS: -H=windowsgui
       - rm *.syso # rm file to avoid compilation problems on other platforms
 
-  test-unit:
-    desc: Run unit tests only
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/test-go-task/Taskfile.yml
+  go:test:
+    desc: Run unit tests
+    dir: "{{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}}"
     cmds:
-      - go test -short -run '{{ default ".*" .TEST_REGEX }}' {{ default "-v" .GOFLAGS }} -coverprofile=coverage_unit.txt {{ default .DEFAULT_TARGETS .TARGETS }} {{.TEST_LDFLAGS}}
+      - |
+        go test \
+          -v \
+          -short \
+          -run '{{default ".*" .GO_TEST_REGEX}}' \
+          {{default "-timeout 10m -coverpkg=./... -covermode=atomic" .GO_TEST_FLAGS}} \
+          -coverprofile=coverage_unit.txt \
+          {{default .DEFAULT_GO_PACKAGES .GO_PACKAGES}}
 
   test-e2e:
     desc: Run end 2 end tests
@@ -63,7 +72,10 @@ vars:
   # all modules of this project except for "gen/..." module
   DEFAULT_TARGETS:
     sh: echo `go list ./... | grep -v 'arduino-create-agent/gen/' | tr '\n' ' '`
-  GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
+  DEFAULT_GO_MODULE_PATH: ./
+  DEFAULT_GO_PACKAGES:
+    sh: |
+      echo $(cd {{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}} && go list ./... | tr '\n' ' ' || echo '"ERROR: Unable to discover Go packages"')
   # check-lint vars
   GOLINTBIN:
     sh: go list -f {{"{{"}}".Target{{"}}"}}" golang.org/x/lint/golint
