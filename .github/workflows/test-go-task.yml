@@ -73,6 +73,10 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
 
     steps:
+      # By default, actions/checkout converts the repo's LF line endings to CRLF on the Windows runner.
+      - name: Disable EOL conversions
+        run: git config --global core.autocrlf false
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
