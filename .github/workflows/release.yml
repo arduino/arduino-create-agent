@@ -85,9 +85,6 @@ jobs:
       - name: Check the code is good
         run: task check
 
-      - name: Run unit tests
-        run: task test-unit
-
       - name: Build the Agent for linux
         run: task build
         if: matrix.os == 'ubuntu-18.04'
@@ -121,19 +118,6 @@ jobs:
           CGO_CFLAGS: -mmacosx-version-min=10.11
           CGO_LDFLAGS: -mmacosx-version-min=10.11
         run: task build
-        if: matrix.os == 'macos-10.15'
-
-      - name: Install Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-          architecture: 'x64'
-        if: matrix.os == 'macos-10.15'
-
-      - name: Run e2e tests
-        run: |
-          pip install poetry
-          task test-e2e
         if: matrix.os == 'macos-10.15'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
