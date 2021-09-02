@@ -85,16 +85,13 @@ jobs:
       - name: Check the code is good
         run: task check
 
-      - name: Run unit tests
-        run: task test-unit
-
       - name: Build the Agent for linux
-        run: task build
+        run: task go:build
         if: matrix.os == 'ubuntu-18.04'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
-        run: task build-cli
+        run: task go:build-cli
         if: matrix.os == 'ubuntu-18.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
@@ -108,11 +105,11 @@ jobs:
         env:
           GOARCH: 386  # 32bit architecture (for support)
           GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
-        run: task build-win
+        run: task go:build-win
         if: matrix.os == 'windows-2019' && matrix.arch == '-386'
 
       - name: Build the Agent for win64
-        run: task build-win # GOARCH=amd64 by default on the runners
+        run: task go:build-win # GOARCH=amd64 by default on the runners
         if: matrix.os == 'windows-2019' && matrix.arch == '-amd64'
 
       - name: Build the Agent for macos
@@ -120,20 +117,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 10.11 # minimum supported version for mac
           CGO_CFLAGS: -mmacosx-version-min=10.11
           CGO_LDFLAGS: -mmacosx-version-min=10.11
-        run: task build
-        if: matrix.os == 'macos-10.15'
-
-      - name: Install Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-          architecture: 'x64'
-        if: matrix.os == 'macos-10.15'
-
-      - name: Run e2e tests
-        run: |
-          pip install poetry
-          task test-e2e
+        run: task go:build
         if: matrix.os == 'macos-10.15'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file

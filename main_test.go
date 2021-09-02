@@ -10,7 +10,7 @@ import (
 )
 
 func TestValidSignatureKey(t *testing.T) {
-	testfile := filepath.Join("test", "testdata", "test.ini")
+	testfile := filepath.Join("tests", "testdata", "test.ini")
 	args, err := parseIni(testfile)
 	require.NoError(t, err)
 	require.NotNil(t, args)

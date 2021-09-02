@@ -1,4 +1,7 @@
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![Test Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml)
+[![Codecov](https://codecov.io/gh/arduino/arduino-create-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/arduino/arduino-create-agent)
+[![Test Integration status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml)
 
 arduino-create-agent
 ====================
