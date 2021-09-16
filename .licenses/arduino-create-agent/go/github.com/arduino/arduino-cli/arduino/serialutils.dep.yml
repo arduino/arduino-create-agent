@@ -4,7 +4,7 @@ version: v0.0.0-20210422154105-5aa424818026
 type: go
 summary: 
 homepage: https://pkg.go.dev/github.com/arduino/arduino-cli/arduino/serialutils
-license: other
+license: gpl-3.0-only
 licenses:
 - sources: arduino-cli@v0.0.0-20210422154105-5aa424818026/LICENSE.txt
   text: |

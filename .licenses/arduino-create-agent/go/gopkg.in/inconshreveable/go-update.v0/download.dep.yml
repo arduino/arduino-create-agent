@@ -4,7 +4,7 @@ version: v0.0.0-20150814200126-d8b0b1d421aa
 type: go
 summary: 
 homepage: https://pkg.go.dev/gopkg.in/inconshreveable/go-update.v0/download
-license: other
+license: apache-2.0
 licenses:
 - sources: go-update.v0@v0.0.0-20150814200126-d8b0b1d421aa/LICENSE
   text: |

@@ -4,7 +4,7 @@ version: v0.0.0-20181101151912-c8aeb1ed9b49
 type: go
 summary: go-socket.io is a server implementation of socket.io in golang.
 homepage: https://pkg.go.dev/github.com/googollee/go-socket.io
-license: other
+license: bsd-3-clause
 licenses:
 - sources: LICENSE
   text: |-

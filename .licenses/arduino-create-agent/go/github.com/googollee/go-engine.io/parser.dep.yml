@@ -4,7 +4,7 @@ version: v0.0.0-20180829091931-e2f255711dcb
 type: go
 summary: 
 homepage: https://pkg.go.dev/github.com/googollee/go-engine.io/parser
-license: other
+license: bsd-3-clause
 licenses:
 - sources: go-engine.io@v0.0.0-20180829091931-e2f255711dcb/LICENSE
   text: |-
