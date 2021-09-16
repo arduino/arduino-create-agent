@@ -3,6 +3,7 @@
 [![Codecov](https://codecov.io/gh/arduino/arduino-create-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/arduino/arduino-create-agent)
 [![Test Integration status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml)
 [![Check License status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-license.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-license.yml)
+[![Check Go Dependencies status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml)
 
 arduino-create-agent
 ====================
