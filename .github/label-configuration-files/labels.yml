@@ -1,0 +1,13 @@
+# Used by the "Sync Labels" workflow
+# See: https://github.com/Financial-Times/github-label-sync#label-config-file
+
+- name: "conclusion: stale"
+  color: "940404"
+  description: Closed due to lack of activity
+  notes: |
+    Added by the "Close stale issues" workflow.
+- name: "status: stale"
+  color: "940404"
+  description: Pending closure due to lack of activity
+  notes: |
+    Added by the "Close stale issues" workflow.
