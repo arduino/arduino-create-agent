@@ -13,8 +13,12 @@ updates:
   - dependency-name: github.com/sirupsen/logrus
     versions:
     - 1.7.1
+  labels:
+  - "topic: infrastructure"
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
     interval: daily
   open-pull-requests-limit: 10
+  labels:
+  - "topic: infrastructure"
