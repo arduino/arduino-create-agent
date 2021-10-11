@@ -30,6 +30,8 @@ type serialhub struct {
 
 	// Unregister requests from connections.
 	unregister chan *serport
+
+	mu sync.Mutex
 }
 
 type SpPortList struct {
@@ -74,15 +76,19 @@ func (sh *serialhub) run() {
 	for {
 		select {
 		case p := <-sh.register:
+			sh.mu.Lock()
 			//log.Print("Registering a port: ", p.portConf.Name)
 			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + ",\"BufferType\":\"" + p.BufferType + "\"}")
 			sh.ports[p] = true
+			sh.mu.Unlock()
 		case p := <-sh.unregister:
+			sh.mu.Lock()
 			//log.Print("Unregistering a port: ", p.portConf.Name)
 			h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
 			delete(sh.ports, p)
 			close(p.sendBuffered)
 			close(p.sendNoBuf)
+			sh.mu.Unlock()
 		case wr := <-sh.write:
 			// if user sent in the commands as one text mode line
 			write(wr)

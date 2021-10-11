@@ -71,6 +71,8 @@ func GetList(network bool) ([]OsSerialPort, error) {
 
 func findPortByName(portname string) (*serport, bool) {
 	portnamel := strings.ToLower(portname)
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
 	for port := range sh.ports {
 		if strings.ToLower(port.portConf.Name) == portnamel {
 			// we found our port
