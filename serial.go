@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/arduino/arduino-create-agent/upload"
-	log "github.com/sirupsen/logrus"
 )
 
 type writeRequest struct {
@@ -195,7 +194,7 @@ func spListDual(network bool) {
 	// to append the open/close state, baud rates, etc to make
 	// a super clean nice list to send back to browser
 	n := len(list)
-	spl := make([]SpPortItem, n, n)
+	spl := make([]SpPortItem, n)
 
 	ctr := 0
 
