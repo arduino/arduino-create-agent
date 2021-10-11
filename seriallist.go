@@ -80,14 +80,3 @@ func findPortByName(portname string) (*serport, bool) {
 	}
 	return nil, false
 }
-
-func findPortByNameRerun(portname string, network bool) (OsSerialPort, bool) {
-	portnamel := strings.ToLower(portname)
-	list, _ := GetList(network)
-	for _, item := range list {
-		if strings.ToLower(item.Name) == portnamel {
-			return item, true
-		}
-	}
-	return OsSerialPort{}, false
-}
