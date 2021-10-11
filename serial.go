@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/arduino/arduino-create-agent/upload"
+	log "github.com/sirupsen/logrus"
 )
 
 type writeRequest struct {
@@ -34,6 +36,7 @@ type serialhub struct {
 type SpPortList struct {
 	Ports   []SpPortItem
 	Network bool
+	mu      sync.Mutex `json:"-"`
 }
 
 type SpPortItem struct {
@@ -102,13 +105,17 @@ func write(wr writeRequest) {
 
 // spList broadcasts a Json representation of the ports found
 func spList(network bool) {
-	var list SpPortList
+	var ls []byte
+	var err error
 	if network {
-		list = NetworkPorts
+		NetworkPorts.mu.Lock()
+		ls, err = json.MarshalIndent(NetworkPorts, "", "\t")
+		NetworkPorts.mu.Unlock()
 	} else {
-		list = SerialPorts
+		SerialPorts.mu.Lock()
+		ls, err = json.MarshalIndent(SerialPorts, "", "\t")
+		SerialPorts.mu.Unlock()
 	}
-	ls, err := json.MarshalIndent(list, "", "\t")
 	if err != nil {
 		//log.Println(err)
 		h.broadcastSys <- []byte("Error creating json on port list " +
@@ -120,10 +127,14 @@ func spList(network bool) {
 
 // discoverLoop periodically update the list of ports found
 func discoverLoop() {
+	SerialPorts.mu.Lock()
 	SerialPorts.Network = false
 	SerialPorts.Ports = make([]SpPortItem, 0)
+	SerialPorts.mu.Unlock()
+	NetworkPorts.mu.Lock()
 	NetworkPorts.Network = true
 	NetworkPorts.Ports = make([]SpPortItem, 0)
+	NetworkPorts.mu.Unlock()
 
 	go func() {
 		for {
@@ -184,13 +195,13 @@ func spListDual(network bool) {
 	// to append the open/close state, baud rates, etc to make
 	// a super clean nice list to send back to browser
 	n := len(list)
-	spl := SpPortList{make([]SpPortItem, n, n), network}
+	spl := make([]SpPortItem, n, n)
 
 	ctr := 0
 
 	for _, item := range list {
 
-		spl.Ports[ctr] = SpPortItem{
+		spl[ctr] = SpPortItem{
 			Name:            item.Name,
 			SerialNumber:    item.ISerial,
 			DeviceClass:     item.DeviceClass,
@@ -209,17 +220,21 @@ func spListDual(network bool) {
 
 		if isFound {
 			// we found our port
-			spl.Ports[ctr].IsOpen = true
-			spl.Ports[ctr].Baud = myport.portConf.Baud
-			spl.Ports[ctr].BufferAlgorithm = myport.BufferType
+			spl[ctr].IsOpen = true
+			spl[ctr].Baud = myport.portConf.Baud
+			spl[ctr].BufferAlgorithm = myport.BufferType
 		}
 		ctr++
 	}
 
 	if network {
-		NetworkPorts = spl
+		NetworkPorts.mu.Lock()
+		NetworkPorts.Ports = spl
+		NetworkPorts.mu.Unlock()
 	} else {
-		SerialPorts = spl
+		SerialPorts.mu.Lock()
+		SerialPorts.Ports = spl
+		SerialPorts.mu.Unlock()
 	}
 }
 
