@@ -2,6 +2,7 @@
 [![Test Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml)
 [![Codecov](https://codecov.io/gh/arduino/arduino-create-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/arduino/arduino-create-agent)
 [![Test Integration status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml)
+[![Check License status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-license.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-license.yml)
 
 arduino-create-agent
 ====================
