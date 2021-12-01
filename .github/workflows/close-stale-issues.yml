@@ -4,7 +4,7 @@ on:
   schedule:
     - cron:  '30 8 * * mon'
 
-permission:
+permissions:
   issues: write
 
 jobs:
