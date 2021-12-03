@@ -89,7 +89,7 @@ jobs:
         uses: arduino/setup-task@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          version: 3.9.0
+          version: 3.x
 
         # https://github.com/getlantern/systray#linux
       - name: Install Dependencies (Linux)
