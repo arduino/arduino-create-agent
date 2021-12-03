@@ -79,7 +79,7 @@ jobs:
       - name: Install Taskfile
         uses: arduino/setup-task@v1
         with:
-          version: 3.9.0
+          version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check the code is good
