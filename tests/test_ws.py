@@ -46,7 +46,7 @@ def test_open_serial_timedraw(socketio, serial_port, baudrate, message):
     general_open_serial(socketio, serial_port, baudrate, message, "timedraw")
 
 
-# NOTE run the following tests with a board connected to the PC and with the sketch found in test/testdata/SerialEcho.ino on it be sure to change serial_address in conftest.py
+# NOTE run the following tests with a board connected to the PC and with the sketch found in tests/testdata/SerialEcho.ino on it be sure to change serial_address in conftest.py
 @pytest.mark.skipif(
     running_on_ci(),
     reason="VMs have no serial ports",

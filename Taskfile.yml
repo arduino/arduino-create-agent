@@ -1,43 +1,76 @@
 version: '3'
 
 tasks:
-
-  build:
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/go-task/Taskfile.yml
+  go:build:
     desc: Build the project, to use a specific version use `task build TAG_VERSION=x.x.x`
+    dir: "{{.DEFAULT_GO_MODULE_PATH}}"
     cmds:
       - go build -v -i {{default "" .ADDITIONAL_FLAGS}} -o {{default "arduino-create-agent" .APP_NAME}} -ldflags '-X main.version={{default .TAG_TEST .TAG_VERSION}} -X main.git_revision={{.COMMIT}} {{default "" .WIN_FLAGS}}'
     vars:
       COMMIT:
         sh: git log -n 1 --format=%h
 
-  build-cli:
-    desc: Build the project without tray support
+  go:build-cli:
+    desc: Build the project without tray icon support
     cmds:
-      - task: build
+      - task: go:build
         vars:
           APP_NAME: arduino-create-agent_cli
           ADDITIONAL_FLAGS: -tags cli
 
-  build-win:
+  go:build-win:
     desc: Build the project for win, to build 32bit `export GOARCH=386` and for 64 bit `export GOARCH=amd64` before `task build-win`
     cmds:
       - rsrc -arch {{.GOARCH}} -manifest manifest.xml # GOARCH shoud be either amd64 or 386
-      - task: build
+      - task: go:build
         vars:
           APP_NAME: arduino-create-agent.exe
           WIN_FLAGS: -H=windowsgui
       - rm *.syso # rm file to avoid compilation problems on other platforms
 
-  test-unit:
-    desc: Run unit tests only
+  go:build-win-cli:
+    desc: Build the project fow win without tray icon support
     cmds:
-      - go test -short -run '{{ default ".*" .TEST_REGEX }}' {{ default "-v" .GOFLAGS }} -coverprofile=coverage_unit.txt {{ default .DEFAULT_TARGETS .TARGETS }} {{.TEST_LDFLAGS}}
+      - task: go:build
+        vars:
+          APP_NAME: arduino-create-agent_cli.exe
+          ADDITIONAL_FLAGS: -tags cli
 
-  test-e2e:
-    desc: Run end 2 end tests
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/test-go-task/Taskfile.yml
+  go:test:
+    desc: Run unit tests
+    dir: "{{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}}"
+    cmds:
+      - |
+        go test \
+          -v \
+          -short \
+          -run '{{default ".*" .GO_TEST_REGEX}}' \
+          {{default "-timeout 10m -coverpkg=./... -covermode=atomic" .GO_TEST_FLAGS}} \
+          -coverprofile=coverage_unit.txt \
+          {{default .DEFAULT_GO_PACKAGES .GO_PACKAGES}}
+
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/test-go-integration-task/Taskfile.yml
+  go:test-integration:
+    desc: Run integration tests
+    deps:
+      # - task: go:build # we build it in the CI and not in the task because _cli version is required and build procedure is different on win
+      - task: poetry:install-deps
+    cmds:
+      - poetry run pytest tests
+
+   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/poetry-task/Taskfile.yml
+  poetry:install-deps:
+    desc: Install dependencies managed by Poetry
     cmds:
       - poetry install --no-root
-      - poetry run pytest test
+
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/poetry-task/Taskfile.yml
+  poetry:update-deps:
+    desc: Update all dependencies managed by Poetry to their newest versions
+    cmds:
+      - poetry update
 
   check:
     desc: Check fmt and lint
@@ -63,7 +96,10 @@ vars:
   # all modules of this project except for "gen/..." module
   DEFAULT_TARGETS:
     sh: echo `go list ./... | grep -v 'arduino-create-agent/gen/' | tr '\n' ' '`
-  GOFLAGS: "-timeout 10m -v -coverpkg=./... -covermode=atomic"
+  DEFAULT_GO_MODULE_PATH: ./
+  DEFAULT_GO_PACKAGES:
+    sh: |
+      echo $(cd {{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}} && go list ./... | tr '\n' ' ' || echo '"ERROR: Unable to discover Go packages"')
   # check-lint vars
   GOLINTBIN:
     sh: go list -f {{"{{"}}".Target{{"}}"}}" golang.org/x/lint/golint

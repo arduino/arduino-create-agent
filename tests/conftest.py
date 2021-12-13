@@ -12,7 +12,7 @@ import socketio as io
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
     
-    agent_cli = str(Path(pytestconfig.rootdir) / "arduino-create-agent")
+    agent_cli = str(Path(pytestconfig.rootdir) / "arduino-create-agent_cli")
     env = {
         # "ARDUINO_DATA_DIR": data_dir,
         # "ARDUINO_DOWNLOADS_DIR": downloads_dir,
