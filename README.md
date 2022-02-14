@@ -26,7 +26,7 @@ The Arduino Create Agent is a single binary that will sit on the traybar and wor
 Get the [latest version](https://github.com/arduino/arduino-create-agent/releases) of the Agent for all supported platforms or complete the [Getting Started](https://create.arduino.cc/getting-started/plugin/welcome).
 
 ## Apple M1 support
-At the moment the new Apple Silicon Macs released in November 2020, like the new [MacBook Pro 13"](https://www.apple.com/macbook-pro-13/), [MacBook Air](https://www.apple.com/macbook-air/) and [Mac mini](https://www.apple.com/mac-mini/) models with the [Apple M1](https://www.apple.com/mac/m1/) chip are currently NOT supported by the Create Agent.
+At the moment the new Apple Silicon Macs released in November 2020, like the [MacBook Pro 13"](https://www.apple.com/macbook-pro-13/), [MacBook Air](https://www.apple.com/macbook-air/) and [Mac mini](https://www.apple.com/mac-mini/) models with the [Apple M1](https://www.apple.com/mac/m1/) chip do not have native builds. But the Arduino Agent performs well in Rosetta 2 mode.
 
 ## Documentation
 The documentation has been moved to the [wiki](https://github.com/arduino/arduino-create-agent/wiki) page. There you can find:
