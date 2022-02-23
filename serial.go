@@ -37,7 +37,7 @@ type serialhub struct {
 type SpPortList struct {
 	Ports   []SpPortItem
 	Network bool
-	mu      sync.Mutex `json:"-"`
+	Mu      sync.Mutex `json:"-"`
 }
 
 type SpPortItem struct {
@@ -113,13 +113,13 @@ func spList(network bool) {
 	var ls []byte
 	var err error
 	if network {
-		NetworkPorts.mu.Lock()
+		NetworkPorts.Mu.Lock()
 		ls, err = json.MarshalIndent(&NetworkPorts, "", "\t")
-		NetworkPorts.mu.Unlock()
+		NetworkPorts.Mu.Unlock()
 	} else {
-		SerialPorts.mu.Lock()
+		SerialPorts.Mu.Lock()
 		ls, err = json.MarshalIndent(&SerialPorts, "", "\t")
-		SerialPorts.mu.Unlock()
+		SerialPorts.Mu.Unlock()
 	}
 	if err != nil {
 		//log.Println(err)
@@ -132,14 +132,14 @@ func spList(network bool) {
 
 // discoverLoop periodically update the list of ports found
 func discoverLoop() {
-	SerialPorts.mu.Lock()
+	SerialPorts.Mu.Lock()
 	SerialPorts.Network = false
 	SerialPorts.Ports = make([]SpPortItem, 0)
-	SerialPorts.mu.Unlock()
-	NetworkPorts.mu.Lock()
+	SerialPorts.Mu.Unlock()
+	NetworkPorts.Mu.Lock()
 	NetworkPorts.Network = true
 	NetworkPorts.Ports = make([]SpPortItem, 0)
-	NetworkPorts.mu.Unlock()
+	NetworkPorts.Mu.Unlock()
 
 	go func() {
 		for {
@@ -233,13 +233,13 @@ func spListDual(network bool) {
 	}
 
 	if network {
-		NetworkPorts.mu.Lock()
+		NetworkPorts.Mu.Lock()
 		NetworkPorts.Ports = spl
-		NetworkPorts.mu.Unlock()
+		NetworkPorts.Mu.Unlock()
 	} else {
-		SerialPorts.mu.Lock()
+		SerialPorts.Mu.Lock()
 		SerialPorts.Ports = spl
-		SerialPorts.mu.Unlock()
+		SerialPorts.Mu.Unlock()
 	}
 }
 
