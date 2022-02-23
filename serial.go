@@ -114,11 +114,11 @@ func spList(network bool) {
 	var err error
 	if network {
 		NetworkPorts.mu.Lock()
-		ls, err = json.MarshalIndent(NetworkPorts, "", "\t")
+		ls, err = json.MarshalIndent(&NetworkPorts, "", "\t")
 		NetworkPorts.mu.Unlock()
 	} else {
 		SerialPorts.mu.Lock()
-		ls, err = json.MarshalIndent(SerialPorts, "", "\t")
+		ls, err = json.MarshalIndent(&SerialPorts, "", "\t")
 		SerialPorts.mu.Unlock()
 	}
 	if err != nil {
