@@ -103,7 +103,7 @@ jobs:
 
       - name: Send unit tests coverage to Codecov
         if: runner.os == 'Linux'
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           file: ${{ matrix.module.path }}coverage_unit.txt
           flags: ${{ matrix.module.codecov-flags }}
