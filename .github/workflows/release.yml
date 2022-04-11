@@ -157,7 +157,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: arduino-create-agent
@@ -267,7 +267,7 @@ jobs:
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: ${{ matrix.executable-path }}  # path expected by installbuilder
@@ -362,7 +362,7 @@ jobs:
     runs-on: macos-10.15
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ArduinoCreateAgent-osx${{ matrix.arch }}
           path: ArduinoCreateAgent-osx
@@ -430,7 +430,7 @@ jobs:
           fetch-depth: 0 # fetch all history for the create changelog step to work properly
 
       - name: Download artifact
-        uses: actions/download-artifact@v2 # download all the artifacts
+        uses: actions/download-artifact@v3 # download all the artifacts
 
       - name: Identify Prerelease
         # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
