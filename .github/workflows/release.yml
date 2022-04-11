@@ -137,7 +137,7 @@ jobs:
 
         # config.ini is required by the executable when it's run
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
@@ -200,7 +200,7 @@ jobs:
 
         # This step will overwrite the non signed mac artifact (arduino-create-agent-${{ env.RUNS_ON }})
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
@@ -345,7 +345,7 @@ jobs:
         if: matrix.os == 'ubuntu-18.04'
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ArduinoCreateAgent-${{ matrix.install-builder-name }}${{ matrix.arch }}
           path: ArduinoCreateAgent*
@@ -413,7 +413,7 @@ jobs:
         run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.dmg
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ArduinoCreateAgent-osx${{ matrix.arch }}
           path: ArduinoCreateAgent*.tar
