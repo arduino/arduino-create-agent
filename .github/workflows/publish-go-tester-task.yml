@@ -141,7 +141,7 @@ jobs:
 
       # config.ini is required by the executable when it's run
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
