@@ -11,7 +11,6 @@ psutil = "^5.8.0"
 pytest = "^6.2.2"
 requests = "^2.25.1"
 invoke = "^1.5.0"
-pathlib = "^1.0.1"
 asyncio = "^3.4.3"
 python-socketio = "^4"
 
