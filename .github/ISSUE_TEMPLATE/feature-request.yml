@@ -1,0 +1,87 @@
+# Source: https://github.com/arduino/tooling-project-assets/blob/main/issue-templates/forms/platform-dependent/bug-report.yml
+# See: https://docs.github.com/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+
+name: Feature request
+description: Suggest an enhancement to this project.
+labels:
+  - "type: enhancement"
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the request
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Describe the current behavior
+      description: |
+        What is the current behavior of Arduino Create Agent in relation to your request?
+        How can we reproduce that behavior?
+    validations:
+      required: true
+  - type: input
+    id: project-version
+    attributes:
+      label: Arduino Create Agent version
+      description: |
+        Which version of Arduino Create Agent are you using?
+        _This should be the most recent version available._
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      description: Which operating system(s) are you using on your computer?
+      multiple: true
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - N/A
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: Operating system version
+      description: Which version of the operating system are you using on your computer?
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: |
+        Which web browser(s) are you using on your computer?
+        (e.g., Chrome, Safari)
+    validations:
+      required: true
+  - type: input
+    id: browser-version
+    attributes:
+      label: Browser version
+      description: Which version of the web browser are you using on your computer?
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add any additional information here.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Issue checklist
+      description: Please double-check that you have done each of the following things before submitting the issue.
+      options:
+        - label: I searched for previous requests in [the issue tracker](https://github.com/arduino/arduino-create-agent/issues?q=)
+          required: true
+        - label: I verified the feature was still missing when using the latest version
+          required: true
+        - label: My request contains all necessary details
+          required: true

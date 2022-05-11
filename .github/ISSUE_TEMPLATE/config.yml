@@ -1,0 +1,17 @@
+# Source: https://github.com/arduino/tooling-project-assets/blob/main/issue-templates/template-choosers/general/config.yml
+# See: https://docs.github.com/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
+
+blank_issues_enabled: true
+contact_links:
+  - name: Install Arduino Create Agent
+    url: https://create.arduino.cc/getting-started/plugin/welcome
+    about: This guided installer provides easy installation.
+  - name: Learn about using this project
+    url: https://github.com/arduino/arduino-create-agent#readme
+    about: Detailed usage documentation is available here.
+  - name: Support request
+    url: https://forum.arduino.cc/c/software/editor/134
+    about: We can help you out on the Arduino Forum!
+  - name: Discuss development work on the project
+    url: https://groups.google.com/a/arduino.cc/g/developers
+    about: Arduino Developers Mailing List
