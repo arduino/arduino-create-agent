@@ -12,7 +12,7 @@ require (
 	github.com/dimfeld/httptreemux v5.0.1+incompatible // indirect
 	github.com/getlantern/systray v1.1.0
 	github.com/gin-gonic/gin v1.7.7
-	github.com/go-ini/ini v1.62.0
+	github.com/go-ini/ini v1.66.5
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/gxui v0.0.0-20151028112939-f85e0a97b3a4 // indirect
 	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb // indirect
@@ -45,6 +45,5 @@ require (
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
 	gopkg.in/inconshreveable/go-update.v0 v0.0.0-20150814200126-d8b0b1d421aa
-	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
