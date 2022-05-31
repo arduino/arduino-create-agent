@@ -1,13 +1,13 @@
 ---
 name: golang.org/x/net/bpf
-version: v0.0.0-20200324143707-d3edc9973b7e
+version: v0.0.0-20210226172049-e18ecbb05110
 type: go
 summary: Package bpf implements marshaling and unmarshaling of programs for the Berkeley
   Packet Filter virtual machine, and provides a Go implementation of the virtual machine.
 homepage: https://pkg.go.dev/golang.org/x/net/bpf
 license: bsd-3-clause
 licenses:
-- sources: net@v0.0.0-20200324143707-d3edc9973b7e/LICENSE
+- sources: net@v0.0.0-20210226172049-e18ecbb05110/LICENSE
   text: |
     Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -36,7 +36,7 @@ licenses:
     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- sources: net@v0.0.0-20200324143707-d3edc9973b7e/PATENTS
+- sources: net@v0.0.0-20210226172049-e18ecbb05110/PATENTS
   text: |
     Additional IP Rights Grant (Patents)
 

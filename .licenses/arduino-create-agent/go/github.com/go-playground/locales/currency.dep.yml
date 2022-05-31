@@ -1,12 +1,12 @@
 ---
 name: github.com/go-playground/locales/currency
-version: v0.13.0
+version: v0.14.0
 type: go
 summary: 
 homepage: https://pkg.go.dev/github.com/go-playground/locales/currency
 license: mit
 licenses:
-- sources: locales@v0.13.0/LICENSE
+- sources: locales@v0.14.0/LICENSE
   text: |-
     The MIT License (MIT)
 
@@ -29,6 +29,6 @@ licenses:
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
-- sources: locales@v0.13.0/README.md
+- sources: locales@v0.14.0/README.md
   text: Distributed under MIT License, please see license file in code for more details.
 notices: []
