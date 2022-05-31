@@ -1,12 +1,12 @@
 ---
 name: github.com/gin-gonic/gin/binding
-version: v1.7.7
+version: v1.8.0
 type: go
 summary: 
 homepage: https://pkg.go.dev/github.com/gin-gonic/gin/binding
 license: mit
 licenses:
-- sources: gin@v1.7.7/LICENSE
+- sources: gin@v1.8.0/LICENSE
   text: |
     The MIT License (MIT)
 

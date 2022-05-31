@@ -1,17 +1,16 @@
 ---
-name: github.com/go-playground/validator/v10
-version: v10.10.0
+name: github.com/pelletier/go-toml/v2
+version: v2.0.1
 type: go
-summary: Package validator implements value validations for structs and individual
-  fields based on tags.
-homepage: https://pkg.go.dev/github.com/go-playground/validator/v10
+summary: Package toml is a library to read and write TOML documents.
+homepage: https://pkg.go.dev/github.com/pelletier/go-toml/v2
 license: mit
 licenses:
 - sources: LICENSE
-  text: |+
+  text: |
     The MIT License (MIT)
 
-    Copyright (c) 2015 Dean Karn
+    Copyright (c) 2013 - 2022 Thomas Pelletier, Eric Anderton
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +29,6 @@ licenses:
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
-
 - sources: README.md
-  text: Distributed under MIT License, please see license file within the code for
-    more details.
+  text: The MIT License (MIT). Read [LICENSE](LICENSE).
 notices: []

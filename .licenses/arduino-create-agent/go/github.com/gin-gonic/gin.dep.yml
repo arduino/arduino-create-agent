@@ -1,6 +1,6 @@
 ---
 name: github.com/gin-gonic/gin
-version: v1.7.7
+version: v1.8.0
 type: go
 summary: Package gin implements a HTTP web framework called gin.
 homepage: https://pkg.go.dev/github.com/gin-gonic/gin
@@ -141,6 +141,11 @@ notices:
 
     **@JasonSoft (Jason Lee)**
     - Fix typo in comment
+
+
+    **@jincheng9 (Jincheng Zhang)**
+    - ★ support TSR when wildcard follows named param
+    - Fix errors and typos in comments
 
 
     **@joiggama (Ignacio Galindo)**
