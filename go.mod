@@ -10,7 +10,7 @@ require (
 	github.com/davidmz/go-pageant v1.0.1 // indirect
 	github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 // indirect
 	github.com/dimfeld/httptreemux v5.0.1+incompatible // indirect
-	github.com/getlantern/systray v1.1.0
+	github.com/getlantern/systray v1.2.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-ini/ini v1.62.0
 	github.com/google/gxui v0.0.0-20151028112939-f85e0a97b3a4 // indirect
