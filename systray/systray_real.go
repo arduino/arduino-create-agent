@@ -23,14 +23,12 @@ import (
 	"os"
 	"runtime"
 
-	log "github.com/sirupsen/logrus"
-
+	"fyne.io/systray"
 	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
-
 	"github.com/arduino/arduino-create-agent/icon"
-	"github.com/getlantern/systray"
 	"github.com/go-ini/ini"
+	log "github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 )
 
