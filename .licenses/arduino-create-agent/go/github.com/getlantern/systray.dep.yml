@@ -1,6 +1,6 @@
 ---
 name: github.com/getlantern/systray
-version: v1.1.0
+version: v1.2.1
 type: go
 summary: Package systray is a cross-platform Go library to place an icon and menu
   in the notification area.
