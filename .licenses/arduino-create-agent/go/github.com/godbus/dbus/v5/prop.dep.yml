@@ -5,7 +5,7 @@ type: go
 summary: Package prop provides the Properties struct which can be used to implement
   org.freedesktop.DBus.Properties.
 homepage: https://pkg.go.dev/github.com/godbus/dbus/v5/prop
-license: other
+license: bsd-2-clause
 licenses:
 - sources: v5@v5.0.4/LICENSE
   text: |

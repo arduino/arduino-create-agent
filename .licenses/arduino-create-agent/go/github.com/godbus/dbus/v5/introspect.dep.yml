@@ -5,7 +5,7 @@ type: go
 summary: Package introspect provides some utilities for dealing with the DBus introspection
   format.
 homepage: https://pkg.go.dev/github.com/godbus/dbus/v5/introspect
-license: other
+license: bsd-2-clause
 licenses:
 - sources: v5@v5.0.4/LICENSE
   text: |
