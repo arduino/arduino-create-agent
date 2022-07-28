@@ -22,7 +22,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-2019, macos-10.15]
+        os: [ubuntu-18.04, windows-2019, macos-11]
         arch: [-amd64]
         include:
         - os: windows-2019
@@ -118,7 +118,7 @@ jobs:
           CGO_CFLAGS: -mmacosx-version-min=10.11
           CGO_LDFLAGS: -mmacosx-version-min=10.11
         run: task go:build
-        if: matrix.os == 'macos-10.15'
+        if: matrix.os == 'macos-11'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
@@ -150,7 +150,7 @@ jobs:
     needs: build
     strategy:
       matrix: # to allow support for future architectures
-        os: [macos-10.15]
+        os: [macos-11]
         arch: [-amd64]
 
     runs-on: ${{ matrix.os }}
@@ -231,7 +231,7 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-        os: [ubuntu-18.04, windows-2019, macos-10.15]
+        os: [ubuntu-18.04, windows-2019, macos-11]
         arch: [-amd64]
         include:
           - os: ubuntu-18.04
@@ -250,7 +250,7 @@ jobs:
             executable-path: artifacts/windows/
             extension: .exe
             installer-extension: .exe
-          - os: macos-10.15
+          - os: macos-11
             browser: safari
             install-builder-name: osx
             executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
@@ -275,7 +275,7 @@ jobs:
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
-        if: matrix.os == 'ubuntu-18.04' || matrix.os == 'macos-10.15'
+        if: matrix.os == 'ubuntu-18.04' || matrix.os == 'macos-11'
 
       - name: Rename executable to Arduino_Create_Agent
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
@@ -286,7 +286,7 @@ jobs:
 
       - name: get year
         run: echo "YEAR=$(date "+%Y")" >> $GITHUB_ENV
-        if: matrix.os == 'macos-10.15'
+        if: matrix.os == 'macos-11'
 
       - name: Generate Info.plist for MacOS
         run: |
@@ -309,7 +309,7 @@ jobs:
 
           </dict></plist>
           EOF
-        if: matrix.os == 'macos-10.15'
+        if: matrix.os == 'macos-11'
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
@@ -320,7 +320,7 @@ jobs:
 
       - name: Save macos signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
-        if: matrix.os == 'macos-10.15'
+        if: matrix.os == 'macos-11'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
@@ -332,7 +332,7 @@ jobs:
           cp -vr ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome${{matrix.installer-extension}}
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox${{matrix.installer-extension}}
           rm -r ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-C*
-        if: matrix.os == 'windows-2019' || matrix.os == 'macos-10.15'
+        if: matrix.os == 'windows-2019' || matrix.os == 'macos-11'
 
         # linux
       - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
@@ -359,7 +359,7 @@ jobs:
         browser: [safari, firefox, chrome]
         arch: [-amd64]
 
-    runs-on: macos-10.15
+    runs-on: macos-11
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v3
