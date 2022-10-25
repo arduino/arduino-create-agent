@@ -32,7 +32,7 @@ require (
 	github.com/sfreiberg/simplessh v0.0.0-20180301191542-495cbb862a9c
 	github.com/sirupsen/logrus v1.8.1
 	github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
 	github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea // indirect
 	go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87
