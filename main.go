@@ -35,7 +35,6 @@ import (
 	cors "github.com/andela/gin-cors"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
-	"github.com/arduino/arduino-create-agent/updater"
 	"github.com/arduino/arduino-create-agent/utilities"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
@@ -140,29 +139,29 @@ func main() {
 		AdditionalConfig: *additionalConfig,
 	}
 
-	path, err := osext.Executable()
-	if err != nil {
-		panic(err)
-	}
+	// path, err := osext.Executable()
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	// If the executable is temporary, copy it to the full path, then restart
-	if strings.Contains(path, "-temp") {
-		newPath := updater.BinPath(path)
-		err := copyExe(path, newPath)
-		if err != nil {
-			log.Println("Copy error: ", err)
-			panic(err)
-		}
+	// // If the executable is temporary, copy it to the full path, then restart
+	// if strings.Contains(path, "-temp") {
+	// 	newPath := updater.BinPath(path)
+	// 	err := copyExe(path, newPath)
+	// 	if err != nil {
+	// 		log.Println("Copy error: ", err)
+	// 		panic(err)
+	// 	}
 
-		Systray.Update(newPath)
-	} else {
-		// Otherwise copy to a path with -temp suffix
-		err := copyExe(path, updater.TempPath(path))
-		if err != nil {
-			panic(err)
-		}
-		Systray.Start()
-	}
+	// 	Systray.Update(newPath)
+	// } else {
+	// 	// Otherwise copy to a path with -temp suffix
+	// 	err := copyExe(path, updater.TempPath(path))
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	Systray.Start()
+	// }
 }
 
 func copyExe(from, to string) error {
