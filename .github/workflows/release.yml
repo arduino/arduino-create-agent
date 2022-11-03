@@ -15,6 +15,8 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
   KEYCHAIN: "sign.keychain"
+  KEYCHAIN_PASSWORD: keychainpassword # Arbitrary password for a keychain that exists only for the duration of the job, so not secret
+  GON_CONFIG_PATH: gon.config.hcl
   INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
   AC_USERNAME: ${{ secrets.AC_USERNAME }} # used by gon
   AC_PASSWORD: ${{ secrets.AC_PASSWORD }} # used by gon
@@ -166,12 +168,22 @@ jobs:
 
       - name: Import Code-Signing Certificates
         run: |
-          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > ${{ env.INSTALLER_CERT_MAC_PATH }}
-          security create-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security default-keychain -s ${{ env.KEYCHAIN }}
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security import ${{ env.INSTALLER_CERT_MAC_PATH }} -k ${{ env.KEYCHAIN }} -f pkcs12 -A -T /usr/bin/codesign -P ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-          security set-key-partition-list -S apple-tool:,apple: -s -k ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
+          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > "${{ env.INSTALLER_CERT_MAC_PATH }}"
+          security create-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security default-keychain -s "${{ env.KEYCHAIN }}"
+          security unlock-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security import \
+            "${{ env.INSTALLER_CERT_MAC_PATH }}" \
+            -k "${{ env.KEYCHAIN }}" \
+            -f pkcs12 \
+            -A \
+            -T "/usr/bin/codesign" \
+            -P "${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "${{ env.KEYCHAIN_PASSWORD }}" \
+            "${{ env.KEYCHAIN }}"
 
       - name: Install gon for code signing and app notarization
         run: |
@@ -181,13 +193,15 @@ jobs:
       - name: Write gon config to file
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
-          cat > gon.config.hcl <<EOF
+          cat > "${{ env.GON_CONFIG_PATH }}" <<EOF
           # See: https://github.com/mitchellh/gon#configuration-file
           source = ["${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}"]
           bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
+
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
           }
+
           # Ask Gon for zip output to force notarization process to take place.
           # The CI will ignore the zip output, using the signed binary only.
           zip {
@@ -195,11 +209,8 @@ jobs:
           }
           EOF
 
-      - name: Code sign and notarize app
-        run: |
-          echo "gon will notarize executable in arduino-create-agent/arduino-create-agent"
-          gon -log-level=debug -log-json gon.config.hcl
-        timeout-minutes: 30
+      - name: Sign and notarize binary
+        run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
         # This step will overwrite the non signed mac artifact (arduino-create-agent-${{ env.RUNS_ON }})
       - name: Upload artifact
@@ -376,12 +387,22 @@ jobs:
 
       - name: Import Code-Signing Certificates
         run: |
-          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > ${{ env.INSTALLER_CERT_MAC_PATH }}
-          security create-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security default-keychain -s ${{ env.KEYCHAIN }}
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security import ${{ env.INSTALLER_CERT_MAC_PATH }} -k ${{ env.KEYCHAIN }} -f pkcs12 -A -T /usr/bin/codesign -P ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-          security set-key-partition-list -S apple-tool:,apple: -s -k ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
+          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > "${{ env.INSTALLER_CERT_MAC_PATH }}"
+          security create-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security default-keychain -s "${{ env.KEYCHAIN }}"
+          security unlock-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security import \
+            "${{ env.INSTALLER_CERT_MAC_PATH }}" \
+            -k "${{ env.KEYCHAIN }}" \
+            -f pkcs12 \
+            -A \
+            -T "/usr/bin/codesign" \
+            -P "${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "${{ env.KEYCHAIN_PASSWORD }}" \
+            "${{ env.KEYCHAIN }}"
 
       - name: Install gon for code signing and app notarization
         run: |
