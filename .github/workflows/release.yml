@@ -6,6 +6,8 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+*"
 
 env:
+  # As defined by the Taskfile's PROJECT_NAME variable
+  PROJECT_NAME: arduino-create-agent
   TARGET: "/CreateAgent/Stable"
   OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
   VERSION_TARGET: "arduino-create-static/agent-metadata/"
@@ -122,11 +124,11 @@ jobs:
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
-        run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
+        run: go-selfupdate ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch != '-386' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Create autoupdate files for win32
-        run: go-selfupdate -platform windows${{ matrix.arch }} arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
+        run: go-selfupdate -platform windows${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch == '-386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
@@ -139,9 +141,9 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
           path: |
-            arduino-create-agent*
+            ${{ env.PROJECT_NAME }}*
             config.ini
           if-no-files-found: error
 
@@ -180,8 +182,9 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config.hcl <<EOF
-          source = ["arduino-create-agent/arduino-create-agent"]
-          bundle_id = "cc.arduino.arduino-agent"
+          # See: https://github.com/mitchellh/gon#configuration-file
+          source = ["${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}"]
+          bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
           }
@@ -202,10 +205,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
           path: |
-            arduino-create-agent
-            !arduino-create-agent.zip
+            ${{ env.PROJECT_NAME }}
+            !${{ env.PROJECT_NAME }}.zip
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -269,19 +272,19 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
           path: ${{ matrix.executable-path }}  # path expected by installbuilder
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
-        run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
+        run: chmod -v +x ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}*
         if: matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-12'
 
       - name: Rename executable to Arduino_Create_Agent
-        run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
+        run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
 
       - name: Rename executable to Arduino_Create_Agent_cli
-        run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
+        run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
         if: matrix.os == 'ubuntu-20.04'
 
       - name: get year
@@ -390,7 +393,7 @@ jobs:
         run: |
           cat > gon.config_installer.hcl <<EOF
           source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"]
-          bundle_id = "cc.arduino.arduino-agent-installer"
+          bundle_id = "cc.arduino.arduino-create-agent-installer"
 
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
@@ -458,8 +461,8 @@ jobs:
           update_release_body: false # `true` won't work because trigger type is not release
           files: |
             release/*.exe
-            arduino-create-agent-windows-2019-386/arduino-create-agent.exe
-            arduino-create-agent-windows-2019-amd64/arduino-create-agent.exe
+            ${{ env.PROJECT_NAME }}-windows-2019-386/${{ env.PROJECT_NAME }}.exe
+            ${{ env.PROJECT_NAME }}-windows-2019-amd64/${{ env.PROJECT_NAME }}.exe
 
       - name: Create changelog
         uses: arduino/create-changelog@v1
