@@ -149,22 +149,85 @@ jobs:
             config.ini
           if-no-files-found: error
 
-  # The code-sign-mac-executable job will download the macos artifact from the previous job, sign e notarize the binary and re-upload it.
-  code-sign-mac-executable:
+  create-macos-bundle:
     needs: build
-    strategy:
-      matrix: # to allow support for future architectures
-        os: [macos-12]
-        arch: [-amd64]
 
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-12
+    env:
+      EXE_PATH: "skel/ArduinoCreateAgent.app/Contents/MacOS/"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains the bundle structure and icons
+          token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.PROJECT_NAME }}-macos-12-amd64
+          path: ${{ env.EXE_PATH }}
+
+      - name: Remove placeholder file
+        run: rm -rf ${{ env.EXE_PATH }}.empty
+
+        # zip artifacts do not mantain executable permission
+      - name: Make executable
+        run: chmod -v +x ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }}
+
+      - name: Rename executable to Arduino_Create_Agent
+        run: mv -v ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }} ${{ env.EXE_PATH }}Arduino_Create_Agent
+
+      - name: get year
+        run: echo "YEAR=$(date "+%Y")" >> $GITHUB_ENV
+
+      - name: Generate Info.plist for MacOS
+        run: |
+          cat > skel/ArduinoCreateAgent.app/Contents/Info.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+
+              <key>CFBundleIconFile</key>           <string>AppIcon.icns</string>
+
+              <key>CFBundleName</key>               <string>Arduino Create Agent</string>
+              <key>CFBundleExecutable</key>         <string>Arduino_Create_Agent</string>
+              <key>CFBundleIdentifier</key>         <string>create.arduino.cc</string>
+
+              <key>CFBundleVersion</key>            <string>${GITHUB_REF##*/}</string>
+              <key>NSHumanReadableCopyright</key>   <string>© Copyright ${{ env.YEAR }} Arduino LLC</string>
+              <key>CFBundleShortVersionString</key> <string>${GITHUB_REF##*/}</string>
+              <key>LSUIElement</key>                <true/>
+              <!-- Needed for Apache Callback -->
+              <key>NSPrincipalClass</key><string>NSApplication</string>
+              <key>NSMainNibFile</key><string>MainMenu</string>
+
+          </dict></plist>
+          EOF
+
+      - name: Tar bundle to keep permissions
+        run: tar -cvf ArduinoCreateAgent.app.tar -C skel/ .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: ArduinoCreateAgent.app
+          path: ArduinoCreateAgent.app.tar
+          
+  # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it.
+  notarize-macos:
+    name: Notarize bundle
+    runs-on: macos-12
+    needs: create-macos-bundle
 
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
-          path: ${{ env.PROJECT_NAME }}
+          name: ArduinoCreateAgent.app
+
+      - name: un-Tar bundle
+        run: tar -xvf ArduinoCreateAgent.app.tar
 
       - name: Import Code-Signing Certificates
         run: |
@@ -195,7 +258,7 @@ jobs:
         run: |
           cat > "${{ env.GON_CONFIG_PATH }}" <<EOF
           # See: https://github.com/mitchellh/gon#configuration-file
-          source = ["${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}"]
+          source = ["ArduinoCreateAgent.app"]
           bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
 
           sign {
@@ -224,7 +287,7 @@ jobs:
 
   # This job is responsible for generating the installers (using installbuilder)
   package:
-    needs: code-sign-mac-executable
+    needs: notarize-macos
     runs-on: ubuntu-20.04
 
     env:
@@ -289,41 +352,15 @@ jobs:
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}*
-        if: matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-12'
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Rename executable to Arduino_Create_Agent
         run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
+        if:  matrix.os != 'macos-12'
 
       - name: Rename executable to Arduino_Create_Agent_cli
         run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
         if: matrix.os == 'ubuntu-20.04'
-
-      - name: get year
-        run: echo "YEAR=$(date "+%Y")" >> $GITHUB_ENV
-        if: matrix.os == 'macos-12'
-
-      - name: Generate Info.plist for MacOS
-        run: |
-          cat > skel/ArduinoCreateAgent.app/Contents/Info.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-
-              <key>CFBundleIconFile</key>           <string>AppIcon.icns</string>
-
-              <key>CFBundleName</key>               <string>Arduino Create Agent</string>
-              <key>CFBundleExecutable</key>         <string>Arduino_Create_Agent</string>
-              <key>CFBundleIdentifier</key>         <string>create.arduino.cc</string>
-
-              <key>CFBundleVersion</key>            <string>${GITHUB_REF##*/}</string>
-              <key>NSHumanReadableCopyright</key>   <string>© Copyright ${{ env.YEAR }} Arduino LLC</string>
-              <key>CFBundleShortVersionString</key> <string>${GITHUB_REF##*/}</string>
-              <key>LSUIElement</key>                <true/>
-              <!-- Needed for Apache Callback -->
-              <key>NSPrincipalClass</key><string>NSApplication</string>
-              <key>NSMainNibFile</key><string>MainMenu</string>
-
-          </dict></plist>
-          EOF
-        if: matrix.os == 'macos-12'
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
