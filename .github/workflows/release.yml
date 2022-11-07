@@ -218,6 +218,8 @@ jobs:
   notarize-macos:
     name: Notarize bundle
     runs-on: macos-12
+    env:
+      GON_PATH: ${{ github.workspace }}/gon
     needs: create-macos-bundle
 
     steps:
@@ -249,9 +251,18 @@ jobs:
             "${{ env.KEYCHAIN }}"
 
       - name: Install gon for code signing and app notarization
+        uses: actions/checkout@v3
+        with:
+          repository: darkvertex/gon #this fork has support for --deep notarization
+          path: ${{ env.GON_PATH }}
+          ref: deep_sign_support
+
+      - name: Build gon
+        working-directory: ${{ env.GON_PATH }}/cmd/gon/
         run: |
-          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.zip
-          unzip gon_macos.zip -d /usr/local/bin
+          ls -lah
+          go build
+          mv gon /usr/local/bin
 
       - name: Write gon config to file
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
@@ -263,6 +274,7 @@ jobs:
 
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
+            deep = true
           }
 
           # Ask Gon for zip output to force notarization process to take place.
@@ -444,7 +456,7 @@ jobs:
 
       - name: Install gon for code signing and app notarization
         run: |
-          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.zip
+          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.5/gon_macos.zip
           unzip gon_macos.zip -d /usr/local/bin
 
       - name: Write gon config to file
