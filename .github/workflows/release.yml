@@ -346,9 +346,9 @@ jobs:
           - os: macos-12
             browser: safari
             install-builder-name: osx
-            executable-path: artifacts/macos/
+            executable-path: artifacts/macos/ArduinoCreateAgent.app
             installer-extension: .app
-            artifact-name: ArduinoCreateAgent.app_notarized
+            artifact-name: ArduinoCreateAgent.app_notarized # this artifact contains the Contents directory
 
     container:
       image: floydpink/ubuntu-install-builder:22.10.0
@@ -365,6 +365,14 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}
           path: ${{ matrix.executable-path }}  # path expected by installbuilder
+
+      - name: unzip mac notarized bundle
+        working-directory: ${{ matrix.executable-path }}
+        run: |
+          apt install unzip
+          unzip ${{ matrix.artifact-name }}.zip
+          rm ${{ matrix.artifact-name }}.zip
+        if:  matrix.os == 'macos-12'
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
