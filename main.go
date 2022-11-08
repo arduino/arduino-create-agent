@@ -35,7 +35,6 @@ import (
 	cors "github.com/andela/gin-cors"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
-	"github.com/arduino/arduino-create-agent/utilities"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
@@ -47,7 +46,6 @@ import (
 var (
 	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
 	git_revision          = "xxxxxxxx"  //don't modify it, Jenkins will take care
-	embedded_autoextract  = false
 	port                  string
 	portSSL               string
 	requiredToolsAPILevel = "v1"
@@ -185,15 +183,6 @@ func loop() {
 	// autoextract self
 	src, _ := osext.Executable()
 	dest := filepath.Dir(src)
-
-	if embedded_autoextract {
-		// save the config.ini (if it exists)
-		if _, err := os.Stat(filepath.Join(dest, "config.ini")); os.IsNotExist(err) {
-			log.Println("First run, unzipping self")
-			err := utilities.Unzip(src, dest)
-			log.Println("Self extraction, err:", err)
-		}
-	}
 
 	// Parse ini config
 	args, err := parseIni(filepath.Join(dest, "config.ini"))
