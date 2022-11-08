@@ -172,6 +172,10 @@ jobs:
       - name: Remove placeholder file
         run: rm -rf ${{ env.EXE_PATH }}.empty
 
+      - name: Move config.ini to the Resources dir
+        working-directory: ${{ env.EXE_PATH }}
+        run: mv config.ini ../Resources/
+
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }}
