@@ -22,7 +22,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-2019, macos-12]
+        os: [ubuntu-20.04, windows-2019, macos-12]
         arch: [-amd64]
         include:
         - os: windows-2019
@@ -65,7 +65,7 @@ jobs:
         # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
         run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Install Go deps
         # Since 10/23/2019 pwsh is the default shell
@@ -87,12 +87,12 @@ jobs:
 
       - name: Build the Agent for linux
         run: task go:build
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
         run: task go:build-cli
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
         # rsrc will produce a *.syso file that should get automatically recognized by go build command and linked into an executable.
@@ -211,7 +211,7 @@ jobs:
   # This job is responsible for generating the installers (using installbuilder)
   package:
     needs: code-sign-mac-executable
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     env:
       # vars used by installbuilder
@@ -231,10 +231,10 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-        os: [ubuntu-18.04, windows-2019, macos-12]
+        os: [ubuntu-20.04, windows-2019, macos-12]
         arch: [-amd64]
         include:
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             install-builder-name: linux
             executable-path: artifacts/linux-amd64/
           - os: windows-2019
@@ -275,14 +275,14 @@ jobs:
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
-        if: matrix.os == 'ubuntu-18.04' || matrix.os == 'macos-12'
+        if: matrix.os == 'ubuntu-20.04' || matrix.os == 'macos-12'
 
       - name: Rename executable to Arduino_Create_Agent
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
 
       - name: Rename executable to Arduino_Create_Agent_cli
         run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: get year
         run: echo "YEAR=$(date "+%Y")" >> $GITHUB_ENV
@@ -342,7 +342,7 @@ jobs:
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.run
           cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome.tar.gz
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.tar.gz
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -420,7 +420,7 @@ jobs:
           if-no-files-found: error
 
   create-release:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: code-sign-mac-installers
 
     steps:
