@@ -56,7 +56,7 @@ var (
 var (
 	hibernate        = flag.Bool("hibernate", false, "start hibernated")
 	genCert          = flag.Bool("generateCert", false, "")
-	additionalConfig = flag.String("additional-config", "config.ini", "config file path")
+	additionalConfig = flag.String("additional-config", "", "config file path")
 	isLaunchSelf     = flag.Bool("ls", false, "launch self 5 seconds later")
 
 	// Ignored flags for compatibility
