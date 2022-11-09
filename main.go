@@ -37,6 +37,7 @@ import (
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
 	v2 "github.com/arduino/arduino-create-agent/v2"
+	paths "github.com/arduino/go-paths-helper"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
 	log "github.com/sirupsen/logrus"
@@ -180,28 +181,45 @@ func loop() {
 	if *hibernate {
 		return
 	}
-	// autoextract self
+
 	src, _ := os.Executable()
-	dest := filepath.Dir(src)
+	srcPath := paths.New(src)
+	srcDir := srcPath.Parent()
+	log.Print(srcPath)
+	log.Print(srcDir)
 
-	// Parse ini config
-	args, err := parseIni(filepath.Join(dest, "config.ini"))
+	configPath := srcDir.Join("config.ini")
+	log.Print(configPath)
+
+	if configPath.NotExist() {
+		// probably we are on macOS, where the config is in a different dir
+		configPath = srcDir.Parent().Join("Resources", "config.ini")
+		if configPath.NotExist() {
+			log.Panic("config.ini file not found")
+		}
+	}
+
+	// Parse default ini config
+	args, err := parseIni(configPath.String())
 	if err != nil {
-		panic(err)
+		log.Panicf("config.ini cannot be parsed: %s", err)
 	}
 	err = iniConf.Parse(args)
 	if err != nil {
-		panic(err)
+		log.Panicf("cannot parse arguments: %s", err)
 	}
 
-	// Parse additional ini config
-	args, err = parseIni(filepath.Join(dest, *additionalConfig))
-	if err != nil {
-		panic(err)
-	}
-	err = iniConf.Parse(args)
-	if err != nil {
-		panic(err)
+	// Parse additional ini config if defined
+	if len(*additionalConfig) > 0 {
+		log.Print(*additionalConfig)
+		args, err = parseIni(srcDir.Join(*additionalConfig).String())
+		if err != nil {
+			log.Panicf("additional config.ini cannot be parsed: %s", err)
+		}
+		err = iniConf.Parse(args)
+		if err != nil {
+			log.Panicf("cannot parse arguments: %s", err)
+		}
 	}
 
 	// Instantiate Tools
@@ -371,7 +389,7 @@ func loop() {
 
 	go func() {
 		// check if certificates exist; if not, use plain http
-		if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
+		if srcDir.Join("cert.pem").NotExist() {
 			log.Error("Could not find HTTPS certificate. Using plain HTTP only.")
 			return
 		}
@@ -382,7 +400,7 @@ func loop() {
 		for i < end {
 			i = i + 1
 			portSSL = ":" + strconv.Itoa(i)
-			if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+			if err := r.RunTLS(*address+portSSL, srcDir.Join("cert.pem").String(), srcDir.Join("key.pem").String()); err != nil {
 				log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				continue
 			} else {
