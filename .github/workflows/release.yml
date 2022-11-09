@@ -53,7 +53,7 @@ jobs:
         run: |
           curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip 
           unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
-          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
+          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "IS_PRE=true" >> $GITHUB_OUTPUT; fi
 
       - name: Disable EOL conversions
         run: git config --global core.autocrlf false
@@ -524,7 +524,7 @@ jobs:
         run: |
           curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip
           unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
-          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
+          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "IS_PRE=true" >> $GITHUB_OUTPUT; fi
 
       #  mandatory step because upload-release-action does not support multiple folders
       - name: prepare artifacts for the release
@@ -568,7 +568,7 @@ jobs:
           vt_title_pre="${vt_title_pre//'\n'/'%0A'}"
           vt_links="${vt_links//$'\n'/'%0A'}" # replace \n with a special character -> generates a single lines, \n will be reintroduced later
           vt_title_post="${vt_title_post//'\n'/'%0A'}"
-          echo "::set-output name=RBODY::$body'%0A'$vt_title_pre$vt_links$vt_title_post"
+          echo "RBODY=$body'%0A'$vt_title_pre$vt_links$vt_title_post" >> $GITHUB_OUTPUT
 
       - name: Create Github Release
         uses: actions/create-release@v1
