@@ -185,17 +185,14 @@ func loop() {
 	src, _ := osext.Executable()
 	srcPath := paths.New(src)
 	srcDir := srcPath.Parent()
-	log.Print(srcPath)
-	log.Print(srcDir)
 
 	configPath := srcDir.Join("config.ini")
-	log.Print(configPath)
 
 	if configPath.NotExist() {
 		// probably we are on macOS, where the config is in a different dir
 		configPath = srcDir.Parent().Join("Resources", "config.ini")
 		if configPath.NotExist() {
-			log.Panic("config.ini file not found")
+			log.Panicf("config.ini file not found in %s", configPath)
 		}
 	}
 
@@ -208,17 +205,23 @@ func loop() {
 	if err != nil {
 		log.Panicf("cannot parse arguments: %s", err)
 	}
+	log.Infof("using config from %s", configPath)
 
 	// Parse additional ini config if defined
 	if len(*additionalConfig) > 0 {
-		log.Print(*additionalConfig)
-		args, err = parseIni(srcDir.Join(*additionalConfig).String())
-		if err != nil {
-			log.Panicf("additional config.ini cannot be parsed: %s", err)
-		}
-		err = iniConf.Parse(args)
-		if err != nil {
-			log.Panicf("cannot parse arguments: %s", err)
+		additionalConfigPath := paths.New(*additionalConfig)
+		if additionalConfigPath.NotExist() {
+			log.Infof("additional config file not found in %s", additionalConfigPath.String())
+		} else {
+			args, err = parseIni(additionalConfigPath.String())
+			if err != nil {
+				log.Panicf("additional config cannot be parsed: %s", err)
+			}
+			err = iniConf.Parse(args)
+			if err != nil {
+				log.Panicf("cannot parse arguments: %s", err)
+			}
+			log.Infof("using additional config from %s", additionalConfigPath.String())
 		}
 	}
 
