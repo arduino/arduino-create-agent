@@ -186,13 +186,25 @@ func loop() {
 	srcPath := paths.New(src)
 	srcDir := srcPath.Parent()
 
-	configPath := srcDir.Join("config.ini")
+	var configPath *paths.Path
 
-	if configPath.NotExist() {
-		// probably we are on macOS, where the config is in a different dir
-		configPath = srcDir.Parent().Join("Resources", "config.ini")
+	// see if the env var is defined, if it is take the config from there
+	envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG")
+	if envConfig != "" {
+		configPath = paths.New(envConfig)
 		if configPath.NotExist() {
-			log.Panicf("config.ini file not found in %s", configPath)
+			log.Panicf("config from env var %s does not exists", envConfig)
+		}
+	} else {
+		// take the config from the folder where the binary sits
+		configPath = srcDir.Join("config.ini")
+
+		if configPath.NotExist() {
+			// probably we are on macOS, where the config is in a different dir
+			configPath = srcDir.Parent().Join("Resources", "config.ini")
+			if configPath.NotExist() {
+				log.Panicf("config.ini file not found in %s", configPath)
+			}
 		}
 	}
 
