@@ -558,11 +558,14 @@ jobs:
       - name: Organize release body message #use sed to clean and format the output markdown style
         id: release_body
         run: |
-          body=$(cat CHANGELOG.md)
-          vt_title_pre="<details close>\n<summary>VirusTotal analysis 🛡</summary>\n\n"
-          vt_links="$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')"
-          vt_title_post="\n</details>"
-          echo "RBODY=$body\n$vt_title_pre$vt_links$vt_title_post" >> $GITHUB_OUTPUT
+          echo "RBODY<<EOF" >> $GITHUB_OUTPUT
+          echo "$(cat CHANGELOG.md)" >> $GITHUB_OUTPUT
+          echo "<details close>" >> $GITHUB_OUTPUT
+          echo "<summary>VirusTotal analysis 🛡</summary>" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')" >> $GITHUB_OUTPUT
+          echo "</details>" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Github Release
         uses: actions/create-release@v1
