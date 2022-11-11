@@ -559,16 +559,10 @@ jobs:
         id: release_body
         run: |
           body=$(cat CHANGELOG.md)
-          body="${body//'%'/'%25'}"
-          body="${body//$'\n'/'%0A'}"
-          body="${body//$'\r'/'%0D'}"
           vt_title_pre="<details close>\n<summary>VirusTotal analysis 🛡</summary>\n\n"
           vt_links="$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')"
           vt_title_post="\n</details>"
-          vt_title_pre="${vt_title_pre//'\n'/'%0A'}"
-          vt_links="${vt_links//$'\n'/'%0A'}" # replace \n with a special character -> generates a single lines, \n will be reintroduced later
-          vt_title_post="${vt_title_post//'\n'/'%0A'}"
-          echo "RBODY=$body'%0A'$vt_title_pre$vt_links$vt_title_post" >> $GITHUB_OUTPUT
+          echo "RBODY=$body\n$vt_title_pre$vt_links$vt_title_post" >> $GITHUB_OUTPUT
 
       - name: Create Github Release
         uses: actions/create-release@v1
