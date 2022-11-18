@@ -266,23 +266,20 @@ jobs:
           }
 
           # Ask Gon for zip output to force notarization process to take place.
-          # The CI will ignore the zip output, using the signed binary only.
+          # The CI will upload the zip output
           zip {
-            output_path = "${{ env.PROJECT_NAME }}.zip"
+            output_path = "ArduinoCreateAgent.app_notarized.zip"
           }
           EOF
 
       - name: Sign and notarize binary
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
-        # This step will overwrite the non signed mac artifact (arduino-create-agent-${{ env.RUNS_ON }})
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
-          path: |
-            ${{ env.PROJECT_NAME }}
-            !${{ env.PROJECT_NAME }}.zip
+          name: ArduinoCreateAgent.app_notarized
+          path: ArduinoCreateAgent.app_notarized.zip
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -314,6 +311,7 @@ jobs:
           - os: ubuntu-20.04
             install-builder-name: linux
             executable-path: artifacts/linux-amd64/
+            artifact-name: arduino-create-agent-ubuntu-20.04-amd64
           - os: windows-2019
             arch: -386
             browser: edge
@@ -321,17 +319,20 @@ jobs:
             executable-path: artifacts/windows/
             extension: .exe
             installer-extension: .exe
+            artifact-name: arduino-create-agent-windows-2019-386
           - os: windows-2019
             browser: edge
             install-builder-name: windows
             executable-path: artifacts/windows/
             extension: .exe
             installer-extension: .exe
+            artifact-name: arduino-create-agent-windows-2019-amd64
           - os: macos-12
             browser: safari
             install-builder-name: osx
-            executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
+            executable-path: artifacts/macos/
             installer-extension: .app
+            artifact-name: ArduinoCreateAgent.app_notarized
 
     container:
       image: floydpink/ubuntu-install-builder:22.10.0
@@ -346,7 +347,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
+          name: ${{ matrix.artifact-name }}
           path: ${{ matrix.executable-path }}  # path expected by installbuilder
 
         # zip artifacts do not mantain executable permission
