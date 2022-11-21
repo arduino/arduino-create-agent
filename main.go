@@ -24,7 +24,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/user"
-	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -239,9 +238,10 @@ func loop() {
 
 	// Instantiate Tools
 	usr, _ := user.Current()
-	directory := filepath.Join(usr.HomeDir, ".arduino-create")
+	usrDir := paths.New(usr.HomeDir)
+	agentDir := usrDir.Join(".arduino-create")
 	Tools = tools.Tools{
-		Directory: directory,
+		Directory: agentDir.String(),
 		IndexURL:  *indexURL,
 		Logger: func(msg string) {
 			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -331,16 +331,12 @@ func loop() {
 	// save crashreport to file
 	if *crashreport {
 		logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
-		currDir, err := osext.ExecutableFolder()
-		if err != nil {
-			panic(err)
-		}
 		// handle logs directory creation
-		logsDir := filepath.Join(currDir, "logs")
-		if _, err := os.Stat(logsDir); os.IsNotExist(err) {
-			os.Mkdir(logsDir, 0700)
+		logsDir := agentDir.Join("logs")
+		if logsDir.NotExist() {
+			logsDir.Mkdir()
 		}
-		logFile, err := os.OpenFile(filepath.Join(logsDir, logFilename), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
+		logFile, err := os.OpenFile(logsDir.Join(logFilename).String(), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
 		if err != nil {
 			log.Print("Cannot create file used for crash-report")
 		} else {
@@ -399,7 +395,7 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(directory)
+	goa := v2.Server(agentDir.String())
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
