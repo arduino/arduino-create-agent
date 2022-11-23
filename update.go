@@ -30,38 +30,39 @@
 package main
 
 import (
-	"github.com/arduino/arduino-create-agent/updater"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
-	"github.com/kardianos/osext"
 )
 
 func updateHandler(c *gin.Context) {
 
-	path, err := osext.Executable()
+	// path, err := osext.Executable()
 
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
+	// if err != nil {
+	// 	c.JSON(500, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
-	var up = &updater.Updater{
-		CurrentVersion: version,
-		APIURL:         *updateUrl,
-		BinURL:         *updateUrl,
-		DiffURL:        "",
-		Dir:            "update/",
-		CmdName:        *appName,
-	}
+	// var up = &updater.Updater{
+	// 	CurrentVersion: version,
+	// 	APIURL:         *updateUrl,
+	// 	BinURL:         *updateUrl,
+	// 	DiffURL:        "",
+	// 	Dir:            "update/",
+	// 	CmdName:        *appName,
+	// }
 
-	err = up.BackgroundRun()
+	// err = up.BackgroundRun()
 
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
+	// if err != nil {
+	// 	c.JSON(500, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
-	path = updater.TempPath(path)
+	// path = updater.TempPath(path)
 
-	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
-	Systray.Update(path)
+	c.JSON(200, gin.H{"success": "This version of the agent do not support autoupdate, please manually update to a newer one: https://github.com/arduino/arduino-create-agent/releases"})
+	log.Warn("This version of the agent do not support autoupdate, please manually update to a newer one: https://github.com/arduino/arduino-create-agent/releases")
+	// Systray.Update(path)
 }
