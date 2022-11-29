@@ -1,4 +1,4 @@
-name: release
+name: Release
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+*"
 
 env:
+  # As defined by the Taskfile's PROJECT_NAME variable
+  PROJECT_NAME: arduino-create-agent
   TARGET: "/CreateAgent/Stable"
   OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
   VERSION_TARGET: "arduino-create-static/agent-metadata/"
@@ -13,6 +15,8 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
   KEYCHAIN: "sign.keychain"
+  KEYCHAIN_PASSWORD: keychainpassword # Arbitrary password for a keychain that exists only for the duration of the job, so not secret
+  GON_CONFIG_PATH: gon.config.hcl
   INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
   AC_USERNAME: ${{ secrets.AC_USERNAME }} # used by gon
   AC_PASSWORD: ${{ secrets.AC_PASSWORD }} # used by gon
@@ -22,7 +26,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-2019, macos-11]
+        os: [ubuntu-20.04, windows-2019, macos-12]
         arch: [-amd64]
         include:
         - os: windows-2019
@@ -49,7 +53,7 @@ jobs:
         run: |
           curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip 
           unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
-          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
+          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "IS_PRE=true" >> $GITHUB_OUTPUT; fi
 
       - name: Disable EOL conversions
         run: git config --global core.autocrlf false
@@ -65,7 +69,7 @@ jobs:
         # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
         run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Install Go deps
         # Since 10/23/2019 pwsh is the default shell
@@ -87,12 +91,12 @@ jobs:
 
       - name: Build the Agent for linux
         run: task go:build
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
         # build the agent without GUI support (no tray icon)
       - name: Build the Agent-cli
         run: task go:build-cli
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
         # rsrc will produce a *.syso file that should get automatically recognized by go build command and linked into an executable.
@@ -118,15 +122,15 @@ jobs:
           CGO_CFLAGS: -mmacosx-version-min=10.11
           CGO_LDFLAGS: -mmacosx-version-min=10.11
         run: task go:build
-        if: matrix.os == 'macos-11'
+        if: matrix.os == 'macos-12'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
-        run: go-selfupdate arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
+        run: go-selfupdate ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch != '-386' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Create autoupdate files for win32
-        run: go-selfupdate -platform windows${{ matrix.arch }} arduino-create-agent${{ matrix.ext }} ${TAG_VERSION}
+        run: go-selfupdate -platform windows${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch == '-386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
@@ -139,154 +143,48 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
           path: |
-            arduino-create-agent*
+            ${{ env.PROJECT_NAME }}*
             config.ini
           if-no-files-found: error
 
-  # The code-sign-mac-executable job will download the macos artifact from the previous job, sign e notarize the binary and re-upload it.
-  code-sign-mac-executable:
+  create-macos-bundle:
     needs: build
-    strategy:
-      matrix: # to allow support for future architectures
-        os: [macos-11]
-        arch: [-amd64]
 
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
-          path: arduino-create-agent
-
-      - name: Import Code-Signing Certificates
-        run: |
-          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > ${{ env.INSTALLER_CERT_MAC_PATH }}
-          security create-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security default-keychain -s ${{ env.KEYCHAIN }}
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security import ${{ env.INSTALLER_CERT_MAC_PATH }} -k ${{ env.KEYCHAIN }} -f pkcs12 -A -T /usr/bin/codesign -P ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-          security set-key-partition-list -S apple-tool:,apple: -s -k ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-
-      - name: Install gon for code signing and app notarization
-        run: |
-          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.zip
-          unzip gon_macos.zip -d /usr/local/bin
-
-      - name: Write gon config to file
-        # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
-        run: |
-          cat > gon.config.hcl <<EOF
-          source = ["arduino-create-agent/arduino-create-agent"]
-          bundle_id = "cc.arduino.arduino-agent"
-          sign {
-            application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
-          }
-          # Ask Gon for zip output to force notarization process to take place.
-          # The CI will ignore the zip output, using the signed binary only.
-          zip {
-            output_path = "arduino-create-agent.zip"
-          }
-          EOF
-
-      - name: Code sign and notarize app
-        run: |
-          echo "gon will notarize executable in arduino-create-agent/arduino-create-agent"
-          gon -log-level=debug -log-json gon.config.hcl
-        timeout-minutes: 30
-
-        # This step will overwrite the non signed mac artifact (arduino-create-agent-${{ env.RUNS_ON }})
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
-          path: |
-            arduino-create-agent
-            !arduino-create-agent.zip
-          if-no-files-found: error
-
-  # This job is responsible for generating the installers (using installbuilder)
-  package:
-    needs: code-sign-mac-executable
-    runs-on: ubuntu-18.04
-
+    runs-on: macos-12
     env:
-      # vars used by installbuilder
-      INSTALLBUILDER_PATH: "/opt/installbuilder-22.10.0/bin/builder"
-      INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
-      # vars passed to installbuilder to install https certs automatically
-      CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
-      NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
-      CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
-      CREATE_OSX_BUNDLED_MG: 0  # tell installbuilder to not create the DMG, gon will take care of that later
-      # installbuilder will read this vars automatically (defined in installer.xml):
-      INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
-      INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
-      INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-      INSTALLER_CERT_MAC_P12: "/tmp/ArduinoCerts2020.p12"
-
-    strategy:
-      fail-fast: false  # if one os is failing continue nonetheless
-      matrix:  # used to generate installers for different OS and not for runs-on
-        os: [ubuntu-18.04, windows-2019, macos-11]
-        arch: [-amd64]
-        include:
-          - os: ubuntu-18.04
-            install-builder-name: linux
-            executable-path: artifacts/linux-amd64/
-          - os: windows-2019
-            arch: -386
-            browser: edge
-            install-builder-name: windows
-            executable-path: artifacts/windows/
-            extension: .exe
-            installer-extension: .exe
-          - os: windows-2019
-            browser: edge
-            install-builder-name: windows
-            executable-path: artifacts/windows/
-            extension: .exe
-            installer-extension: .exe
-          - os: macos-11
-            browser: safari
-            install-builder-name: osx
-            executable-path: 'skel/ArduinoCreateAgent.app/Contents/MacOS/'
-            installer-extension: .app
-
-    container:
-      image: floydpink/ubuntu-install-builder:22.10.0
+      EXE_PATH: "skel/ArduinoCreateAgent.app/Contents/MacOS/"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains install.xml
+          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains the bundle structure and icons
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
-          path: ${{ matrix.executable-path }}  # path expected by installbuilder
+          name: ${{ env.PROJECT_NAME }}-macos-12-amd64
+          path: ${{ env.EXE_PATH }}
+
+      - name: Remove placeholder file
+        run: rm -rf ${{ env.EXE_PATH }}.empty
+
+      - name: Move config.ini to the Resources dir
+        working-directory: ${{ env.EXE_PATH }}
+        run: mv config.ini ../Resources/
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
-        run: chmod -v +x ${{ matrix.executable-path }}arduino-create-agent*
-        if: matrix.os == 'ubuntu-18.04' || matrix.os == 'macos-11'
+        run: chmod -v +x ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }}
 
       - name: Rename executable to Arduino_Create_Agent
-        run: mv -v ${{ matrix.executable-path }}arduino-create-agent${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
-
-      - name: Rename executable to Arduino_Create_Agent_cli
-        run: mv -v ${{ matrix.executable-path }}arduino-create-agent_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
-        if: matrix.os == 'ubuntu-18.04'
+        run: mv -v ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }} ${{ env.EXE_PATH }}Arduino_Create_Agent
 
       - name: get year
         run: echo "YEAR=$(date "+%Y")" >> $GITHUB_ENV
-        if: matrix.os == 'macos-11'
 
       - name: Generate Info.plist for MacOS
         run: |
@@ -309,7 +207,185 @@ jobs:
 
           </dict></plist>
           EOF
-        if: matrix.os == 'macos-11'
+
+      - name: Tar bundle to keep permissions
+        run: tar -cvf ArduinoCreateAgent.app.tar -C skel/ .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: ArduinoCreateAgent.app
+          path: ArduinoCreateAgent.app.tar
+          
+  # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it.
+  notarize-macos:
+    name: Notarize bundle
+    runs-on: macos-12
+    env:
+      GON_PATH: ${{ github.workspace }}/gon
+    needs: create-macos-bundle
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ArduinoCreateAgent.app
+
+      - name: un-Tar bundle
+        run: tar -xvf ArduinoCreateAgent.app.tar
+
+      - name: Import Code-Signing Certificates
+        run: |
+          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > "${{ env.INSTALLER_CERT_MAC_PATH }}"
+          security create-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security default-keychain -s "${{ env.KEYCHAIN }}"
+          security unlock-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security import \
+            "${{ env.INSTALLER_CERT_MAC_PATH }}" \
+            -k "${{ env.KEYCHAIN }}" \
+            -f pkcs12 \
+            -A \
+            -T "/usr/bin/codesign" \
+            -P "${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "${{ env.KEYCHAIN_PASSWORD }}" \
+            "${{ env.KEYCHAIN }}"
+
+      - name: Install gon for code signing and app notarization
+        uses: actions/checkout@v3
+        with:
+          repository: darkvertex/gon #this fork has support for --deep notarization
+          path: ${{ env.GON_PATH }}
+          ref: deep_sign_support
+
+      - name: Build gon
+        working-directory: ${{ env.GON_PATH }}/cmd/gon/
+        run: |
+          ls -lah
+          go build
+          mv gon /usr/local/bin
+
+      - name: Write gon config to file
+        # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
+        run: |
+          cat > "${{ env.GON_CONFIG_PATH }}" <<EOF
+          # See: https://github.com/mitchellh/gon#configuration-file
+          source = ["ArduinoCreateAgent.app"]
+          bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
+
+          sign {
+            application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
+            deep = true
+          }
+
+          # Ask Gon for zip output to force notarization process to take place.
+          # The CI will upload the zip output
+          zip {
+            output_path = "ArduinoCreateAgent.app_notarized.zip"
+          }
+          EOF
+
+      - name: Sign and notarize binary
+        run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ArduinoCreateAgent.app_notarized
+          path: ArduinoCreateAgent.app_notarized.zip
+          if-no-files-found: error
+
+  # This job is responsible for generating the installers (using installbuilder)
+  package:
+    needs: notarize-macos
+    runs-on: ubuntu-20.04
+
+    env:
+      # vars used by installbuilder
+      INSTALLBUILDER_PATH: "/opt/installbuilder-22.10.0/bin/builder"
+      INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
+      # vars passed to installbuilder to install https certs automatically
+      CERT_INSTALL: "ask_certificates_install=CI"  # win(edge),mac(safari)
+      NO_CERT_INSTALL: "ask_certificates_install=CS"  # linux
+      CHOICE_CERT_INSTALL: "ask_certificates_install=CC"  # win,mac:(ff,chrome)
+      CREATE_OSX_BUNDLED_MG: 0  # tell installbuilder to not create the DMG, gon will take care of that later
+      # installbuilder will read this vars automatically (defined in installer.xml):
+      INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
+      INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
+      INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
+      INSTALLER_CERT_MAC_P12: "/tmp/ArduinoCerts2020.p12"
+
+    strategy:
+      fail-fast: false  # if one os is failing continue nonetheless
+      matrix:  # used to generate installers for different OS and not for runs-on
+        os: [ubuntu-20.04, windows-2019, macos-12]
+        arch: [-amd64]
+        include:
+          - os: ubuntu-20.04
+            install-builder-name: linux
+            executable-path: artifacts/linux-amd64/
+            artifact-name: arduino-create-agent-ubuntu-20.04-amd64
+          - os: windows-2019
+            arch: -386
+            browser: edge
+            install-builder-name: windows
+            executable-path: artifacts/windows/
+            extension: .exe
+            installer-extension: .exe
+            artifact-name: arduino-create-agent-windows-2019-386
+          - os: windows-2019
+            browser: edge
+            install-builder-name: windows
+            executable-path: artifacts/windows/
+            extension: .exe
+            installer-extension: .exe
+            artifact-name: arduino-create-agent-windows-2019-amd64
+          - os: macos-12
+            browser: safari
+            install-builder-name: osx
+            executable-path: artifacts/macos/ArduinoCreateAgent.app
+            installer-extension: .app
+            artifact-name: ArduinoCreateAgent.app_notarized # this artifact contains the Contents directory
+
+    container:
+      image: floydpink/ubuntu-install-builder:22.10.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains install.xml
+          token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.executable-path }}  # path expected by installbuilder
+
+      - name: unzip mac notarized bundle
+        working-directory: ${{ matrix.executable-path }}
+        run: |
+          apt install unzip
+          unzip ${{ matrix.artifact-name }}.zip
+          rm ${{ matrix.artifact-name }}.zip
+        if:  matrix.os == 'macos-12'
+
+        # zip artifacts do not mantain executable permission
+      - name: Make executable
+        run: chmod -v +x ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}*
+        if: matrix.os == 'ubuntu-20.04'
+
+      - name: Rename executable to Arduino_Create_Agent
+        run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
+        if:  matrix.os != 'macos-12'
+
+      - name: Rename executable to Arduino_Create_Agent_cli
+        run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
@@ -320,7 +396,7 @@ jobs:
 
       - name: Save macos signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
-        if: matrix.os == 'macos-11'
+        if: matrix.os == 'macos-12'
 
         # win(edge),mac(safari) -> CERT_INSTALL and win,mac:(ff,chrome) -> CHOICE_CERT_INSTALL
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
@@ -332,7 +408,7 @@ jobs:
           cp -vr ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome${{matrix.installer-extension}}
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-CC${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox${{matrix.installer-extension}}
           rm -r ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer-C*
-        if: matrix.os == 'windows-2019' || matrix.os == 'macos-11'
+        if: matrix.os == 'windows-2019' || matrix.os == 'macos-12'
 
         # linux
       - name: Launch Bitrock installbuilder-20 with NO_CERT_INSTALL
@@ -342,7 +418,7 @@ jobs:
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.run ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.run
           cp -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-chrome.tar.gz
           mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-linux-x64-installer-CS.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer-firefox.tar.gz
-        if: matrix.os == 'ubuntu-18.04'
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -359,7 +435,7 @@ jobs:
         browser: [safari, firefox, chrome]
         arch: [-amd64]
 
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v3
@@ -373,16 +449,26 @@ jobs:
 
       - name: Import Code-Signing Certificates
         run: |
-          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > ${{ env.INSTALLER_CERT_MAC_PATH }}
-          security create-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security default-keychain -s ${{ env.KEYCHAIN }}
-          security unlock-keychain -p ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
-          security import ${{ env.INSTALLER_CERT_MAC_PATH }} -k ${{ env.KEYCHAIN }} -f pkcs12 -A -T /usr/bin/codesign -P ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-          security set-key-partition-list -S apple-tool:,apple: -s -k ${{ secrets.KEYCHAIN_PASSWORD }} ${{ env.KEYCHAIN }}
+          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > "${{ env.INSTALLER_CERT_MAC_PATH }}"
+          security create-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security default-keychain -s "${{ env.KEYCHAIN }}"
+          security unlock-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security import \
+            "${{ env.INSTALLER_CERT_MAC_PATH }}" \
+            -k "${{ env.KEYCHAIN }}" \
+            -f pkcs12 \
+            -A \
+            -T "/usr/bin/codesign" \
+            -P "${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "${{ env.KEYCHAIN_PASSWORD }}" \
+            "${{ env.KEYCHAIN }}"
 
       - name: Install gon for code signing and app notarization
         run: |
-          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.3/gon_macos.zip
+          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.5/gon_macos.zip
           unzip gon_macos.zip -d /usr/local/bin
 
       - name: Write gon config to file
@@ -390,7 +476,7 @@ jobs:
         run: |
           cat > gon.config_installer.hcl <<EOF
           source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"]
-          bundle_id = "cc.arduino.arduino-agent-installer"
+          bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}-installer"
 
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
@@ -420,7 +506,7 @@ jobs:
           if-no-files-found: error
 
   create-release:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: code-sign-mac-installers
 
     steps:
@@ -438,7 +524,7 @@ jobs:
         run: |
           curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip
           unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
-          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "::set-output name=IS_PRE::true"; fi
+          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "IS_PRE=true" >> $GITHUB_OUTPUT; fi
 
       #  mandatory step because upload-release-action does not support multiple folders
       - name: prepare artifacts for the release
@@ -458,8 +544,8 @@ jobs:
           update_release_body: false # `true` won't work because trigger type is not release
           files: |
             release/*.exe
-            arduino-create-agent-windows-2019-386/arduino-create-agent.exe
-            arduino-create-agent-windows-2019-amd64/arduino-create-agent.exe
+            ${{ env.PROJECT_NAME }}-windows-2019-386/${{ env.PROJECT_NAME }}.exe
+            ${{ env.PROJECT_NAME }}-windows-2019-amd64/${{ env.PROJECT_NAME }}.exe
 
       - name: Create changelog
         uses: arduino/create-changelog@v1
@@ -472,17 +558,14 @@ jobs:
       - name: Organize release body message #use sed to clean and format the output markdown style
         id: release_body
         run: |
-          body=$(cat CHANGELOG.md)
-          body="${body//'%'/'%25'}"
-          body="${body//$'\n'/'%0A'}"
-          body="${body//$'\r'/'%0D'}"
-          vt_title_pre="<details close>\n<summary>VirusTotal analysis 🛡</summary>\n\n"
-          vt_links="$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')"
-          vt_title_post="\n</details>"
-          vt_title_pre="${vt_title_pre//'\n'/'%0A'}"
-          vt_links="${vt_links//$'\n'/'%0A'}" # replace \n with a special character -> generates a single lines, \n will be reintroduced later
-          vt_title_post="${vt_title_post//'\n'/'%0A'}"
-          echo "::set-output name=RBODY::$body'%0A'$vt_title_pre$vt_links$vt_title_post"
+          echo "RBODY<<EOF" >> $GITHUB_OUTPUT
+          echo "$(cat CHANGELOG.md)" >> $GITHUB_OUTPUT
+          echo "<details close>" >> $GITHUB_OUTPUT
+          echo "<summary>VirusTotal analysis 🛡</summary>" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "$(echo ${{ steps.virustotal_step.outputs.analysis}} | sed 's/release\///g' | sed 's/,/\n/g' | sed 's/^/- [/' | sed 's/=/](/' | sed 's/$/)/')" >> $GITHUB_OUTPUT
+          echo "</details>" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Github Release
         uses: actions/create-release@v1

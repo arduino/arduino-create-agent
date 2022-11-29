@@ -54,7 +54,7 @@ jobs:
             RESULT="false"
           fi
 
-          echo "::set-output name=result::$RESULT"
+          echo "result=$RESULT" >> $GITHUB_OUTPUT
 
   #this job is heavily customized because the build is quite a bit different from other tooling team projects
   build:
@@ -64,7 +64,7 @@ jobs:
     #use the strategy instead because we still use the native build
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-2019, macos-11]
+        os: [ubuntu-20.04, windows-2019, macos-12]
         arch: [-amd64]
         include:
         - os: windows-2019
