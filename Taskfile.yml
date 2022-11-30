@@ -30,7 +30,7 @@ tasks:
     desc: Build the project, to use a specific version use `task build TAG_VERSION=x.x.x`
     dir: "{{.DEFAULT_GO_MODULE_PATH}}"
     cmds:
-      - go build -v -i {{default "" .ADDITIONAL_FLAGS}} -o {{default "arduino-create-agent" .APP_NAME}} -ldflags '-X main.version={{default .TAG_TEST .TAG_VERSION}} -X main.git_revision={{.COMMIT}} {{default "" .WIN_FLAGS}}'
+      - go build -v -i {{default "" .ADDITIONAL_FLAGS}} -o {{default "arduino-create-agent" .APP_NAME}} -ldflags '-X main.version={{default .TAG_TEST .TAG_VERSION}} -X main.commit={{.COMMIT}} {{default "" .WIN_FLAGS}}'
     vars:
       COMMIT:
         sh: git log -n 1 --format=%h

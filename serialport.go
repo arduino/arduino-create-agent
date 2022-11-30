@@ -27,6 +27,7 @@ import (
 	serial "go.bug.st/serial"
 )
 
+// SerialConfig is the serial port configuration
 type SerialConfig struct {
 	Name  string
 	Baud  int
@@ -63,11 +64,13 @@ type serport struct {
 	bufferwatcher Bufferflow
 }
 
+// SpPortMessage is the serial port message
 type SpPortMessage struct {
 	P string // the port, i.e. com22
 	D string // the data, i.e. G0 X0 Y0
 }
 
+// SpPortMessageRaw is the raw serial port message
 type SpPortMessageRaw struct {
 	P string // the port, i.e. com22
 	D []byte // the data, i.e. G0 X0 Y0
@@ -76,7 +79,7 @@ type SpPortMessageRaw struct {
 func (p *serport) reader(buftype string) {
 
 	timeCheckOpen := time.Now()
-	var buffered_ch bytes.Buffer
+	var bufferedCh bytes.Buffer
 
 	serialBuffer := make([]byte, 1024)
 	for {
@@ -108,17 +111,17 @@ func (p *serport) reader(buftype string) {
 				p.bufferwatcher.OnIncomingData(data)
 			case "default": // the bufferbuftype is actually called default 🤷‍♂️
 				// save the left out bytes for the next iteration due to UTF-8 encoding
-				bufferPart = append(buffered_ch.Bytes(), bufferPart[:n]...)
-				n += len(buffered_ch.Bytes())
-				buffered_ch.Reset()
+				bufferPart = append(bufferedCh.Bytes(), bufferPart[:n]...)
+				n += len(bufferedCh.Bytes())
+				bufferedCh.Reset()
 				for i, w := 0, 0; i < n; i += w {
 					runeValue, width := utf8.DecodeRune(bufferPart[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed length)
 					if runeValue == utf8.RuneError {
-						buffered_ch.Write(bufferPart[i:n])
+						bufferedCh.Write(bufferPart[i:n])
 						break
 					}
 					if i == n {
-						buffered_ch.Reset()
+						bufferedCh.Reset()
 					}
 					data += string(runeValue)
 					w = width

@@ -47,8 +47,8 @@ import (
 
 var (
 	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
-	git_revision          = "xxxxxxxx"  //don't modify it, Jenkins will take care
-	embedded_autoextract  = false
+	commit                = "xxxxxxxx"  //don't modify it, Jenkins will take care
+	embeddedAutoextract   = false
 	port                  string
 	portSSL               string
 	requiredToolsAPILevel = "v1"
@@ -80,7 +80,7 @@ var (
 	origins      = iniConf.String("origins", "", "Allowed origin list for CORS")
 	regExpFilter = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
 	signatureKey = iniConf.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
-	updateUrl    = iniConf.String("updateUrl", "", "")
+	updateURL    = iniConf.String("updateUrl", "", "")
 	verbose      = iniConf.Bool("v", true, "show debug logging")
 	crashreport  = iniConf.Bool("crashreport", false, "enable crashreport logging")
 )
@@ -91,9 +91,9 @@ var (
 	Systray systray.Systray
 )
 
-type NullWriter int
+type nullWriter int
 
-func (NullWriter) Write([]byte) (int, error) { return 0, nil }
+func (nullWriter) Write([]byte) (int, error) { return 0, nil }
 
 type logWriter struct{}
 
@@ -102,7 +102,7 @@ func (u *logWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-var logger_ws logWriter
+var loggerWs logWriter
 
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
@@ -122,7 +122,7 @@ func main() {
 	flag.Parse()
 
 	// Generate certificates
-	if *genCert == true {
+	if *genCert {
 		generateCertificates()
 		os.Exit(0)
 	}
@@ -133,7 +133,7 @@ func main() {
 	// SetupSystray is the main thread
 	Systray = systray.Systray{
 		Hibernate: *hibernate,
-		Version:   version + "-" + git_revision,
+		Version:   version + "-" + commit,
 		DebugURL: func() string {
 			return "http://" + *address + port
 		},
@@ -187,7 +187,7 @@ func loop() {
 	src, _ := osext.Executable()
 	dest := filepath.Dir(src)
 
-	if embedded_autoextract {
+	if embeddedAutoextract {
 		// save the config.ini (if it exists)
 		if _, err := os.Stat(filepath.Join(dest, "config.ini")); os.IsNotExist(err) {
 			log.Println("First run, unzipping self")
@@ -304,7 +304,7 @@ func loop() {
 
 	if !*verbose {
 		log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
-		log.SetOutput(new(NullWriter)) //route all logging to nullwriter
+		log.SetOutput(new(nullWriter)) //route all logging to nullwriter
 	}
 
 	// save crashreport to file
@@ -422,11 +422,11 @@ func loop() {
 	}()
 }
 
-var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHtml))
+var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHTML))
 
 // If you navigate to this server's homepage, you'll get this HTML
 // so you can directly interact with the serial port server
-const homeTemplateHtml = `<!DOCTYPE html>
+const homeTemplateHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <title>Arduino Create Agent Debug Console</title>

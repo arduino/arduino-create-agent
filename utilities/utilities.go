@@ -105,6 +105,7 @@ func call(stack []*exec.Cmd, pipes []*io.PipeWriter) (err error) {
 	return stack[0].Wait()
 }
 
+// Unzip will unzip a file to a destination
 func Unzip(zippath string, destination string) (err error) {
 	r, err := zip.OpenReader(zippath)
 	if err != nil {

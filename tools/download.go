@@ -52,11 +52,9 @@ type system struct {
 }
 
 type tool struct {
-	Name        string   `json:"name"`
-	Version     string   `json:"version"`
-	Systems     []system `json:"systems"`
-	url         string
-	destination string
+	Name    string   `json:"name"`
+	Version string   `json:"version"`
+	Systems []system `json:"systems"`
 }
 
 type index struct {
@@ -110,7 +108,8 @@ func checkGPGSig(fileName string, sigFileName string) error {
 	return err
 }
 
-func (t *Tools) DownloadPackageIndex(index_file, signature_file string) error {
+// DownloadPackageIndex will download a package_index file
+func (t *Tools) DownloadPackageIndex(indexFile, signatureFile string) error {
 	// Fetch the index
 	resp, err := http.Get(t.IndexURL)
 	if err != nil {
@@ -132,12 +131,12 @@ func (t *Tools) DownloadPackageIndex(index_file, signature_file string) error {
 	defer signature.Body.Close()
 
 	// Read the body
-	signature_body, err := ioutil.ReadAll(signature.Body)
+	signatureBody, err := ioutil.ReadAll(signature.Body)
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(index_file, body, 0644)
-	ioutil.WriteFile(signature_file, signature_body, 0644)
+	ioutil.WriteFile(indexFile, body, 0644)
+	ioutil.WriteFile(signatureFile, signatureBody, 0644)
 
 	t.LastRefresh = time.Now()
 
@@ -172,23 +171,23 @@ func pathExists(path string) bool {
 // if it already exists.
 func (t *Tools) Download(pack, name, version, behaviour string) error {
 
-	index_file := path.Join(t.Directory, "package_index.json")
-	signature_file := path.Join(t.Directory, "package_index.json.sig")
+	indexFile := path.Join(t.Directory, "package_index.json")
+	signatureFile := path.Join(t.Directory, "package_index.json.sig")
 
 	if _, err := os.Stat(path.Join(t.Directory, "package_index.json")); err != nil || time.Since(t.LastRefresh) > 1*time.Hour {
 		// Download the file again and save it
-		err = t.DownloadPackageIndex(index_file, signature_file)
+		err = t.DownloadPackageIndex(indexFile, signatureFile)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := checkGPGSig(index_file, signature_file)
+	err := checkGPGSig(indexFile, signatureFile)
 	if err != nil {
 		return err
 	}
 
-	body, err := ioutil.ReadFile(index_file)
+	body, err := ioutil.ReadFile(indexFile)
 	if err != nil {
 		return err
 	}
@@ -240,7 +239,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	checkSumString := "SHA-256:" + hex.EncodeToString(checksum[:sha256.Size])
 
 	if checkSumString != correctSystem.CheckSum {
-		return errors.New("Checksum doesn't match")
+		return errors.New("checksum doesn't match")
 	}
 
 	// Decompress
@@ -319,26 +318,17 @@ func findTool(pack, name, version string, data index) (tool, system) {
 
 	// Find the url based on system
 	var correctSystem system
-	max_similarity := 0.7
+	maxSimilarity := 0.7
 
 	for _, s := range correctTool.Systems {
 		similarity := smetrics.Jaro(s.Host, systems[runtime.GOOS+runtime.GOARCH])
-		if similarity > max_similarity {
+		if similarity > maxSimilarity {
 			correctSystem = s
-			max_similarity = similarity
+			maxSimilarity = similarity
 		}
 	}
 
 	return correctTool, correctSystem
-}
-
-func stringInSlice(str string, list []string) bool {
-	for _, v := range list {
-		if v == str {
-			return true
-		}
-	}
-	return false
 }
 
 func commonPrefix(sep byte, paths []string) string {
@@ -415,7 +405,7 @@ func findBaseDir(dirList []string) string {
 }
 
 func extractZip(log func(msg string), body []byte, location string) (string, error) {
-	path, err := utilities.SaveFileonTempDir("tooldownloaded.zip", bytes.NewReader(body))
+	path, _ := utilities.SaveFileonTempDir("tooldownloaded.zip", bytes.NewReader(body))
 	r, err := zip.OpenReader(path)
 	if err != nil {
 		return location, err
@@ -490,7 +480,7 @@ func extractTarGz(log func(msg string), body []byte, location string) (string, e
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			//return location, err
+			return location, err
 		}
 
 		path := filepath.Join(location, strings.Replace(header.Name, basedir, "", -1))
@@ -510,7 +500,7 @@ func extractTarGz(log func(msg string), body []byte, location string) (string, e
 		}
 
 		if header.Typeflag == tar.TypeSymlink {
-			err = os.Symlink(header.Linkname, path)
+			_ = os.Symlink(header.Linkname, path)
 			continue
 		}
 
@@ -520,7 +510,7 @@ func extractTarGz(log func(msg string), body []byte, location string) (string, e
 		}
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
-			//return location, err
+			return location, err
 		}
 		file.Close()
 	}
@@ -575,7 +565,7 @@ func extractBz2(log func(msg string), body []byte, location string) (string, err
 		}
 
 		if header.Typeflag == tar.TypeSymlink {
-			err = os.Symlink(header.Linkname, path)
+			_ = os.Symlink(header.Linkname, path)
 			continue
 		}
 
@@ -586,7 +576,7 @@ func extractBz2(log func(msg string), body []byte, location string) (string, err
 		}
 		_, err = io.Copy(file, tarReader)
 		if err != nil {
-			//return location, err
+			return location, err
 		}
 		file.Close()
 	}
@@ -594,7 +584,7 @@ func extractBz2(log func(msg string), body []byte, location string) (string, err
 }
 
 func (t *Tools) installDrivers(location string) error {
-	OK_PRESSED := 6
+	OkPressed := 6
 	extension := ".bat"
 	preamble := ""
 	if runtime.GOOS != "windows" {
@@ -605,7 +595,7 @@ func (t *Tools) installDrivers(location string) error {
 	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
 		t.Logger("Installing drivers")
 		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
-		if ok == OK_PRESSED {
+		if ok == OkPressed {
 			os.Chdir(location)
 			t.Logger(preamble + "post_install" + extension)
 			oscmd := exec.Command(preamble + "post_install" + extension)
@@ -615,25 +605,8 @@ func (t *Tools) installDrivers(location string) error {
 			}
 			err = oscmd.Run()
 			return err
-		} else {
-			return errors.New("Could not install drivers")
 		}
-	}
-	return nil
-}
-
-func makeExecutable(location string) error {
-	location = path.Join(location, "bin")
-	files, err := ioutil.ReadDir(location)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		err = os.Chmod(path.Join(location, file.Name()), 0755)
-		if err != nil {
-			return err
-		}
+		return errors.New("could not install drivers")
 	}
 	return nil
 }

@@ -75,7 +75,7 @@ func generateKey(ecdsaCurve string) (interface{}, error) {
 	case "P521":
 		return ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	default:
-		return nil, fmt.Errorf("Unrecognized elliptic curve: %q", ecdsaCurve)
+		return nil, fmt.Errorf("unrecognized elliptic curve: %q", ecdsaCurve)
 	}
 }
 
@@ -87,7 +87,7 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	} else {
 		notBefore, err = time.Parse("Jan 2 15:04:05 2006", validFrom)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to parse creation date: %s\n", err.Error())
+			return nil, fmt.Errorf("failed to parse creation date: %s", err.Error())
 		}
 	}
 
@@ -96,7 +96,7 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate serial number: %s\n", err.Error())
+		return nil, fmt.Errorf("failed to generate serial number: %s", err.Error())
 	}
 
 	template := x509.Certificate{
@@ -164,7 +164,7 @@ func generateCertificates() {
 		os.Exit(1)
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, publicKey(caKey), caKey)
+	derBytes, _ := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, publicKey(caKey), caKey)
 
 	certOut, err := os.Create("ca.cert.pem")
 	if err != nil {
@@ -202,7 +202,7 @@ func generateCertificates() {
 		os.Exit(1)
 	}
 
-	derBytes, err = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), caKey)
+	derBytes, _ = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), caKey)
 
 	certOut, err = os.Create("cert.pem")
 	if err != nil {
@@ -233,6 +233,7 @@ func deleteCertHandler(c *gin.Context) {
 	DeleteCertificates()
 }
 
+// DeleteCertificates will delete the certificates
 func DeleteCertificates() {
 	os.Remove("ca.cert.pem")
 	os.Remove("ca.cert.cer")

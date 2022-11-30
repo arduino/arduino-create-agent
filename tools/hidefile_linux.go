@@ -23,9 +23,11 @@ func hideFile(path string) {
 
 }
 
+// TellCommandNotToSpawnShell will now spawn a shell
 func TellCommandNotToSpawnShell(_ *exec.Cmd) {
 }
 
+// MessageBox will open a dialog
 func MessageBox(title, text string) int {
 	return 6
 }

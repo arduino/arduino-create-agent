@@ -123,7 +123,7 @@ func checkCmd(m []byte) {
 
 	sl := strings.ToLower(strings.Trim(s, "\n"))
 
-	if *hibernate == true {
+	if *hibernate {
 		//do nothing
 		return
 	}
@@ -246,12 +246,12 @@ func checkCmd(m []byte) {
 func logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
-		multi_writer := io.MultiWriter(&logger_ws, os.Stderr)
-		log.SetOutput(multi_writer)
+		multiWriter := io.MultiWriter(&loggerWs, os.Stderr)
+		log.SetOutput(multiWriter)
 	} else if strings.HasPrefix(sl, "log off") {
 		*logDump = "off"
 		log.SetOutput(os.Stderr)
-	} else if strings.HasPrefix(sl, "log show") {
+		// } else if strings.HasPrefix(sl, "log show") {
 		// TODO: send all the saved log to websocket
 		//h.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
 	}

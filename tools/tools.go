@@ -45,6 +45,8 @@ import (
 //         IndexURL: "https://downloads.arduino.cc/packages/package_index.json"
 //         Logger: log.Logger
 //     }
+
+// Tools will represent the installed tools
 type Tools struct {
 	Directory   string
 	IndexURL    string

@@ -49,12 +49,14 @@ type serialhub struct {
 	mu sync.Mutex
 }
 
+// SpPortList is the serial port list
 type SpPortList struct {
 	Ports   []SpPortItem
 	Network bool
 	Mu      sync.Mutex `json:"-"`
 }
 
+// SpPortItem is the serial port item
 type SpPortItem struct {
 	Name            string
 	SerialNumber    string
@@ -231,8 +233,8 @@ func spListDual(network bool) {
 			BufferAlgorithm: "",
 			Ver:             version,
 			NetworkPort:     item.NetworkPort,
-			VendorID:        item.IdVendor,
-			ProductID:       item.IdProduct,
+			VendorID:        item.IDVendor,
+			ProductID:       item.IDProduct,
 		}
 
 		// figure out if port is open

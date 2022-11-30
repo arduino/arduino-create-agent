@@ -46,8 +46,8 @@ func updateHandler(c *gin.Context) {
 
 	var up = &updater.Updater{
 		CurrentVersion: version,
-		APIURL:         *updateUrl,
-		BinURL:         *updateUrl,
+		APIURL:         *updateURL,
+		BinURL:         *updateURL,
 		DiffURL:        "",
 		Dir:            "update/",
 		CmdName:        *appName,

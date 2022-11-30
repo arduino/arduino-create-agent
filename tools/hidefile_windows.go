@@ -28,10 +28,12 @@ func hideFile(path string) {
 	syscall.SetFileAttributes(cpath, syscall.FILE_ATTRIBUTE_HIDDEN)
 }
 
+// TellCommandNotToSpawnShell will now spawn a shell
 func TellCommandNotToSpawnShell(oscmd *exec.Cmd) {
 	oscmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 }
 
+// MessageBox will open a dialog
 func MessageBox(title, text string) int {
 	var mod = syscall.NewLazyDLL("user32.dll")
 	var proc = mod.NewProc("MessageBoxW")
