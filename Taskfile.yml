@@ -151,4 +151,4 @@ vars:
   DEFAULT_GO_MODULE_PATH: ./
   DEFAULT_GO_PACKAGES:
     sh: |
-      echo $(cd {{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}} && go list ./... | tr '\n' ' ' || echo '"ERROR: Unable to discover Go packages"')
+      echo $(cd {{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}} && go list ./... | grep -v 'arduino-create-agent/gen/' | grep -v 'arduino-create-agent/design' | tr '\n' ' ' || echo '"ERROR: Unable to discover Go packages"')
