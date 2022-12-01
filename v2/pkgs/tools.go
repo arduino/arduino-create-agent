@@ -39,13 +39,15 @@ import (
 // Tools is a client that implements github.com/arduino/arduino-create-agent/gen/tools.Service interface.
 // It saves tools in a specified folder with this structure: packager/name/version
 // For example:
-//   folder
-//   └── arduino
-//       └── bossac
-//           ├── 1.6.1-arduino
-//           │   └── bossac
-//           └── 1.7.0
-//               └── bossac
+//
+//	folder
+//	└── arduino
+//	    └── bossac
+//	        ├── 1.6.1-arduino
+//	        │   └── bossac
+//	        └── 1.7.0
+//	            └── bossac
+//
 // It requires an Indexes client to list and read package index files: use the Indexes struct
 type Tools struct {
 	Indexes interface {

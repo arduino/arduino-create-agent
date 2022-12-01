@@ -92,17 +92,17 @@ func BinPath(path string) string {
 //
 // Example:
 //
-//  updater := &selfupdate.Updater{
-//  	CurrentVersion: version,
-//  	ApiURL:         "http://updates.yourdomain.com/",
-//  	BinURL:         "http://updates.yourdownmain.com/",
-//  	DiffURL:        "http://updates.yourdomain.com/",
-//  	Dir:            "update/",
-//  	CmdName:        "myapp", // app name
-//  }
-//  if updater != nil {
-//  	go updater.BackgroundRun()
-//  }
+//	updater := &selfupdate.Updater{
+//		CurrentVersion: version,
+//		ApiURL:         "http://updates.yourdomain.com/",
+//		BinURL:         "http://updates.yourdownmain.com/",
+//		DiffURL:        "http://updates.yourdomain.com/",
+//		Dir:            "update/",
+//		CmdName:        "myapp", // app name
+//	}
+//	if updater != nil {
+//		go updater.BackgroundRun()
+//	}
 type Updater struct {
 	CurrentVersion string // Currently running version.
 	APIURL         string // Base URL for API requests (json files).
