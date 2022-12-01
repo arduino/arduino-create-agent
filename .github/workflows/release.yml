@@ -20,6 +20,8 @@ env:
   INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
   AC_USERNAME: ${{ secrets.AC_USERNAME }} # used by gon
   AC_PASSWORD: ${{ secrets.AC_PASSWORD }} # used by gon
+  # See: https://github.com/actions/setup-go/tree/v3#readme
+  GO_VERSION: "1.19"
 
 jobs:
   # The build job is responsible for: configuring the environment, testing and compiling process
@@ -64,7 +66,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: "1.14"
+          go-version: ${{ env.GO_VERSION }}
 
         # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
