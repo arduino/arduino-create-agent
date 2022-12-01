@@ -4,6 +4,7 @@
 [![Test Integration status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-integration-task.yml)
 [![Check License status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-license.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-license.yml)
 [![Check Go Dependencies status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml)
+[![Check Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml)
 
 arduino-create-agent
 ====================

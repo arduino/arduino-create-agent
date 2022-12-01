@@ -96,22 +96,50 @@ tasks:
     cmds:
       - poetry update
 
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-go-task/Taskfile.yml
+  go:fix:
+    desc: Modernize usages of outdated APIs
+    dir: "{{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}}"
+    cmds:
+      - go fix {{default .DEFAULT_GO_PACKAGES .GO_PACKAGES}}
+
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-go-task/Taskfile.yml
+  go:format:
+    desc: Format Go code
+    dir: "{{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}}"
+    cmds:
+      - go fmt {{default .DEFAULT_GO_PACKAGES .GO_PACKAGES}}
+
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-go-task/Taskfile.yml
+  go:lint:
+    desc: Lint Go code
+    dir: "{{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}}"
+    cmds:
+      - |
+        if ! which golint &>/dev/null; then
+          echo "golint not installed or not in PATH. Please install: https://github.com/golang/lint#installation"
+          exit 1
+        fi
+      - |
+        golint \
+          {{default "-min_confidence 0.8 -set_exit_status" .GO_LINT_FLAGS}} \
+          {{default .DEFAULT_GO_PACKAGES .GO_PACKAGES}}
+
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-go-task/Taskfile.yml
+  go:vet:
+    desc: Check for errors in Go code
+    dir: "{{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}}"
+    cmds:
+      - go vet {{default .DEFAULT_GO_PACKAGES .GO_PACKAGES}}
+
   check:
     desc: Check fmt and lint
     cmds:
-      - go version
-      - go fmt {{ default .DEFAULT_TARGETS .TARGETS }}
-      - test -z $(go fmt {{ default .DEFAULT_TARGETS .TARGETS }})
-      - echo 'test ok'
-      - go vet {{ default .DEFAULT_TARGETS .TARGETS }}
-      - echo 'vet ok'
-      # FIXME: too many suggestions are failing the check, I'll fix these one in
-      # another PR.
-      # - "'{{.GOLINTBIN}}' {{.GOLINTFLAGS}} {{ default .DEFAULT_TARGETS .TARGETS }}"
-      # - task: i18n:check
-      # - task: python:check
-      # - task: docs:check
-      # - task: config:check
+      - task: go:vet
+      - task: go:lint
+      - task: python:lint
+      - task: protoc:check
+
       
 vars:
   TAG_TEST: "0.0.0-dev"
@@ -124,7 +152,3 @@ vars:
   DEFAULT_GO_PACKAGES:
     sh: |
       echo $(cd {{default .DEFAULT_GO_MODULE_PATH .GO_MODULE_PATH}} && go list ./... | tr '\n' ' ' || echo '"ERROR: Unable to discover Go packages"')
-  # check-lint vars
-  GOLINTBIN:
-    sh: go list -f {{"{{"}}".Target{{"}}"}}" golang.org/x/lint/golint
-  GOLINTFLAGS: "-min_confidence 0.8 -set_exit_status"

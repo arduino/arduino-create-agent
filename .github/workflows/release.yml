@@ -86,9 +86,6 @@ jobs:
           version: '3.x'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check the code is good
-        run: task check
-
       - name: Build the Agent for linux
         run: task go:build
         if: matrix.os == 'ubuntu-20.04'
