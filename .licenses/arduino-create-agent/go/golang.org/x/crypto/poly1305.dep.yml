@@ -1,9 +1,10 @@
 ---
-name: golang.org/x/crypto/curve25519/internal/field
+name: golang.org/x/crypto/poly1305
 version: v0.0.0-20210711020723-a769d52b0f97
 type: go
-summary: Package field implements fast arithmetic modulo 2^255-19.
-homepage: https://pkg.go.dev/golang.org/x/crypto/curve25519/internal/field
+summary: Package poly1305 implements Poly1305 one-time message authentication code
+  as specified in https://cr.yp.to/mac/poly1305-20050329.pdf.
+homepage: https://pkg.go.dev/golang.org/x/crypto/poly1305
 license: bsd-3-clause
 licenses:
 - sources: crypto@v0.0.0-20210711020723-a769d52b0f97/LICENSE
