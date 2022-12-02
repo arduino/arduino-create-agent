@@ -29,7 +29,6 @@ import (
 	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/getlantern/systray"
 	"github.com/go-ini/ini"
-	"github.com/kardianos/osext"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -102,7 +101,7 @@ func (s *Systray) updateMenuItem(item *systray.MenuItem, disable bool) {
 
 // CrashesIsEmpty checks if the folder containing crash-reports is empty
 func (s *Systray) CrashesIsEmpty() bool {
-	currDir, err := osext.ExecutableFolder()
+	currDir, err := os.Getwd()
 	if err != nil {
 		log.Error("Cannot determine executable path: ", err)
 	}
@@ -115,7 +114,7 @@ func (s *Systray) CrashesIsEmpty() bool {
 
 // RemoveCrashes removes the crash-reports from `logs` folder
 func (s *Systray) RemoveCrashes() {
-	currDir, err := osext.ExecutableFolder()
+	currDir, err := os.Getwd()
 	if err != nil {
 		log.Error("Cannot determine executable path: ", err)
 	}
@@ -190,7 +189,7 @@ type configIni struct {
 // getconfigs parses all config files in the executable folder
 func getConfigs() []configIni {
 	// config.ini must be there, so call it Default
-	src, _ := osext.Executable()
+	src, _ := os.Executable()
 	dest := filepath.Dir(src)
 
 	var configs []configIni

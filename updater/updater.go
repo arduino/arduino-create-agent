@@ -32,8 +32,6 @@ import (
 	"github.com/kr/binarydist"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/inconshreveable/go-update.v0"
-
-	"github.com/kardianos/osext"
 )
 
 // Update protocol:
@@ -123,7 +121,7 @@ func (u *Updater) BackgroundRun() error {
 		log.Println(err)
 		return err
 	}
-	//self, err := osext.Executable()
+	//self, err := os.Executable()
 	//if err != nil {
 	// fail update, couldn't figure out path to self
 	//return
@@ -225,13 +223,13 @@ func (u *Updater) fetchInfo() error {
 }
 
 func (u *Updater) getExecRelativeDir(dir string) string {
-	filename, _ := osext.Executable()
+	filename, _ := os.Executable()
 	path := filepath.Join(filepath.Dir(filename), dir)
 	return path
 }
 
 func (u *Updater) update() error {
-	path, err := osext.Executable()
+	path, err := os.Executable()
 	if err != nil {
 		return err
 	}

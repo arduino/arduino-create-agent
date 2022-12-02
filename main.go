@@ -40,7 +40,6 @@ import (
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
-	"github.com/kardianos/osext"
 	log "github.com/sirupsen/logrus"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
@@ -140,7 +139,7 @@ func main() {
 		AdditionalConfig: *additionalConfig,
 	}
 
-	path, err := osext.Executable()
+	path, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
@@ -184,7 +183,7 @@ func loop() {
 		return
 	}
 	// autoextract self
-	src, _ := osext.Executable()
+	src, _ := os.Executable()
 	dest := filepath.Dir(src)
 
 	if embeddedAutoextract {
@@ -310,7 +309,7 @@ func loop() {
 	// save crashreport to file
 	if *crashreport {
 		logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
-		currDir, err := osext.ExecutableFolder()
+		currDir, err := os.Getwd()
 		if err != nil {
 			panic(err)
 		}
