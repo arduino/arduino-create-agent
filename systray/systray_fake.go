@@ -14,7 +14,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 //go:build cli
-// +build cli
 
 // Systray_fake gets compiled when the tag 'cli' is present. This is useful to build an agent without trayicon functionalities
 package systray
