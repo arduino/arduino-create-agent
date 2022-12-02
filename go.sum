@@ -316,8 +316,7 @@ github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673/go.mod h1:N3UwUGtsr
 github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea h1:CyhwejzVGvZ3Q2PSbQ4NRRYn+ZWv5eS1vlaEusT+bAI=
 github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea/go.mod h1:eNr558nEUjP8acGw8FFjTeWvSgU1stO7FAO6eknhHe4=
 go.bug.st/cleanup v1.0.0/go.mod h1:EqVmTg2IBk4znLbPD28xne3abjsJftMdqqJEjhn70bk=
-go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87 h1:8W/hwyrc25HrXxbtG8Ghiwgq/hDB8KCh7hKMf78gp90=
-go.bug.st/downloader v0.0.0-20181116113543-9b8976a44d87/go.mod h1:OUL7bexo6Ir+BRE5E7Cs3qUvO6ZgJL5Hjk/qwiy6Ze0=
+go.bug.st/downloader/v2 v2.1.1 h1:nyqbUizo3E2IxCCm4YFac4FtSqqFpqWP+Aae5GCMuw4=
 go.bug.st/downloader/v2 v2.1.1/go.mod h1:VZW2V1iGKV8rJL2ZEGIDzzBeKowYv34AedJz13RzVII=
 go.bug.st/relaxed-semver v0.0.0-20190922224835-391e10178d18/go.mod h1:Cx1VqMtEhE9pIkEyUj3LVVVPkv89dgW8aCKrRPDR/uE=
 go.bug.st/serial v1.1.2/go.mod h1:VmYBeyJWp5BnJ0tw2NUJHZdJTGl2ecBGABHlzRK1knY=
