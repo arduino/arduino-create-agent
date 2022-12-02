@@ -1,12 +1,12 @@
 ---
 name: golang.org/x/net/internal/socket
-version: v0.0.0-20210226172049-e18ecbb05110
+version: v0.0.0-20211112202133-69e39bad7dc2
 type: go
 summary: Package socket provides a portable interface for socket system calls.
 homepage: https://pkg.go.dev/golang.org/x/net/internal/socket
 license: bsd-3-clause
 licenses:
-- sources: net@v0.0.0-20210226172049-e18ecbb05110/LICENSE
+- sources: net@v0.0.0-20211112202133-69e39bad7dc2/LICENSE
   text: |
     Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -35,7 +35,7 @@ licenses:
     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- sources: net@v0.0.0-20210226172049-e18ecbb05110/PATENTS
+- sources: net@v0.0.0-20211112202133-69e39bad7dc2/PATENTS
   text: |
     Additional IP Rights Grant (Patents)
 

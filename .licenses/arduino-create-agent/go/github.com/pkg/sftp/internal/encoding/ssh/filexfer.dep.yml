@@ -1,12 +1,13 @@
 ---
-name: github.com/pkg/sftp
+name: github.com/pkg/sftp/internal/encoding/ssh/filexfer
 version: v1.13.4
 type: go
-summary: Package sftp implements the SSH File Transfer Protocol as described in https://tools.ietf.org/html/draft-ietf-secsh-filexfer-02
-homepage: https://pkg.go.dev/github.com/pkg/sftp
+summary: Package filexfer implements the wire encoding for secsh-filexfer as described
+  in https://tools.ietf.org/html/draft-ietf-secsh-filexfer-02
+homepage: https://pkg.go.dev/github.com/pkg/sftp/internal/encoding/ssh/filexfer
 license: bsd-2-clause
 licenses:
-- sources: LICENSE
+- sources: sftp@v1.13.4/LICENSE
   text: |
     Copyright (c) 2013, Dave Cheney
     All rights reserved.

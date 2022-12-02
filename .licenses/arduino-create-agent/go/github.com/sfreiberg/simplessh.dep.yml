@@ -1,6 +1,6 @@
 ---
 name: github.com/sfreiberg/simplessh
-version: v0.0.0-20180301191542-495cbb862a9c
+version: v0.0.0-20220719182921-185eafd40485
 type: go
 summary: 
 homepage: https://pkg.go.dev/github.com/sfreiberg/simplessh
