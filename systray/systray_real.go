@@ -14,7 +14,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 //go:build !cli
-// +build !cli
 
 // Systray_real gets compiled when the tag 'cli' is missing. This is the default case
 

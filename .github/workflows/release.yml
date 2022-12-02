@@ -20,6 +20,8 @@ env:
   INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
   AC_USERNAME: ${{ secrets.AC_USERNAME }} # used by gon
   AC_PASSWORD: ${{ secrets.AC_PASSWORD }} # used by gon
+  # See: https://github.com/actions/setup-go/tree/v3#readme
+  GO_VERSION: "1.19"
 
 jobs:
   # The build job is responsible for: configuring the environment, testing and compiling process
@@ -64,7 +66,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: "1.14"
+          go-version: ${{ env.GO_VERSION }}
 
         # dependencies used for compiling the GUI
       - name: Install Dependencies (Linux)
@@ -72,13 +74,7 @@ jobs:
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Install Go deps
-        # Since 10/23/2019 pwsh is the default shell
-        # on Windows, but pwsh fails to install protoc-gen-go so
-        # we force bash as default shell for all OSes in this task
-        run: |
-          go get github.com/golangci/govet
-          go get golang.org/x/lint/golint
-          go get -u github.com/sanbornm/go-selfupdate/...
+        run: go install github.com/sanbornm/go-selfupdate/...@latest
 
       - name: Install Taskfile
         uses: arduino/setup-task@v1
@@ -98,14 +94,13 @@ jobs:
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
         # rsrc will produce a *.syso file that should get automatically recognized by go build command and linked into an executable.
       - name: Download tool to embed manifest in win binary
-        run: go get github.com/akavel/rsrc
+        run: go install github.com/akavel/rsrc@latest
         if: matrix.os == 'windows-2019'
 
         # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
         env:
           GOARCH: 386  # 32bit architecture (for support)
-          GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task go:build-win
         if: matrix.os == 'windows-2019' && matrix.arch == '-386'
 

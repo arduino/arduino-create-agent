@@ -1,17 +1,17 @@
 ---
 name: github.com/ugorji/go/codec
-version: v1.2.7
+version: v1.1.6
 type: go
 summary: Package codec provides a High Performance, Feature-Rich Idiomatic Go 1.4+
   codec/encoding library for binc, msgpack, cbor, json.
 homepage: https://pkg.go.dev/github.com/ugorji/go/codec
 license: mit
 licenses:
-- sources: LICENSE
+- sources: go@v1.1.6/LICENSE
   text: |
     The MIT License (MIT)
 
-    Copyright (c) 2012-2020 Ugorji Nwoke.
+    Copyright (c) 2012-2015 Ugorji Nwoke.
     All rights reserved.
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
