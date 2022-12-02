@@ -15,6 +15,7 @@
 
 package main
 
+// Bufferflow interface
 type Bufferflow interface {
 	Init()
 	OnIncomingData(data string) // implement this method

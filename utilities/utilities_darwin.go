@@ -17,5 +17,6 @@ package utilities
 
 import "os/exec"
 
+// TellCommandNotToSpawnShell will now spawn a shell
 func TellCommandNotToSpawnShell(_ *exec.Cmd) {
 }

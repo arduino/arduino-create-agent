@@ -45,8 +45,7 @@ type connection struct {
 	ws socketio.Socket
 
 	// Buffered channel of outbound messages.
-	send     chan []byte
-	incoming chan []byte
+	send chan []byte
 }
 
 func (c *connection) writer() {
@@ -67,7 +66,7 @@ func (s *WsServer) ServeHTTP(c *gin.Context) {
 	s.Server.ServeHTTP(c.Writer, c.Request)
 }
 
-type AdditionalFile struct {
+type additionalFile struct {
 	Hex      []byte `json:"hex"`
 	Filename string `json:"filename"`
 }
@@ -82,7 +81,7 @@ type Upload struct {
 	Extra       upload.Extra     `json:"extra"`
 	Hex         []byte           `json:"hex"`
 	Filename    string           `json:"filename"`
-	ExtraFiles  []AdditionalFile `json:"extrafiles"`
+	ExtraFiles  []additionalFile `json:"extrafiles"`
 }
 
 var uploadStatusStr = "ProgrammerStatus"
@@ -105,7 +104,7 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
-	if data.Extra.Network == false {
+	if !data.Extra.Network {
 		if data.Signature == "" {
 			c.String(http.StatusBadRequest, "signature is required")
 			return

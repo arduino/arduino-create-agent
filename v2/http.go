@@ -31,6 +31,7 @@ import (
 	"goa.design/goa/http/middleware"
 )
 
+// Server is the actual server
 func Server(home string) http.Handler {
 	mux := goahttp.NewMuxer()
 

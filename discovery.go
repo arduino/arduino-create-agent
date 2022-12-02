@@ -128,7 +128,7 @@ func getPorts() ([]OsSerialPort, error) {
 		for e := range results {
 			log.Printf("%+v", e)
 			if e.AddrIPv4 != nil {
-				arrPorts = append(arrPorts, OsSerialPort{Name: e.AddrIPv4.String(), IdProduct: e.Instance, IdVendor: strings.Join(e.Text[:], " "), NetworkPort: true})
+				arrPorts = append(arrPorts, OsSerialPort{Name: e.AddrIPv4.String(), IDProduct: e.Instance, IDVendor: strings.Join(e.Text[:], " "), NetworkPort: true})
 			}
 		}
 		timeout <- true
@@ -140,10 +140,8 @@ func getPorts() ([]OsSerialPort, error) {
 		return nil, err
 	}
 	// wait for some kind of timeout and return arrPorts
-	select {
-	case <-timeout:
-		return arrPorts, nil
-	}
+	<-timeout
+	return arrPorts, nil
 }
 
 // Filter returns a new slice containing all OsSerialPort in the slice that satisfy the predicate f.

@@ -15,14 +15,17 @@
 
 package browser
 
+// Find will find the browser
 func Find(process string) ([]byte, error) {
 	return nil, nil
 }
 
+// Kill will kill a process
 func Kill(process string) ([]byte, error) {
 	return nil, nil
 }
 
+// Start will start a command
 func Start(command []byte, url string) ([]byte, error) {
 	return nil, nil
 }

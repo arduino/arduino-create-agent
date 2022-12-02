@@ -15,6 +15,7 @@
 
 // Log the panic under unix to the log file
 
+//go:build !windows
 // +build !windows
 
 package main

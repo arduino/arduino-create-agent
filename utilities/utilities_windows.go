@@ -20,6 +20,7 @@ import (
 	"syscall"
 )
 
+// TellCommandNotToSpawnShell will now spawn a shell
 func TellCommandNotToSpawnShell(oscmd *exec.Cmd) {
 	oscmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 }

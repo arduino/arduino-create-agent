@@ -35,7 +35,7 @@ func infoHandler(c *gin.Context) {
 		"ws":         "ws://" + host + port,
 		"wss":        "wss://localhost" + portSSL,
 		"origins":    origins,
-		"update_url": updateUrl,
+		"update_url": updateURL,
 		"os":         runtime.GOOS + ":" + runtime.GOARCH,
 	})
 }

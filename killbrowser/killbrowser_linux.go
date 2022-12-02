@@ -22,6 +22,7 @@ import (
 	"github.com/arduino/arduino-create-agent/utilities"
 )
 
+// Find will find the browser
 func Find(process string) ([]byte, error) {
 	ps := exec.Command("ps", "-A", "-o", "command")
 	grep := exec.Command("grep", process)
@@ -30,11 +31,13 @@ func Find(process string) ([]byte, error) {
 	return utilities.PipeCommands(ps, grep, head)
 }
 
+// Kill will kill a process
 func Kill(process string) ([]byte, error) {
 	cmd := exec.Command("pkill", "-9", process)
 	return cmd.Output()
 }
 
+// Start will start a command
 func Start(command []byte, url string) ([]byte, error) {
 	parts := strings.Split(string(command), " ")
 	cmd := exec.Command(parts[0], url)

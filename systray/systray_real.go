@@ -13,9 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+//go:build !cli
 // +build !cli
 
 // Systray_real gets compiled when the tag 'cli' is missing. This is the default case
+
 package systray
 
 import (
@@ -55,7 +57,7 @@ func (s *Systray) start() {
 	menuVer.Disable()
 
 	// Add links
-	mUrl := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
+	mURL := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open Debug Console", "Debug console")
 
 	// Remove crash-reports
@@ -74,7 +76,7 @@ func (s *Systray) start() {
 	go func() {
 		for {
 			select {
-			case <-mUrl.ClickedCh:
+			case <-mURL.ClickedCh:
 				_ = open.Start("https://create.arduino.cc")
 			case <-mDebug.ClickedCh:
 				_ = open.Start(s.DebugURL())

@@ -31,8 +31,8 @@ type Index struct {
 }
 
 // Tool is the go representation of the info about a
-//tool contained in a package-index file, stripped from
-//every non-used field.
+// tool contained in a package-index file, stripped from
+// every non-used field.
 type Tool struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`

@@ -26,17 +26,19 @@ import (
 	"go.bug.st/serial/enumerator"
 )
 
+// OsSerialPort is the Os serial port
 type OsSerialPort struct {
 	Name         string
 	DeviceClass  string
 	Manufacturer string
 	Product      string
-	IdProduct    string
-	IdVendor     string
+	IDProduct    string
+	IDVendor     string
 	ISerial      string
 	NetworkPort  bool
 }
 
+// GetList will return the OS serial port
 func GetList(network bool) ([]OsSerialPort, error) {
 
 	if network {
@@ -58,7 +60,7 @@ func GetList(network bool) ([]OsSerialPort, error) {
 			vidString := fmt.Sprintf("0x%s", vid)
 			pidString := fmt.Sprintf("0x%s", pid)
 			if vid != "0000" && pid != "0000" {
-				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IdVendor: vidString, IdProduct: pidString, ISerial: element.SerialNumber})
+				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IDVendor: vidString, IDProduct: pidString, ISerial: element.SerialNumber})
 			}
 		}
 	}

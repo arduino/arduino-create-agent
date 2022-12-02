@@ -17,15 +17,18 @@ package browser
 
 import "os/exec"
 
+// Find will find the browser
 func Find(process string) ([]byte, error) {
 	return []byte(process), nil
 }
 
+// Kill will kill a process
 func Kill(process string) ([]byte, error) {
 	cmd := exec.Command("Taskkill", "/F", "/IM", process+".exe")
 	return cmd.Output()
 }
 
+// Start will start a command
 func Start(command []byte, url string) ([]byte, error) {
 	cmd := exec.Command("cmd", "/C", "start", string(command), url)
 	return cmd.Output()

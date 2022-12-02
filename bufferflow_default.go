@@ -21,6 +21,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BufferflowDefault is the default bufferflow, whick means no buffering
 type BufferflowDefault struct {
 	port   string
 	output chan<- []byte
@@ -28,6 +29,7 @@ type BufferflowDefault struct {
 	done   chan bool
 }
 
+// NewBufferflowDefault create a new default bufferflow
 func NewBufferflowDefault(port string, output chan<- []byte) *BufferflowDefault {
 	return &BufferflowDefault{
 		port:   port,
@@ -37,6 +39,7 @@ func NewBufferflowDefault(port string, output chan<- []byte) *BufferflowDefault 
 	}
 }
 
+// Init will initialize the bufferflow
 func (b *BufferflowDefault) Init() {
 	log.Println("Initting default buffer flow (which means no buffering)")
 	go b.consumeInput()
@@ -57,10 +60,12 @@ Loop:
 	close(b.input) // close the input channel at the end of the computation
 }
 
+// OnIncomingData will forward the data
 func (b *BufferflowDefault) OnIncomingData(data string) {
 	b.input <- data
 }
 
+// Close will close the bufferflow
 func (b *BufferflowDefault) Close() {
 	b.done <- true
 	close(b.done)

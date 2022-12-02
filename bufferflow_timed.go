@@ -22,6 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BufferflowTimed sends data once every 16ms
 type BufferflowTimed struct {
 	port           string
 	output         chan<- []byte
@@ -32,6 +33,7 @@ type BufferflowTimed struct {
 	bufferedOutput string
 }
 
+// NewBufferflowTimed will create a new timed bufferflow
 func NewBufferflowTimed(port string, output chan<- []byte) *BufferflowTimed {
 	return &BufferflowTimed{
 		port:           port,
@@ -44,6 +46,7 @@ func NewBufferflowTimed(port string, output chan<- []byte) *BufferflowTimed {
 	}
 }
 
+// Init will initialize the bufferflow
 func (b *BufferflowTimed) Init() {
 	log.Println("Initting timed buffer flow (output once every 16ms)")
 	go b.consumeInput()
@@ -72,10 +75,12 @@ Loop:
 	close(b.input)
 }
 
+// OnIncomingData will forward the data
 func (b *BufferflowTimed) OnIncomingData(data string) {
 	b.input <- data
 }
 
+// Close will close the bufferflow
 func (b *BufferflowTimed) Close() {
 	b.ticker.Stop()
 	b.done <- true

@@ -28,7 +28,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/kr/binarydist"
 	log "github.com/sirupsen/logrus"
@@ -67,10 +66,8 @@ const (
 	plat = runtime.GOOS + "-" + runtime.GOARCH
 )
 
-const devValidTime = 7 * 24 * time.Hour
-
 var errHashMismatch = errors.New("new file hash mismatch after patch")
-var errDiffUrlUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
+var errDiffURLUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
 var up = update.New()
 
 // TempPath generates a temporary path for the executable (adding "-temp")
@@ -95,17 +92,17 @@ func BinPath(path string) string {
 //
 // Example:
 //
-//  updater := &selfupdate.Updater{
-//  	CurrentVersion: version,
-//  	ApiURL:         "http://updates.yourdomain.com/",
-//  	BinURL:         "http://updates.yourdownmain.com/",
-//  	DiffURL:        "http://updates.yourdomain.com/",
-//  	Dir:            "update/",
-//  	CmdName:        "myapp", // app name
-//  }
-//  if updater != nil {
-//  	go updater.BackgroundRun()
-//  }
+//	updater := &selfupdate.Updater{
+//		CurrentVersion: version,
+//		ApiURL:         "http://updates.yourdomain.com/",
+//		BinURL:         "http://updates.yourdownmain.com/",
+//		DiffURL:        "http://updates.yourdomain.com/",
+//		Dir:            "update/",
+//		CmdName:        "myapp", // app name
+//	}
+//	if updater != nil {
+//		go updater.BackgroundRun()
+//	}
 type Updater struct {
 	CurrentVersion string // Currently running version.
 	APIURL         string // Base URL for API requests (json files).
@@ -158,7 +155,7 @@ func verifySha(bin []byte, sha []byte) bool {
 
 func (u *Updater) fetchAndApplyPatch(old io.Reader) ([]byte, error) {
 	if u.DiffURL == "" {
-		return nil, errDiffUrlUndefined
+		return nil, errDiffURLUndefined
 	}
 	r, err := fetch(u.DiffURL + u.CmdName + "/" + u.CurrentVersion + "/" + u.Info.Version + "/" + plat)
 	if err != nil {
@@ -260,7 +257,7 @@ func (u *Updater) update() error {
 		switch err {
 		case errHashMismatch:
 			log.Println("update: hash mismatch from patched binary")
-		case errDiffUrlUndefined:
+		case errDiffURLUndefined:
 			log.Println("update: ", err)
 		default:
 			log.Println("update: patching binary, ", err)

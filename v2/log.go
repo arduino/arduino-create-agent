@@ -22,10 +22,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// LogAdapter is the adapter for the logger
 type LogAdapter struct {
 	*logrus.Logger
 }
 
+// Log is the log function
 func (a LogAdapter) Log(keyvals ...interface{}) error {
 	n := (len(keyvals) + 1) / 2
 	if len(keyvals)%2 != 0 {
