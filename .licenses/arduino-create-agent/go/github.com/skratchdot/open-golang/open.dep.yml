@@ -1,13 +1,13 @@
 ---
 name: github.com/skratchdot/open-golang/open
-version: v0.0.0-20160302144031-75fb7ed4208c
+version: v0.0.0-20200116055534-eef842397966
 type: go
 summary: Open a file, directory, or URI using the OS's default application for that
   object type.
 homepage: https://pkg.go.dev/github.com/skratchdot/open-golang/open
 license: mit
 licenses:
-- sources: open-golang@v0.0.0-20160302144031-75fb7ed4208c/LICENSE-MIT
+- sources: open-golang@v0.0.0-20200116055534-eef842397966/LICENSE
   text: |
     Copyright (c) 2013 skratchdot
 
@@ -31,6 +31,6 @@ licenses:
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
-- sources: open-golang@v0.0.0-20160302144031-75fb7ed4208c/README.md
+- sources: open-golang@v0.0.0-20200116055534-eef842397966/README.md
   text: "Copyright (c) 2013 skratchdot  \nLicensed under the MIT license."
 notices: []
