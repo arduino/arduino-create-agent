@@ -26,8 +26,10 @@ import socketio as io
 
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
-    
-    agent_cli = str(Path(pytestconfig.rootdir) / "arduino-create-agent_cli")
+    if platform.system() == "Windows":
+        agent = str(Path(pytestconfig.rootdir) / "arduino-create-agent_cli.exe")
+    else:
+        agent = str(Path(pytestconfig.rootdir) / "arduino-create-agent")
     env = {
         # "ARDUINO_DATA_DIR": data_dir,
         # "ARDUINO_DOWNLOADS_DIR": downloads_dir,
@@ -39,7 +41,7 @@ def agent(pytestconfig):
     
     cd_command = "cd"
     with run_context.prefix(f'{cd_command} ..'):
-        runner.run(agent_cli, echo=True, hide=True, warn=True, env=env, asynchronous=True)
+        runner.run(agent, echo=True, hide=True, warn=True, env=env, asynchronous=True)
         
         # we give some time to the agent to start and listen to
         # incoming requests

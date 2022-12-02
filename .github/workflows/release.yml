@@ -83,11 +83,6 @@ jobs:
         run: task go:build
         if: matrix.os == 'ubuntu-20.04'
 
-        # build the agent without GUI support (no tray icon)
-      - name: Build the Agent-cli
-        run: task go:build-cli
-        if: matrix.os == 'ubuntu-20.04'
-
         # the manifest is required by windows GUI apps, otherwise the binary will crash with: "Unable to create main window: TTM_ADDTOOL failed" (for reference https://github.com/lxn/walk/issues/28)
         # rsrc will produce a *.syso file that should get automatically recognized by go build command and linked into an executable.
       - name: Download tool to embed manifest in win binary
@@ -400,10 +395,6 @@ jobs:
 
       - name: Rename executable to Arduino_Create_Agent
         run: mv -v artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}${{ matrix.extension }} artifacts/${{ matrix.platform-name }}/Arduino_Create_Agent${{ matrix.extension }}
-
-      - name: Rename executable to Arduino_Create_Agent_cli
-        run: mv -v artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}_cli${{ matrix.extension }} artifacts/${{ matrix.platform-name }}/Arduino_Create_Agent_cli${{ matrix.extension }}
-        if: matrix.os == 'ubuntu-20.04'
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
