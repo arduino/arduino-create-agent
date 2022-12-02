@@ -78,8 +78,6 @@ jobs:
         # on Windows, but pwsh fails to install protoc-gen-go so
         # we force bash as default shell for all OSes in this task
         run: |
-          go get github.com/golangci/govet
-          go get golang.org/x/lint/golint
           go get -u github.com/sanbornm/go-selfupdate/...
 
       - name: Install Taskfile
