@@ -101,7 +101,6 @@ jobs:
       - name: Build the Agent for win32
         env:
           GOARCH: 386  # 32bit architecture (for support)
-          GO386: 387  # support old instruction sets without MMX (used in the Pentium 4) (will be deprecated in GO > 1.15 https://golang.org/doc/go1.15)
         run: task go:build-win
         if: matrix.os == 'windows-2019' && matrix.arch == '-386'
 
