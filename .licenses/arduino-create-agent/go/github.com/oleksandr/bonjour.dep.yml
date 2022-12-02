@@ -1,9 +1,8 @@
 ---
 name: github.com/oleksandr/bonjour
-version: v0.0.0-20160508152359-5dcf00d8b228
+version: v0.0.0-20210301155756-30f43c61b915
 type: go
-summary: bonjour This is a simple Multicast DNS-SD (Apple Bonjour) library written
-  in Golang.
+summary: bonjour
 homepage: https://pkg.go.dev/github.com/oleksandr/bonjour
 license: mit
 licenses:

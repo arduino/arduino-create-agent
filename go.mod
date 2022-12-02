@@ -14,7 +14,7 @@ require (
 	github.com/kr/binarydist v0.1.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/oleksandr/bonjour v0.0.0-20160508152359-5dcf00d8b228
+	github.com/oleksandr/bonjour v0.0.0-20210301155756-30f43c61b915
 	github.com/pkg/errors v0.9.1
 	github.com/sfreiberg/simplessh v0.0.0-20180301191542-495cbb862a9c
 	github.com/sirupsen/logrus v1.8.1
