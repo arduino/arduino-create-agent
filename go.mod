@@ -17,7 +17,7 @@ require (
 	github.com/oleksandr/bonjour v0.0.0-20210301155756-30f43c61b915
 	github.com/pkg/errors v0.9.1
 	github.com/sfreiberg/simplessh v0.0.0-20220719182921-185eafd40485
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
 	github.com/stretchr/testify v1.8.1
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
@@ -25,7 +25,7 @@ require (
 	go.bug.st/serial v1.4.1
 	goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 	gopkg.in/inconshreveable/go-update.v0 v0.0.0-20150814200126-d8b0b1d421aa
 )
 
