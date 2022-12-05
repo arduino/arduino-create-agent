@@ -9,7 +9,7 @@ require (
 	github.com/codeclysm/extract/v3 v3.0.2
 	github.com/getlantern/systray v1.1.0
 	github.com/gin-gonic/gin v1.8.1
-	github.com/go-ini/ini v1.62.0
+	github.com/go-ini/ini v1.67.0
 	github.com/googollee/go-socket.io v0.0.0-20181101151912-c8aeb1ed9b49
 	github.com/kr/binarydist v0.1.0
 	github.com/mattn/go-shellwords v1.0.12
@@ -71,7 +71,6 @@ require (
 	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
