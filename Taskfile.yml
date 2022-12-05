@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-dependencies-task/Taskfile.yml
@@ -30,17 +30,14 @@ tasks:
     desc: Build the project, to use a specific version use `task build TAG_VERSION=x.x.x`
     dir: "{{.DEFAULT_GO_MODULE_PATH}}"
     cmds:
-      - go build -v -i {{default "" .ADDITIONAL_FLAGS}} -o {{default "arduino-create-agent" .APP_NAME}} -ldflags '-X main.version={{default .TAG_TEST .TAG_VERSION}} -X main.commit={{.COMMIT}} {{default "" .WIN_FLAGS}}'
-    vars:
-      COMMIT:
-        sh: git log -n 1 --format=%h
+      - go build -v {{.ADDITIONAL_FLAGS}} -o {{.PROJECT_NAME}} {{.LDFLAGS}} {{.WIN_FLAGS}}'
 
   go:build-cli:
     desc: Build the project without tray icon support
     cmds:
       - task: go:build
         vars:
-          APP_NAME: arduino-create-agent_cli
+          PROJECT_NAME: arduino-create-agent_cli
           ADDITIONAL_FLAGS: -tags cli
 
   go:build-win:
@@ -49,16 +46,19 @@ tasks:
       - rsrc -arch {{.GOARCH}} -manifest manifest.xml # GOARCH shoud be either amd64 or 386
       - task: go:build
         vars:
-          APP_NAME: arduino-create-agent.exe
+          PROJECT_NAME: arduino-create-agent.exe
           WIN_FLAGS: -H=windowsgui
       - rm *.syso # rm file to avoid compilation problems on other platforms
+    vars:
+      GOARCH:
+        sh: go env GOARCH
 
   go:build-win-cli:
-    desc: Build the project fow win without tray icon support
+    desc: Build the project for win without tray icon support
     cmds:
       - task: go:build
         vars:
-          APP_NAME: arduino-create-agent_cli.exe
+          PROJECT_NAME: arduino-create-agent_cli.exe
           ADDITIONAL_FLAGS: -tags cli
 
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/test-go-task/Taskfile.yml
@@ -137,17 +137,27 @@ tasks:
     cmds:
       - task: go:vet
       - task: go:lint
-      - task: python:lint
-      - task: protoc:check
 
       
 vars:
+  # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/release-go-task/Taskfile.yml
+  PROJECT_NAME: arduino-create-agent
+  # build vars
+  COMMIT:
+    sh: echo "$(git log --no-show-signature -n 1 --format=%h)"
+  TIMESTAMP_SHORT:
+    sh: echo "{{now | date "20060102"}}"
+  TAG:
+    sh: echo "$(git tag --points-at=HEAD 2> /dev/null | head -n1)"
   TAG_TEST: "0.0.0-dev"
-  GOARCH:
-    sh: go env GOARCH
-  # all modules of this project except for "gen/..." module
-  DEFAULT_TARGETS:
-    sh: echo `go list ./... | grep -v 'arduino-create-agent/gen/' | tr '\n' ' '`
+  VERSION: "{{if .NIGHTLY}}nightly-{{.TIMESTAMP_SHORT}}{{else if .TAG}}{{.TAG}}{{else}}{{.TAG_TEST}}{{end}}"
+  CONFIGURATION_PACKAGE: main
+  LDFLAGS: >-
+    -ldflags
+    '
+    -X {{.CONFIGURATION_PACKAGE}}.version={{.VERSION}}
+    -X {{.CONFIGURATION_PACKAGE}}.commit={{.COMMIT}}
+  # Path of the project's primary Go module:
   DEFAULT_GO_MODULE_PATH: ./
   DEFAULT_GO_PACKAGES:
     sh: |
