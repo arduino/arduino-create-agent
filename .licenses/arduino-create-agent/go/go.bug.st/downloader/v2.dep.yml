@@ -1,9 +1,9 @@
 ---
-name: go.bug.st/downloader
-version: v0.0.0-20181116113543-9b8976a44d87
+name: go.bug.st/downloader/v2
+version: v2.1.1
 type: go
 summary: 
-homepage: https://pkg.go.dev/go.bug.st/downloader
+homepage: https://pkg.go.dev/go.bug.st/downloader/v2
 license: bsd-3-clause
 licenses:
 - sources: LICENSE

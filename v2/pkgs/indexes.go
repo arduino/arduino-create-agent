@@ -27,7 +27,7 @@ import (
 
 	"github.com/arduino/arduino-create-agent/gen/indexes"
 	"github.com/sirupsen/logrus"
-	"go.bug.st/downloader"
+	"go.bug.st/downloader/v2"
 )
 
 // Indexes is a client that implements github.com/arduino/arduino-create-agent/gen/indexes.Service interface

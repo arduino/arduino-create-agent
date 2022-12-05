@@ -1,6 +1,6 @@
 ---
 name: github.com/kardianos/osext
-version: v0.0.0-20170510131534-ae77be60afb1
+version: v0.0.0-20190222173326-2bc1f35cddc0
 type: go
 summary: Extensions to the standard "os" package.
 homepage: https://pkg.go.dev/github.com/kardianos/osext

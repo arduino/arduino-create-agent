@@ -30,14 +30,15 @@
 package main
 
 import (
+	"os"
+
 	"github.com/arduino/arduino-create-agent/updater"
 	"github.com/gin-gonic/gin"
-	"github.com/kardianos/osext"
 )
 
 func updateHandler(c *gin.Context) {
 
-	path, err := osext.Executable()
+	path, err := os.Executable()
 
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})

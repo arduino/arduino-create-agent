@@ -17,12 +17,11 @@ package systray
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/kardianos/osext"
 )
 
 // Systray manages the systray icon with its menu and actions. It also handles the pause/resume behaviour of the agent
@@ -46,9 +45,9 @@ func (s *Systray) Restart() {
 	if s.path == "" {
 		log.Println("Update binary path not set")
 		var err error
-		s.path, err = osext.Executable()
+		s.path, err = os.Executable()
 		if err != nil {
-			log.Printf("Error getting exe path using osext lib. err: %v\n", err)
+			log.Printf("Error getting exe path using os lib. err: %v\n", err)
 		}
 	} else {
 		log.Println("Starting updated binary: ", s.path)
