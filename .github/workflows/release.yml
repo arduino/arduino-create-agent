@@ -131,14 +131,12 @@ jobs:
           aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.OLD_TARGET }}      
         if: steps.prerelease.outputs.IS_PRE != 'true'
 
-        # config.ini is required by the executable when it's run
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
           path: |
             ${{ env.PROJECT_NAME }}*
-            config.ini
           if-no-files-found: error
 
   create-macos-bundle:
@@ -163,10 +161,6 @@ jobs:
 
       - name: Remove placeholder file
         run: rm -rf ${{ env.EXE_PATH }}.empty
-
-      - name: Move config.ini to the Resources dir
-        working-directory: ${{ env.EXE_PATH }}
-        run: mv config.ini ../Resources/
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
