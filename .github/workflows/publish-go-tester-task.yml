@@ -138,12 +138,10 @@ jobs:
         run: task go:build
         if: runner.os == 'macOS'
 
-      # config.ini is required by the executable when it's run
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
             arduino-create-agent*
-            config.ini
           if-no-files-found: error
