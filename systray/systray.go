@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/arduino/go-paths-helper"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -38,6 +39,8 @@ type Systray struct {
 	ConfigDir *paths.Path
 	// The path of the exe (only used in update)
 	path string
+	// The path of the configuration file
+	currentConfigFilePath *paths.Path
 }
 
 // Restart restarts the program
@@ -93,4 +96,10 @@ func (s *Systray) Resume() {
 func (s *Systray) Update(path string) {
 	s.path = path
 	s.Restart()
+}
+
+// SetCurrentConfigFile allows to specify the path of the configuration file the agent
+// is using. The tray menu with this info can display an "open config file" option.
+func (s *Systray) SetCurrentConfigFile(configPath *paths.Path) {
+	s.currentConfigFilePath = configPath
 }

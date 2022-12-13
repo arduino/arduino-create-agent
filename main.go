@@ -255,6 +255,7 @@ func loop() {
 	if err != nil {
 		log.Panicf("cannot parse arguments: %s", err)
 	}
+	Systray.SetCurrentConfigFile(configPath)
 
 	// Parse additional ini config if defined
 	if len(*additionalConfig) > 0 {

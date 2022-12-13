@@ -57,6 +57,7 @@ func (s *Systray) start() {
 	// Add links
 	mURL := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
 	mDebug := systray.AddMenuItem("Open Debug Console", "Debug console")
+	mConfig := systray.AddMenuItem("Open Configuration", "Config File")
 
 	// Remove crash-reports
 	mRmCrashes := systray.AddMenuItem("Remove crash reports", "")
@@ -78,6 +79,8 @@ func (s *Systray) start() {
 				_ = open.Start("https://create.arduino.cc")
 			case <-mDebug.ClickedCh:
 				_ = open.Start(s.DebugURL())
+			case <-mConfig.ClickedCh:
+				_ = open.Start(s.currentConfigFilePath.String())
 			case <-mRmCrashes.ClickedCh:
 				s.RemoveCrashes()
 				s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
