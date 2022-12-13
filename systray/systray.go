@@ -34,6 +34,8 @@ type Systray struct {
 	DebugURL func() string
 	// The active configuration file
 	AdditionalConfig string
+	// The path to the directory containing the configuration files
+	ConfigDir *paths.Path
 	// The path of the exe (only used in update)
 	path string
 }
