@@ -16,14 +16,17 @@
 //go:build cli
 
 // Systray_fake gets compiled when the tag 'cli' is present. This is useful to build an agent without trayicon functionalities
+
 package systray
 
 import "os"
 
+// Start is a dummy function
 func (s *Systray) Start() {
 	select {}
 }
 
+// Quit is a dummy function
 func (s *Systray) Quit() {
 	os.Exit(0)
 }
