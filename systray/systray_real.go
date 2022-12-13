@@ -20,10 +20,8 @@
 package systray
 
 import (
-	"fmt"
 	"os"
 	"os/user"
-	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 
@@ -185,35 +183,35 @@ type configIni struct {
 	Location string
 }
 
-// getconfigs parses all config files in the executable folder
+// getConfigs parses all config files in the .arduino-create folder
 func getConfigs() []configIni {
-	// config.ini must be there, so call it Default
-	src, _ := os.Executable() // TODO change path
-	dest := filepath.Dir(src)
+
+	usr, _ := user.Current()
+	usrDir := paths.New(usr.HomeDir) // The user folder, on linux/macos /home/<usr>/
+	agentDir := usrDir.Join(".arduino-create")
 
 	var configs []configIni
 
-	err := filepath.Walk(dest, func(path string, f os.FileInfo, _ error) error {
-		if !f.IsDir() {
-			if filepath.Ext(path) == ".ini" {
-				cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true, AllowPythonMultilineValues: true}, filepath.Join(dest, f.Name()))
-				if err != nil {
-					return err
-				}
-				defaultSection, err := cfg.GetSection("")
-				name := defaultSection.Key("name").String()
-				if name == "" || err != nil {
-					name = "Default config"
-				}
-				conf := configIni{Name: name, Location: f.Name()}
-				configs = append(configs, conf)
-			}
-		}
-		return nil
-	})
-
+	files, err := agentDir.ReadDir()
 	if err != nil {
-		fmt.Println("error walking through executable configuration: %w", err)
+		log.Errorf("cannot read the content of %s", agentDir)
+		return nil
+	}
+	files.FilterOutDirs()
+	files.FilterSuffix(".ini")
+	for _, file := range files {
+		cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true, AllowPythonMultilineValues: true}, file.String())
+		if err != nil {
+			log.Errorf("error walking through executable configuration: %s", err)
+		} else {
+			defaultSection, err := cfg.GetSection("")
+			name := defaultSection.Key("name").String()
+			if name == "" || err != nil {
+				name = "Default config"
+			}
+			conf := configIni{Name: name, Location: file.String()}
+			configs = append(configs, conf)
+		}
 	}
 
 	return configs
