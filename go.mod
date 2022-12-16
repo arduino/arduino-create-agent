@@ -6,7 +6,7 @@ require (
 	github.com/andela/gin-cors v0.0.0-20160928171741-e8c3436a37e2
 	github.com/arduino/arduino-cli v0.0.0-20210422154105-5aa424818026
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/codeclysm/extract/v3 v3.0.2
+	github.com/codeclysm/extract/v3 v3.1.0
 	github.com/getlantern/systray v1.1.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-ini/ini v1.62.0
@@ -50,10 +50,11 @@ require (
 	github.com/google/gxui v0.0.0-20151028112939-f85e0a97b3a4 // indirect
 	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
-	github.com/h2non/filetype v1.1.0 // indirect
+	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d // indirect
@@ -67,6 +68,7 @@ require (
 	github.com/pkg/sftp v1.13.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ugorji/go v1.1.6 // indirect
+	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/zach-klippenstein/goregen v0.0.0-20160303162051-795b5e3961ea // indirect
 	golang.org/x/net v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
