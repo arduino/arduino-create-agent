@@ -52,6 +52,16 @@ var (
 	requiredToolsAPILevel = "v1"
 )
 
+// the important folders of the agent
+var (
+	src, _   = os.Executable()
+	srcPath  = paths.New(src)   // The path of the agent's binary
+	srcDir   = srcPath.Parent() // The directory of the agent's binary
+	usr, _   = user.Current()
+	usrDir   = paths.New(usr.HomeDir) // The user folder, on linux/macos /home/<usr>/
+	agentDir = usrDir.Join(".arduino-create")
+)
+
 // regular flags
 var (
 	hibernate        = flag.Bool("hibernate", false, "start hibernated")
@@ -149,15 +159,10 @@ func main() {
 		AdditionalConfig: *additionalConfig,
 	}
 
-	path, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-
 	// If the executable is temporary, copy it to the full path, then restart
-	if strings.Contains(path, "-temp") {
-		newPath := updater.BinPath(path)
-		err := copyExe(path, newPath)
+	if strings.Contains(srcPath.String(), "-temp") {
+		newPath := updater.BinPath(srcPath.String())
+		err := copyExe(srcPath.String(), newPath)
 		if err != nil {
 			log.Println("Copy error: ", err)
 			panic(err)
@@ -166,7 +171,7 @@ func main() {
 		Systray.Update(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
-		err := copyExe(path, updater.TempPath(path))
+		err := copyExe(srcPath.String(), updater.TempPath(srcPath.String()))
 		if err != nil {
 			panic(err)
 		}
@@ -195,14 +200,6 @@ func loop() {
 
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
-
-	// the important folders of the agent
-	src, _ := os.Executable()
-	srcPath := paths.New(src)  // The path of the agent's binary
-	srcDir := srcPath.Parent() // The directory of the agent's binary
-	usr, _ := user.Current()
-	usrDir := paths.New(usr.HomeDir) // The user folder, on linux/macos /home/<usr>/
-	agentDir := usrDir.Join(".arduino-create")
 
 	// Instantiate Tools
 	Tools = tools.Tools{
