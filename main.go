@@ -140,6 +140,18 @@ func main() {
 	// Parse regular flags
 	flag.Parse()
 
+	// Instantiate Tools, so that .arduino-create/ folder gets created
+	Tools = tools.Tools{
+		Directory: agentDir.String(),
+		IndexURL:  *indexURL,
+		Logger: func(msg string) {
+			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+			mapB, _ := json.Marshal(mapD)
+			h.broadcastSys <- mapB
+		},
+	}
+	Tools.Init(requiredToolsAPILevel)
+
 	// Generate certificates
 	if *genCert {
 		generateCertificates()
@@ -200,18 +212,6 @@ func loop() {
 
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
-
-	// Instantiate Tools
-	Tools = tools.Tools{
-		Directory: agentDir.String(),
-		IndexURL:  *indexURL,
-		Logger: func(msg string) {
-			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
-			mapB, _ := json.Marshal(mapD)
-			h.broadcastSys <- mapB
-		},
-	}
-	Tools.Init(requiredToolsAPILevel)
 
 	// Let's handle the config
 	var configPath *paths.Path
