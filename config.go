@@ -23,6 +23,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// getCertificatesDir return the directory where SSL certificates are saved
+func getCertificatesDir() *paths.Path {
+	return getDataDir()
+}
+
 // getDataDir returns the full path to the default Arduino Create Agent data directory.
 func getDataDir() *paths.Path {
 	userDir, err := os.UserHomeDir()

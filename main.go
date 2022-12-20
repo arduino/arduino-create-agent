@@ -128,7 +128,7 @@ func main() {
 
 	// Generate certificates
 	if *genCert {
-		generateCertificates()
+		generateCertificates(getCertificatesDir())
 		os.Exit(0)
 	}
 
@@ -404,7 +404,8 @@ func loop() {
 
 	go func() {
 		// check if certificates exist; if not, use plain http
-		if srcDir.Join("cert.pem").NotExist() {
+		certsDir := getCertificatesDir()
+		if certsDir.Join("cert.pem").NotExist() {
 			log.Error("Could not find HTTPS certificate. Using plain HTTP only.")
 			return
 		}
@@ -415,7 +416,7 @@ func loop() {
 		for i < end {
 			i = i + 1
 			portSSL = ":" + strconv.Itoa(i)
-			if err := r.RunTLS(*address+portSSL, srcDir.Join("cert.pem").String(), srcDir.Join("key.pem").String()); err != nil {
+			if err := r.RunTLS(*address+portSSL, certsDir.Join("cert.pem").String(), certsDir.Join("key.pem").String()); err != nil {
 				log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				continue
 			} else {
