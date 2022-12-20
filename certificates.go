@@ -24,6 +24,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/arduino/go-paths-helper"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
@@ -133,12 +134,11 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	return &template, nil
 }
 
-func generateCertificates() {
-
-	os.Remove("ca.cert.pem")
-	os.Remove("ca.key.pem")
-	os.Remove("cert.pem")
-	os.Remove("key.pem")
+func generateCertificates(path *paths.Path) {
+	path.Join("ca.cert.pem").Remove()
+	path.Join("ca.key.pem").Remove()
+	path.Join("cert.pem").Remove()
+	path.Join("key.pem").Remove()
 
 	// Create the key for the certification authority
 	caKey, err := generateKey("P256")
@@ -146,15 +146,15 @@ func generateCertificates() {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
-
-	keyOut, err := os.OpenFile("ca.key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOutPath := path.Join("ca.key.pem").String()
+	keyOut, err := os.OpenFile(keyOutPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
 	pem.Encode(keyOut, pemBlockForKey(caKey))
 	keyOut.Close()
-	log.Println("written ca.key.pem")
+	log.Printf("written %s", keyOutPath)
 
 	// Create the certification authority
 	caTemplate, err := generateSingleCertificate(true)
@@ -166,17 +166,19 @@ func generateCertificates() {
 
 	derBytes, _ := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, publicKey(caKey), caKey)
 
-	certOut, err := os.Create("ca.cert.pem")
+	certOutPath := path.Join("ca.cert.pem").String()
+	certOut, err := os.Create(certOutPath)
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
-	log.Print("written ca.cert.pem")
+	log.Printf("written %s", certOutPath)
 
-	ioutil.WriteFile("ca.cert.cer", derBytes, 0644)
-	log.Print("written ca.cert.cer")
+	filePath := path.Join("ca.cert.cer").String()
+	ioutil.WriteFile(filePath, derBytes, 0644)
+	log.Printf("written %s", filePath)
 
 	// Create the key for the final certificate
 	key, err := generateKey("P256")
@@ -185,14 +187,15 @@ func generateCertificates() {
 		os.Exit(1)
 	}
 
-	keyOut, err = os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOutPath = path.Join("key.pem").String()
+	keyOut, err = os.OpenFile(keyOutPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
 	pem.Encode(keyOut, pemBlockForKey(key))
 	keyOut.Close()
-	log.Println("written key.pem")
+	log.Printf("written %s", keyOutPath)
 
 	// Create the final certificate
 	template, err := generateSingleCertificate(false)
@@ -204,17 +207,19 @@ func generateCertificates() {
 
 	derBytes, _ = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), caKey)
 
-	certOut, err = os.Create("cert.pem")
+	certOutPath = path.Join("cert.pem").String()
+	certOut, err = os.Create(certOutPath)
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
-	log.Print("written cert.pem")
+	log.Printf("written %s", certOutPath)
 
-	ioutil.WriteFile("cert.cer", derBytes, 0644)
-	log.Print("written cert.cer")
+	certPath := path.Join("cert.cer").String()
+	ioutil.WriteFile(certPath, derBytes, 0644)
+	log.Printf("written %s", certPath)
 
 }
 
@@ -230,14 +235,14 @@ func certHandler(c *gin.Context) {
 }
 
 func deleteCertHandler(c *gin.Context) {
-	DeleteCertificates()
+	DeleteCertificates(agentDir)
 }
 
 // DeleteCertificates will delete the certificates
-func DeleteCertificates() {
-	os.Remove("ca.cert.pem")
-	os.Remove("ca.cert.cer")
-	os.Remove("ca.key.pem")
+func DeleteCertificates(path *paths.Path) {
+	path.Join("ca.cert.pem").Remove()
+	path.Join("ca.cert.cer").Remove()
+	path.Join("ca.key.pem").Remove()
 }
 
 const noFirefoxTemplateHTML = `<!DOCTYPE html>
