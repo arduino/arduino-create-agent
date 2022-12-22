@@ -73,6 +73,12 @@ var systems = map[string]string{
 	"linuxarm":     "arm-linux-gnueabihf",
 }
 
+// public vars to allow override in the tests
+var (
+	OS   = runtime.GOOS
+	Arch = runtime.GOARCH
+)
+
 func mimeType(data []byte) (string, error) {
 	return http.DetectContentType(data[0:512]), nil
 }
@@ -321,7 +327,7 @@ func findTool(pack, name, version string, data index) (tool, system) {
 	maxSimilarity := 0.7
 
 	for _, s := range correctTool.Systems {
-		similarity := smetrics.Jaro(s.Host, systems[runtime.GOOS+runtime.GOARCH])
+		similarity := smetrics.Jaro(s.Host, systems[OS+Arch])
 		if similarity > maxSimilarity {
 			correctSystem = s
 			maxSimilarity = similarity
@@ -587,7 +593,7 @@ func (t *Tools) installDrivers(location string) error {
 	OkPressed := 6
 	extension := ".bat"
 	preamble := ""
-	if runtime.GOOS != "windows" {
+	if OS != "windows" {
 		extension = ".sh"
 		// add ./ to force locality
 		preamble = "./"
@@ -599,7 +605,7 @@ func (t *Tools) installDrivers(location string) error {
 			os.Chdir(location)
 			t.Logger(preamble + "post_install" + extension)
 			oscmd := exec.Command(preamble + "post_install" + extension)
-			if runtime.GOOS != "linux" {
+			if OS != "linux" {
 				// spawning a shell could be the only way to let the user type his password
 				TellCommandNotToSpawnShell(oscmd)
 			}
