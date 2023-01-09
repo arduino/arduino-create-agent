@@ -1,9 +1,8 @@
 ---
 name: github.com/xrash/smetrics
-version: v0.0.0-20201216005158-039620a65673
+version: v0.0.0-20170218160415-a3153f7040e9
 type: go
-summary: Package smetrics provides a bunch of algorithms for calculating the distance
-  between strings.
+summary: 
 homepage: https://pkg.go.dev/github.com/xrash/smetrics
 license: mit
 licenses:
