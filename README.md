@@ -1,3 +1,5 @@
+# arduino-create-agent
+
 [![License: AGPL v3.0](https://img.shields.io/badge/License-AGPL%20v3.0-blue)](https://www.gnu.org/licenses/agpl-3.0.html)
 [![Test Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml)
 [![Codecov](https://codecov.io/gh/arduino/arduino-create-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/arduino/arduino-create-agent)
@@ -6,13 +8,11 @@
 [![Check Go Dependencies status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml)
 [![Check Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml)
 
-arduino-create-agent
-====================
-
 The Arduino Create Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create applications](https://create.arduino.cc) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
 
 ## Architecture
-```
+
+```text
 +-------------------------------+
 |                               |
 |            Browser            |
@@ -26,13 +26,17 @@ The Arduino Create Agent is a single binary that will sit on the traybar and wor
 ```
 
 ## Installation
+
 Get the [latest version](https://github.com/arduino/arduino-create-agent/releases) of the Agent for all supported platforms or complete the [Getting Started](https://create.arduino.cc/getting-started/plugin/welcome).
 
 ## Apple M1 support
+
 At the moment the new Apple Silicon Macs released in November 2020, like the [MacBook Pro 13"](https://www.apple.com/macbook-pro-13/), [MacBook Air](https://www.apple.com/macbook-air/) and [Mac mini](https://www.apple.com/mac-mini/) models with the [Apple M1](https://www.apple.com/mac/m1/) chip do not have native builds. But the Arduino Agent performs well in [Rosetta 2 mode](https://support.apple.com/en-us/HT211861).
 
 ## Documentation
+
 The documentation has been moved to the [wiki](https://github.com/arduino/arduino-create-agent/wiki) page. There you can find:
+
 - [Advanced usage](https://github.com/arduino/arduino-create-agent/wiki/Advanced-usage): explaining how to use multiple configurations and how to use the agent with a proxy.
 - [Agent Beta Program](https://github.com/arduino/arduino-create-agent/wiki/Agent-Beta-Program)
 - [Developement](https://github.com/arduino/arduino-create-agent/wiki/Developement): containing useful info to help in development
@@ -42,6 +46,7 @@ The documentation has been moved to the [wiki](https://github.com/arduino/arduin
 - [How to use the agent](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-the-agent)
 
 ## Contributing
+
 ### Submitting an issue
 
 When submitting a new issue please search for duplicates before creating a new one. Help us by providing  useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
@@ -55,6 +60,7 @@ Thank you!
 e-mail contact: security@arduino.cc
 
 ### Submitting a pull request
+
 We are glad you want to contribute with code: that's the best way to help this software.
 
 Your contribution is adding or modifying existing behaviour, please always refer to an existing issue or open a new one before contributing. We are trying to use [Test Driven Development](https://en.wikipedia.org/wiki/Test-driven_development) in the near future: please add one or more tests that prove that your contribution is good and is working as expected, it will help us a lot.
@@ -66,12 +72,14 @@ Also, for your contribution to be accepted, every one of your commits must be "S
 By signing off your commits, you agree to the following agreement, also known as [Developer Certificate of Origin](http://developercertificate.org/): it assures everyone that the code you're submitting is yours or that you have rights to submit it.
 
 ## Authors and acknowledgment
+
 arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
 
 The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
 
 ## License
-```
+
+```text
 Developer Certificate of Origin
 Version 1.1
 
@@ -81,7 +89,6 @@ San Francisco, CA 94110 USA
 
 Everyone is permitted to copy and distribute verbatim copies of this
 license document, but changing it is not allowed.
-
 
 Developer's Certificate of Origin 1.1
 
