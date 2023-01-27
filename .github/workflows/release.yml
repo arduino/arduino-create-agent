@@ -280,7 +280,7 @@ jobs:
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
         
       - name: Upload autoupdate bundle to Arduino downloads servers
-        run: aws s3 cp ArduinoCreateAgent.app_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        run: aws s3 cp ArduinoCreateAgent.app_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
         if: ${{ needs.build.outputs.prerelease }} != 'true'
 
       - name: Upload artifact
