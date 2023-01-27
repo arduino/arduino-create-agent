@@ -54,9 +54,6 @@ var (
 
 // the important folders of the agent
 var (
-	src, _   = os.Executable()
-	srcPath  = paths.New(src)   // The path of the agent's binary
-	srcDir   = srcPath.Parent() // The directory of the agent's binary
 	usr, _   = user.Current()
 	usrDir   = paths.New(usr.HomeDir) // The user folder, on linux/macos /home/<usr>/
 	agentDir = usrDir.Join(".arduino-create")
@@ -172,19 +169,18 @@ func main() {
 	}
 
 	// If the executable is temporary, copy it to the full path, then restart
-	if strings.Contains(srcPath.String(), "-temp") {
-		newPath := updater.BinPath(srcPath.String())
-		err := copyExe(srcPath.String(), newPath)
-		if err != nil {
+	if src, err := os.Executable(); err != nil {
+		panic(err)
+	} else if strings.Contains(src, "-temp") {
+		newPath := updater.RemoveTempSuffixFromPath(src)
+		if err := copyExe(src, newPath); err != nil {
 			log.Println("Copy error: ", err)
 			panic(err)
 		}
-
 		Systray.RestartWith(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
-		err := copyExe(srcPath.String(), updater.TempPath(srcPath.String()))
-		if err != nil {
+		if err := copyExe(src, updater.AddTempSuffixToPath(src)); err != nil {
 			panic(err)
 		}
 		Systray.Start()
@@ -230,7 +226,9 @@ func loop() {
 		log.Infof("using config from default: %s", configPath)
 		// take the config from the old folder where the agent's binary sits
 	} else {
-		oldConfigPath := srcDir.Join("config.ini")
+		// Fall back to the old config.ini location
+		src, _ := os.Executable()
+		oldConfigPath := paths.New(src).Parent().Join("config.ini")
 		if oldConfigPath.Exist() {
 			err := oldConfigPath.CopyTo(agentDir.Join("config.ini"))
 			if err != nil {
