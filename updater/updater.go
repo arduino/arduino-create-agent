@@ -68,6 +68,38 @@ var errHashMismatch = errors.New("new file hash mismatch after patch")
 var errDiffURLUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
 var up = update.New()
 
+func Start(src string) string {
+	// If the executable is temporary, copy it to the full path, then restart
+	if strings.Contains(src, "-temp") {
+		newPath := removeTempSuffixFromPath(src)
+		if err := copyExe(src, newPath); err != nil {
+			log.Println("Copy error: ", err)
+			panic(err)
+		}
+		return newPath
+	}
+
+	// Otherwise copy to a path with -temp suffix
+	if err := copyExe(src, AddTempSuffixToPath(src)); err != nil {
+		panic(err)
+	}
+	return ""
+}
+
+func copyExe(from, to string) error {
+	data, err := os.ReadFile(from)
+	if err != nil {
+		log.Println("Cannot read file: ", from)
+		return err
+	}
+	err = os.WriteFile(to, data, 0755)
+	if err != nil {
+		log.Println("Cannot write file: ", to)
+		return err
+	}
+	return nil
+}
+
 // AddTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
 func AddTempSuffixToPath(path string) string {
 	if filepath.Ext(path) == "exe" {
@@ -79,8 +111,8 @@ func AddTempSuffixToPath(path string) string {
 	return path
 }
 
-// RemoveTempSuffixFromPath removes "-temp" suffix from the path to an executable file (a "-temp.exe" extension is replaced with ".exe")
-func RemoveTempSuffixFromPath(path string) string {
+// removeTempSuffixFromPath removes "-temp" suffix from the path to an executable file (a "-temp.exe" extension is replaced with ".exe")
+func removeTempSuffixFromPath(path string) string {
 	return strings.Replace(path, "-temp", "", -1)
 }
 
