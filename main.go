@@ -158,7 +158,7 @@ func main() {
 			log.Println("Copy error: ", err)
 			panic(err)
 		}
-		Systray.Update(newPath)
+		Systray.RestartWith(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
 		if err := copyExe(src, updater.AddTempSuffixToPath(src)); err != nil {
