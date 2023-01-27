@@ -180,7 +180,7 @@ func main() {
 			panic(err)
 		}
 
-		Systray.Update(newPath)
+		Systray.RestartWith(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
 		err := copyExe(srcPath.String(), updater.TempPath(srcPath.String()))
