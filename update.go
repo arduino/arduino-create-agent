@@ -30,40 +30,16 @@
 package main
 
 import (
-	"os"
-
 	"github.com/arduino/arduino-create-agent/updater"
 	"github.com/gin-gonic/gin"
 )
 
 func updateHandler(c *gin.Context) {
-
-	path, err := os.Executable()
-
+	restartPath, err := updater.CheckForUpdates(version, *updateURL, *updateURL, *appName)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-
-	var up = &updater.Updater{
-		CurrentVersion: version,
-		APIURL:         *updateURL,
-		BinURL:         *updateURL,
-		DiffURL:        "",
-		Dir:            "update/",
-		CmdName:        *appName,
-	}
-
-	err = up.BackgroundRun()
-
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	path = updater.AddTempSuffixToPath(path)
-
 	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
-
-	Systray.RestartWith(path)
+	Systray.RestartWith(restartPath)
 }
