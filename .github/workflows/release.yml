@@ -8,7 +8,7 @@ on:
 env:
   # As defined by the Taskfile's PROJECT_NAME variable
   PROJECT_NAME: arduino-create-agent
-  TARGET: "/CreateAgent/Stable"
+  TARGET: "/CreateAgent/Stable/"
   OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
   VERSION_TARGET: "arduino-create-static/agent-metadata/"
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -206,13 +206,13 @@ jobs:
           name: ArduinoCreateAgent.app
           path: ArduinoCreateAgent.app.tar
           
-  # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it.
+  # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it, uploading it also on s3 download servers for the autoupdate.
   notarize-macos:
     name: Notarize bundle
     runs-on: macos-12
     env:
       GON_PATH: ${{ github.workspace }}/gon
-    needs: create-macos-bundle
+    needs: [build, create-macos-bundle]
 
     steps:
       - name: Download artifact
@@ -278,6 +278,10 @@ jobs:
 
       - name: Sign and notarize binary
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
+        
+      - name: Upload autoupdate bundle to Arduino downloads servers
+        run: aws s3 cp ArduinoCreateAgent.app_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        if: ${{ needs.build.outputs.prerelease }} != 'true'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
