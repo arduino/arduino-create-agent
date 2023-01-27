@@ -13,17 +13,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+//go:build darwin
+
 package updater
 
-// Start checks if an update has been downloaded and if so returns the path to the
-// binary to be executed to perform the update. If no update has been downloaded
-// it returns an empty string.
-func Start(src string) string {
-	return start(src)
+func start(src string) string {
+	return ""
 }
 
-// CheckForUpdates checks if there is a new version of the binary available and
-// if so downloads it.
-func CheckForUpdates(currentVersion string, updateAPIURL, updateBinURL string, cmdName string) (string, error) {
-	return checkForUpdates(currentVersion, updateAPIURL, updateBinURL, cmdName)
+func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, cmdName string) (string, error) {
+	return "", nil
 }
