@@ -80,10 +80,30 @@ func Start(src string) string {
 	}
 
 	// Otherwise copy to a path with -temp suffix
-	if err := copyExe(src, AddTempSuffixToPath(src)); err != nil {
+	if err := copyExe(src, addTempSuffixToPath(src)); err != nil {
 		panic(err)
 	}
 	return ""
+}
+
+func CheckForUpdates(currentVersion string, updateAPIURL, updateBinURL string, cmdName string) (string, error) {
+	path, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	var up = &Updater{
+		CurrentVersion: currentVersion,
+		APIURL:         updateAPIURL,
+		BinURL:         updateBinURL,
+		DiffURL:        "",
+		Dir:            "update/",
+		CmdName:        cmdName,
+	}
+
+	if err := up.BackgroundRun(); err != nil {
+		return "", err
+	}
+	return addTempSuffixToPath(path), nil
 }
 
 func copyExe(from, to string) error {
@@ -100,8 +120,8 @@ func copyExe(from, to string) error {
 	return nil
 }
 
-// AddTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
-func AddTempSuffixToPath(path string) string {
+// addTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
+func addTempSuffixToPath(path string) string {
 	if filepath.Ext(path) == "exe" {
 		path = strings.Replace(path, ".exe", "-temp.exe", -1)
 	} else {
@@ -266,7 +286,7 @@ func (u *Updater) update() error {
 		return err
 	}
 
-	path = AddTempSuffixToPath(path)
+	path = addTempSuffixToPath(path)
 
 	old, err := os.Open(path)
 	if err != nil {
