@@ -22,7 +22,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -149,37 +148,13 @@ func main() {
 		ConfigDir:        configDir,
 	}
 
-	// If the executable is temporary, copy it to the full path, then restart
 	if src, err := os.Executable(); err != nil {
 		panic(err)
-	} else if strings.Contains(src, "-temp") {
-		newPath := updater.RemoveTempSuffixFromPath(src)
-		if err := copyExe(src, newPath); err != nil {
-			log.Println("Copy error: ", err)
-			panic(err)
-		}
-		Systray.RestartWith(newPath)
+	} else if restartPath := updater.Start(src); restartPath != "" {
+		Systray.RestartWith(restartPath)
 	} else {
-		// Otherwise copy to a path with -temp suffix
-		if err := copyExe(src, updater.AddTempSuffixToPath(src)); err != nil {
-			panic(err)
-		}
 		Systray.Start()
 	}
-}
-
-func copyExe(from, to string) error {
-	data, err := ioutil.ReadFile(from)
-	if err != nil {
-		log.Println("Cannot read file: ", from)
-		return err
-	}
-	err = ioutil.WriteFile(to, data, 0755)
-	if err != nil {
-		log.Println("Cannot write file: ", to)
-		return err
-	}
-	return nil
 }
 
 func loop() {
