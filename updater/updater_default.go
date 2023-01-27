@@ -21,14 +21,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/kr/binarydist"
@@ -61,10 +58,6 @@ import (
 //   [gzipped executable data]
 //
 //
-
-const (
-	plat = runtime.GOOS + "-" + runtime.GOARCH
-)
 
 var errHashMismatch = errors.New("new file hash mismatch after patch")
 var errDiffURLUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
@@ -156,16 +149,13 @@ func removeTempSuffixFromPath(path string) string {
 //		go updater.BackgroundRun()
 //	}
 type Updater struct {
-	CurrentVersion string // Currently running version.
-	APIURL         string // Base URL for API requests (json files).
-	CmdName        string // Command name is appended to the ApiURL like http://apiurl/CmdName/. This represents one binary.
-	BinURL         string // Base URL for full binary downloads.
-	DiffURL        string // Base URL for diff downloads.
-	Dir            string // Directory to store selfupdate state.
-	Info           struct {
-		Version string
-		Sha256  []byte
-	}
+	CurrentVersion string               // Currently running version.
+	APIURL         string               // Base URL for API requests (json files).
+	CmdName        string               // Command name is appended to the ApiURL like http://apiurl/CmdName/. This represents one binary.
+	BinURL         string               // Base URL for full binary downloads.
+	DiffURL        string               // Base URL for diff downloads.
+	Dir            string               // Directory to store selfupdate state.
+	Info           *availableUpdateInfo // Information about the available update.
 }
 
 // BackgroundRun starts the update check and apply cycle.
@@ -185,18 +175,6 @@ func (u *Updater) BackgroundRun() error {
 		return err
 	}
 	return nil
-}
-
-func fetch(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		log.Errorf("bad http status from %s: %v", url, resp.Status)
-		return nil, fmt.Errorf("bad http status from %s: %v", url, resp.Status)
-	}
-	return resp.Body, nil
 }
 
 func verifySha(bin []byte, sha []byte) bool {
@@ -261,18 +239,11 @@ func (u *Updater) fetchBin() ([]byte, error) {
 }
 
 func (u *Updater) fetchInfo() error {
-	r, err := fetch(u.APIURL + u.CmdName + "/" + plat + ".json")
+	info, err := fetchInfo(u.APIURL, u.CmdName)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
-	err = json.NewDecoder(r).Decode(&u.Info)
-	if err != nil {
-		return err
-	}
-	if len(u.Info.Sha256) != sha256.Size {
-		return errors.New("bad cmd hash in info")
-	}
+	u.Info = info
 	return nil
 }
 
