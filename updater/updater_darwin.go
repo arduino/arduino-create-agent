@@ -25,6 +25,7 @@ import (
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/codeclysm/extract/v3"
+	"github.com/sirupsen/logrus"
 )
 
 func start(src string) string {
@@ -56,12 +57,17 @@ func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, c
 	}
 
 	tmp := paths.TempDir().Join("arduino-create-agent")
+	if err := tmp.MkdirAll(); err != nil {
+		return "", err
+	}
 	tmpZip := tmp.Join("update.zip")
 	tmpAppPath := tmp.Join("ArduinoCreateAgent-update.app")
 	defer tmp.RemoveAll()
 
 	// Download the update.
-	download, err := fetch(updateBinURL + cmdName + "/" + plat + "/" + info.Version + "/" + cmdName)
+	downloadURL := updateBinURL + cmdName + "/" + info.Version + "/ArduinoCreateAgent.app_notarized.zip"
+	logrus.WithField("url", downloadURL).Info("Downloading update")
+	download, err := fetch(downloadURL)
 	if err != nil {
 		return "", err
 	}
@@ -85,6 +91,7 @@ func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, c
 	}
 
 	// Unzip the update
+	logrus.WithField("tmpDir", tmpAppPath).Info("Unzipping update")
 	if err := tmpAppPath.MkdirAll(); err != nil {
 		return "", fmt.Errorf("could not create tmp dir to unzip update: %w", err)
 	}
@@ -99,11 +106,13 @@ func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, c
 	}
 
 	// Rename current app as .old
+	logrus.WithField("from", currentAppPath).WithField("to", oldAppPath).Info("Renaming old app")
 	if err := currentAppPath.Rename(oldAppPath); err != nil {
 		return "", fmt.Errorf("could not rename old app as .old: %w", err)
 	}
 
 	// Install new app
+	logrus.WithField("from", tmpAppPath).WithField("to", currentAppPath).Info("Copying updated app")
 	if err := tmpAppPath.CopyDirTo(currentAppPath); err != nil {
 		// Try rollback changes
 		_ = currentAppPath.RemoveAll()
@@ -112,8 +121,11 @@ func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, c
 	}
 
 	// Remove old app
+	logrus.WithField("to", oldAppPath).Info("Removing old app")
 	_ = oldAppPath.RemoveAll()
 
 	// Restart agent
-	return currentAppPath.Join("Contents", "MacOS", "Arduino_Create_Agent").String(), nil
+	newExecutable := currentAppPath.Join("Contents", "MacOS", "Arduino_Create_Agent")
+	logrus.WithField("path", newExecutable).Info("Running new app")
+	return newExecutable.String(), nil
 }
