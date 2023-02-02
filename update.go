@@ -41,5 +41,9 @@ func updateHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
-	Systray.RestartWith(restartPath)
+	if restartPath == "quit" {
+		Systray.Quit()
+	} else {
+		Systray.RestartWith(restartPath)
+	}
 }
