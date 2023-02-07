@@ -283,6 +283,25 @@ jobs:
         run: aws s3 cp ArduinoCreateAgent.app_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
+      - name: Generate json file used for the new autoupdate
+        run: |
+          cat > darwin-amd64-bundle.json <<EOF
+          {
+              "Version": "${GITHUB_REF/refs\/tags\//}",
+              "Sha256": "$(shasum -a 256 ArduinoCreateAgent.app_notarized.zip | awk '{print $1}'"
+          }
+          EOF
+          # we do this because we do not offer a binary for m1 yet,
+          #`runtime.GOARCH` on an m1 machine returns ARM64, so the call for the file would fail
+          cp darwin-amd64-bundle.json darwin-arm64-bundle.json
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
+
+      - name: Upload autoupdate files to Arduino downloads servers
+        run: |
+          aws s3 cp darwin-amd64-bundle.json s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+          aws s3 cp darwin-arm64-bundle.json s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
