@@ -288,7 +288,7 @@ jobs:
           cat > darwin-amd64-bundle.json <<EOF
           {
               "Version": "${GITHUB_REF/refs\/tags\//}",
-              "Sha256": "$(shasum -a 256 ArduinoCreateAgent.app_notarized.zip | awk '{print $1}'"
+              "Sha256": "$(shasum -a 256 ArduinoCreateAgent.app_notarized.zip | awk '{print $1}' |  xxd -r -p | base64)"
           }
           EOF
           # we do this because we do not offer a binary for m1 yet,
