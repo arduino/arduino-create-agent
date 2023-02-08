@@ -123,6 +123,14 @@ jobs:
         run: go-selfupdate ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch != '-386' && steps.prerelease.outputs.IS_PRE != 'true'
 
+        # for now we do not distribute m1 build, this is a workaround for now
+      - name: Copy autoupdate file for darwin-arm64 (m1 arch)
+        working-directory: public/
+        run: | 
+          cp darwin-amd64.json darwin-arm64.json
+          cp ${TAG_VERSION}/darwin-amd64.gz ${TAG_VERSION}/darwin-arm64.gz
+        if: matrix.os == `macos-12` && steps.prerelease.outputs.IS_PRE != 'true'
+
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch == '-386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
