@@ -22,11 +22,13 @@ package systray
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/arduino/arduino-create-agent/icon"
+	"github.com/arduino/go-paths-helper"
 	"github.com/getlantern/systray"
 	"github.com/go-ini/ini"
 	"github.com/skratchdot/open-golang/open"
@@ -101,30 +103,27 @@ func (s *Systray) updateMenuItem(item *systray.MenuItem, disable bool) {
 
 // CrashesIsEmpty checks if the folder containing crash-reports is empty
 func (s *Systray) CrashesIsEmpty() bool {
-	currDir, err := os.Getwd()
-	if err != nil {
-		log.Error("Cannot determine executable path: ", err)
-	}
-	logsDir := filepath.Join(currDir, "logs")
-	if _, err := os.Stat(string(logsDir)); os.IsNotExist(err) {
-		return true
-	}
-	return false
+	logsDir := getLogsDir()
+	return logsDir.NotExist() // if the logs directory is empty we assume there are no crashreports
 }
 
 // RemoveCrashes removes the crash-reports from `logs` folder
 func (s *Systray) RemoveCrashes() {
-	currDir, err := os.Getwd()
-	if err != nil {
-		log.Error("Cannot determine executable path: ", err)
-	}
-	logsDir := filepath.Join(currDir, "logs")
-	pathErr := os.RemoveAll(logsDir)
+	logsDir := getLogsDir()
+	pathErr := logsDir.RemoveAll()
 	if pathErr != nil {
-		log.Error("Cannot remove crashreports: ", pathErr)
+		log.Errorf("Cannot remove crashreports: %s", pathErr)
 	} else {
-		log.Info("Removed crashreports inside: ", logsDir)
+		log.Infof("Removed crashreports inside: %s", logsDir)
 	}
+}
+
+// getLogsDir simply returns the folder containing the logs
+func getLogsDir() *paths.Path {
+	usr, _ := user.Current()
+	usrDir := paths.New(usr.HomeDir) // The user folder, on linux/macos /home/<usr>/
+	agentDir := usrDir.Join(".arduino-create")
+	return agentDir.Join("logs")
 }
 
 // starthibernate creates a systray icon with menu options to resume/quit the agent
@@ -189,7 +188,7 @@ type configIni struct {
 // getconfigs parses all config files in the executable folder
 func getConfigs() []configIni {
 	// config.ini must be there, so call it Default
-	src, _ := os.Executable()
+	src, _ := os.Executable() // TODO change path
 	dest := filepath.Dir(src)
 
 	var configs []configIni

@@ -23,8 +23,6 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
-	"os/user"
-	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -36,8 +34,8 @@ import (
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
-	"github.com/arduino/arduino-create-agent/utilities"
 	v2 "github.com/arduino/arduino-create-agent/v2"
+	paths "github.com/arduino/go-paths-helper"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
 	log "github.com/sirupsen/logrus"
@@ -47,7 +45,6 @@ import (
 var (
 	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
 	commit                = "xxxxxxxx"  //don't modify it, Jenkins will take care
-	embeddedAutoextract   = false
 	port                  string
 	portSSL               string
 	requiredToolsAPILevel = "v1"
@@ -182,44 +179,19 @@ func loop() {
 	if *hibernate {
 		return
 	}
-	// autoextract self
+
+	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stdout)
+
+	// the important folders of the agent
 	src, _ := os.Executable()
-	dest := filepath.Dir(src)
-
-	if embeddedAutoextract {
-		// save the config.ini (if it exists)
-		if _, err := os.Stat(filepath.Join(dest, "config.ini")); os.IsNotExist(err) {
-			log.Println("First run, unzipping self")
-			err := utilities.Unzip(src, dest)
-			log.Println("Self extraction, err:", err)
-		}
-	}
-
-	// Parse ini config
-	args, err := parseIni(filepath.Join(dest, "config.ini"))
-	if err != nil {
-		panic(err)
-	}
-	err = iniConf.Parse(args)
-	if err != nil {
-		panic(err)
-	}
-
-	// Parse additional ini config
-	args, err = parseIni(filepath.Join(dest, *additionalConfig))
-	if err != nil {
-		panic(err)
-	}
-	err = iniConf.Parse(args)
-	if err != nil {
-		panic(err)
-	}
+	srcPath := paths.New(src)  // The path of the agent's binary
+	srcDir := srcPath.Parent() // The directory of the agent's binary
+	agentDir, err := getDefaultArduinoCreateConfigDir()
 
 	// Instantiate Tools
-	usr, _ := user.Current()
-	directory := filepath.Join(usr.HomeDir, ".arduino-create")
 	Tools = tools.Tools{
-		Directory: directory,
+		Directory: agentDir.String(),
 		IndexURL:  *indexURL,
 		Logger: func(msg string) {
 			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -229,9 +201,64 @@ func loop() {
 	}
 	Tools.Init(requiredToolsAPILevel)
 
-	log.SetLevel(log.InfoLevel)
+	// Let's handle the config
+	var configPath *paths.Path
 
-	log.SetOutput(os.Stdout)
+	// see if the env var is defined, if it is take the config from there, this will override the default path
+	if envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG"); envConfig != "" {
+		configPath = paths.New(envConfig)
+		if configPath.NotExist() {
+			log.Panicf("config from env var %s does not exists", envConfig)
+		}
+		log.Infof("using config from env variable: %s", configPath)
+	} else if defaultConfigPath := agentDir.Join("config.ini"); defaultConfigPath.Exist() {
+		// by default take the config from the ~/.arduino-create/config.ini file
+		configPath = defaultConfigPath
+		log.Infof("using config from default: %s", configPath)
+	} else {
+		// take the config from the old folder where the agent's binary sits
+		oldConfigPath := srcDir.Join("config.ini")
+		if oldConfigPath.Exist() {
+			err := oldConfigPath.CopyTo(defaultConfigPath)
+			if err != nil {
+				log.Errorf("cannot copy old %s, to %s, generating new config", oldConfigPath, configPath)
+			} else {
+				configPath = defaultConfigPath
+				log.Infof("copied old %s, to %s", oldConfigPath, configPath)
+			}
+		}
+	}
+	if configPath == nil {
+		configPath = generateConfig(agentDir)
+	}
+
+	// Parse the config.ini
+	args, err := parseIni(configPath.String())
+	if err != nil {
+		log.Panicf("config.ini cannot be parsed: %s", err)
+	}
+	err = iniConf.Parse(args)
+	if err != nil {
+		log.Panicf("cannot parse arguments: %s", err)
+	}
+
+	// Parse additional ini config if defined
+	if len(*additionalConfig) > 0 {
+		additionalConfigPath := paths.New(*additionalConfig)
+		if additionalConfigPath.NotExist() {
+			log.Infof("additional config file not found in %s", additionalConfigPath.String())
+		} else {
+			args, err = parseIni(additionalConfigPath.String())
+			if err != nil {
+				log.Panicf("additional config cannot be parsed: %s", err)
+			}
+			err = iniConf.Parse(args)
+			if err != nil {
+				log.Panicf("cannot parse arguments: %s", err)
+			}
+			log.Infof("using additional config from %s", additionalConfigPath.String())
+		}
+	}
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
@@ -309,16 +336,12 @@ func loop() {
 	// save crashreport to file
 	if *crashreport {
 		logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
-		currDir, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
 		// handle logs directory creation
-		logsDir := filepath.Join(currDir, "logs")
-		if _, err := os.Stat(logsDir); os.IsNotExist(err) {
-			os.Mkdir(logsDir, 0700)
+		logsDir := agentDir.Join("logs")
+		if logsDir.NotExist() {
+			logsDir.Mkdir()
 		}
-		logFile, err := os.OpenFile(filepath.Join(logsDir, logFilename), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
+		logFile, err := os.OpenFile(logsDir.Join(logFilename).String(), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
 		if err != nil {
 			log.Print("Cannot create file used for crash-report")
 		} else {
@@ -377,12 +400,12 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(directory)
+	goa := v2.Server(agentDir.String())
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
 		// check if certificates exist; if not, use plain http
-		if _, err := os.Stat(filepath.Join(dest, "cert.pem")); os.IsNotExist(err) {
+		if srcDir.Join("cert.pem").NotExist() {
 			log.Error("Could not find HTTPS certificate. Using plain HTTP only.")
 			return
 		}
@@ -393,7 +416,7 @@ func loop() {
 		for i < end {
 			i = i + 1
 			portSSL = ":" + strconv.Itoa(i)
-			if err := r.RunTLS(*address+portSSL, filepath.Join(dest, "cert.pem"), filepath.Join(dest, "key.pem")); err != nil {
+			if err := r.RunTLS(*address+portSSL, srcDir.Join("cert.pem").String(), srcDir.Join("key.pem").String()); err != nil {
 				log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				continue
 			} else {
