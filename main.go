@@ -19,7 +19,6 @@
 package main
 
 import (
-	_ "embed"
 	"encoding/json"
 	"flag"
 	"io/ioutil"
@@ -81,9 +80,6 @@ var (
 	verbose      = iniConf.Bool("v", true, "show debug logging")
 	crashreport  = iniConf.Bool("crashreport", false, "enable crashreport logging")
 )
-
-//go:embed config.ini
-var configContent []byte
 
 // global clients
 var (
@@ -209,26 +205,25 @@ func loop() {
 	var configPath *paths.Path
 
 	// see if the env var is defined, if it is take the config from there, this will override the default path
-	envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG")
-	if envConfig != "" {
+	if envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG"); envConfig != "" {
 		configPath = paths.New(envConfig)
 		if configPath.NotExist() {
 			log.Panicf("config from env var %s does not exists", envConfig)
 		}
 		log.Infof("using config from env variable: %s", configPath)
+	} else if defaultConfigPath := agentDir.Join("config.ini"); defaultConfigPath.Exist() {
 		// by default take the config from the ~/.arduino-create/config.ini file
-	} else if agentDir.Join("config.ini").Exist() {
-		configPath = agentDir.Join("config.ini")
+		configPath = defaultConfigPath
 		log.Infof("using config from default: %s", configPath)
-		// take the config from the old folder where the agent's binary sits
 	} else {
+		// take the config from the old folder where the agent's binary sits
 		oldConfigPath := srcDir.Join("config.ini")
 		if oldConfigPath.Exist() {
-			err := oldConfigPath.CopyTo(agentDir.Join("config.ini"))
+			err := oldConfigPath.CopyTo(defaultConfigPath)
 			if err != nil {
 				log.Errorf("cannot copy old %s, to %s, generating new config", oldConfigPath, configPath)
 			} else {
-				configPath = agentDir.Join("config.ini")
+				configPath = defaultConfigPath
 				log.Infof("copied old %s, to %s", oldConfigPath, configPath)
 			}
 		}
@@ -709,19 +704,4 @@ func parseIni(filename string) (args []string, err error) {
 	}
 
 	return args, nil
-}
-
-// generateConfig function will take a path as an input
-// and will write the default config,ini file to that path,
-// it will panic if something goes wrong
-func generateConfig(destDir *paths.Path) *paths.Path {
-	// generate the config.ini file directly in destDir
-	configPath := destDir.Join("config.ini")
-	err := configPath.WriteFile(configContent)
-	if err != nil {
-		// if we do not have a config there's nothing else we can do
-		log.Panicf("cannot generate config: %s", err)
-	}
-	log.Infof("generated config in %s", configPath)
-	return configPath
 }

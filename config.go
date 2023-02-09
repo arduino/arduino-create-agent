@@ -16,10 +16,12 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 
 	"github.com/arduino/go-paths-helper"
+	log "github.com/sirupsen/logrus"
 )
 
 // getDefaultArduinoCreateConfigDir returns the full path to the default arduino create agent data directory
@@ -49,4 +51,22 @@ func getDefaultArduinoCreateConfigDir() (*paths.Path, error) {
 		return nil, fmt.Errorf("cannot create config dir: %s", err)
 	}
 	return agentConfigDir, nil
+}
+
+//go:embed config.ini
+var configContent []byte
+
+// generateConfig function will take a directory path as an input
+// and will write the default config,ini file to that directory,
+// it will panic if something goes wrong
+func generateConfig(destDir *paths.Path) *paths.Path {
+	configPath := destDir.Join("config.ini")
+
+	// generate the config.ini file directly in destDir
+	if err := configPath.WriteFile(configContent); err != nil {
+		// if we do not have a config there's nothing else we can do
+		panic("cannot generate config: " + err.Error())
+	}
+	log.Infof("generated config in %s", configPath)
+	return configPath
 }
