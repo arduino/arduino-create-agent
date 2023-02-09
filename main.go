@@ -24,7 +24,6 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -192,9 +191,7 @@ func loop() {
 	src, _ := os.Executable()
 	srcPath := paths.New(src)  // The path of the agent's binary
 	srcDir := srcPath.Parent() // The directory of the agent's binary
-	usr, _ := user.Current()
-	usrDir := paths.New(usr.HomeDir) // The user folder, on linux/macos /home/<usr>/
-	agentDir := usrDir.Join(".arduino-create")
+	agentDir, err := getDefaultArduinoCreateConfigDir()
 
 	// Instantiate Tools
 	Tools = tools.Tools{
