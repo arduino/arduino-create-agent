@@ -133,6 +133,33 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	return &template, nil
 }
 
+// migrateCertificatesGeneratedWithOldAgentVersions checks if certificates generated
+// with an old version of the Agent needs to be migrated to the current certificates
+// directory, and performs the migration if needed.
+func migrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
+	if certsDir.Join("ca.cert.pem").Exist() {
+		// The new certificates are already set-up, nothing to do
+		return
+	}
+
+	fileList := []string{
+		"ca.key.pem",
+		"ca.cert.pem",
+		"ca.cert.cer",
+		"key.pem",
+		"cert.pem",
+		"cert.cer",
+	}
+	oldCertsDirPath, _ := os.Executable()
+	oldCertsDir := paths.New(oldCertsDirPath)
+	for _, fileName := range fileList {
+		oldCert := oldCertsDir.Join(fileName)
+		if oldCert.Exist() {
+			oldCert.CopyTo(certsDir.Join(fileName))
+		}
+	}
+}
+
 func generateCertificates(certsDir *paths.Path) {
 	certsDir.Join("ca.cert.pem").Remove()
 	certsDir.Join("ca.key.pem").Remove()

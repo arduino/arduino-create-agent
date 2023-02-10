@@ -131,6 +131,8 @@ func main() {
 		generateCertificates(getCertificatesDir())
 		os.Exit(0)
 	}
+	// Check if certificates made with Agent <=1.2.7 needs to be moved over the new location
+	migrateCertificatesGeneratedWithOldAgentVersions(getCertificatesDir())
 
 	// Launch main loop in a goroutine
 	go loop()
