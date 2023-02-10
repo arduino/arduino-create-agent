@@ -153,15 +153,15 @@ func main() {
 	if src, err := os.Executable(); err != nil {
 		panic(err)
 	} else if strings.Contains(src, "-temp") {
-		newPath := updater.BinPath(src)
+		newPath := updater.RemoveTempSuffixFromPath(src)
 		if err := copyExe(src, newPath); err != nil {
 			log.Println("Copy error: ", err)
 			panic(err)
 		}
-		Systray.Update(newPath)
+		Systray.RestartWith(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
-		if err := copyExe(src, updater.TempPath(src)); err != nil {
+		if err := copyExe(src, updater.AddTempSuffixToPath(src)); err != nil {
 			panic(err)
 		}
 		Systray.Start()

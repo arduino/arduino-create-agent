@@ -61,8 +61,9 @@ func updateHandler(c *gin.Context) {
 		return
 	}
 
-	path = updater.TempPath(path)
+	path = updater.AddTempSuffixToPath(path)
 
 	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
-	Systray.Update(path)
+
+	Systray.RestartWith(path)
 }

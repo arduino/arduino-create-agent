@@ -68,8 +68,8 @@ var errHashMismatch = errors.New("new file hash mismatch after patch")
 var errDiffURLUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
 var up = update.New()
 
-// TempPath generates a temporary path for the executable (adding "-temp")
-func TempPath(path string) string {
+// AddTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
+func AddTempSuffixToPath(path string) string {
 	if filepath.Ext(path) == "exe" {
 		path = strings.Replace(path, ".exe", "-temp.exe", -1)
 	} else {
@@ -79,8 +79,8 @@ func TempPath(path string) string {
 	return path
 }
 
-// BinPath generates the proper path for a temporary executable (removing "-temp")
-func BinPath(path string) string {
+// RemoveTempSuffixFromPath removes "-temp" suffix from the path to an executable file (a "-temp.exe" extension is replaced with ".exe")
+func RemoveTempSuffixFromPath(path string) string {
 	return strings.Replace(path, "-temp", "", -1)
 }
 
@@ -234,7 +234,7 @@ func (u *Updater) update() error {
 		return err
 	}
 
-	path = TempPath(path)
+	path = AddTempSuffixToPath(path)
 
 	old, err := os.Open(path)
 	if err != nil {

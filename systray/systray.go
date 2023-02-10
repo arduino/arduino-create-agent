@@ -92,8 +92,8 @@ func (s *Systray) Resume() {
 	s.Restart()
 }
 
-// Update restarts the program with the given path
-func (s *Systray) Update(path string) {
+// RestartWith restarts the program with the given path
+func (s *Systray) RestartWith(path string) {
 	s.path = path
 	s.Restart()
 }
