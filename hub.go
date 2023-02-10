@@ -182,7 +182,7 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		// Always delete root certificates when we receive a downloadtool command
 		// Useful if the install procedure was not followed strictly (eg. manually)
-		DeleteCertificates()
+		DeleteCertificates(getCertificatesDir())
 		go func() {
 			args := strings.Split(s, " ")
 			var tool, toolVersion, pack, behaviour string

@@ -17,15 +17,41 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"os"
 
 	"github.com/arduino/go-paths-helper"
 	log "github.com/sirupsen/logrus"
 )
 
-// getDefaultArduinoCreateConfigDir returns the full path to the default arduino create agent data directory
-func getDefaultArduinoCreateConfigDir() (*paths.Path, error) {
+// getCertificatesDir return the directory where SSL certificates are saved
+func getCertificatesDir() *paths.Path {
+	return getDataDir()
+}
+
+// getDataDir returns the full path to the default Arduino Create Agent data directory.
+func getDataDir() *paths.Path {
+	userDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Panicf("Could not get user dir: %s", err)
+	}
+	dataDir := paths.New(userDir, ".arduino-create")
+	if err := dataDir.MkdirAll(); err != nil {
+		log.Panicf("Could not create data dir: %s", err)
+	}
+	return dataDir
+}
+
+// getLogsDir return the directory where logs are saved
+func getLogsDir() *paths.Path {
+	logsDir := getDataDir().Join("logs")
+	if err := logsDir.MkdirAll(); err != nil {
+		log.Panicf("Can't create logs dir: %s", err)
+	}
+	return logsDir
+}
+
+// getDefaultConfigDir returns the full path to the default Arduino Create Agent configuration directory.
+func getDefaultConfigDir() *paths.Path {
 	// UserConfigDir returns the default root directory to use
 	// for user-specific configuration data. Users should create
 	// their own application-specific subdirectory within this
@@ -43,14 +69,14 @@ func getDefaultArduinoCreateConfigDir() (*paths.Path, error) {
 	// is not defined), then it will return an error.
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return nil, err
+		log.Panicf("Can't get user home dir: %s", err)
 	}
 
 	agentConfigDir := paths.New(configDir, "ArduinoCreateAgent")
 	if err := agentConfigDir.MkdirAll(); err != nil {
-		return nil, fmt.Errorf("cannot create config dir: %s", err)
+		log.Panicf("Can't create config dir: %s", err)
 	}
-	return agentConfigDir, nil
+	return agentConfigDir
 }
 
 //go:embed config.ini

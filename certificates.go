@@ -16,7 +16,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net"
 	"os"
@@ -24,6 +23,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/arduino/go-paths-helper"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
@@ -133,12 +133,38 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	return &template, nil
 }
 
-func generateCertificates() {
+// migrateCertificatesGeneratedWithOldAgentVersions checks if certificates generated
+// with an old version of the Agent needs to be migrated to the current certificates
+// directory, and performs the migration if needed.
+func migrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
+	if certsDir.Join("ca.cert.pem").Exist() {
+		// The new certificates are already set-up, nothing to do
+		return
+	}
 
-	os.Remove("ca.cert.pem")
-	os.Remove("ca.key.pem")
-	os.Remove("cert.pem")
-	os.Remove("key.pem")
+	fileList := []string{
+		"ca.key.pem",
+		"ca.cert.pem",
+		"ca.cert.cer",
+		"key.pem",
+		"cert.pem",
+		"cert.cer",
+	}
+	oldCertsDirPath, _ := os.Executable()
+	oldCertsDir := paths.New(oldCertsDirPath)
+	for _, fileName := range fileList {
+		oldCert := oldCertsDir.Join(fileName)
+		if oldCert.Exist() {
+			oldCert.CopyTo(certsDir.Join(fileName))
+		}
+	}
+}
+
+func generateCertificates(certsDir *paths.Path) {
+	certsDir.Join("ca.cert.pem").Remove()
+	certsDir.Join("ca.key.pem").Remove()
+	certsDir.Join("cert.pem").Remove()
+	certsDir.Join("key.pem").Remove()
 
 	// Create the key for the certification authority
 	caKey, err := generateKey("P256")
@@ -147,18 +173,20 @@ func generateCertificates() {
 		os.Exit(1)
 	}
 
-	keyOut, err := os.OpenFile("ca.key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
+	{
+		keyOutPath := certsDir.Join("ca.key.pem").String()
+		keyOut, err := os.OpenFile(keyOutPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600) // Save key with user-only permission 0600
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		pem.Encode(keyOut, pemBlockForKey(caKey))
+		keyOut.Close()
+		log.Printf("written %s", keyOutPath)
 	}
-	pem.Encode(keyOut, pemBlockForKey(caKey))
-	keyOut.Close()
-	log.Println("written ca.key.pem")
 
 	// Create the certification authority
 	caTemplate, err := generateSingleCertificate(true)
-
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
@@ -166,17 +194,23 @@ func generateCertificates() {
 
 	derBytes, _ := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, publicKey(caKey), caKey)
 
-	certOut, err := os.Create("ca.cert.pem")
-	if err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
+	{
+		caCertOutPath := certsDir.Join("ca.cert.pem")
+		caCertOut, err := caCertOutPath.Create()
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		pem.Encode(caCertOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+		caCertOut.Close()
+		log.Printf("written %s", caCertOutPath)
 	}
-	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-	certOut.Close()
-	log.Print("written ca.cert.pem")
 
-	ioutil.WriteFile("ca.cert.cer", derBytes, 0644)
-	log.Print("written ca.cert.cer")
+	{
+		caCertPath := certsDir.Join("ca.cert.cer")
+		caCertPath.WriteFile(derBytes)
+		log.Printf("written %s", caCertPath)
+	}
 
 	// Create the key for the final certificate
 	key, err := generateKey("P256")
@@ -185,18 +219,20 @@ func generateCertificates() {
 		os.Exit(1)
 	}
 
-	keyOut, err = os.OpenFile("key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
+	{
+		keyOutPath := certsDir.Join("key.pem").String()
+		keyOut, err := os.OpenFile(keyOutPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600) // Save key with user-only permission 0600
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		pem.Encode(keyOut, pemBlockForKey(key))
+		keyOut.Close()
+		log.Printf("written %s", keyOutPath)
 	}
-	pem.Encode(keyOut, pemBlockForKey(key))
-	keyOut.Close()
-	log.Println("written key.pem")
 
 	// Create the final certificate
 	template, err := generateSingleCertificate(false)
-
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
@@ -204,18 +240,23 @@ func generateCertificates() {
 
 	derBytes, _ = x509.CreateCertificate(rand.Reader, template, caTemplate, publicKey(key), caKey)
 
-	certOut, err = os.Create("cert.pem")
-	if err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
+	{
+		certOutPath := certsDir.Join("cert.pem").String()
+		certOut, err := os.Create(certOutPath)
+		if err != nil {
+			log.Error(err.Error())
+			os.Exit(1)
+		}
+		pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+		certOut.Close()
+		log.Printf("written %s", certOutPath)
 	}
-	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-	certOut.Close()
-	log.Print("written cert.pem")
 
-	ioutil.WriteFile("cert.cer", derBytes, 0644)
-	log.Print("written cert.cer")
-
+	{
+		certPath := certsDir.Join("cert.cer")
+		certPath.WriteFile(derBytes)
+		log.Printf("written %s", certPath)
+	}
 }
 
 func certHandler(c *gin.Context) {
@@ -230,14 +271,14 @@ func certHandler(c *gin.Context) {
 }
 
 func deleteCertHandler(c *gin.Context) {
-	DeleteCertificates()
+	DeleteCertificates(getCertificatesDir())
 }
 
 // DeleteCertificates will delete the certificates
-func DeleteCertificates() {
-	os.Remove("ca.cert.pem")
-	os.Remove("ca.cert.cer")
-	os.Remove("ca.key.pem")
+func DeleteCertificates(certDir *paths.Path) {
+	certDir.Join("ca.cert.pem").Remove()
+	certDir.Join("ca.cert.cer").Remove()
+	certDir.Join("ca.key.pem").Remove()
 }
 
 const noFirefoxTemplateHTML = `<!DOCTYPE html>

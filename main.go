@@ -128,18 +128,17 @@ func main() {
 
 	// Generate certificates
 	if *genCert {
-		generateCertificates()
+		generateCertificates(getCertificatesDir())
 		os.Exit(0)
 	}
+	// Check if certificates made with Agent <=1.2.7 needs to be moved over the new location
+	migrateCertificatesGeneratedWithOldAgentVersions(getCertificatesDir())
 
 	// Launch main loop in a goroutine
 	go loop()
 
 	// SetupSystray is the main thread
-	configDir, err := getDefaultArduinoCreateConfigDir()
-	if err != nil {
-		log.Panicf("Can't open defaul configuration dir: %s", err)
-	}
+	configDir := getDefaultConfigDir()
 	Systray = systray.Systray{
 		Hibernate: *hibernate,
 		Version:   version + "-" + commit,
@@ -150,25 +149,19 @@ func main() {
 		ConfigDir:        configDir,
 	}
 
-	path, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-
 	// If the executable is temporary, copy it to the full path, then restart
-	if strings.Contains(path, "-temp") {
-		newPath := updater.BinPath(path)
-		err := copyExe(path, newPath)
-		if err != nil {
+	if src, err := os.Executable(); err != nil {
+		panic(err)
+	} else if strings.Contains(src, "-temp") {
+		newPath := updater.BinPath(src)
+		if err := copyExe(src, newPath); err != nil {
 			log.Println("Copy error: ", err)
 			panic(err)
 		}
-
 		Systray.Update(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
-		err := copyExe(path, updater.TempPath(path))
-		if err != nil {
+		if err := copyExe(src, updater.TempPath(src)); err != nil {
 			panic(err)
 		}
 		Systray.Start()
@@ -197,15 +190,9 @@ func loop() {
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
 
-	// the important folders of the agent
-	src, _ := os.Executable()
-	srcPath := paths.New(src)  // The path of the agent's binary
-	srcDir := srcPath.Parent() // The directory of the agent's binary
-	agentDir, err := getDefaultArduinoCreateConfigDir()
-
 	// Instantiate Tools
 	Tools = tools.Tools{
-		Directory: agentDir.String(),
+		Directory: getDataDir().String(),
 		IndexURL:  *indexURL,
 		Logger: func(msg string) {
 			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -216,6 +203,7 @@ func loop() {
 	Tools.Init(requiredToolsAPILevel)
 
 	// Let's handle the config
+	configDir := getDefaultConfigDir()
 	var configPath *paths.Path
 
 	// see if the env var is defined, if it is take the config from there, this will override the default path
@@ -225,13 +213,14 @@ func loop() {
 			log.Panicf("config from env var %s does not exists", envConfig)
 		}
 		log.Infof("using config from env variable: %s", configPath)
-	} else if defaultConfigPath := agentDir.Join("config.ini"); defaultConfigPath.Exist() {
+	} else if defaultConfigPath := configDir.Join("config.ini"); defaultConfigPath.Exist() {
 		// by default take the config from the ~/.arduino-create/config.ini file
 		configPath = defaultConfigPath
 		log.Infof("using config from default: %s", configPath)
 	} else {
-		// take the config from the old folder where the agent's binary sits
-		oldConfigPath := srcDir.Join("config.ini")
+		// Fall back to the old config.ini location
+		src, _ := os.Executable()
+		oldConfigPath := paths.New(src).Parent().Join("config.ini")
 		if oldConfigPath.Exist() {
 			err := oldConfigPath.CopyTo(defaultConfigPath)
 			if err != nil {
@@ -243,7 +232,7 @@ func loop() {
 		}
 	}
 	if configPath == nil {
-		configPath = generateConfig(agentDir)
+		configPath = generateConfig(configDir)
 	}
 
 	// Parse the config.ini
@@ -352,10 +341,7 @@ func loop() {
 	if *crashreport {
 		logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
 		// handle logs directory creation
-		logsDir := agentDir.Join("logs")
-		if logsDir.NotExist() {
-			logsDir.Mkdir()
-		}
+		logsDir := getLogsDir()
 		logFile, err := os.OpenFile(logsDir.Join(logFilename).String(), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
 		if err != nil {
 			log.Print("Cannot create file used for crash-report")
@@ -415,12 +401,13 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(agentDir.String())
+	goa := v2.Server(getDataDir().String())
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
 		// check if certificates exist; if not, use plain http
-		if srcDir.Join("cert.pem").NotExist() {
+		certsDir := getCertificatesDir()
+		if certsDir.Join("cert.pem").NotExist() {
 			log.Error("Could not find HTTPS certificate. Using plain HTTP only.")
 			return
 		}
@@ -431,7 +418,7 @@ func loop() {
 		for i < end {
 			i = i + 1
 			portSSL = ":" + strconv.Itoa(i)
-			if err := r.RunTLS(*address+portSSL, srcDir.Join("cert.pem").String(), srcDir.Join("key.pem").String()); err != nil {
+			if err := r.RunTLS(*address+portSSL, certsDir.Join("cert.pem").String(), certsDir.Join("key.pem").String()); err != nil {
 				log.Printf("Error trying to bind to port: %v, so exiting...", err)
 				continue
 			} else {
