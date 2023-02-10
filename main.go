@@ -192,11 +192,10 @@ func loop() {
 	src, _ := os.Executable()
 	srcPath := paths.New(src)  // The path of the agent's binary
 	srcDir := srcPath.Parent() // The directory of the agent's binary
-	agentDir := getDefaultConfigDir()
 
 	// Instantiate Tools
 	Tools = tools.Tools{
-		Directory: agentDir.String(),
+		Directory: getDataDir().String(),
 		IndexURL:  *indexURL,
 		Logger: func(msg string) {
 			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -407,7 +406,7 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(agentDir.String())
+	goa := v2.Server(getDataDir().String())
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {

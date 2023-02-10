@@ -23,6 +23,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// getDataDir returns the full path to the default Arduino Create Agent data directory.
+func getDataDir() *paths.Path {
+	userDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Panicf("Could not get user dir: %s", err)
+	}
+	dataDir := paths.New(userDir, ".arduino-create")
+	if err := dataDir.MkdirAll(); err != nil {
+		log.Panicf("Could not create data dir: %s", err)
+	}
+	return dataDir
+}
+
 // getDefaultConfigDir returns the full path to the default Arduino Create Agent configuration directory.
 func getDefaultConfigDir() *paths.Path {
 	// UserConfigDir returns the default root directory to use
