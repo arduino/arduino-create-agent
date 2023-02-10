@@ -136,6 +136,10 @@ func main() {
 	go loop()
 
 	// SetupSystray is the main thread
+	configDir, err := getDefaultArduinoCreateConfigDir()
+	if err != nil {
+		log.Panicf("Can't open defaul configuration dir: %s", err)
+	}
 	Systray = systray.Systray{
 		Hibernate: *hibernate,
 		Version:   version + "-" + commit,
@@ -143,6 +147,7 @@ func main() {
 			return "http://" + *address + port
 		},
 		AdditionalConfig: *additionalConfig,
+		ConfigDir:        configDir,
 	}
 
 	path, err := os.Executable()
@@ -250,6 +255,7 @@ func loop() {
 	if err != nil {
 		log.Panicf("cannot parse arguments: %s", err)
 	}
+	Systray.SetCurrentConfigFile(configPath)
 
 	// Parse additional ini config if defined
 	if len(*additionalConfig) > 0 {
