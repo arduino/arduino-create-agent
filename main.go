@@ -343,10 +343,7 @@ func loop() {
 	if *crashreport {
 		logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
 		// handle logs directory creation
-		logsDir := agentDir.Join("logs")
-		if logsDir.NotExist() {
-			logsDir.Mkdir()
-		}
+		logsDir := getLogsDir()
 		logFile, err := os.OpenFile(logsDir.Join(logFilename).String(), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
 		if err != nil {
 			log.Print("Cannot create file used for crash-report")

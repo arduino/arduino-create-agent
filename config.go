@@ -36,6 +36,15 @@ func getDataDir() *paths.Path {
 	return dataDir
 }
 
+// getLogsDir return the directory where logs are saved
+func getLogsDir() *paths.Path {
+	logsDir := getDataDir().Join("logs")
+	if err := logsDir.MkdirAll(); err != nil {
+		log.Panicf("Can't create logs dir: %s", err)
+	}
+	return logsDir
+}
+
 // getDefaultConfigDir returns the full path to the default Arduino Create Agent configuration directory.
 func getDefaultConfigDir() *paths.Path {
 	// UserConfigDir returns the default root directory to use
