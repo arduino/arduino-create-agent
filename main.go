@@ -188,11 +188,6 @@ func loop() {
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
 
-	// the important folders of the agent
-	src, _ := os.Executable()
-	srcPath := paths.New(src)  // The path of the agent's binary
-	srcDir := srcPath.Parent() // The directory of the agent's binary
-
 	// Instantiate Tools
 	Tools = tools.Tools{
 		Directory: getDataDir().String(),
@@ -221,8 +216,9 @@ func loop() {
 		configPath = defaultConfigPath
 		log.Infof("using config from default: %s", configPath)
 	} else {
-		// take the config from the old folder where the agent's binary sits
-		oldConfigPath := srcDir.Join("config.ini")
+		// Fall back to the old config.ini location
+		src, _ := os.Executable()
+		oldConfigPath := paths.New(src).Parent().Join("config.ini")
 		if oldConfigPath.Exist() {
 			err := oldConfigPath.CopyTo(defaultConfigPath)
 			if err != nil {
