@@ -147,25 +147,19 @@ func main() {
 		ConfigDir:        configDir,
 	}
 
-	path, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-
 	// If the executable is temporary, copy it to the full path, then restart
-	if strings.Contains(path, "-temp") {
-		newPath := updater.BinPath(path)
-		err := copyExe(path, newPath)
-		if err != nil {
+	if src, err := os.Executable(); err != nil {
+		panic(err)
+	} else if strings.Contains(src, "-temp") {
+		newPath := updater.BinPath(src)
+		if err := copyExe(src, newPath); err != nil {
 			log.Println("Copy error: ", err)
 			panic(err)
 		}
-
 		Systray.Update(newPath)
 	} else {
 		// Otherwise copy to a path with -temp suffix
-		err := copyExe(path, updater.TempPath(path))
-		if err != nil {
+		if err := copyExe(src, updater.TempPath(src)); err != nil {
 			panic(err)
 		}
 		Systray.Start()
