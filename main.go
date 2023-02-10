@@ -136,10 +136,7 @@ func main() {
 	go loop()
 
 	// SetupSystray is the main thread
-	configDir, err := getDefaultArduinoCreateConfigDir()
-	if err != nil {
-		log.Panicf("Can't open defaul configuration dir: %s", err)
-	}
+	configDir := getDefaultConfigDir()
 	Systray = systray.Systray{
 		Hibernate: *hibernate,
 		Version:   version + "-" + commit,
@@ -201,7 +198,7 @@ func loop() {
 	src, _ := os.Executable()
 	srcPath := paths.New(src)  // The path of the agent's binary
 	srcDir := srcPath.Parent() // The directory of the agent's binary
-	agentDir, err := getDefaultArduinoCreateConfigDir()
+	agentDir := getDefaultConfigDir()
 
 	// Instantiate Tools
 	Tools = tools.Tools{
@@ -216,6 +213,7 @@ func loop() {
 	Tools.Init(requiredToolsAPILevel)
 
 	// Let's handle the config
+	configDir := getDefaultConfigDir()
 	var configPath *paths.Path
 
 	// see if the env var is defined, if it is take the config from there, this will override the default path
@@ -225,7 +223,7 @@ func loop() {
 			log.Panicf("config from env var %s does not exists", envConfig)
 		}
 		log.Infof("using config from env variable: %s", configPath)
-	} else if defaultConfigPath := agentDir.Join("config.ini"); defaultConfigPath.Exist() {
+	} else if defaultConfigPath := configDir.Join("config.ini"); defaultConfigPath.Exist() {
 		// by default take the config from the ~/.arduino-create/config.ini file
 		configPath = defaultConfigPath
 		log.Infof("using config from default: %s", configPath)
@@ -243,7 +241,7 @@ func loop() {
 		}
 	}
 	if configPath == nil {
-		configPath = generateConfig(agentDir)
+		configPath = generateConfig(configDir)
 	}
 
 	// Parse the config.ini
