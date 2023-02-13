@@ -238,15 +238,6 @@ func (u *Updater) fetchBin() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (u *Updater) fetchInfo() error {
-	info, err := fetchInfo(u.APIURL, u.CmdName)
-	if err != nil {
-		return err
-	}
-	u.Info = info
-	return nil
-}
-
 func (u *Updater) getExecRelativeDir(dir string) string {
 	filename, _ := os.Executable()
 	path := filepath.Join(filepath.Dir(filename), dir)
@@ -267,11 +258,12 @@ func (u *Updater) update() error {
 	}
 	defer old.Close()
 
-	err = u.fetchInfo()
+	info, err := fetchInfo(u.APIURL, u.CmdName)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	u.Info = info
 	if u.Info.Version == u.CurrentVersion {
 		return nil
 	}
