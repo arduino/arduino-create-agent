@@ -55,7 +55,7 @@ func start(src string) string {
 	return ""
 }
 
-func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, cmdName string) (string, error) {
+func checkForUpdates(currentVersion string, updateURL string, cmdName string) (string, error) {
 	executablePath, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("could not app path: %w", err)
@@ -70,7 +70,7 @@ func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, c
 	}
 
 	// Fetch information about updates
-	info, err := fetchInfo(updateAPIURL, cmdName)
+	info, err := fetchInfo(updateURL, cmdName)
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +88,7 @@ func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, c
 	defer tmp.RemoveAll()
 
 	// Download the update.
-	downloadURL := updateBinURL + cmdName + "/" + info.Version + "/ArduinoCreateAgent.app_notarized.zip"
+	downloadURL := updateURL + cmdName + "/" + info.Version + "/ArduinoCreateAgent.app_notarized.zip"
 	logrus.WithField("url", downloadURL).Info("Downloading update")
 	download, err := fetch(downloadURL)
 	if err != nil {

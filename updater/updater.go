@@ -36,8 +36,8 @@ func Start(src string) string {
 
 // CheckForUpdates checks if there is a new version of the binary available and
 // if so downloads it.
-func CheckForUpdates(currentVersion string, updateAPIURL, updateBinURL string, cmdName string) (string, error) {
-	return checkForUpdates(currentVersion, updateAPIURL, updateBinURL, cmdName)
+func CheckForUpdates(currentVersion string, updateURL string, cmdName string) (string, error) {
+	return checkForUpdates(currentVersion, updateURL, cmdName)
 }
 
 const (
