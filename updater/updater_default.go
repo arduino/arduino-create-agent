@@ -97,36 +97,6 @@ func checkForUpdates(currentVersion string, updateURL string, cmdName string) (s
 	return addTempSuffixToPath(path), nil
 }
 
-func copyExe(from, to string) error {
-	data, err := os.ReadFile(from)
-	if err != nil {
-		log.Println("Cannot read file: ", from)
-		return err
-	}
-	err = os.WriteFile(to, data, 0755)
-	if err != nil {
-		log.Println("Cannot write file: ", to)
-		return err
-	}
-	return nil
-}
-
-// addTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
-func addTempSuffixToPath(path string) string {
-	if filepath.Ext(path) == "exe" {
-		path = strings.Replace(path, ".exe", "-temp.exe", -1)
-	} else {
-		path = path + "-temp"
-	}
-
-	return path
-}
-
-// removeTempSuffixFromPath removes "-temp" suffix from the path to an executable file (a "-temp.exe" extension is replaced with ".exe")
-func removeTempSuffixFromPath(path string) string {
-	return strings.Replace(path, "-temp", "", -1)
-}
-
 // Updater is the configuration and runtime data for doing an update.
 //
 // Note that ApiURL, BinURL and DiffURL should have the same value if all files are available at the same location.

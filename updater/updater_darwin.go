@@ -46,13 +46,30 @@ import (
 	"io"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/codeclysm/extract/v3"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func start(src string) string {
+	if strings.Contains(src, "-temp") {
+		// This is required to transition from the previous auto-update system to the new one.
+		// Updating from version <=1.2.7 will produce the `ArduinoCreateAgent-temp` file and we should
+		// complete the upgrade by copying the `ArduinoCreateAgent-temp` executable back to the original.
+		//
+		// This procedure will be automatically skipped starting from version >1.2.7.
+
+		newPath := removeTempSuffixFromPath(src)
+		if err := copyExe(src, newPath); err != nil {
+			log.Println("Copy error: ", err)
+			panic(err)
+		}
+		return newPath
+	}
+
 	return ""
 }
 
