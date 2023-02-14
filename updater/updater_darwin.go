@@ -45,6 +45,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/codeclysm/extract/v3"
@@ -70,7 +71,13 @@ func checkForUpdates(currentVersion string, updateURL string, cmdName string) (s
 	}
 
 	// Fetch information about updates
-	info, err := fetchInfo(updateURL, cmdName)
+
+	// updateURL: "https://downloads.arduino.cc/"
+	// cmdName: "CreateAgent/Stable"
+	// plat: "darwin-amd64"
+	// info URL: "https://downloads.arduino.cc/CreateAgent/Stable/darwin-amd64-bundle.json"
+	infoURL := updateURL + cmdName + "/" + plat + "-bundle.json"
+	info, err := fetchInfo(infoURL)
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +95,13 @@ func checkForUpdates(currentVersion string, updateURL string, cmdName string) (s
 	defer tmp.RemoveAll()
 
 	// Download the update.
-	downloadURL := updateURL + cmdName + "/" + info.Version + "/ArduinoCreateAgent.app_notarized.zip"
+
+	// updateURL: "https://downloads.arduino.cc/"
+	// cmdName == "CreateAgent/Stable"
+	// info.Version == "1.2.8"
+	// runtime.GOARCH: "amd64"
+	// downloadURL: "https://downloads.arduino.cc/CreateAgent/Stable/1.2.8/ArduinoCreateAgent.app_arm64_notarized.zip"
+	downloadURL := updateURL + cmdName + "/" + info.Version + "/ArduinoCreateAgent.app_" + runtime.GOARCH + "_notarized.zip"
 	logrus.WithField("url", downloadURL).Info("Downloading update")
 	download, err := fetch(downloadURL)
 	if err != nil {

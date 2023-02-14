@@ -44,8 +44,8 @@ const (
 	plat = runtime.GOOS + "-" + runtime.GOARCH
 )
 
-func fetchInfo(updateAPIURL string, cmdName string) (*availableUpdateInfo, error) {
-	r, err := fetch(updateAPIURL + cmdName + "/" + plat + ".json")
+func fetchInfo(updateAPIURL string) (*availableUpdateInfo, error) {
+	r, err := fetch(updateAPIURL)
 	if err != nil {
 		return nil, err
 	}

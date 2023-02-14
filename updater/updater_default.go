@@ -225,7 +225,8 @@ func (u *Updater) update() error {
 	}
 	defer old.Close()
 
-	info, err := fetchInfo(u.UpdateURL, u.CmdName)
+	infoURL := u.UpdateURL + u.CmdName + "/" + plat + ".json"
+	info, err := fetchInfo(infoURL)
 	if err != nil {
 		log.Println(err)
 		return err
