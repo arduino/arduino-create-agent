@@ -15,29 +15,6 @@
 
 package updater
 
-/*
-#cgo CFLAGS: -x objective-c
-#cgo LDFLAGS: -framework Cocoa
-#import <Cocoa/Cocoa.h>
-
-void runApplication(const char *path) {
-	NSWorkspace *ws = [NSWorkspace sharedWorkspace];
-	NSURL *url = [NSURL fileURLWithPath:@(path) isDirectory:NO];
-
-	NSWorkspaceOpenConfiguration* configuration = [NSWorkspaceOpenConfiguration new];
-	//[configuration setEnvironment:env];
-	[configuration setPromptsUserIfNeeded:YES];
-	[configuration setCreatesNewApplicationInstance:YES];
-
-	dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-	[ws openApplicationAtURL:url configuration:configuration completionHandler:^(NSRunningApplication* app, NSError* error) {
-		dispatch_semaphore_signal(semaphore);
-	}];
-	dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-}
-*/
-import "C"
-
 import (
 	"bytes"
 	"context"
@@ -179,8 +156,7 @@ func checkForUpdates(currentVersion string, updateURL string, cmdName string) (s
 
 	// Restart agent
 	logrus.WithField("path", currentAppPath).Info("Running new app")
-	C.runApplication(C.CString(currentAppPath.String()))
 
 	// Close old agent
-	return "quit", nil
+	return currentAppPath.String(), nil
 }
