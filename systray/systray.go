@@ -18,7 +18,6 @@ package systray
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
@@ -69,8 +68,7 @@ func (s *Systray) Restart() {
 	}
 
 	// Launch executable
-	cmd := exec.Command(s.path, args...)
-	err := cmd.Start()
+	err := execApp(s.path, args...)
 	if err != nil {
 		log.Printf("Error restarting process: %v\n", err)
 		return

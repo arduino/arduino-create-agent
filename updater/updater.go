@@ -22,7 +22,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -36,16 +39,16 @@ func Start(src string) string {
 
 // CheckForUpdates checks if there is a new version of the binary available and
 // if so downloads it.
-func CheckForUpdates(currentVersion string, updateAPIURL, updateBinURL string, cmdName string) (string, error) {
-	return checkForUpdates(currentVersion, updateAPIURL, updateBinURL, cmdName)
+func CheckForUpdates(currentVersion string, updateURL string, cmdName string) (string, error) {
+	return checkForUpdates(currentVersion, updateURL, cmdName)
 }
 
 const (
 	plat = runtime.GOOS + "-" + runtime.GOARCH
 )
 
-func fetchInfo(updateAPIURL string, cmdName string) (*availableUpdateInfo, error) {
-	r, err := fetch(updateAPIURL + cmdName + "/" + plat + ".json")
+func fetchInfo(updateAPIURL string) (*availableUpdateInfo, error) {
+	r, err := fetch(updateAPIURL)
 	if err != nil {
 		return nil, err
 	}
@@ -76,4 +79,34 @@ func fetch(url string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("bad http status from %s: %v", url, resp.Status)
 	}
 	return resp.Body, nil
+}
+
+// addTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
+func addTempSuffixToPath(path string) string {
+	if filepath.Ext(path) == "exe" {
+		path = strings.Replace(path, ".exe", "-temp.exe", -1)
+	} else {
+		path = path + "-temp"
+	}
+
+	return path
+}
+
+// removeTempSuffixFromPath removes "-temp" suffix from the path to an executable file (a "-temp.exe" extension is replaced with ".exe")
+func removeTempSuffixFromPath(path string) string {
+	return strings.Replace(path, "-temp", "", -1)
+}
+
+func copyExe(from, to string) error {
+	data, err := os.ReadFile(from)
+	if err != nil {
+		log.Println("Cannot read file: ", from)
+		return err
+	}
+	err = os.WriteFile(to, data, 0755)
+	if err != nil {
+		log.Println("Cannot write file: ", to)
+		return err
+	}
+	return nil
 }

@@ -28,7 +28,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kr/binarydist"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/inconshreveable/go-update.v0"
 )
@@ -60,7 +59,6 @@ import (
 //
 
 var errHashMismatch = errors.New("new file hash mismatch after patch")
-var errDiffURLUndefined = errors.New("DiffURL is not defined, I cannot fetch and apply patch, reverting to full bin")
 var up = update.New()
 
 func start(src string) string {
@@ -81,16 +79,14 @@ func start(src string) string {
 	return ""
 }
 
-func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, cmdName string) (string, error) {
+func checkForUpdates(currentVersion string, updateURL string, cmdName string) (string, error) {
 	path, err := os.Executable()
 	if err != nil {
 		return "", err
 	}
 	var up = &Updater{
 		CurrentVersion: currentVersion,
-		APIURL:         updateAPIURL,
-		BinURL:         updateBinURL,
-		DiffURL:        "",
+		UpdateURL:      updateURL,
 		Dir:            "update/",
 		CmdName:        cmdName,
 	}
@@ -101,36 +97,6 @@ func checkForUpdates(currentVersion string, updateAPIURL, updateBinURL string, c
 	return addTempSuffixToPath(path), nil
 }
 
-func copyExe(from, to string) error {
-	data, err := os.ReadFile(from)
-	if err != nil {
-		log.Println("Cannot read file: ", from)
-		return err
-	}
-	err = os.WriteFile(to, data, 0755)
-	if err != nil {
-		log.Println("Cannot write file: ", to)
-		return err
-	}
-	return nil
-}
-
-// addTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
-func addTempSuffixToPath(path string) string {
-	if filepath.Ext(path) == "exe" {
-		path = strings.Replace(path, ".exe", "-temp.exe", -1)
-	} else {
-		path = path + "-temp"
-	}
-
-	return path
-}
-
-// removeTempSuffixFromPath removes "-temp" suffix from the path to an executable file (a "-temp.exe" extension is replaced with ".exe")
-func removeTempSuffixFromPath(path string) string {
-	return strings.Replace(path, "-temp", "", -1)
-}
-
 // Updater is the configuration and runtime data for doing an update.
 //
 // Note that ApiURL, BinURL and DiffURL should have the same value if all files are available at the same location.
@@ -139,9 +105,7 @@ func removeTempSuffixFromPath(path string) string {
 //
 //	updater := &selfupdate.Updater{
 //		CurrentVersion: version,
-//		ApiURL:         "http://updates.yourdomain.com/",
-//		BinURL:         "http://updates.yourdownmain.com/",
-//		DiffURL:        "http://updates.yourdomain.com/",
+//		UpdateURL:      "http://updates.yourdomain.com/",
 //		Dir:            "update/",
 //		CmdName:        "myapp", // app name
 //	}
@@ -150,10 +114,8 @@ func removeTempSuffixFromPath(path string) string {
 //	}
 type Updater struct {
 	CurrentVersion string               // Currently running version.
-	APIURL         string               // Base URL for API requests (json files).
+	UpdateURL      string               // Base URL for API requests (json files).
 	CmdName        string               // Command name is appended to the ApiURL like http://apiurl/CmdName/. This represents one binary.
-	BinURL         string               // Base URL for full binary downloads.
-	DiffURL        string               // Base URL for diff downloads.
 	Dir            string               // Directory to store selfupdate state.
 	Info           *availableUpdateInfo // Information about the available update.
 }
@@ -183,31 +145,6 @@ func verifySha(bin []byte, sha []byte) bool {
 	return bytes.Equal(h.Sum(nil), sha)
 }
 
-func (u *Updater) fetchAndApplyPatch(old io.Reader) ([]byte, error) {
-	if u.DiffURL == "" {
-		return nil, errDiffURLUndefined
-	}
-	r, err := fetch(u.DiffURL + u.CmdName + "/" + u.CurrentVersion + "/" + u.Info.Version + "/" + plat)
-	if err != nil {
-		return nil, err
-	}
-	defer r.Close()
-	var buf bytes.Buffer
-	err = binarydist.Patch(old, &buf, r)
-	return buf.Bytes(), err
-}
-
-func (u *Updater) fetchAndVerifyPatch(old io.Reader) ([]byte, error) {
-	bin, err := u.fetchAndApplyPatch(old)
-	if err != nil {
-		return nil, err
-	}
-	if !verifySha(bin, u.Info.Sha256) {
-		return nil, errHashMismatch
-	}
-	return bin, nil
-}
-
 func (u *Updater) fetchAndVerifyFullBin() ([]byte, error) {
 	bin, err := u.fetchBin()
 	if err != nil {
@@ -221,7 +158,7 @@ func (u *Updater) fetchAndVerifyFullBin() ([]byte, error) {
 }
 
 func (u *Updater) fetchBin() ([]byte, error) {
-	r, err := fetch(u.BinURL + u.CmdName + "/" + u.Info.Version + "/" + plat + ".gz")
+	r, err := fetch(u.UpdateURL + u.CmdName + "/" + u.Info.Version + "/" + plat + ".gz")
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +195,8 @@ func (u *Updater) update() error {
 	}
 	defer old.Close()
 
-	info, err := fetchInfo(u.APIURL, u.CmdName)
+	infoURL := u.UpdateURL + u.CmdName + "/" + plat + ".json"
+	info, err := fetchInfo(infoURL)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -267,26 +205,15 @@ func (u *Updater) update() error {
 	if u.Info.Version == u.CurrentVersion {
 		return nil
 	}
-	bin, err := u.fetchAndVerifyPatch(old)
-	if err != nil {
-		switch err {
-		case errHashMismatch:
-			log.Println("update: hash mismatch from patched binary")
-		case errDiffURLUndefined:
-			log.Println("update: ", err)
-		default:
-			log.Println("update: patching binary, ", err)
-		}
 
-		bin, err = u.fetchAndVerifyFullBin()
-		if err != nil {
-			if err == errHashMismatch {
-				log.Println("update: hash mismatch from full binary")
-			} else {
-				log.Println("update: fetching full binary,", err)
-			}
-			return err
+	bin, err := u.fetchAndVerifyFullBin()
+	if err != nil {
+		if err == errHashMismatch {
+			log.Println("update: hash mismatch from full binary")
+		} else {
+			log.Println("update: fetching full binary,", err)
 		}
+		return err
 	}
 
 	// close the old binary before installing because on windows

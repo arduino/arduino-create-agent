@@ -8,7 +8,7 @@ on:
 env:
   # As defined by the Taskfile's PROJECT_NAME variable
   PROJECT_NAME: arduino-create-agent
-  TARGET: "/CreateAgent/Stable"
+  TARGET: "/CreateAgent/Stable/"
   OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
   VERSION_TARGET: "arduino-create-static/agent-metadata/"
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -26,6 +26,8 @@ env:
 jobs:
   # The build job is responsible for: configuring the environment, testing and compiling process
   build:
+    outputs:
+      prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-12]
@@ -110,9 +112,9 @@ jobs:
 
       - name: Build the Agent for macos
         env:
-          MACOSX_DEPLOYMENT_TARGET: 10.11 # minimum supported version for mac
-          CGO_CFLAGS: -mmacosx-version-min=10.11
-          CGO_LDFLAGS: -mmacosx-version-min=10.11
+          MACOSX_DEPLOYMENT_TARGET: 10.15 # minimum supported version for mac
+          CGO_CFLAGS: -mmacosx-version-min=10.15
+          CGO_LDFLAGS: -mmacosx-version-min=10.15
         run: task go:build
         if: matrix.os == 'macos-12'
 
@@ -120,6 +122,14 @@ jobs:
       - name: Create autoupdate files
         run: go-selfupdate ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch != '-386' && steps.prerelease.outputs.IS_PRE != 'true'
+
+        # for now we do not distribute m1 build, this is a workaround for now
+      - name: Copy autoupdate file for darwin-arm64 (m1 arch)
+        working-directory: public/
+        run: |
+          cp darwin-amd64.json darwin-arm64.json
+          cp ${TAG_VERSION}/darwin-amd64.gz ${TAG_VERSION}/darwin-arm64.gz
+        if: matrix.os == 'macos-12' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
@@ -142,6 +152,11 @@ jobs:
   create-macos-bundle:
     needs: build
 
+    # for not they are exaclty the same
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
     runs-on: macos-12
     env:
       EXE_PATH: "skel/ArduinoCreateAgent.app/Contents/MacOS/"
@@ -156,7 +171,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.PROJECT_NAME }}-macos-12-amd64
+          name: ${{ env.PROJECT_NAME }}-macos-12-amd64 # if we want to support darwin-arm64 in the future for real this has to change.
           path: ${{ env.EXE_PATH }}
 
       - name: Remove placeholder file
@@ -195,31 +210,37 @@ jobs:
           EOF
 
       - name: Tar bundle to keep permissions
-        run: tar -cvf ArduinoCreateAgent.app.tar -C skel/ .
+        run: tar -cvf ArduinoCreateAgent.app_${{ matrix.arch }}.tar -C skel/ .
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
-          name: ArduinoCreateAgent.app
-          path: ArduinoCreateAgent.app.tar
+          name: ArduinoCreateAgent.app_${{ matrix.arch }}
+          path: ArduinoCreateAgent.app_${{ matrix.arch }}.tar
           
-  # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it.
+  # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it, uploading it also on s3 download servers for the autoupdate.
   notarize-macos:
     name: Notarize bundle
+
+    # for not they are exaclty the same
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
     runs-on: macos-12
     env:
       GON_PATH: ${{ github.workspace }}/gon
-    needs: create-macos-bundle
+    needs: [build, create-macos-bundle]
 
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: ArduinoCreateAgent.app
+          name: ArduinoCreateAgent.app_${{ matrix.arch }}
 
       - name: un-Tar bundle
-        run: tar -xvf ArduinoCreateAgent.app.tar
+        run: tar -xvf ArduinoCreateAgent.app_${{ matrix.arch }}.tar
 
       - name: Import Code-Signing Certificates
         run: |
@@ -270,18 +291,37 @@ jobs:
           # Ask Gon for zip output to force notarization process to take place.
           # The CI will upload the zip output
           zip {
-            output_path = "ArduinoCreateAgent.app_notarized.zip"
+            output_path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
           }
           EOF
 
       - name: Sign and notarize binary
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
+        
+      - name: Upload autoupdate bundle to Arduino downloads servers
+        run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
+
+      - name: Generate json file used for the new autoupdate
+        run: |
+          cat > darwin-${{ matrix.arch }}-bundle.json <<EOF
+          {
+              "Version": "${GITHUB_REF/refs\/tags\//}",
+              "Sha256": "$(shasum -a 256 ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip | awk '{print $1}' |  xxd -r -p | base64)"
+          }
+          EOF
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
+
+      - name: Upload autoupdate files to Arduino downloads servers
+        run: |
+          aws s3 cp darwin-${{ matrix.arch }}-bundle.json s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ArduinoCreateAgent.app_notarized
-          path: ArduinoCreateAgent.app_notarized.zip
+          name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
+          path: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -334,7 +374,8 @@ jobs:
             install-builder-name: osx
             executable-path: artifacts/macos/ArduinoCreateAgent.app
             installer-extension: .app
-            artifact-name: ArduinoCreateAgent.app_notarized # this artifact contains the Contents directory
+            artifact-name: ArduinoCreateAgent.app_amd64_notarized # this artifact contains the Contents directory
+            # here we support only amd64 for macos. Hopefully in the future installbuilder for macOS will be removed, see https://github.com/arduino/arduino-create-agent/issues/739
 
     container:
       image: floydpink/ubuntu-install-builder:22.10.0
@@ -493,7 +534,7 @@ jobs:
 
   create-release:
     runs-on: ubuntu-20.04
-    needs: code-sign-mac-installers
+    needs: [build, code-sign-mac-installers]
 
     steps:
       - name: Checkout
@@ -503,14 +544,6 @@ jobs:
 
       - name: Download artifact
         uses: actions/download-artifact@v3 # download all the artifacts
-
-      - name: Identify Prerelease
-        # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
-        id: prerelease
-        run: |
-          curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip
-          unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
-          if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "IS_PRE=true" >> $GITHUB_OUTPUT; fi
 
       #  mandatory step because upload-release-action does not support multiple folders
       - name: prepare artifacts for the release
@@ -562,7 +595,7 @@ jobs:
           release_name: ${{ github.ref }}
           body: ${{ steps.release_body.outputs.RBODY}}
           draft: false
-          prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
+          prerelease: ${{ needs.build.outputs.prerelease }}
 
       - name: Upload release files on Github
         uses: svenstaro/upload-release-action@v2
@@ -574,10 +607,10 @@ jobs:
 
       - name: Upload release files on Arduino downloads servers
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
-        if: steps.prerelease.outputs.IS_PRE != 'true'
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Update version file (used by frontend to trigger autoupdate and create filename)
         run: |
           echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
           aws s3 cp /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
-        if: steps.prerelease.outputs.IS_PRE != 'true'
+        if: ${{ needs.build.outputs.prerelease != 'true' }}

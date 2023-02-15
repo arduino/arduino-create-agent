@@ -35,11 +35,15 @@ import (
 )
 
 func updateHandler(c *gin.Context) {
-	restartPath, err := updater.CheckForUpdates(version, *updateURL, *updateURL, *appName)
+	restartPath, err := updater.CheckForUpdates(version, *updateURL, *appName)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(200, gin.H{"success": "Please wait a moment while the agent reboots itself"})
-	Systray.RestartWith(restartPath)
+	if restartPath == "quit" {
+		Systray.Quit()
+	} else {
+		Systray.RestartWith(restartPath)
+	}
 }
