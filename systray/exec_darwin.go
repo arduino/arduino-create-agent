@@ -45,8 +45,18 @@ void runApplication(const char *path, const char **argv, int argc) {
 }
 */
 import "C"
+import (
+	"os/exec"
+	"path/filepath"
+)
 
 func execApp(path string, args ...string) error {
+	if filepath.Ext(path) != ".app" {
+		// If not .app, fallback to standard process execution
+		cmd := exec.Command(path, args...)
+		return cmd.Start()
+	}
+
 	argc := C.int(len(args))
 	argv := C.makeCharArray(argc)
 	for i, arg := range args {
