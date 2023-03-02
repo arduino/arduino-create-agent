@@ -23,8 +23,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/arduino/arduino-create-agent/upload"
 )
 
 type writeRequest struct {
@@ -129,15 +127,9 @@ func write(wr writeRequest) {
 func spList(network bool) {
 	var ls []byte
 	var err error
-	if network {
-		NetworkPorts.Mu.Lock()
-		ls, err = json.MarshalIndent(&NetworkPorts, "", "\t")
-		NetworkPorts.Mu.Unlock()
-	} else {
-		SerialPorts.Mu.Lock()
-		ls, err = json.MarshalIndent(&SerialPorts, "", "\t")
-		SerialPorts.Mu.Unlock()
-	}
+	SerialPorts.Mu.Lock()
+	ls, err = json.MarshalIndent(&SerialPorts, "", "\t")
+	SerialPorts.Mu.Unlock()
 	if err != nil {
 		//log.Println(err)
 		h.broadcastSys <- []byte("Error creating json on port list " +
@@ -153,19 +145,7 @@ func discoverLoop() {
 	SerialPorts.Network = false
 	SerialPorts.Ports = make([]SpPortItem, 0)
 	SerialPorts.Mu.Unlock()
-	NetworkPorts.Mu.Lock()
-	NetworkPorts.Network = true
-	NetworkPorts.Ports = make([]SpPortItem, 0)
-	NetworkPorts.Mu.Unlock()
 
-	go func() {
-		for {
-			if !upload.Busy {
-				spListDual(false)
-			}
-			time.Sleep(2 * time.Second)
-		}
-	}()
 	go func() {
 		for {
 			spListDual(true)
@@ -177,7 +157,7 @@ func discoverLoop() {
 func spListDual(network bool) {
 
 	// call our os specific implementation of getting the serial list
-	list, err := GetList(network)
+	list, err := GetList()
 
 	//log.Println(list)
 	//log.Println(err)
@@ -249,15 +229,9 @@ func spListDual(network bool) {
 		ctr++
 	}
 
-	if network {
-		NetworkPorts.Mu.Lock()
-		NetworkPorts.Ports = spl
-		NetworkPorts.Mu.Unlock()
-	} else {
-		SerialPorts.Mu.Lock()
-		SerialPorts.Ports = spl
-		SerialPorts.Mu.Unlock()
-	}
+	SerialPorts.Mu.Lock()
+	SerialPorts.Ports = spl
+	SerialPorts.Mu.Unlock()
 }
 
 func spErr(err string) {

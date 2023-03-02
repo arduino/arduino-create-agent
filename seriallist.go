@@ -19,12 +19,13 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"go.bug.st/serial/enumerator"
+	"github.com/arduino/arduino-cli/arduino/discovery"
+	"github.com/arduino/arduino-cli/arduino/discovery/discoverymanager"
 )
+
+var discoveryManager *discoverymanager.DiscoveryManager
 
 // OsSerialPort is the Os serial port
 type OsSerialPort struct {
@@ -39,51 +40,39 @@ type OsSerialPort struct {
 }
 
 // GetList will return the OS serial port
-func GetList(network bool) ([]OsSerialPort, error) {
+func GetList() ([]OsSerialPort, error) {
 
-	if network {
-		netportList, err := GetNetworkList()
-		return netportList, err
+	if discoveryManager == nil {
+		discoveryManager = discoverymanager.New()
+		Tools.Download("builtin", "serial-discovery", "latest", "keep")
+		Tools.Download("builtin", "mdns-discovery", "latest", "keep")
+		sd, err := Tools.GetLocation("serial-discovery")
+		if err == nil {
+			d := discovery.New("serial", sd+"/serial-discovery")
+			discoveryManager.Add(d)
+		}
+		md, err := Tools.GetLocation("mdns-discovery")
+		if err == nil {
+			d := discovery.New("mdns", md+"/mdns-discovery")
+			discoveryManager.Add(d)
+		}
+		discoveryManager.Start()
 	}
 
-	// will timeout in 2 seconds
+	fmt.Println("calling getList")
+	ports := discoveryManager.List()
+
+	fmt.Println(ports)
+
 	arrPorts := []OsSerialPort{}
-	ports, err := enumerator.GetDetailedPortsList()
-	if err != nil {
-		return arrPorts, err
+	for _, port := range ports {
+		vid := port.Properties.AsMap()["vid"]
+		pid := port.Properties.AsMap()["pid"]
+		arrPorts = append(arrPorts, OsSerialPort{Name: port.Address, IDVendor: vid, IDProduct: pid, ISerial: port.HardwareID})
 	}
+	fmt.Println(arrPorts)
 
-	for _, element := range ports {
-		if element.IsUSB {
-			vid := element.VID
-			pid := element.PID
-			vidString := fmt.Sprintf("0x%s", vid)
-			pidString := fmt.Sprintf("0x%s", pid)
-			if vid != "0000" && pid != "0000" {
-				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IDVendor: vidString, IDProduct: pidString, ISerial: element.SerialNumber})
-			}
-		}
-	}
-
-	// see if we should filter the list
-	if len(*regExpFilter) > 0 {
-		// yes, user asked for a filter
-		reFilter := regexp.MustCompile("(?i)" + *regExpFilter)
-
-		newarrPorts := []OsSerialPort{}
-		for _, element := range arrPorts {
-			// if matches regex, include
-			if reFilter.MatchString(element.Name) {
-				newarrPorts = append(newarrPorts, element)
-			} else {
-				log.Debugf("serial port did not match. port: %v\n", element)
-			}
-
-		}
-		arrPorts = newarrPorts
-	}
-
-	return arrPorts, err
+	return arrPorts, nil
 }
 
 func findPortByName(portname string) (*serport, bool) {
