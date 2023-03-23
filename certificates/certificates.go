@@ -5,7 +5,7 @@
 // Generate a self-signed X.509 certificate for a TLS server. Outputs to
 // 'cert.pem' and 'key.pem' and will overwrite existing files.
 
-package main
+package certificates
 
 import (
 	"crypto/ecdsa"
@@ -134,10 +134,10 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	return &template, nil
 }
 
-// migrateCertificatesGeneratedWithOldAgentVersions checks if certificates generated
+// MigrateCertificatesGeneratedWithOldAgentVersions checks if certificates generated
 // with an old version of the Agent needs to be migrated to the current certificates
 // directory, and performs the migration if needed.
-func migrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
+func MigrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
 	if certsDir.Join("ca.cert.pem").Exist() {
 		// The new certificates are already set-up, nothing to do
 		return
@@ -161,7 +161,8 @@ func migrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
 	}
 }
 
-func generateCertificates(certsDir *paths.Path) {
+// GenerateCertificates will generate the required certificates useful for a HTTPS connection on localhost
+func GenerateCertificates(certsDir *paths.Path) {
 	certsDir.Join("ca.cert.pem").Remove()
 	certsDir.Join("ca.key.pem").Remove()
 	certsDir.Join("cert.pem").Remove()
@@ -260,7 +261,8 @@ func generateCertificates(certsDir *paths.Path) {
 	}
 }
 
-func certHandler(c *gin.Context) {
+// CertHandler will expone the certificate (we do not know why this was required)
+func CertHandler(c *gin.Context) {
 	if strings.Contains(c.Request.UserAgent(), "Firefox") {
 		c.Header("content-type", "application/x-x509-ca-cert")
 		c.File("ca.cert.cer")
@@ -271,7 +273,8 @@ func certHandler(c *gin.Context) {
 	})
 }
 
-func deleteCertHandler(c *gin.Context) {
+// DeleteCertHandler will delete the certificates
+func DeleteCertHandler(c *gin.Context) {
 	DeleteCertificates(config.GetCertificatesDir())
 }
 

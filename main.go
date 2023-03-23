@@ -31,6 +31,7 @@ import (
 	"time"
 
 	cors "github.com/andela/gin-cors"
+	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
@@ -128,11 +129,11 @@ func main() {
 
 	// Generate certificates
 	if *genCert {
-		generateCertificates(config.GetCertificatesDir())
+		cert.GenerateCertificates(config.GetCertificatesDir())
 		os.Exit(0)
 	}
 	// Check if certificates made with Agent <=1.2.7 needs to be moved over the new location
-	migrateCertificatesGeneratedWithOldAgentVersions(config.GetCertificatesDir())
+	cert.MigrateCertificatesGeneratedWithOldAgentVersions(config.GetCertificatesDir())
 
 	// Launch main loop in a goroutine
 	go loop()
@@ -364,8 +365,8 @@ func loop() {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.GET("/certificate.crt", certHandler)
-	r.DELETE("/certificate.crt", deleteCertHandler)
+	r.GET("/certificate.crt", cert.CertHandler)
+	r.DELETE("/certificate.crt", cert.DeleteCertHandler)
 	r.POST("/upload", uploadHandler)
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
