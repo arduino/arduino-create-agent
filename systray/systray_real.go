@@ -60,7 +60,7 @@ func (s *Systray) start() {
 
 	// Remove crash-reports
 	mRmCrashes := systray.AddMenuItem("Remove crash reports", "")
-	s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
+	s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 
 	// Add pause/quit
 	mPause := systray.AddMenuItem("Pause Agent", "")
@@ -82,7 +82,7 @@ func (s *Systray) start() {
 				_ = open.Start(s.currentConfigFilePath.String())
 			case <-mRmCrashes.ClickedCh:
 				s.RemoveCrashes()
-				s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
+				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:
@@ -99,12 +99,6 @@ func (s *Systray) updateMenuItem(item *systray.MenuItem, disable bool) {
 	} else {
 		item.Enable()
 	}
-}
-
-// CrashesIsEmpty checks if the folder containing crash-reports is empty
-func (s *Systray) CrashesIsEmpty() bool {
-	logsDir := config.GetLogsDir()
-	return logsDir.NotExist() // if the logs directory is empty we assume there are no crashreports
 }
 
 // RemoveCrashes removes the crash-reports from `logs` folder

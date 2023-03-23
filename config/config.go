@@ -51,6 +51,11 @@ func GetLogsDir() *paths.Path {
 	return logsDir
 }
 
+// LogsIsEmpty checks if the folder containing crash-reports is empty
+func LogsIsEmpty() bool {
+	return GetLogsDir().NotExist() // if the logs directory is empty we assume there are no crashreports
+}
+
 // GetDefaultConfigDir returns the full path to the default Arduino Create Agent configuration directory.
 func GetDefaultConfigDir() *paths.Path {
 	// UserConfigDir returns the default root directory to use
