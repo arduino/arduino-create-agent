@@ -23,6 +23,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/go-paths-helper"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -271,7 +272,7 @@ func certHandler(c *gin.Context) {
 }
 
 func deleteCertHandler(c *gin.Context) {
-	DeleteCertificates(getCertificatesDir())
+	DeleteCertificates(config.GetCertificatesDir())
 }
 
 // DeleteCertificates will delete the certificates

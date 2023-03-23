@@ -10,6 +10,8 @@ public/
 artifacts*
 logs/
 
+config/config.ini
+
 # IDEs config 
 .idea
 .vscode
