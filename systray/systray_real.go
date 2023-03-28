@@ -24,7 +24,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
+
 	"github.com/arduino/arduino-create-agent/icon"
 	"github.com/getlantern/systray"
 	"github.com/go-ini/ini"
@@ -62,6 +64,9 @@ func (s *Systray) start() {
 	mRmCrashes := systray.AddMenuItem("Remove crash reports", "")
 	s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 
+	mGenCerts := systray.AddMenuItem("Generate HTTPS certificates", "HTTPS Certs")
+	s.updateMenuItem(mGenCerts, config.CertsExist())
+
 	// Add pause/quit
 	mPause := systray.AddMenuItem("Pause Agent", "")
 	systray.AddSeparator()
@@ -83,6 +88,9 @@ func (s *Systray) start() {
 			case <-mRmCrashes.ClickedCh:
 				s.RemoveCrashes()
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
+			case <-mGenCerts.ClickedCh:
+				cert.GenerateCertificates(config.GetCertificatesDir())
+				s.Restart()
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:

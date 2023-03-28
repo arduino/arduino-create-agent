@@ -29,6 +29,12 @@ func GetCertificatesDir() *paths.Path {
 	return GetDataDir()
 }
 
+// CertsExist checks if the certs have already been generated
+func CertsExist() bool {
+	certFile := GetCertificatesDir().Join("cert.pem")
+	return certFile.Exist() //if the certFile is not present we assume there are no certs
+}
+
 // GetDataDir returns the full path to the default Arduino Create Agent data directory.
 func GetDataDir() *paths.Path {
 	userDir, err := os.UserHomeDir()
