@@ -86,7 +86,7 @@ func (s *Systray) start() {
 			case <-mConfig.ClickedCh:
 				_ = open.Start(s.currentConfigFilePath.String())
 			case <-mRmCrashes.ClickedCh:
-				s.RemoveCrashes()
+				RemoveCrashes()
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 			case <-mGenCerts.ClickedCh:
 				cert.GenerateCertificates(config.GetCertificatesDir())
@@ -110,7 +110,7 @@ func (s *Systray) updateMenuItem(item *systray.MenuItem, disable bool) {
 }
 
 // RemoveCrashes removes the crash-reports from `logs` folder
-func (s *Systray) RemoveCrashes() {
+func RemoveCrashes() {
 	logsDir := config.GetLogsDir()
 	pathErr := logsDir.RemoveAll()
 	if pathErr != nil {
