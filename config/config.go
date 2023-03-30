@@ -16,6 +16,7 @@
 package config
 
 import (
+	// we need this for the config ini in this package
 	_ "embed"
 	"os"
 
