@@ -79,9 +79,6 @@ func GetDefaultConfigDir() *paths.Path {
 	return agentConfigDir
 }
 
-// https://github.com/golang/go/issues/46056
-//
-//go:generate cp -r ../config.ini config.ini
 //go:embed config.ini
 var configContent []byte
 
