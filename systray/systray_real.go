@@ -64,7 +64,7 @@ func (s *Systray) start() {
 	mRmCrashes := systray.AddMenuItem("Remove crash reports", "")
 	s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 
-	mGenCerts := systray.AddMenuItem("Generate HTTPS certificates", "HTTPS Certs")
+	mGenCerts := systray.AddMenuItem("Generate and Install HTTPS certificates", "HTTPS Certs")
 	s.updateMenuItem(mGenCerts, config.CertsExist())
 
 	// Add pause/quit
@@ -90,6 +90,7 @@ func (s *Systray) start() {
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 			case <-mGenCerts.ClickedCh:
 				cert.GenerateCertificates(config.GetCertificatesDir())
+				cert.InstallCertificate(config.GetCertificatesDir().Join("ca.cert.cer"))
 				s.Restart()
 			case <-mPause.ClickedCh:
 				s.Pause()
