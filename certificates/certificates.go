@@ -127,14 +127,8 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 		BasicConstraintsValid: true,
 	}
 
-	hosts := strings.Split(host, ",")
-	for _, h := range hosts {
-		if ip := net.ParseIP(h); ip != nil {
-			template.IPAddresses = append(template.IPAddresses, ip)
-		} else {
-			template.DNSNames = append(template.DNSNames, h)
-		}
-	}
+	template.IPAddresses = append(template.IPAddresses, net.ParseIP("127.0.0.1"))
+	template.DNSNames = append(template.DNSNames, "localhost")
 
 	if isCa {
 		template.IsCA = true

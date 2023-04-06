@@ -350,6 +350,7 @@ func loop() {
 		extraOrigins = append(extraOrigins, "http://localhost:"+port)
 		extraOrigins = append(extraOrigins, "https://localhost:"+port)
 		extraOrigins = append(extraOrigins, "http://127.0.0.1:"+port)
+		extraOrigins = append(extraOrigins, "https://127.0.0.1:"+port)
 	}
 
 	r.Use(cors.Middleware(cors.Config{
