@@ -21,6 +21,7 @@ package systray
 
 import (
 	"os"
+	"runtime"
 
 	log "github.com/sirupsen/logrus"
 
@@ -65,7 +66,13 @@ func (s *Systray) start() {
 	s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 
 	mGenCerts := systray.AddMenuItem("Generate and Install HTTPS certificates", "HTTPS Certs")
-	s.updateMenuItem(mGenCerts, config.CertsExist())
+	// On linux/windows chrome/firefox/edge(chromium) the agent works without problems on plain HTTP,
+	// so we disable the menuItem to generate/install the certificates
+	if runtime.GOOS != "darwin" {
+		s.updateMenuItem(mGenCerts, true)
+	} else {
+		s.updateMenuItem(mGenCerts, config.CertsExist())
+	}
 
 	// Add pause/quit
 	mPause := systray.AddMenuItem("Pause Agent", "")
