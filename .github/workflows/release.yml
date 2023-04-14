@@ -438,7 +438,6 @@ jobs:
     needs: package
     strategy:
       matrix:
-        browser: [safari, firefox, chrome]
         arch: [-amd64]
 
     runs-on: macos-12
@@ -451,7 +450,7 @@ jobs:
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
-        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app/Contents/MacOS/*
+        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.app/Contents/MacOS/*
 
       - name: Import Code-Signing Certificates
         run: |
@@ -481,7 +480,7 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
-          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"]
+          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.app"]
           bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}-installer"
 
           sign {
@@ -489,20 +488,20 @@ jobs:
           }
 
           dmg {
-            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.dmg"
+            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.dmg"
             volume_name = "ArduinoCreateAgent"
           }
           EOF
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.app"
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.app"
           gon -log-level=debug -log-json gon.config_installer.hcl
         timeout-minutes: 30
 
       #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
-        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer-${{ matrix.browser }}.dmg
+        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.dmg
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
