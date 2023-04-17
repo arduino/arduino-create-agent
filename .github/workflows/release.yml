@@ -31,10 +31,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-12]
-        arch: [-amd64]
+        arch: [amd64]
         include:
         - os: windows-2019
-          arch: -386
+          arch: 386
           ext: ".exe"
         - os: windows-2019
           ext: ".exe"
@@ -104,11 +104,11 @@ jobs:
         env:
           GOARCH: 386  # 32bit architecture (for support)
         run: task go:build-win
-        if: matrix.os == 'windows-2019' && matrix.arch == '-386'
+        if: matrix.os == 'windows-2019' && matrix.arch == '386'
 
       - name: Build the Agent for win64
         run: task go:build-win # GOARCH=amd64 by default on the runners
-        if: matrix.os == 'windows-2019' && matrix.arch == '-amd64'
+        if: matrix.os == 'windows-2019' && matrix.arch == 'amd64'
 
       - name: Build the Agent for macos
         env:
@@ -121,7 +121,7 @@ jobs:
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
         run: go-selfupdate ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
-        if: matrix.arch != '-386' && steps.prerelease.outputs.IS_PRE != 'true'
+        if: matrix.arch != '386' && steps.prerelease.outputs.IS_PRE != 'true'
 
         # for now we do not distribute m1 build, this is a workaround for now
       - name: Copy autoupdate file for darwin-arm64 (m1 arch)
@@ -132,8 +132,8 @@ jobs:
         if: matrix.os == 'macos-12' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Create autoupdate files for win32
-        run: go-selfupdate -platform windows${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
-        if: matrix.arch == '-386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
+        run: go-selfupdate -platform windows-${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
+        if: matrix.arch == '386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: |
@@ -144,7 +144,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}${{ matrix.arch }}
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
           path: |
             ${{ env.PROJECT_NAME }}*
           if-no-files-found: error
@@ -345,7 +345,7 @@ jobs:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
         os: [ubuntu-20.04, windows-2019, macos-12]
-        arch: [-amd64]
+        arch: [amd64]
         include:
           - os: ubuntu-20.04
             install-builder-name: linux
@@ -353,7 +353,7 @@ jobs:
             installer-extension: .run
             artifact-name: arduino-create-agent-ubuntu-20.04-amd64
           - os: windows-2019
-            arch: -386
+            arch: 386
             install-builder-name: windows
             executable-path: artifacts/windows/
             extension: .exe
@@ -424,16 +424,16 @@ jobs:
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
       - name: Launch Bitrock installbuilder
         run: |
-          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars "${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}"
+          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
 
       - name: Generate archive
-        run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer${{matrix.installer-extension}}
+        run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ArduinoCreateAgent-${{ matrix.install-builder-name }}${{ matrix.arch }}
+          name: ArduinoCreateAgent-${{ matrix.install-builder-name }}-${{ matrix.arch }}
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
@@ -442,19 +442,19 @@ jobs:
     needs: package
     strategy:
       matrix:
-        arch: [-amd64]
+        arch: [amd64]
 
     runs-on: macos-12
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: ArduinoCreateAgent-osx${{ matrix.arch }}
+          name: ArduinoCreateAgent-osx-${{ matrix.arch }}
           path: ArduinoCreateAgent-osx
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
-        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.app/Contents/MacOS/*
+        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.app/Contents/MacOS/*
 
       - name: Import Code-Signing Certificates
         run: |
@@ -484,7 +484,7 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
-          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.app"]
+          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.app"]
           bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}-installer"
 
           sign {
@@ -492,25 +492,25 @@ jobs:
           }
 
           dmg {
-            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.dmg"
+            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"
             volume_name = "ArduinoCreateAgent"
           }
           EOF
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.app"
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.app"
           gon -log-level=debug -log-json gon.config_installer.hcl
         timeout-minutes: 30
 
       #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
-        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx${{ matrix.arch }}-installer.dmg
+        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ArduinoCreateAgent-osx${{ matrix.arch }}
+          name: ArduinoCreateAgent-osx-${{ matrix.arch }}
           path: ArduinoCreateAgent*.tar
           if-no-files-found: error
 
