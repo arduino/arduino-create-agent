@@ -350,7 +350,7 @@ jobs:
           - os: ubuntu-20.04
             install-builder-name: linux
             executable-path: artifacts/linux-amd64/
-            installer-extension: .tar.gz
+            installer-extension: .run
             artifact-name: arduino-create-agent-ubuntu-20.04-amd64
           - os: windows-2019
             arch: -386
@@ -424,8 +424,11 @@ jobs:
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
       - name: Launch Bitrock installbuilder
         run: |
-          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }}
-          mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-installer${{matrix.installer-extension}} ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer${{matrix.installer-extension}}
+          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars "${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}"
+
+      - name: Generate archive
+        run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}${{ matrix.arch }}-installer${{matrix.installer-extension}}
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
