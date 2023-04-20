@@ -22,11 +22,13 @@ package certificates
 #cgo LDFLAGS: -framework Cocoa
 #import <Cocoa/Cocoa.h>
 
-void installCert(const char *path) {
+char *installCert(const char *path) {
     NSURL *url = [NSURL fileURLWithPath:@(path) isDirectory:NO];
     NSData *rootCertData = [NSData dataWithContentsOfURL:url];
 
     OSStatus err = noErr;
+    NSMutableString *errString = [NSMutableString new];
+    char *errReturnString = "\0";
     SecCertificateRef rootCert = SecCertificateCreateWithData(kCFAllocatorDefault, (CFDataRef) rootCertData);
 
     CFTypeRef result;
@@ -41,22 +43,32 @@ void installCert(const char *path) {
     if( err == noErr) {
         NSLog(@"Install root certificate success");
     } else if( err == errSecDuplicateItem ) {
-        NSLog(@"duplicate root certificate entry");
+        errString = [@"duplicate root certificate entry. Error: " stringByAppendingFormat:@"%d ",err];
+        NSLog(errString);
+        errReturnString = [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
+        return errReturnString;
     } else {
-        NSLog(@"install root certificate failure");
+        errString = [@"install root certificate failure. Error: " stringByAppendingFormat:@"%d ",err];
+        NSLog(errString);
+        errReturnString = [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
+        return errReturnString;
     }
 
     NSDictionary *newTrustSettings = @{(id)kSecTrustSettingsResult: [NSNumber numberWithInt:kSecTrustSettingsResultTrustRoot]};
     err = SecTrustSettingsSetTrustSettings(rootCert, kSecTrustSettingsDomainUser, (__bridge CFTypeRef)(newTrustSettings));
     if (err != errSecSuccess) {
-        NSLog(@"Could not change the trust setting for a certificate. Error: %d", err);
-        exit(0);
+        errString = [@"Could not change the trust setting for a certificate. Error: " stringByAppendingFormat:@"%d ",err];
+        NSLog(errString);
+        errReturnString = [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
     }
+    return errReturnString;
 }
 
 */
 import "C"
 import (
+	"os/exec"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/arduino/go-paths-helper"
@@ -65,5 +77,11 @@ import (
 // InstallCertificate will install the certificates in the system keychain on macos
 func InstallCertificate(cert *paths.Path) {
 	log.Infof("Installing certificate: %s", cert)
-	C.installCert(C.CString(cert.String()))
+	p := C.installCert(C.CString(cert.String()))
+	s := C.GoString(p)
+	if len(s) != 0 {
+		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Error installing certificates\"")
+		_ = oscmd.Run()
+		log.Info(oscmd.String())
+	}
 }
