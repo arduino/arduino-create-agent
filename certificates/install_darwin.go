@@ -22,46 +22,43 @@ package certificates
 #cgo LDFLAGS: -framework Cocoa
 #import <Cocoa/Cocoa.h>
 
-char *installCert(const char *path) {
+const char *installCert(const char *path) {
     NSURL *url = [NSURL fileURLWithPath:@(path) isDirectory:NO];
     NSData *rootCertData = [NSData dataWithContentsOfURL:url];
 
     OSStatus err = noErr;
-    NSMutableString *errString = [NSMutableString new];
-    char *errReturnString = "\0";
     SecCertificateRef rootCert = SecCertificateCreateWithData(kCFAllocatorDefault, (CFDataRef) rootCertData);
 
     CFTypeRef result;
 
     NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
-    (id)kSecClassCertificate, kSecClass,
-    rootCert, kSecValueRef,
-    nil];
+        (id)kSecClassCertificate, kSecClass,
+        rootCert, kSecValueRef,
+        nil];
 
     err = SecItemAdd((CFDictionaryRef)dict, &result);
 
-    if( err == noErr) {
+    if (err == noErr) {
         NSLog(@"Install root certificate success");
-    } else if( err == errSecDuplicateItem ) {
-        errString = [@"duplicate root certificate entry. Error: " stringByAppendingFormat:@"%d ",err];
-        NSLog(errString);
-        errReturnString = [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
-        return errReturnString;
+    } else if (err == errSecDuplicateItem) {
+        NSString *errString = [@"duplicate root certificate entry. Error: " stringByAppendingFormat:@"%d", err];
+        NSLog(@"%@", errString);
+        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];;
     } else {
-        errString = [@"install root certificate failure. Error: " stringByAppendingFormat:@"%d ",err];
-        NSLog(errString);
-        errReturnString = [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
-        return errReturnString;
+        NSString *errString = [@"install root certificate failure. Error: " stringByAppendingFormat:@"%d", err];
+        NSLog(@"%@", errString);
+        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
     }
 
     NSDictionary *newTrustSettings = @{(id)kSecTrustSettingsResult: [NSNumber numberWithInt:kSecTrustSettingsResultTrustRoot]};
     err = SecTrustSettingsSetTrustSettings(rootCert, kSecTrustSettingsDomainUser, (__bridge CFTypeRef)(newTrustSettings));
     if (err != errSecSuccess) {
-        errString = [@"Could not change the trust setting for a certificate. Error: " stringByAppendingFormat:@"%d ",err];
-        NSLog(errString);
-        errReturnString = [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
+        NSString *errString = [@"Could not change the trust setting for a certificate. Error: " stringByAppendingFormat:@"%d", err];
+        NSLog(@"%@", errString);
+        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
     }
-    return errReturnString;
+
+    return "";
 }
 
 */
