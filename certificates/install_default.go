@@ -18,12 +18,15 @@
 package certificates
 
 import (
+	"errors"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/arduino/go-paths-helper"
 )
 
 // InstallCertificate won't do anything on unsupported Operative Systems
-func InstallCertificate(cert *paths.Path) {
+func InstallCertificate(cert *paths.Path) error {
 	log.Warn("platform not supported for the certificate install")
+	return errors.New("platform not supported for the certificate install")
 }

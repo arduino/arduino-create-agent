@@ -96,8 +96,13 @@ func (s *Systray) start() {
 				RemoveCrashes()
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 			case <-mGenCerts.ClickedCh:
-				cert.GenerateCertificates(config.GetCertificatesDir())
-				cert.InstallCertificate(config.GetCertificatesDir().Join("ca.cert.cer"))
+				certDir := config.GetCertificatesDir()
+				cert.GenerateCertificates(certDir)
+				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
+				// if something goes wrong during the cert install we remove them, so the user is able to retry
+				if err != nil {
+					cert.DeleteCertificates(certDir)
+				}
 				s.Restart()
 			case <-mPause.ClickedCh:
 				s.Pause()

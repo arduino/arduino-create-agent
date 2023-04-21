@@ -168,10 +168,6 @@ func MigrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
 
 // GenerateCertificates will generate the required certificates useful for a HTTPS connection on localhost
 func GenerateCertificates(certsDir *paths.Path) {
-	certsDir.Join("ca.cert.pem").Remove()
-	certsDir.Join("ca.key.pem").Remove()
-	certsDir.Join("cert.pem").Remove()
-	certsDir.Join("key.pem").Remove()
 
 	// Create the key for the certification authority
 	caKey, err := generateKey("P256")
@@ -285,9 +281,12 @@ func DeleteCertHandler(c *gin.Context) {
 
 // DeleteCertificates will delete the certificates
 func DeleteCertificates(certDir *paths.Path) {
+	certDir.Join("ca.key.pem").Remove()
 	certDir.Join("ca.cert.pem").Remove()
 	certDir.Join("ca.cert.cer").Remove()
-	certDir.Join("ca.key.pem").Remove()
+	certDir.Join("key.pem").Remove()
+	certDir.Join("cert.pem").Remove()
+	certDir.Join("cert.cer").Remove()
 }
 
 const noFirefoxTemplateHTML = `<!DOCTYPE html>

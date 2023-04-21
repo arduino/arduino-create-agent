@@ -64,6 +64,7 @@ const char *installCert(const char *path) {
 */
 import "C"
 import (
+	"errors"
 	"os/exec"
 
 	log "github.com/sirupsen/logrus"
@@ -71,14 +72,16 @@ import (
 	"github.com/arduino/go-paths-helper"
 )
 
-// InstallCertificate will install the certificates in the system keychain on macos
-func InstallCertificate(cert *paths.Path) {
+// InstallCertificate will install the certificates in the system keychain on macos,
+// if something goes wrong will show a dialog with the error and return an error
+func InstallCertificate(cert *paths.Path) error {
 	log.Infof("Installing certificate: %s", cert)
 	p := C.installCert(C.CString(cert.String()))
 	s := C.GoString(p)
 	if len(s) != 0 {
 		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Error installing certificates\"")
 		_ = oscmd.Run()
-		log.Info(oscmd.String())
+		return errors.New(s)
 	}
+	return nil
 }
