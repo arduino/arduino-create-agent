@@ -13,9 +13,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package main
+package config
 
 import (
+	// we need this for the config ini in this package
 	_ "embed"
 	"os"
 
@@ -23,13 +24,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// getCertificatesDir return the directory where SSL certificates are saved
-func getCertificatesDir() *paths.Path {
-	return getDataDir()
+// GetCertificatesDir return the directory where SSL certificates are saved
+func GetCertificatesDir() *paths.Path {
+	return GetDataDir()
 }
 
-// getDataDir returns the full path to the default Arduino Create Agent data directory.
-func getDataDir() *paths.Path {
+// CertsExist checks if the certs have already been generated
+func CertsExist() bool {
+	certFile := GetCertificatesDir().Join("cert.pem")
+	return certFile.Exist() //if the certFile is not present we assume there are no certs
+}
+
+// GetDataDir returns the full path to the default Arduino Create Agent data directory.
+func GetDataDir() *paths.Path {
 	userDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panicf("Could not get user dir: %s", err)
@@ -41,17 +48,22 @@ func getDataDir() *paths.Path {
 	return dataDir
 }
 
-// getLogsDir return the directory where logs are saved
-func getLogsDir() *paths.Path {
-	logsDir := getDataDir().Join("logs")
+// GetLogsDir return the directory where logs are saved
+func GetLogsDir() *paths.Path {
+	logsDir := GetDataDir().Join("logs")
 	if err := logsDir.MkdirAll(); err != nil {
 		log.Panicf("Can't create logs dir: %s", err)
 	}
 	return logsDir
 }
 
-// getDefaultConfigDir returns the full path to the default Arduino Create Agent configuration directory.
-func getDefaultConfigDir() *paths.Path {
+// LogsIsEmpty checks if the folder containing crash-reports is empty
+func LogsIsEmpty() bool {
+	return GetLogsDir().NotExist() // if the logs directory is empty we assume there are no crashreports
+}
+
+// GetDefaultConfigDir returns the full path to the default Arduino Create Agent configuration directory.
+func GetDefaultConfigDir() *paths.Path {
 	// UserConfigDir returns the default root directory to use
 	// for user-specific configuration data. Users should create
 	// their own application-specific subdirectory within this
@@ -82,10 +94,10 @@ func getDefaultConfigDir() *paths.Path {
 //go:embed config.ini
 var configContent []byte
 
-// generateConfig function will take a directory path as an input
+// GenerateConfig function will take a directory path as an input
 // and will write the default config,ini file to that directory,
 // it will panic if something goes wrong
-func generateConfig(destDir *paths.Path) *paths.Path {
+func GenerateConfig(destDir *paths.Path) *paths.Path {
 	configPath := destDir.Join("config.ini")
 
 	// generate the config.ini file directly in destDir

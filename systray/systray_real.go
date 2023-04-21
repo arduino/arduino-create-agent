@@ -21,12 +21,14 @@ package systray
 
 import (
 	"os"
-	"os/user"
+	"runtime"
 
 	log "github.com/sirupsen/logrus"
 
+	cert "github.com/arduino/arduino-create-agent/certificates"
+	"github.com/arduino/arduino-create-agent/config"
+
 	"github.com/arduino/arduino-create-agent/icon"
-	"github.com/arduino/go-paths-helper"
 	"github.com/getlantern/systray"
 	"github.com/go-ini/ini"
 	"github.com/skratchdot/open-golang/open"
@@ -61,7 +63,16 @@ func (s *Systray) start() {
 
 	// Remove crash-reports
 	mRmCrashes := systray.AddMenuItem("Remove crash reports", "")
-	s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
+	s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
+
+	mGenCerts := systray.AddMenuItem("Generate and Install HTTPS certificates", "HTTPS Certs")
+	// On linux/windows chrome/firefox/edge(chromium) the agent works without problems on plain HTTP,
+	// so we disable the menuItem to generate/install the certificates
+	if runtime.GOOS != "darwin" {
+		s.updateMenuItem(mGenCerts, true)
+	} else {
+		s.updateMenuItem(mGenCerts, config.CertsExist())
+	}
 
 	// Add pause/quit
 	mPause := systray.AddMenuItem("Pause Agent", "")
@@ -82,8 +93,17 @@ func (s *Systray) start() {
 			case <-mConfig.ClickedCh:
 				_ = open.Start(s.currentConfigFilePath.String())
 			case <-mRmCrashes.ClickedCh:
-				s.RemoveCrashes()
-				s.updateMenuItem(mRmCrashes, s.CrashesIsEmpty())
+				RemoveCrashes()
+				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
+			case <-mGenCerts.ClickedCh:
+				certDir := config.GetCertificatesDir()
+				cert.GenerateCertificates(certDir)
+				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
+				// if something goes wrong during the cert install we remove them, so the user is able to retry
+				if err != nil {
+					cert.DeleteCertificates(certDir)
+				}
+				s.Restart()
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:
@@ -102,29 +122,15 @@ func (s *Systray) updateMenuItem(item *systray.MenuItem, disable bool) {
 	}
 }
 
-// CrashesIsEmpty checks if the folder containing crash-reports is empty
-func (s *Systray) CrashesIsEmpty() bool {
-	logsDir := getLogsDir()
-	return logsDir.NotExist() // if the logs directory is empty we assume there are no crashreports
-}
-
 // RemoveCrashes removes the crash-reports from `logs` folder
-func (s *Systray) RemoveCrashes() {
-	logsDir := getLogsDir()
+func RemoveCrashes() {
+	logsDir := config.GetLogsDir()
 	pathErr := logsDir.RemoveAll()
 	if pathErr != nil {
 		log.Errorf("Cannot remove crashreports: %s", pathErr)
 	} else {
 		log.Infof("Removed crashreports inside: %s", logsDir)
 	}
-}
-
-// getLogsDir simply returns the folder containing the logs
-func getLogsDir() *paths.Path {
-	usr, _ := user.Current()
-	usrDir := paths.New(usr.HomeDir) // The user folder, on linux/macos /home/<usr>/
-	agentDir := usrDir.Join(".arduino-create")
-	return agentDir.Join("logs")
 }
 
 // starthibernate creates a systray icon with menu options to resume/quit the agent

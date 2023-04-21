@@ -31,6 +31,8 @@ import (
 	"time"
 
 	cors "github.com/andela/gin-cors"
+	cert "github.com/arduino/arduino-create-agent/certificates"
+	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
@@ -127,17 +129,17 @@ func main() {
 
 	// Generate certificates
 	if *genCert {
-		generateCertificates(getCertificatesDir())
+		cert.GenerateCertificates(config.GetCertificatesDir())
 		os.Exit(0)
 	}
 	// Check if certificates made with Agent <=1.2.7 needs to be moved over the new location
-	migrateCertificatesGeneratedWithOldAgentVersions(getCertificatesDir())
+	cert.MigrateCertificatesGeneratedWithOldAgentVersions(config.GetCertificatesDir())
 
 	// Launch main loop in a goroutine
 	go loop()
 
 	// SetupSystray is the main thread
-	configDir := getDefaultConfigDir()
+	configDir := config.GetDefaultConfigDir()
 	Systray = systray.Systray{
 		Hibernate: *hibernate,
 		Version:   version + "-" + commit,
@@ -167,7 +169,7 @@ func loop() {
 
 	// Instantiate Tools
 	Tools = tools.Tools{
-		Directory: getDataDir().String(),
+		Directory: config.GetDataDir().String(),
 		IndexURL:  *indexURL,
 		Logger: func(msg string) {
 			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -178,7 +180,7 @@ func loop() {
 	Tools.Init(requiredToolsAPILevel)
 
 	// Let's handle the config
-	configDir := getDefaultConfigDir()
+	configDir := config.GetDefaultConfigDir()
 	var configPath *paths.Path
 
 	// see if the env var is defined, if it is take the config from there, this will override the default path
@@ -207,7 +209,7 @@ func loop() {
 		}
 	}
 	if configPath == nil {
-		configPath = generateConfig(configDir)
+		configPath = config.GenerateConfig(configDir)
 	}
 
 	// Parse the config.ini
@@ -316,7 +318,7 @@ func loop() {
 	if *crashreport {
 		logFilename := "crashreport_" + time.Now().Format("20060102150405") + ".log"
 		// handle logs directory creation
-		logsDir := getLogsDir()
+		logsDir := config.GetLogsDir()
 		logFile, err := os.OpenFile(logsDir.Join(logFilename).String(), os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
 		if err != nil {
 			log.Print("Cannot create file used for crash-report")
@@ -348,6 +350,7 @@ func loop() {
 		extraOrigins = append(extraOrigins, "http://localhost:"+port)
 		extraOrigins = append(extraOrigins, "https://localhost:"+port)
 		extraOrigins = append(extraOrigins, "http://127.0.0.1:"+port)
+		extraOrigins = append(extraOrigins, "https://127.0.0.1:"+port)
 	}
 
 	r.Use(cors.Middleware(cors.Config{
@@ -363,8 +366,8 @@ func loop() {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.GET("/certificate.crt", certHandler)
-	r.DELETE("/certificate.crt", deleteCertHandler)
+	r.GET("/certificate.crt", cert.CertHandler)
+	r.DELETE("/certificate.crt", cert.DeleteCertHandler)
 	r.POST("/upload", uploadHandler)
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
@@ -376,12 +379,12 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(getDataDir().String())
+	goa := v2.Server(config.GetDataDir().String())
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
 		// check if certificates exist; if not, use plain http
-		certsDir := getCertificatesDir()
+		certsDir := config.GetCertificatesDir()
 		if certsDir.Join("cert.pem").NotExist() {
 			log.Error("Could not find HTTPS certificate. Using plain HTTP only.")
 			return

@@ -1,11 +1,22 @@
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+// Copyright 2023 Arduino SA
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Generate a self-signed X.509 certificate for a TLS server. Outputs to
 // 'cert.pem' and 'key.pem' and will overwrite existing files.
 
-package main
+package certificates
 
 import (
 	"crypto/ecdsa"
@@ -23,6 +34,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/go-paths-helper"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -115,14 +127,8 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 		BasicConstraintsValid: true,
 	}
 
-	hosts := strings.Split(host, ",")
-	for _, h := range hosts {
-		if ip := net.ParseIP(h); ip != nil {
-			template.IPAddresses = append(template.IPAddresses, ip)
-		} else {
-			template.DNSNames = append(template.DNSNames, h)
-		}
-	}
+	template.IPAddresses = append(template.IPAddresses, net.ParseIP("127.0.0.1"))
+	template.DNSNames = append(template.DNSNames, "localhost")
 
 	if isCa {
 		template.IsCA = true
@@ -133,10 +139,10 @@ func generateSingleCertificate(isCa bool) (*x509.Certificate, error) {
 	return &template, nil
 }
 
-// migrateCertificatesGeneratedWithOldAgentVersions checks if certificates generated
+// MigrateCertificatesGeneratedWithOldAgentVersions checks if certificates generated
 // with an old version of the Agent needs to be migrated to the current certificates
 // directory, and performs the migration if needed.
-func migrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
+func MigrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
 	if certsDir.Join("ca.cert.pem").Exist() {
 		// The new certificates are already set-up, nothing to do
 		return
@@ -160,11 +166,8 @@ func migrateCertificatesGeneratedWithOldAgentVersions(certsDir *paths.Path) {
 	}
 }
 
-func generateCertificates(certsDir *paths.Path) {
-	certsDir.Join("ca.cert.pem").Remove()
-	certsDir.Join("ca.key.pem").Remove()
-	certsDir.Join("cert.pem").Remove()
-	certsDir.Join("key.pem").Remove()
+// GenerateCertificates will generate the required certificates useful for a HTTPS connection on localhost
+func GenerateCertificates(certsDir *paths.Path) {
 
 	// Create the key for the certification authority
 	caKey, err := generateKey("P256")
@@ -259,7 +262,8 @@ func generateCertificates(certsDir *paths.Path) {
 	}
 }
 
-func certHandler(c *gin.Context) {
+// CertHandler will expone the certificate (we do not know why this was required)
+func CertHandler(c *gin.Context) {
 	if strings.Contains(c.Request.UserAgent(), "Firefox") {
 		c.Header("content-type", "application/x-x509-ca-cert")
 		c.File("ca.cert.cer")
@@ -270,15 +274,19 @@ func certHandler(c *gin.Context) {
 	})
 }
 
-func deleteCertHandler(c *gin.Context) {
-	DeleteCertificates(getCertificatesDir())
+// DeleteCertHandler will delete the certificates
+func DeleteCertHandler(c *gin.Context) {
+	DeleteCertificates(config.GetCertificatesDir())
 }
 
 // DeleteCertificates will delete the certificates
 func DeleteCertificates(certDir *paths.Path) {
+	certDir.Join("ca.key.pem").Remove()
 	certDir.Join("ca.cert.pem").Remove()
 	certDir.Join("ca.cert.cer").Remove()
-	certDir.Join("ca.key.pem").Remove()
+	certDir.Join("key.pem").Remove()
+	certDir.Join("cert.pem").Remove()
+	certDir.Join("cert.cer").Remove()
 }
 
 const noFirefoxTemplateHTML = `<!DOCTYPE html>
