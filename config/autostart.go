@@ -54,7 +54,7 @@ func WritePlistFile() error {
 		RunAtLoad bool
 	}{
 		Program:   src,
-		RunAtLoad: false,
+		RunAtLoad: true, // This will start the agent right after login (and also after `launchctl load ...`)
 	}
 
 	t := template.Must(template.New("launchdConfig").Parse(string(launchdAgentDefinition)))

@@ -335,9 +335,12 @@ func loop() {
 			if err != nil {
 				log.Info(err)
 			} else {
-				err = config.LoadLaunchdAgent()
+				err = config.LoadLaunchdAgent() // this will load the agent: basically starting a new instance
 				if err != nil {
 					log.Error(err)
+				} else {
+					log.Info("Quitting, another instance of the agent has been started by launchd")
+					os.Exit(0)
 				}
 			}
 		} else {
