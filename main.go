@@ -328,26 +328,27 @@ func loop() {
 		}
 	}
 
-	// osx agent launchd autostart
-	// TODO ignore setting if not on macos
-	if *autostartMacOS {
-		err := config.WritePlistFile()
-		if err != nil {
-			log.Info(err)
-		} else {
-			err = config.LoadLaunchdAgent()
+	// macos agent launchd autostart
+	if runtime.GOOS == "darwin" {
+		if *autostartMacOS {
+			err := config.WritePlistFile()
 			if err != nil {
-				log.Error(err)
+				log.Info(err)
+			} else {
+				err = config.LoadLaunchdAgent()
+				if err != nil {
+					log.Error(err)
+				}
 			}
-		}
-	} else {
-		err := config.UnloadLaunchdAgent()
-		if err != nil {
-			log.Error(err)
 		} else {
-			err = config.RemovePlistFile()
+			err := config.UnloadLaunchdAgent()
 			if err != nil {
 				log.Error(err)
+			} else {
+				err = config.RemovePlistFile()
+				if err != nil {
+					log.Error(err)
+				}
 			}
 		}
 	}
