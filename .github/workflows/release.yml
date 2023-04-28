@@ -380,6 +380,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains install.xml
+          ref: autostart
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
