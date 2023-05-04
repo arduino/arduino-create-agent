@@ -5,7 +5,7 @@
 		<key>KeepAlive</key>
 		<false/>
 		<key>Label</key>
-		<string>ArduinoCreateAgent</string>
+		<string>cc.arduino.arduino-create-agent</string>
 		<key>Program</key>
 		<string>{{.Program}}</string>
 		<key>RunAtLoad</key>
