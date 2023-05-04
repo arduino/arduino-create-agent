@@ -331,28 +331,9 @@ func loop() {
 	// macos agent launchd autostart
 	if runtime.GOOS == "darwin" {
 		if *autostartMacOS {
-			err := config.WritePlistFile()
-			if err != nil {
-				log.Info(err)
-			} else {
-				err = config.LoadLaunchdAgent() // this will load the agent: basically starting a new instance
-				if err != nil {
-					log.Error(err)
-				} else {
-					log.Info("Quitting, another instance of the agent has been started by launchd")
-					os.Exit(0)
-				}
-			}
+			config.InstallPlistFile()
 		} else {
-			err := config.UnloadLaunchdAgent()
-			if err != nil {
-				log.Error(err)
-			} else {
-				err = config.RemovePlistFile()
-				if err != nil {
-					log.Error(err)
-				}
-			}
+			config.UninstallPlistFile()
 		}
 	}
 

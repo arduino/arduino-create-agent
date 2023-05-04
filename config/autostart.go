@@ -17,7 +17,6 @@ package config
 import (
 	// we need this for the ArduinoCreateAgent.plist in this package
 	_ "embed"
-	"fmt"
 	"os"
 	"os/exec"
 	"text/template"
@@ -34,18 +33,36 @@ func getLaunchdAgentPath() *paths.Path {
 	return GetDefaultHomeDir().Join("Library", "LaunchAgents", "ArduinoCreateAgent.plist")
 }
 
-// WritePlistFile function will write the required plist file to $HOME/Library/LaunchAgents/ArduinoCreateAgent.plist
-// it will return nil in case of success,
-// it will error if the file is already there or in any other case
-func WritePlistFile() error {
-
+// InstallPlistFile will handle the process of creating the plist file required for the autostart
+// and loading it using launchd
+func InstallPlistFile() {
 	launchdAgentPath := getLaunchdAgentPath()
-	if launchdAgentPath.Exist() {
+	if !launchdAgentPath.Exist() {
+		err := WritePlistFile(launchdAgentPath)
+		if err != nil {
+			log.Error(err)
+		} else {
+			err = LoadLaunchdAgent() // this will load the agent: basically starting a new instance
+			if err != nil {
+				log.Error(err)
+			} else {
+				log.Info("Quitting, another instance of the agent has been started by launchd")
+				os.Exit(0)
+			}
+		}
+	} else {
 		// we already have an existing launchd plist file, so we don't have to do anything
-		return fmt.Errorf("the autostart file %s already exists", launchdAgentPath)
-	}
+		log.Infof("the autostart file %s already exists: nothing to do", launchdAgentPath)
 
+	}
+}
+
+// WritePlistFile function will write the required plist file to launchdAgentPath
+// it will return nil in case of success,
+// it will error in any other case
+func WritePlistFile(launchdAgentPath *paths.Path) error {
 	src, err := os.Executable()
+
 	if err != nil {
 		return err
 	}
@@ -72,6 +89,18 @@ func LoadLaunchdAgent() error {
 	return err
 }
 
+func UninstallPlistFile() {
+	err := UnloadLaunchdAgent()
+	if err != nil {
+		log.Error(err)
+	} else {
+		err = RemovePlistFile()
+		if err != nil {
+			log.Error(err)
+		}
+	}
+}
+
 // UnloadLaunchdAgent will use launchctl to load the agent, will return an error if something goes wrong
 func UnloadLaunchdAgent() error {
 	// https://www.launchd.info/
@@ -88,5 +117,6 @@ func RemovePlistFile() error {
 		log.Infof("removing: %s", launchdAgentPath)
 		return launchdAgentPath.Remove()
 	}
+	log.Infof("the autostart file %s do not exists: nothing to do", launchdAgentPath)
 	return nil
 }
