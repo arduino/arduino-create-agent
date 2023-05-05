@@ -338,13 +338,9 @@ jobs:
       # vars used by installbuilder
       INSTALLBUILDER_PATH: "/opt/installbuilder-22.10.0/bin/builder"
       INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
-      # vars passed to installbuilder to install https certs automatically
-      CREATE_OSX_BUNDLED_MG: 0  # tell installbuilder to not create the DMG, gon will take care of that later
       # installbuilder will read this vars automatically (defined in installer.xml):
       INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
       INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
-      INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-      INSTALLER_CERT_MAC_P12: "/tmp/ArduinoCerts2020.p12"
 
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
