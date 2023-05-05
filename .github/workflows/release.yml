@@ -288,6 +288,11 @@ jobs:
             deep = true
           }
 
+          # generate a Disk Image
+          dmg {
+            output_path = "ArduinoCreateAgent_${{ matrix.arch }}_notarized.dmg"
+            volume_name = "ArduinoCreateAgent"
+          }
           # Ask Gon for zip output to force notarization process to take place.
           # The CI will upload the zip output
           zip {
@@ -317,11 +322,11 @@ jobs:
           aws s3 cp darwin-${{ matrix.arch }}-bundle.json s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
-          path: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+          path: ArduinoCreateAgent*_${{ matrix.arch }}_notarized.* #TODO remove zip upload (not needed here)
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
