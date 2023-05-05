@@ -38,11 +38,11 @@ func getLaunchdAgentPath() *paths.Path {
 func InstallPlistFile() {
 	launchdAgentPath := getLaunchdAgentPath()
 	if !launchdAgentPath.Exist() {
-		err := WritePlistFile(launchdAgentPath)
+		err := writePlistFile(launchdAgentPath)
 		if err != nil {
 			log.Error(err)
 		} else {
-			err = LoadLaunchdAgent() // this will load the agent: basically starting a new instance
+			err = loadLaunchdAgent() // this will load the agent: basically starting a new instance
 			if err != nil {
 				log.Error(err)
 			} else {
@@ -57,10 +57,10 @@ func InstallPlistFile() {
 	}
 }
 
-// WritePlistFile function will write the required plist file to launchdAgentPath
+// writePlistFile function will write the required plist file to launchdAgentPath
 // it will return nil in case of success,
 // it will error in any other case
-func WritePlistFile(launchdAgentPath *paths.Path) error {
+func writePlistFile(launchdAgentPath *paths.Path) error {
 	src, err := os.Executable()
 
 	if err != nil {
@@ -81,8 +81,8 @@ func WritePlistFile(launchdAgentPath *paths.Path) error {
 	return t.Execute(plistFile, data)
 }
 
-// LoadLaunchdAgent will use launchctl to load the agent, will return an error if something goes wrong
-func LoadLaunchdAgent() error {
+// loadLaunchdAgent will use launchctl to load the agent, will return an error if something goes wrong
+func loadLaunchdAgent() error {
 	// https://www.launchd.info/
 	oscmd := exec.Command("launchctl", "load", getLaunchdAgentPath().String())
 	err := oscmd.Run()
@@ -90,28 +90,28 @@ func LoadLaunchdAgent() error {
 }
 
 func UninstallPlistFile() {
-	err := UnloadLaunchdAgent()
+	err := unloadLaunchdAgent()
 	if err != nil {
 		log.Error(err)
 	} else {
-		err = RemovePlistFile()
+		err = removePlistFile()
 		if err != nil {
 			log.Error(err)
 		}
 	}
 }
 
-// UnloadLaunchdAgent will use launchctl to load the agent, will return an error if something goes wrong
-func UnloadLaunchdAgent() error {
+// unloadLaunchdAgent will use launchctl to load the agent, will return an error if something goes wrong
+func unloadLaunchdAgent() error {
 	// https://www.launchd.info/
 	oscmd := exec.Command("launchctl", "unload", getLaunchdAgentPath().String())
 	err := oscmd.Run()
 	return err
 }
 
-// RemovePlistFile function will remove the plist file from $HOME/Library/LaunchAgents/ArduinoCreateAgent.plist and return an error
+// removePlistFile function will remove the plist file from $HOME/Library/LaunchAgents/ArduinoCreateAgent.plist and return an error
 // it will not do anything if the file is not there
-func RemovePlistFile() error {
+func removePlistFile() error {
 	launchdAgentPath := getLaunchdAgentPath()
 	if launchdAgentPath.Exist() {
 		log.Infof("removing: %s", launchdAgentPath)
