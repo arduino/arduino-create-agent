@@ -89,6 +89,8 @@ func loadLaunchdAgent() error {
 	return err
 }
 
+// UninstallPlistFile will handle the process of unloading (unsing launchd) the file required for the autostart
+// and removing the file
 func UninstallPlistFile() {
 	err := unloadLaunchdAgent()
 	if err != nil {
