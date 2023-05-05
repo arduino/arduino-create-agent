@@ -383,14 +383,6 @@ jobs:
           name: ${{ matrix.artifact-name }}
           path: ${{ matrix.executable-path }}  # path expected by installbuilder
 
-      - name: unzip mac notarized bundle
-        working-directory: ${{ matrix.executable-path }}
-        run: |
-          apt install unzip
-          unzip ${{ matrix.artifact-name }}.zip
-          rm ${{ matrix.artifact-name }}.zip
-        if:  matrix.os == 'macos-12'
-
         # zip artifacts do not mantain executable permission
       - name: Make executable
         run: chmod -v +x ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}*
@@ -398,7 +390,6 @@ jobs:
 
       - name: Rename executable to Arduino_Create_Agent
         run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
-        if:  matrix.os != 'macos-12'
 
       - name: Rename executable to Arduino_Create_Agent_cli
         run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
@@ -410,10 +401,6 @@ jobs:
       - name: Save Win signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_PFX}}
         if: matrix.os == 'windows-2019'
-
-      - name: Save macos signing certificate to file
-        run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
-        if: matrix.os == 'macos-12'
 
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
       - name: Launch Bitrock installbuilder
