@@ -91,6 +91,22 @@ func GetDefaultConfigDir() *paths.Path {
 	return agentConfigDir
 }
 
+// GetDefaultHomeDir returns the full path to the user's home directory.
+func GetDefaultHomeDir() *paths.Path {
+	// UserHomeDir returns the current user's home directory.
+
+	// On Unix, including macOS, it returns the $HOME environment variable.
+	// On Windows, it returns %USERPROFILE%.
+	// On Plan 9, it returns the $home environment variable.
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Panicf("Can't get user home dir: %s", err)
+	}
+
+	return paths.New(homeDir)
+}
+
 //go:embed config.ini
 var configContent []byte
 

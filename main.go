@@ -66,21 +66,22 @@ var (
 
 // iniflags
 var (
-	address      = iniConf.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
-	appName      = iniConf.String("appName", "", "")
-	gcType       = iniConf.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
-	hostname     = iniConf.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
-	httpProxy    = iniConf.String("httpProxy", "", "Proxy server for HTTP requests")
-	httpsProxy   = iniConf.String("httpsProxy", "", "Proxy server for HTTPS requests")
-	indexURL     = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
-	iniConf      = flag.NewFlagSet("ini", flag.ContinueOnError)
-	logDump      = iniConf.String("log", "off", "off = (default)")
-	origins      = iniConf.String("origins", "", "Allowed origin list for CORS")
-	regExpFilter = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-	signatureKey = iniConf.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
-	updateURL    = iniConf.String("updateUrl", "", "")
-	verbose      = iniConf.Bool("v", true, "show debug logging")
-	crashreport  = iniConf.Bool("crashreport", false, "enable crashreport logging")
+	address        = iniConf.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
+	appName        = iniConf.String("appName", "", "")
+	gcType         = iniConf.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
+	hostname       = iniConf.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+	httpProxy      = iniConf.String("httpProxy", "", "Proxy server for HTTP requests")
+	httpsProxy     = iniConf.String("httpsProxy", "", "Proxy server for HTTPS requests")
+	indexURL       = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
+	iniConf        = flag.NewFlagSet("ini", flag.ContinueOnError)
+	logDump        = iniConf.String("log", "off", "off = (default)")
+	origins        = iniConf.String("origins", "", "Allowed origin list for CORS")
+	regExpFilter   = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
+	signatureKey   = iniConf.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
+	updateURL      = iniConf.String("updateUrl", "", "")
+	verbose        = iniConf.Bool("v", true, "show debug logging")
+	crashreport    = iniConf.Bool("crashreport", false, "enable crashreport logging")
+	autostartMacOS = iniConf.Bool("autostartMacOS", true, "the Arduino Create Agent is able to start automatically after login on macOS (launchd agent)")
 )
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHTML))
@@ -324,6 +325,15 @@ func loop() {
 			log.Print("Cannot create file used for crash-report")
 		} else {
 			redirectStderr(logFile)
+		}
+	}
+
+	// macos agent launchd autostart
+	if runtime.GOOS == "darwin" {
+		if *autostartMacOS {
+			config.InstallPlistFile()
+		} else {
+			config.UninstallPlistFile()
 		}
 	}
 
