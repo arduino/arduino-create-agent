@@ -331,7 +331,7 @@ jobs:
 
   # This job is responsible for generating the installers (using installbuilder)
   package:
-    needs: notarize-macos
+    needs: build
     runs-on: ubuntu-20.04
 
     env:
