@@ -345,7 +345,7 @@ jobs:
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-        os: [ubuntu-20.04, windows-2019, macos-12]
+        os: [ubuntu-20.04, windows-2019]
         arch: [amd64]
         include:
           - os: ubuntu-20.04
@@ -366,12 +366,6 @@ jobs:
             extension: .exe
             installer-extension: .exe
             artifact-name: arduino-create-agent-windows-2019-amd64
-          - os: macos-12
-            install-builder-name: osx
-            executable-path: artifacts/macos/ArduinoCreateAgent.app
-            installer-extension: .app
-            artifact-name: ArduinoCreateAgent.app_amd64_notarized # this artifact contains the Contents directory
-            # here we support only amd64 for macos. Hopefully in the future installbuilder for macOS will be removed, see https://github.com/arduino/arduino-create-agent/issues/739
 
     container:
       image: floydpink/ubuntu-install-builder:22.10.0
