@@ -325,8 +325,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
-          path: ArduinoCreateAgent*_${{ matrix.arch }}_notarized.* #TODO remove zip upload (not needed here)
+          name: ArduinoCreateAgent_${{ matrix.arch }}_notarized
+          path: ArduinoCreateAgent_${{ matrix.arch }}_notarized.dmg
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -414,7 +414,7 @@ jobs:
 
   create-release:
     runs-on: ubuntu-20.04
-    needs: [build, code-sign-mac-installers]
+    needs: [build, package]
 
     steps:
       - name: Checkout
@@ -431,8 +431,7 @@ jobs:
           mkdir release
           chmod -v +x ArduinoCreateAgent-linux-amd64/*.run
           mv -v ArduinoCreateAgent-linux-amd64/* release/
-          cat ArduinoCreateAgent-osx-amd64/*.tar | tar -xvf - -i -C release/
-          rm -v release/._ArduinoCreateAgent*.dmg
+          mv -v ArduinoCreateAgent_amd64_notarized/*.dmg release/ 
           mv -v ArduinoCreateAgent-windows*/* release/
 
       - name: VirusTotal Scan
