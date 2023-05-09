@@ -511,7 +511,7 @@ jobs:
 
   create-release:
     runs-on: ubuntu-20.04
-    needs: [build, package]
+    needs: [build, package, generate-sign-dmg]
 
     steps:
       - name: Checkout
