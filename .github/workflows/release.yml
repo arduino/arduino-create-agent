@@ -364,7 +364,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains install.xml
-          ref: remove-macos
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
@@ -421,7 +420,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains the icons/background
-          ref: remove-macos
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
