@@ -528,7 +528,8 @@ jobs:
           mkdir release
           chmod -v +x ArduinoCreateAgent-linux-amd64/*.run
           mv -v ArduinoCreateAgent-linux-amd64/* release/
-          mv -v ArduinoCreateAgent_amd64_notarized/*.dmg release/ 
+          cat ArduinoCreateAgent-osx-amd64/*.tar | tar -xvf - -i -C release/
+          rm -v release/._ArduinoCreateAgent*.dmg
           mv -v ArduinoCreateAgent-windows*/* release/
 
       - name: VirusTotal Scan
