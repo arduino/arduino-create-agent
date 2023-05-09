@@ -407,6 +407,108 @@ jobs:
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
+  # This job will generate a dmg mac installer, sign/notarize it.
+  generate-sign-dmg:
+    needs: notarize-macos
+    strategy:
+      matrix:
+        arch: [amd64]
+
+    runs-on: macos-12
+    steps:
+      - name: Checkout repo with icons/background
+        uses: actions/checkout@v3
+        with:
+          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains the icons/background
+          token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
+          path: ArduinoCreateAgent.app
+
+      - name: unzip artifact
+        working-directory: ArduinoCreateAgent.app
+        run: |
+          unzip ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+          rm ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Genarate DMG
+        run: |
+          create-dmg \
+            --volname "ArduinoCreateAgent" \
+            --background "installer_icons/background.tiff" \
+            --window-pos 200 120 \
+            --window-size 500 320 \
+            --icon-size 80 \
+            --icon "ArduinoCreateAgent.app" 125 150 \
+            --app-drop-link 375 150 \
+            "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg" \
+            "ArduinoCreateAgent.app"
+
+      - name: Import Code-Signing Certificates
+        run: |
+          echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode > "${{ env.INSTALLER_CERT_MAC_PATH }}"
+          security create-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security default-keychain -s "${{ env.KEYCHAIN }}"
+          security unlock-keychain -p "${{ env.KEYCHAIN_PASSWORD }}" "${{ env.KEYCHAIN }}"
+          security import \
+            "${{ env.INSTALLER_CERT_MAC_PATH }}" \
+            -k "${{ env.KEYCHAIN }}" \
+            -f pkcs12 \
+            -A \
+            -T "/usr/bin/codesign" \
+            -P "${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "${{ env.KEYCHAIN_PASSWORD }}" \
+            "${{ env.KEYCHAIN }}"
+
+      - name: Install gon for code signing and app notarization
+        run: |
+          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.5/gon_macos.zip
+          unzip gon_macos.zip -d /usr/local/bin
+
+      - name: Write gon config to file
+        # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
+        run: |
+          cat > gon.config_installer.hcl <<EOF
+          source = ["ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"]
+          bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}-installer"
+
+          sign {
+            application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
+          }
+
+          # Ask Gon for zip output to force notarization process to take place.
+          # The CI will not upload the zip output
+          zip {
+            output_path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
+          }
+          EOF
+
+      - name: Code sign and notarize app
+        run: |
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"
+          gon -log-level=debug -log-json gon.config_installer.hcl
+        timeout-minutes: 30
+
+      #  tar dmg file to keep executable permission
+      - name: Tar files to keep permissions
+        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ArduinoCreateAgent-osx-${{ matrix.arch }}
+          path: ArduinoCreateAgent*.tar
+          if-no-files-found: error
+
   create-release:
     runs-on: ubuntu-20.04
     needs: [build, package]
