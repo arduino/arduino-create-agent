@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"flag"
 	"os"
+	"os/exec"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -167,6 +168,15 @@ func loop() {
 
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stdout)
+
+	// We used to install the agent in $HOME/Applications before versions <= 1.2.7-ventura
+	// With version > 1.3.0 we changed the install path of the agent in /Applications.
+	// If we are updating manually from 1.2.7 to 1.3.0 we have to uninstall the old agent manually first.
+	// This check will inform the user if he needs to run the uninstall first
+	if runtime.GOOS == "darwin" && oldInstallExists() {
+		printDialog("Old agent installation of the Arduino Create Agent found, please uninstall it before launching the new one")
+		os.Exit(0)
+	}
 
 	// Instantiate Tools
 	Tools = tools.Tools{
@@ -432,6 +442,18 @@ func loop() {
 			}
 		}
 	}()
+}
+
+// oldInstallExixts will return true if an old installation of the agent exixts (on macos)
+func oldInstallExists() bool {
+	oldAgentPath := config.GetDefaultHomeDir().Join("Applications", "ArduinoCreateAgent")
+	return oldAgentPath.Exist()
+}
+
+// printDialog will print a GUI error dialog on macos
+func printDialog(dialogText string) {
+	oscmd := exec.Command("osascript", "-e", "display dialog \""+dialogText+"\" buttons \"OK\" with title \"Error\"")
+	_ = oscmd.Run()
 }
 
 func parseIni(filename string) (args []string, err error) {
