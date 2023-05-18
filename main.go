@@ -444,9 +444,15 @@ func loop() {
 	}()
 }
 
-// oldInstallExixts will return true if an old installation of the agent exixts (on macos)
+// oldInstallExists will return true if an old installation of the agent exists (on macos) and is not the process running
 func oldInstallExists() bool {
 	oldAgentPath := config.GetDefaultHomeDir().Join("Applications", "ArduinoCreateAgent")
+	currentBinary, _ := os.Executable()
+	// if the current running binary is the old one we don't need to do anything
+	binIsOld, _ := paths.New(currentBinary).IsInsideDir(oldAgentPath)
+	if binIsOld {
+		return false
+	}
 	return oldAgentPath.Exist()
 }
 
