@@ -8,7 +8,7 @@ require (
 	github.com/arduino/go-paths-helper v1.9.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.1.0
-	github.com/getlantern/systray v1.1.0
+	github.com/getlantern/systray v1.2.2
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-ini/ini v1.62.0
 	github.com/googollee/go-socket.io v0.0.0-20181101151912-c8aeb1ed9b49
