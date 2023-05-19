@@ -15,6 +15,7 @@
 package config
 
 import (
+	"bytes"
 	// we need this for the ArduinoCreateAgent.plist in this package
 	_ "embed"
 	"os"
@@ -38,22 +39,35 @@ func getLaunchdAgentPath() *paths.Path {
 func InstallPlistFile() {
 	launchdAgentPath := getLaunchdAgentPath()
 	if !launchdAgentPath.Exist() {
-		err := writePlistFile(launchdAgentPath)
+		writeLoadExit(launchdAgentPath)
+	} else {
+		// we already have an existing launchd plist file, so we check if it's updated
+		launchAgentContent, _ := launchdAgentPath.ReadFile()
+		launchAgentContentNew, _ := getLaunchdAgentDefinition()
+		if bytes.Equal(launchAgentContent, launchAgentContentNew) {
+			log.Infof("the autostart file %s already exists: nothing to do", launchdAgentPath)
+		} else {
+			log.Infof("the autostart file %s needs to be updated", launchdAgentPath)
+			removePlistFile()
+			writeLoadExit(launchdAgentPath)
+		}
+
+	}
+}
+
+// writeLoadExit function will write the plist file, load it, and then exit, because launchd will start a new instance.
+func writeLoadExit(launchdAgentPath *paths.Path) {
+	err := writePlistFile(launchdAgentPath)
+	if err != nil {
+		log.Error(err)
+	} else {
+		err = loadLaunchdAgent() // this will load the agent: basically starting a new instance
 		if err != nil {
 			log.Error(err)
 		} else {
-			err = loadLaunchdAgent() // this will load the agent: basically starting a new instance
-			if err != nil {
-				log.Error(err)
-			} else {
-				log.Info("Quitting, another instance of the agent has been started by launchd")
-				os.Exit(0)
-			}
+			log.Info("Quitting, another instance of the agent has been started by launchd")
+			os.Exit(0)
 		}
-	} else {
-		// we already have an existing launchd plist file, so we don't have to do anything
-		log.Infof("the autostart file %s already exists: nothing to do", launchdAgentPath)
-
 	}
 }
 
@@ -61,10 +75,20 @@ func InstallPlistFile() {
 // it will return nil in case of success,
 // it will error in any other case
 func writePlistFile(launchdAgentPath *paths.Path) error {
+	definition, err := getLaunchdAgentDefinition()
+	if err != nil {
+		return err
+	}
+	// we need to create a new launchd plist file
+	return launchdAgentPath.WriteFile(definition)
+}
+
+// getLaunchdAgentDefinition will return the definition of the new LaunchdAgent
+func getLaunchdAgentDefinition() ([]byte, error) {
 	src, err := os.Executable()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	data := struct {
 		Program   string
@@ -76,9 +100,12 @@ func writePlistFile(launchdAgentPath *paths.Path) error {
 
 	t := template.Must(template.New("launchdConfig").Parse(string(launchdAgentDefinition)))
 
-	// we need to create a new launchd plist file
-	plistFile, _ := launchdAgentPath.Create()
-	return t.Execute(plistFile, data)
+	buf := bytes.NewBuffer(nil)
+	err = t.Execute(buf, data)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // loadLaunchdAgent will use launchctl to load the agent, will return an error if something goes wrong
