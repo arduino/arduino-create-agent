@@ -326,51 +326,35 @@ jobs:
 
   # This job is responsible for generating the installers (using installbuilder)
   package:
-    needs: notarize-macos
+    needs: build
     runs-on: ubuntu-20.04
 
     env:
       # vars used by installbuilder
       INSTALLBUILDER_PATH: "/opt/installbuilder-22.10.0/bin/builder"
       INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
-      # vars passed to installbuilder to install https certs automatically
-      CREATE_OSX_BUNDLED_MG: 0  # tell installbuilder to not create the DMG, gon will take care of that later
       # installbuilder will read this vars automatically (defined in installer.xml):
       INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
       INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
-      INSTALLER_CERT_MAC_PASSWORD: ${{ secrets.INSTALLER_CERT_MAC_PASSWORD }}
-      INSTALLER_CERT_MAC_P12: "/tmp/ArduinoCerts2020.p12"
 
     strategy:
       fail-fast: false  # if one os is failing continue nonetheless
       matrix:  # used to generate installers for different OS and not for runs-on
-        os: [ubuntu-20.04, windows-2019, macos-12]
+        os: [ubuntu-20.04, windows-2019]
         arch: [amd64]
         include:
           - os: ubuntu-20.04
-            install-builder-name: linux
-            executable-path: artifacts/linux-amd64/
+            platform-name: linux
             installer-extension: .run
-            artifact-name: arduino-create-agent-ubuntu-20.04-amd64
           - os: windows-2019
             arch: 386
-            install-builder-name: windows
-            executable-path: artifacts/windows/
+            platform-name: windows
             extension: .exe
             installer-extension: .exe
-            artifact-name: arduino-create-agent-windows-2019-386
           - os: windows-2019
-            install-builder-name: windows
-            executable-path: artifacts/windows/
+            platform-name: windows
             extension: .exe
             installer-extension: .exe
-            artifact-name: arduino-create-agent-windows-2019-amd64
-          - os: macos-12
-            install-builder-name: osx
-            executable-path: artifacts/macos/ArduinoCreateAgent.app
-            installer-extension: .app
-            artifact-name: ArduinoCreateAgent.app_amd64_notarized # this artifact contains the Contents directory
-            # here we support only amd64 for macos. Hopefully in the future installbuilder for macOS will be removed, see https://github.com/arduino/arduino-create-agent/issues/739
 
     container:
       image: floydpink/ubuntu-install-builder:22.10.0
@@ -385,28 +369,19 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ matrix.artifact-name }}
-          path: ${{ matrix.executable-path }}  # path expected by installbuilder
-
-      - name: unzip mac notarized bundle
-        working-directory: ${{ matrix.executable-path }}
-        run: |
-          apt install unzip
-          unzip ${{ matrix.artifact-name }}.zip
-          rm ${{ matrix.artifact-name }}.zip
-        if:  matrix.os == 'macos-12'
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: artifacts/${{ matrix.platform-name }}/  # path expected by installbuilder
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
-        run: chmod -v +x ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}*
+        run: chmod -v +x artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}*
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Rename executable to Arduino_Create_Agent
-        run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent${{ matrix.extension }}
-        if:  matrix.os != 'macos-12'
+        run: mv -v artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}${{ matrix.extension }} artifacts/${{ matrix.platform-name }}/Arduino_Create_Agent${{ matrix.extension }}
 
       - name: Rename executable to Arduino_Create_Agent_cli
-        run: mv -v ${{ matrix.executable-path }}${{ env.PROJECT_NAME }}_cli${{ matrix.extension }} ${{ matrix.executable-path }}Arduino_Create_Agent_cli${{ matrix.extension }}
+        run: mv -v artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}_cli${{ matrix.extension }} artifacts/${{ matrix.platform-name }}/Arduino_Create_Agent_cli${{ matrix.extension }}
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Save InstallBuilder license to file
@@ -416,44 +391,64 @@ jobs:
         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_PFX }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_PFX}}
         if: matrix.os == 'windows-2019'
 
-      - name: Save macos signing certificate to file
-        run: echo "${{ secrets.INSTALLER_CERT_MAC_P12 }}" | base64 --decode  > ${{ env.INSTALLER_CERT_MAC_P12 }}
-        if: matrix.os == 'macos-12'
-
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
       - name: Launch Bitrock installbuilder
         run: |
-          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.install-builder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
+          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.platform-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
 
       - name: Generate archive
-        run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.install-builder-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
+        run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ArduinoCreateAgent-${{ matrix.install-builder-name }}-${{ matrix.arch }}
+          name: ArduinoCreateAgent-${{ matrix.platform-name }}-${{ matrix.arch }}
           path: ArduinoCreateAgent*
           if-no-files-found: error
 
-  # This job will sign and notarize mac installers
-  code-sign-mac-installers:
-    needs: package
+  # This job will generate a dmg mac installer, sign/notarize it.
+  generate-sign-dmg:
+    needs: notarize-macos
     strategy:
       matrix:
         arch: [amd64]
 
     runs-on: macos-12
     steps:
+      - name: Checkout repo with icons/background
+        uses: actions/checkout@v3
+        with:
+          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains the icons/background
+          token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
+
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
-          name: ArduinoCreateAgent-osx-${{ matrix.arch }}
-          path: ArduinoCreateAgent-osx
+          name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
+          path: ArduinoCreateAgent.app
 
-        # zip artifacts do not mantain executable permission
-      - name: Make executable
-        run: chmod -v +x ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.app/Contents/MacOS/*
+      - name: unzip artifact
+        working-directory: ArduinoCreateAgent.app
+        run: |
+          unzip ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+          rm ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Genarate DMG
+        run: |
+          create-dmg \
+            --volname "ArduinoCreateAgent" \
+            --background "installer_icons/background.tiff" \
+            --window-pos 200 120 \
+            --window-size 500 320 \
+            --icon-size 80 \
+            --icon "ArduinoCreateAgent.app" 125 150 \
+            --app-drop-link 375 150 \
+            "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg" \
+            "ArduinoCreateAgent.app"
 
       - name: Import Code-Signing Certificates
         run: |
@@ -483,22 +478,23 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
-          source = ["ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.app"]
+          source = ["ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"]
           bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}-installer"
 
           sign {
             application_identity = "Developer ID Application: ARDUINO SA (7KT7ZWMCJT)"
           }
 
-          dmg {
-            output_path = "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"
-            volume_name = "ArduinoCreateAgent"
+          # Ask Gon for zip output to force notarization process to take place.
+          # The CI will not upload the zip output
+          zip {
+            output_path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
           }
           EOF
 
       - name: Code sign and notarize app
         run: |
-          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.app"
+          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"
           gon -log-level=debug -log-json gon.config_installer.hcl
         timeout-minutes: 30
 
@@ -515,7 +511,7 @@ jobs:
 
   create-release:
     runs-on: ubuntu-20.04
-    needs: [build, code-sign-mac-installers]
+    needs: [build, package, generate-sign-dmg]
 
     steps:
       - name: Checkout
