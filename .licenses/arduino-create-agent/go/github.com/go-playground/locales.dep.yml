@@ -1,8 +1,8 @@
 ---
 name: github.com/go-playground/locales
-version: v0.14.0
+version: v0.14.1
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/go-playground/locales
 license: mit
 licenses:
