@@ -1,8 +1,8 @@
 ---
 name: github.com/go-playground/universal-translator
-version: v0.18.0
+version: v0.18.1
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/go-playground/universal-translator
 license: mit
 licenses:
