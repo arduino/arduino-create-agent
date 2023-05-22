@@ -39,7 +39,9 @@ func getLaunchdAgentPath() *paths.Path {
 func InstallPlistFile() {
 	launchdAgentPath := getLaunchdAgentPath()
 	if !launchdAgentPath.Exist() {
-		writeLoadExit(launchdAgentPath)
+		writeAndLoadPlistFile(launchdAgentPath)
+		log.Info("Quitting, another instance of the agent has been started by launchd")
+		os.Exit(0)
 	} else {
 		// we already have an existing launchd plist file, so we check if it's updated
 		launchAgentContent, _ := launchdAgentPath.ReadFile()
@@ -49,14 +51,14 @@ func InstallPlistFile() {
 		} else {
 			log.Infof("the autostart file %s needs to be updated", launchdAgentPath)
 			removePlistFile()
-			writeLoadExit(launchdAgentPath)
+			writeAndLoadPlistFile(launchdAgentPath)
 		}
 
 	}
 }
 
-// writeLoadExit function will write the plist file, load it, and then exit, because launchd will start a new instance.
-func writeLoadExit(launchdAgentPath *paths.Path) {
+// writeAndLoadPlistFile function will write the plist file, load it, and then exit, because launchd will start a new instance.
+func writeAndLoadPlistFile(launchdAgentPath *paths.Path) {
 	err := writePlistFile(launchdAgentPath)
 	if err != nil {
 		log.Error(err)
@@ -64,9 +66,6 @@ func writeLoadExit(launchdAgentPath *paths.Path) {
 		err = loadLaunchdAgent() // this will load the agent: basically starting a new instance
 		if err != nil {
 			log.Error(err)
-		} else {
-			log.Info("Quitting, another instance of the agent has been started by launchd")
-			os.Exit(0)
 		}
 	}
 }
