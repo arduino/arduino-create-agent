@@ -572,7 +572,7 @@ jobs:
           release_name: ${{ github.ref }}
           body: ${{ steps.release_body.outputs.RBODY}}
           draft: false
-          prerelease: true
+          prerelease: ${{ needs.build.outputs.prerelease }}
 
       - name: Upload release files on Github
         uses: svenstaro/upload-release-action@v2
@@ -586,8 +586,8 @@ jobs:
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
-      # - name: Update version file (used by frontend to trigger autoupdate and create filename)
-      #   run: |
-      #     echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
-      #     aws s3 cp /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
-      #   if: ${{ needs.build.outputs.prerelease != 'true' }}
+      - name: Update version file (used by frontend to trigger autoupdate and create filename)
+        run: |
+          echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
+          aws s3 cp /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
