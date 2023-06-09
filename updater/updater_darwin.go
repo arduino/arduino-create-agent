@@ -59,7 +59,7 @@ func checkForUpdates(currentVersion string, updateURL string, cmdName string) (s
 	if currentAppPath.Ext() != ".app" {
 		return "", fmt.Errorf("could not find app root in %s", executablePath)
 	}
-	oldAppPath := currentAppPath.Parent().Join("ArdiunoCreateAgent.old.app")
+	oldAppPath := currentAppPath.Parent().Join("ArduinoCreateAgent.old.app")
 	if oldAppPath.Exist() {
 		return "", fmt.Errorf("temp app already exists: %s, cannot update", oldAppPath)
 	}

@@ -453,7 +453,7 @@ func oldInstallExists() bool {
 	if binIsOld {
 		return false
 	}
-	return oldAgentPath.Exist()
+	return oldAgentPath.Join("ArduinoCreateAgent.app").Exist()
 }
 
 // printDialog will print a GUI error dialog on macos
