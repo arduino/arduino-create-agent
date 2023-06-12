@@ -7,7 +7,7 @@ require (
 	github.com/arduino/arduino-cli v0.0.0-20210422154105-5aa424818026
 	github.com/arduino/go-paths-helper v1.9.1
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/codeclysm/extract/v3 v3.1.0
+	github.com/codeclysm/extract/v3 v3.1.1
 	github.com/getlantern/systray v1.1.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-ini/ini v1.62.0
