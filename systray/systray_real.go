@@ -101,6 +101,7 @@ func (s *Systray) start() {
 				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
 				// if something goes wrong during the cert install we remove them, so the user is able to retry
 				if err != nil {
+					log.Errorf("cannot install certificates something went wrong: %s", err)
 					cert.DeleteCertificates(certDir)
 				}
 				s.Restart()
