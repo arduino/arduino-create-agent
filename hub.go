@@ -26,9 +26,6 @@ import (
 	"strconv"
 	"strings"
 
-	cert "github.com/arduino/arduino-create-agent/certificates"
-	"github.com/arduino/arduino-create-agent/config"
-
 	"github.com/arduino/arduino-create-agent/upload"
 	log "github.com/sirupsen/logrus"
 )
@@ -183,9 +180,6 @@ func checkCmd(m []byte) {
 		go spList(false)
 		go spList(true)
 	} else if strings.HasPrefix(sl, "downloadtool") {
-		// Always delete root certificates when we receive a downloadtool command
-		// Useful if the install procedure was not followed strictly (eg. manually)
-		cert.DeleteCertificates(config.GetCertificatesDir())
 		go func() {
 			args := strings.Split(s, " ")
 			var tool, toolVersion, pack, behaviour string
