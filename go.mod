@@ -24,8 +24,8 @@ require (
 	go.bug.st/downloader/v2 v2.1.1
 	go.bug.st/serial v1.4.1
 	goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4
-	golang.org/x/crypto v0.9.0
-	golang.org/x/sys v0.8.0
+	golang.org/x/crypto v0.11.0
+	golang.org/x/sys v0.10.0
 	gopkg.in/inconshreveable/go-update.v0 v0.0.0-20150814200126-d8b0b1d421aa
 )
 
@@ -81,7 +81,7 @@ require (
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
