@@ -70,7 +70,7 @@ var systems = map[string]string{
 	"darwinamd64":  "i686-apple-darwin",
 	"darwinarm64":  "arm64-apple-darwin",
 	"windows386":   "i686-mingw32",
-	"windowsamd64": "i686-mingw32",
+	"windowsamd64": "x86_64-mingw32",
 	"linuxarm":     "arm-linux-gnueabihf",
 }
 

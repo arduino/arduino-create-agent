@@ -40,7 +40,7 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 		{"darwin", "amd64", "x86_64-apple-darwin"},
 		{"darwin", "arm64", "arm64-apple-darwin"},
 		{"windows", "386", "i686-mingw32"},
-		{"windows", "amd64", "i686-mingw32"},
+		{"windows", "amd64", "x86_64-mingw32"},
 		{"linux", "arm", "arm-linux-gnueabihf"},
 	}
 	testIndex := paths.New("testdata", "test_tool_index.json")
