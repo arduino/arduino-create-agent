@@ -33,6 +33,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -41,7 +42,6 @@ import (
 
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/blang/semver"
-	"github.com/xrash/smetrics"
 )
 
 type system struct {
@@ -64,15 +64,21 @@ type index struct {
 	} `json:"packages"`
 }
 
-var systems = map[string]string{
-	"linuxamd64":   "x86_64-linux-gnu",
-	"linux386":     "i686-linux-gnu",
-	"darwinamd64":  "i686-apple-darwin",
-	"darwinarm64":  "arm64-apple-darwin",
-	"windows386":   "i686-mingw32",
-	"windowsamd64": "x86_64-mingw32",
-	"linuxarm":     "arm-linux-gnueabihf",
-}
+// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L129-L142
+var (
+	regexpLinuxArm   = regexp.MustCompile("arm.*-linux-gnueabihf")
+	regexpLinuxArm64 = regexp.MustCompile("(aarch64|arm64)-linux-gnu")
+	regexpLinux64    = regexp.MustCompile("x86_64-.*linux-gnu")
+	regexpLinux32    = regexp.MustCompile("i[3456]86-.*linux-gnu")
+	regexpWindows32  = regexp.MustCompile("i[3456]86-.*(mingw32|cygwin)")
+	regexpWindows64  = regexp.MustCompile("(amd64|x86_64)-.*(mingw32|cygwin)")
+	regexpMac64      = regexp.MustCompile("x86_64-apple-darwin.*")
+	regexpMac32      = regexp.MustCompile("i[3456]86-apple-darwin.*")
+	regexpMacArm64   = regexp.MustCompile("arm64-apple-darwin.*")
+	regexpFreeBSDArm = regexp.MustCompile("arm.*-freebsd[0-9]*")
+	regexpFreeBSD32  = regexp.MustCompile("i?[3456]86-freebsd[0-9]*")
+	regexpFreeBSD64  = regexp.MustCompile("amd64-freebsd[0-9]*")
+)
 
 // public vars to allow override in the tests
 var (
@@ -299,6 +305,64 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	return t.writeMap()
 }
 
+// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L144-L176
+func (s *system) isExactMatchWith(osName, osArch string) bool {
+	if s.Host == "all" {
+		return true
+	}
+
+	switch osName + "," + osArch {
+	case "linux,arm", "linux,armbe":
+		return regexpLinuxArm.MatchString(s.Host)
+	case "linux,arm64":
+		return regexpLinuxArm64.MatchString(s.Host)
+	case "linux,amd64":
+		return regexpLinux64.MatchString(s.Host)
+	case "linux,386":
+		return regexpLinux32.MatchString(s.Host)
+	case "windows,386":
+		return regexpWindows32.MatchString(s.Host)
+	case "windows,amd64":
+		return regexpWindows64.MatchString(s.Host)
+	case "darwin,arm64":
+		return regexpMacArm64.MatchString(s.Host)
+	case "darwin,amd64":
+		return regexpMac64.MatchString(s.Host)
+	case "darwin,386":
+		return regexpMac32.MatchString(s.Host)
+	case "freebsd,arm":
+		return regexpFreeBSDArm.MatchString(s.Host)
+	case "freebsd,386":
+		return regexpFreeBSD32.MatchString(s.Host)
+	case "freebsd,amd64":
+		return regexpFreeBSD64.MatchString(s.Host)
+	}
+	return false
+}
+
+// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L178-L198
+func (s *system) isCompatibleWith(osName, osArch string) (bool, int) {
+	if s.isExactMatchWith(osName, osArch) {
+		return true, 1000
+	}
+
+	switch osName + "," + osArch {
+	case "windows,amd64":
+		return regexpWindows32.MatchString(s.Host), 10
+	case "darwin,amd64":
+		return regexpMac32.MatchString(s.Host), 10
+	case "darwin,arm64":
+		// Compatibility guaranteed through Rosetta emulation
+		if regexpMac64.MatchString(s.Host) {
+			// Prefer amd64 version if available
+			return true, 20
+		}
+		return regexpMac32.MatchString(s.Host), 10
+	}
+
+	return false, 0
+}
+
 func findTool(pack, name, version string, data index) (tool, system) {
 	var correctTool tool
 	correctTool.Version = "0.0"
@@ -325,11 +389,10 @@ func findTool(pack, name, version string, data index) (tool, system) {
 
 	// Find the url based on system
 	var correctSystem system
-	maxSimilarity := 0.7
+	maxSimilarity := -1
 
 	for _, s := range correctTool.Systems {
-		similarity := smetrics.Jaro(s.Host, systems[OS+Arch])
-		if similarity > maxSimilarity {
+		if comp, similarity := s.isCompatibleWith(OS, Arch); comp && similarity > maxSimilarity {
 			correctSystem = s
 			maxSimilarity = similarity
 		}
