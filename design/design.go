@@ -15,7 +15,7 @@
 
 package design
 
-import . "goa.design/goa/dsl"
+import . "goa.design/goa/v3/dsl"
 
 var _ = API("arduino-create-agent", func() {
 	Title("Arduino Create Agent")
