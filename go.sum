@@ -25,8 +25,6 @@ github.com/davidmz/go-pageant v1.0.2 h1:bPblRCh5jGU+Uptpz6LgMZGD5hJoOt7otgT454Wv
 github.com/davidmz/go-pageant v1.0.2/go.mod h1:P2EDDnMqIwG5Rrp05dTRITj9z2zpGcD9efWSkTNKLIE=
 github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 h1:MGKhKyiYrvMDZsmLR/+RGffQSXwEkXgfLSA08qDn9AI=
 github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598/go.mod h1:0FpDmbrt36utu8jEmeU05dPC9AB5tsLYVVi+ZHfyuwI=
-github.com/dimfeld/httptreemux v5.0.1+incompatible h1:Qj3gVcDNoOthBAqftuD596rm4wg/adLLz5xh5CmpiCA=
-github.com/dimfeld/httptreemux v5.0.1+incompatible/go.mod h1:rbUlSV+CCpv/SuqUTP/8Bk2O3LyUV436/yaRGkhP6Z0=
 github.com/dimfeld/httptreemux/v5 v5.5.0 h1:p8jkiMrCuZ0CmhwYLcbNbl7DDo21fozhKHQ2PccwOFQ=
 github.com/dimfeld/httptreemux/v5 v5.5.0/go.mod h1:QeEylH57C0v3VO0tkKraVz9oD3Uu93CKPnTLbsidvSw=
 github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 h1:NRUJuo3v3WGC/g5YiyF790gut6oQr5f3FBI88Wv0dx4=
@@ -169,8 +167,6 @@ go.bug.st/downloader/v2 v2.1.1 h1:nyqbUizo3E2IxCCm4YFac4FtSqqFpqWP+Aae5GCMuw4=
 go.bug.st/downloader/v2 v2.1.1/go.mod h1:VZW2V1iGKV8rJL2ZEGIDzzBeKowYv34AedJz13RzVII=
 go.bug.st/serial v1.4.1 h1:AwYUNixVf90XymNeJaUkMrPp+GZQe3RMFQmpVdHIUK8=
 go.bug.st/serial v1.4.1/go.mod h1:z8CesKorE90Qr/oRSJiEuvzYRKol9r/anJZEb5kt304=
-goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4 h1:+qjyw15FIXxmcA/QmrDrofQPLMAav6X2v+UYH/pQq8A=
-goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4/go.mod h1:NnzBwdNktihbNek+pPiFMQP9PPFsUt8MMPPyo9opDSo=
 goa.design/goa/v3 v3.12.4 h1:g3G8yHLk+jyUDNRL2sNg+ZcoQ62zY83rpgagAQ5VmTA=
 goa.design/goa/v3 v3.12.4/go.mod h1:h1vjyGQ+rqWK+VvnqN8oLcpqaHrKIyuY1Vx+jhKodpg=
 golang.org/x/arch v0.0.0-20210923205945-b76863e36670 h1:18EFjUmQOcUvxNYSkA6jO9VAiXCnxFY6NyDX0bHDmkU=

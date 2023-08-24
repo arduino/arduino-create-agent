@@ -26,8 +26,8 @@ import (
 	toolssvc "github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/sirupsen/logrus"
-	goahttp "goa.design/goa/http"
-	"goa.design/goa/http/middleware"
+	goahttp "goa.design/goa/v3/http"
+	"goa.design/goa/v3/http/middleware"
 )
 
 // Server is the actual server

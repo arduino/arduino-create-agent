@@ -23,7 +23,6 @@ require (
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
 	go.bug.st/downloader/v2 v2.1.1
 	go.bug.st/serial v1.4.1
-	goa.design/goa v1.0.1-0.20190116060309-40843d63b0e4
 	goa.design/goa/v3 v3.12.4
 	golang.org/x/crypto v0.12.0
 	golang.org/x/sys v0.11.0
@@ -38,7 +37,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 // indirect
-	github.com/dimfeld/httptreemux v5.0.1+incompatible // indirect
 	github.com/dimfeld/httptreemux/v5 v5.5.0 // indirect
 	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
 	github.com/getlantern/errors v0.0.0-20190325191628-abdb3e3e36f7 // indirect
