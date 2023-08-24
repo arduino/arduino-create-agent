@@ -46,7 +46,7 @@ func Server(home string) http.Handler {
 	}
 	indexesEndpoints := indexessvc.NewEndpoints(&indexesSvc)
 	indexesServer := indexessvr.New(indexesEndpoints, mux, goahttp.RequestDecoder,
-		goahttp.ResponseEncoder, errorHandler(logger))
+		goahttp.ResponseEncoder, errorHandler(logger), nil)
 	indexessvr.Mount(mux, indexesServer)
 
 	// Mount tools
@@ -55,7 +55,7 @@ func Server(home string) http.Handler {
 		Indexes: &indexesSvc,
 	}
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
-	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
+	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger), nil)
 	toolssvr.Mount(mux, toolsServer)
 
 	// Mount middlewares
@@ -70,7 +70,7 @@ func Server(home string) http.Handler {
 // to correlate.
 func errorHandler(logger *logrus.Logger) func(context.Context, http.ResponseWriter, error) {
 	return func(ctx context.Context, w http.ResponseWriter, err error) {
-		id := ctx.Value(middleware.RequestIDKey).(string)
+		id := ctx.Value(middleware.RequestID).(string)
 		w.Write([]byte("[" + id + "] encoding: " + err.Error()))
 		logger.Printf("[%s] ERROR: %s", id, err.Error())
 	}
