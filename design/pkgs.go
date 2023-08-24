@@ -105,8 +105,7 @@ var IndexPayload = Type("arduino.index", func() {
 })
 
 var ToolPayload = Type("arduino.tool", func() {
-	Description(`A tool is an executable program that can upload sketches. 
-	If url is absent the tool will be searched among the package index installed`)
+	Description("A tool is an executable program that can upload sketches.")
 	TypeName("ToolPayload")
 
 	Attribute("name", String, "The name of the tool", func() {
@@ -118,13 +117,6 @@ var ToolPayload = Type("arduino.tool", func() {
 	Attribute("packager", String, "The packager of the tool", func() {
 		Example("arduino")
 	})
-
-	Attribute("url", String, `The url where the package can be found. Optional. 
-	If present checksum must also be present.`)
-
-	Attribute("checksum", String, `A checksum of the archive. Mandatory when url is present. 
-	This ensures that the package is downloaded correcly.`)
-
 	Required("name", "version", "packager")
 })
 
