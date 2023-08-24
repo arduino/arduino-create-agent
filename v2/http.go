@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"path/filepath"
 
-	docssvr "github.com/arduino/arduino-create-agent/gen/http/docs/server"
 	indexessvr "github.com/arduino/arduino-create-agent/gen/http/indexes/server"
 	toolssvr "github.com/arduino/arduino-create-agent/gen/http/tools/server"
 	indexessvc "github.com/arduino/arduino-create-agent/gen/indexes"
@@ -58,10 +57,6 @@ func Server(home string) http.Handler {
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
 	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
 	toolssvr.Mount(mux, toolsServer)
-
-	// Mount docs
-	docssvr.New(nil, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
-	docssvr.Mount(mux)
 
 	// Mount middlewares
 	handler := middleware.Log(logAdapter)(mux)
