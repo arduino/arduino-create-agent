@@ -95,18 +95,6 @@ func EncodeRemoveResponse(encoder func(context.Context, http.ResponseWriter) goa
 func DecodeRemoveRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
 	return func(r *http.Request) (any, error) {
 		var (
-			body RemoveRequestBody
-			err  error
-		)
-		err = decoder(r).Decode(&body)
-		if err != nil {
-			if err == io.EOF {
-				return nil, goa.MissingPayloadError()
-			}
-			return nil, goa.DecodePayloadError(err.Error())
-		}
-
-		var (
 			packager string
 			name     string
 			version  string
@@ -116,7 +104,7 @@ func DecodeRemoveRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.
 		packager = params["packager"]
 		name = params["name"]
 		version = params["version"]
-		payload := NewRemoveToolPayload(&body, packager, name, version)
+		payload := NewRemoveToolPayload(packager, name, version)
 
 		return payload, nil
 	}

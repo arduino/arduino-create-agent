@@ -27,7 +27,6 @@ import (
 	"testing"
 
 	"github.com/arduino/arduino-create-agent/config"
-	"github.com/arduino/arduino-create-agent/gen/tools"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -54,17 +53,21 @@ func TestInstallToolDifferentContentType(t *testing.T) {
 	r.Any("/v2/*path", gin.WrapH(goa))
 	ts := httptest.NewServer(r)
 
-	URL := "http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz"
-	Checksum := "SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100"
-	request := tools.ToolPayload{
-		Name:     "bossac",
-		Version:  "1.7.0-arduino3",
-		Packager: "arduino",
-		URL:      &URL,
-		Checksum: &Checksum,
+	oldRequest := struct {
+		Name     string
+		Version  string
+		Packager string
+		URL      string
+		Checksum string
+	}{
+		"bossac",
+		"1.7.0-arduino3",
+		"arduino",
+		"http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz",
+		"SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100",
 	}
 
-	payload, err := json.Marshal(request)
+	payload, err := json.Marshal(oldRequest)
 	require.NoError(t, err)
 
 	// for some reason the fronted sends requests with "text/plain" content type.

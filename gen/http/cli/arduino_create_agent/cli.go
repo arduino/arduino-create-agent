@@ -65,7 +65,6 @@ func ParseEndpoint(
 		toolsInstallBodyFlag = toolsInstallFlags.String("body", "REQUIRED", "")
 
 		toolsRemoveFlags        = flag.NewFlagSet("remove", flag.ExitOnError)
-		toolsRemoveBodyFlag     = toolsRemoveFlags.String("body", "REQUIRED", "")
 		toolsRemovePackagerFlag = toolsRemoveFlags.String("packager", "REQUIRED", "The packager of the tool")
 		toolsRemoveNameFlag     = toolsRemoveFlags.String("name", "REQUIRED", "The name of the tool")
 		toolsRemoveVersionFlag  = toolsRemoveFlags.String("version", "REQUIRED", "The version of the tool")
@@ -191,7 +190,7 @@ func ParseEndpoint(
 				data, err = toolsc.BuildInstallPayload(*toolsInstallBodyFlag)
 			case "remove":
 				endpoint = c.Remove()
-				data, err = toolsc.BuildRemovePayload(*toolsRemoveBodyFlag, *toolsRemovePackagerFlag, *toolsRemoveNameFlag, *toolsRemoveVersionFlag)
+				data, err = toolsc.BuildRemovePayload(*toolsRemovePackagerFlag, *toolsRemoveNameFlag, *toolsRemoveVersionFlag)
 			}
 		}
 	}
@@ -297,28 +296,22 @@ Install implements install.
 
 Example:
     %[1]s tools install --body '{
-      "checksum": "Beatae dolor adipisci nulla et quam voluptas.",
       "name": "avrdude",
       "packager": "arduino",
-      "url": "Deserunt voluptatem impedit iusto libero.",
       "version": "6.3.0-arduino9"
    }'
 `, os.Args[0])
 }
 
 func toolsRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] tools remove -body JSON -packager STRING -name STRING -version STRING
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tools remove -packager STRING -name STRING -version STRING
 
 Remove implements remove.
-    -body JSON: 
     -packager STRING: The packager of the tool
     -name STRING: The name of the tool
     -version STRING: The version of the tool
 
 Example:
-    %[1]s tools remove --body '{
-      "checksum": "Ipsa minima quia.",
-      "url": "Expedita rem ipsum quasi harum nostrum."
-   }' --packager "arduino" --name "avrdude" --version "6.3.0-arduino9"
+    %[1]s tools remove --packager "arduino" --name "avrdude" --version "6.3.0-arduino9"
 `, os.Args[0])
 }

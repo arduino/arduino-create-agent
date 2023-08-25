@@ -22,15 +22,13 @@ func BuildInstallPayload(toolsInstallBody string) (*tools.ToolPayload, error) {
 	{
 		err = json.Unmarshal([]byte(toolsInstallBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"checksum\": \"Beatae dolor adipisci nulla et quam voluptas.\",\n      \"name\": \"avrdude\",\n      \"packager\": \"arduino\",\n      \"url\": \"Deserunt voluptatem impedit iusto libero.\",\n      \"version\": \"6.3.0-arduino9\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"name\": \"avrdude\",\n      \"packager\": \"arduino\",\n      \"version\": \"6.3.0-arduino9\"\n   }'")
 		}
 	}
 	v := &tools.ToolPayload{
 		Name:     body.Name,
 		Version:  body.Version,
 		Packager: body.Packager,
-		URL:      body.URL,
-		Checksum: body.Checksum,
 	}
 
 	return v, nil
@@ -38,15 +36,7 @@ func BuildInstallPayload(toolsInstallBody string) (*tools.ToolPayload, error) {
 
 // BuildRemovePayload builds the payload for the tools remove endpoint from CLI
 // flags.
-func BuildRemovePayload(toolsRemoveBody string, toolsRemovePackager string, toolsRemoveName string, toolsRemoveVersion string) (*tools.ToolPayload, error) {
-	var err error
-	var body RemoveRequestBody
-	{
-		err = json.Unmarshal([]byte(toolsRemoveBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"checksum\": \"Ipsa minima quia.\",\n      \"url\": \"Expedita rem ipsum quasi harum nostrum.\"\n   }'")
-		}
-	}
+func BuildRemovePayload(toolsRemovePackager string, toolsRemoveName string, toolsRemoveVersion string) (*tools.ToolPayload, error) {
 	var packager string
 	{
 		packager = toolsRemovePackager
@@ -59,10 +49,7 @@ func BuildRemovePayload(toolsRemoveBody string, toolsRemovePackager string, tool
 	{
 		version = toolsRemoveVersion
 	}
-	v := &tools.ToolPayload{
-		URL:      body.URL,
-		Checksum: body.Checksum,
-	}
+	v := &tools.ToolPayload{}
 	v.Packager = packager
 	v.Name = name
 	v.Version = version

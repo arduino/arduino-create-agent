@@ -63,12 +63,6 @@ type ToolPayload struct {
 	Version string
 	// The packager of the tool
 	Packager string
-	// The url where the package can be found. Optional.
-	// If present checksum must also be present.
-	URL *string
-	// A checksum of the archive. Mandatory when url is present.
-	// This ensures that the package is downloaded correcly.
-	Checksum *string
 }
 
 // MakeNotFound builds a goa.ServiceError from an error.

@@ -22,14 +22,17 @@ paths:
                                 type: array
                                 items:
                                     type: string
-                                    example: Eveniet iure nihil optio qui.
+                                    example: Rerum et soluta laudantium.
                                 example:
-                                    - Et perferendis eveniet voluptas.
-                                    - Ut aut illum eaque dolor magni.
-                                    - Amet illo veritatis laudantium optio.
+                                    - Et deserunt.
+                                    - Impedit iusto libero explicabo.
+                                    - Dolor adipisci nulla.
+                                    - Quam voluptas voluptates expedita rem ipsum.
                             example:
-                                - Illo enim vero qui rerum ut inventore.
-                                - Dolorem nihil autem minima alias.
+                                - Dignissimos consectetur eos molestiae culpa soluta deserunt.
+                                - Nobis sint dolorem unde.
+                                - Quia doloremque.
+                                - Atque iusto tempore sit quod dolor repellat.
                 "400":
                     description: 'invalid_url: url invalid'
                     content:
@@ -152,10 +155,8 @@ paths:
                         schema:
                             $ref: '#/components/schemas/InstallRequestBody'
                         example:
-                            checksum: Beatae dolor adipisci nulla et quam voluptas.
                             name: avrdude
                             packager: arduino
-                            url: Deserunt voluptatem impedit iusto libero.
                             version: 6.3.0-arduino9
             responses:
                 "200":
@@ -200,15 +201,6 @@ paths:
                     description: The version of the tool
                     example: 6.3.0-arduino9
                   example: 6.3.0-arduino9
-            requestBody:
-                required: true
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/RemoveRequestBody'
-                        example:
-                            checksum: Ipsa minima quia.
-                            url: Expedita rem ipsum quasi harum nostrum.
             responses:
                 "200":
                     description: OK response.
@@ -277,7 +269,7 @@ components:
                 temporary:
                     type: boolean
                     description: Is the error temporary?
-                    example: false
+                    example: true
                 timeout:
                     type: boolean
                     description: Is the error a timeout?
@@ -288,8 +280,8 @@ components:
                 id: 123abc
                 message: parameter 'p' must be an integer
                 name: bad_request
-                temporary: false
-                timeout: true
+                temporary: true
+                timeout: false
             required:
                 - name
                 - id
@@ -300,10 +292,6 @@ components:
         InstallRequestBody:
             type: object
             properties:
-                checksum:
-                    type: string
-                    description: "A checksum of the archive. Mandatory when url is present. \n\tThis ensures that the package is downloaded correcly."
-                    example: Sint odio sed consequatur numquam.
                 name:
                     type: string
                     description: The name of the tool
@@ -312,19 +300,13 @@ components:
                     type: string
                     description: The packager of the tool
                     example: arduino
-                url:
-                    type: string
-                    description: "The url where the package can be found. Optional. \n\tIf present checksum must also be present."
-                    example: Et quo doloremque sapiente atque.
                 version:
                     type: string
                     description: The version of the tool
                     example: 6.3.0-arduino9
             example:
-                checksum: Mollitia commodi sunt.
                 name: avrdude
                 packager: arduino
-                url: Quae reprehenderit provident provident debitis illo.
                 version: 6.3.0-arduino9
             required:
                 - name
@@ -341,28 +323,11 @@ components:
                 status: ok
             required:
                 - status
-        RemoveRequestBody:
-            type: object
-            properties:
-                checksum:
-                    type: string
-                    description: "A checksum of the archive. Mandatory when url is present. \n\tThis ensures that the package is downloaded correcly."
-                    example: Ea culpa.
-                url:
-                    type: string
-                    description: "The url where the package can be found. Optional. \n\tIf present checksum must also be present."
-                    example: Odit officiis illo qui quia provident illo.
-            example:
-                checksum: Rerum eum esse corporis ex.
-                url: Molestiae dolor quaerat enim.
         ToolCollection:
             type: array
             items:
                 $ref: '#/components/schemas/ArduinoTool'
             example:
-                - name: avrdude
-                  packager: arduino
-                  version: 6.3.0-arduino9
                 - name: avrdude
                   packager: arduino
                   version: 6.3.0-arduino9
