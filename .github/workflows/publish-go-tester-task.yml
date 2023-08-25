@@ -30,7 +30,7 @@ on:
   repository_dispatch:
 
 env:
-  GO_VERSION: "1.19"
+  GO_VERSION: "1.20"
 
 jobs:
   run-determination:

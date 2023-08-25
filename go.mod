@@ -1,6 +1,6 @@
 module github.com/arduino/arduino-create-agent
 
-go 1.19
+go 1.20
 
 require (
 	github.com/andela/gin-cors v0.0.0-20160928171741-e8c3436a37e2
