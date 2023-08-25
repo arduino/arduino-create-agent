@@ -133,12 +133,6 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 // Install crawles the Index folder, downloads the specified tool, extracts the archive in the Tools Folder.
 // It checks for the Signature specified in the package index.
 func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
-	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
-
-	if payload.URL != nil {
-		return c.install(ctx, path, *payload.URL, *payload.Checksum)
-	}
-
 	list, err := c.Indexes.List(ctx)
 	if err != nil {
 		return nil, err
@@ -159,9 +153,7 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 				if tool.Name == payload.Name &&
 					tool.Version == payload.Version {
 
-					sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
-
-					return c.install(ctx, path, sys.URL, sys.Checksum)
+					return c.install(ctx, payload.Packager, tool)
 				}
 			}
 		}
@@ -172,9 +164,12 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 			payload.Packager, payload.Name, payload.Version))
 }
 
-func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools.Operation, error) {
+func (c *Tools) install(ctx context.Context, packager string, tool Tool) (*tools.Operation, error) {
+	sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
+	path := filepath.Join(packager, tool.Name, tool.Version)
+
 	// Download
-	res, err := http.Get(url)
+	res, err := http.Get(sys.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +194,7 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	sum := sha256.Sum256(buffer.Bytes())
 	sumString := "SHA-256:" + hex.EncodeToString(sum[:sha256.Size])
 
-	if sumString != checksum {
+	if sumString != sys.Checksum {
 		os.RemoveAll(path)
 		return nil, errors.New("checksum doesn't match")
 	}
