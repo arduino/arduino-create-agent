@@ -1,16 +1,17 @@
 ---
-name: goa.design/goa/http
-version: v1.0.1-0.20190116060309-40843d63b0e4
+name: github.com/dimfeld/httptreemux/v5
+version: v5.5.0
 type: go
-summary: 
-homepage: https://pkg.go.dev/goa.design/goa/http
+summary: This is inspired by Julien Schmidt's httprouter, in that it uses a patricia
+  tree, but the implementation is rather different.
+homepage: https://pkg.go.dev/github.com/dimfeld/httptreemux/v5
 license: mit
 licenses:
-- sources: goa@v1.0.1-0.20190116060309-40843d63b0e4/LICENSE
+- sources: LICENSE
   text: |
     The MIT License (MIT)
 
-    Copyright (c) 2015 Raphael Simon and goa Contributors
+    Copyright (c) 2014,2015 Daniel Imfeld
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -19,14 +20,14 @@ licenses:
     copies of the Software, and to permit persons to whom the Software is
     furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 notices: []

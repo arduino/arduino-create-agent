@@ -1,12 +1,14 @@
 ---
-name: goa.design/goa/http/middleware
-version: v1.0.1-0.20190116060309-40843d63b0e4
+name: goa.design/goa/v3/pkg
+version: v3.12.4
 type: go
-summary: 
-homepage: https://pkg.go.dev/goa.design/goa/http/middleware
+summary: Package goa implements a Go framework for writing microservices that promotes
+  best practice by providing a single source of truth from which server code, client
+  code, and documentation is derived.
+homepage: https://pkg.go.dev/goa.design/goa/v3/pkg
 license: mit
 licenses:
-- sources: goa@v1.0.1-0.20190116060309-40843d63b0e4/LICENSE
+- sources: v3@v3.12.4/LICENSE
   text: |
     The MIT License (MIT)
 
