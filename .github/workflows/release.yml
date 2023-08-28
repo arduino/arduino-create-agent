@@ -21,7 +21,7 @@ env:
   AC_USERNAME: ${{ secrets.AC_USERNAME }} # used by gon
   AC_PASSWORD: ${{ secrets.AC_PASSWORD }} # used by gon
   # See: https://github.com/actions/setup-go/tree/v3#readme
-  GO_VERSION: "1.19"
+  GO_VERSION: "1.20"
 
 jobs:
   # The build job is responsible for: configuring the environment, testing and compiling process

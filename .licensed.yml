@@ -5,6 +5,10 @@ sources:
 apps:
   - source_path: ./
 
+reviewed:
+  go:
+    - golang.org/x/crypto/curve25519
+
 # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-dependencies/AGPL-3.0/.licensed.yml
 allowed:
   # The following are based on: https://www.gnu.org/licenses/license-list.html#GPLCompatibleLicenses
