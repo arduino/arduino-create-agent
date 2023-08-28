@@ -18,7 +18,6 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
@@ -125,7 +124,7 @@ func (t *Tools) writeMap() error {
 		return err
 	}
 	filePath := path.Join(dir(), "installed.json")
-	return ioutil.WriteFile(filePath, b, 0644)
+	return os.WriteFile(filePath, b, 0644)
 }
 
 // readMap() reads the installed map from json file "installed.json"
@@ -133,7 +132,7 @@ func (t *Tools) readMap() error {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 	filePath := path.Join(dir(), "installed.json")
-	b, err := ioutil.ReadFile(filePath)
+	b, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}

@@ -28,7 +28,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -134,7 +133,7 @@ func uploadHandler(c *gin.Context) {
 	var filePaths []string
 	filePaths = append(filePaths, filePath)
 
-	tmpdir, err := ioutil.TempDir("", "extrafiles")
+	tmpdir, err := os.MkdirTemp("", "extrafiles")
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
@@ -151,7 +150,7 @@ func uploadHandler(c *gin.Context) {
 			return
 		}
 
-		err := ioutil.WriteFile(path, extraFile.Hex, 0644)
+		err := os.WriteFile(path, extraFile.Hex, 0644)
 		if err != nil {
 			c.String(http.StatusBadRequest, err.Error())
 			return

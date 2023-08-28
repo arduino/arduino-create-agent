@@ -18,7 +18,7 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -104,7 +104,7 @@ func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 	}
 	expectedDirList := []string{"bin", "etc"}
 
-	tmpDir, err := ioutil.TempDir("", "download_test")
+	tmpDir, err := os.MkdirTemp("", "download_test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 		defer resp.Body.Close()
 
 		// Read the body
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("%v", err)
 		}
@@ -148,7 +148,7 @@ func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
 		default:
 			t.Errorf("no suitable type found")
 		}
-		files, err := ioutil.ReadDir(location)
+		files, err := os.ReadDir(location)
 		if err != nil {
 			t.Errorf("%v", err)
 		}

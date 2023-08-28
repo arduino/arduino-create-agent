@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -125,7 +124,7 @@ func (t *Tools) DownloadPackageIndex(indexFile, signatureFile string) error {
 	defer resp.Body.Close()
 
 	// Read the body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -138,12 +137,12 @@ func (t *Tools) DownloadPackageIndex(indexFile, signatureFile string) error {
 	defer signature.Body.Close()
 
 	// Read the body
-	signatureBody, err := ioutil.ReadAll(signature.Body)
+	signatureBody, err := io.ReadAll(signature.Body)
 	if err != nil {
 		return err
 	}
-	ioutil.WriteFile(indexFile, body, 0644)
-	ioutil.WriteFile(signatureFile, signatureBody, 0644)
+	os.WriteFile(indexFile, body, 0644)
+	os.WriteFile(signatureFile, signatureBody, 0644)
 
 	t.LastRefresh = time.Now()
 
@@ -194,7 +193,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 		return err
 	}
 
-	body, err := ioutil.ReadFile(indexFile)
+	body, err := os.ReadFile(indexFile)
 	if err != nil {
 		return err
 	}
@@ -236,7 +235,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	defer resp.Body.Close()
 
 	// Read the body
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}

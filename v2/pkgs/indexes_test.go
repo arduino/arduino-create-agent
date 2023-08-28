@@ -17,7 +17,6 @@ package pkgs_test
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -38,7 +37,7 @@ func TestIndexes(t *testing.T) {
 	defer ts.Close()
 
 	// Initialize indexes with a temp folder
-	tmp, err := ioutil.TempDir("", "")
+	tmp, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatal(err)
 	}
