@@ -31,7 +31,15 @@ var launchdAgentDefinition []byte
 
 // getLaunchdAgentPath will return the path of the launchd agent default path
 func getLaunchdAgentPath() *paths.Path {
-	return GetDefaultHomeDir().Join("Library", "LaunchAgents", "ArduinoCreateAgent.plist")
+	homeDir := GetDefaultHomeDir()
+	launchAgentsPath := homeDir.Join("Library", "LaunchAgents")
+	agentPlistPath := launchAgentsPath.Join("ArduinoCreateAgent.plist")
+
+	if err := os.MkdirAll(launchAgentsPath.String(), 0755); err != nil {
+		log.Panicf("Could not create ~/Library/LaunchAgents directory: %s", err)
+	}
+
+	return agentPlistPath
 }
 
 // InstallPlistFile will handle the process of creating the plist file required for the autostart
