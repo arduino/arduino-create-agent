@@ -28,6 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 	goahttp "goa.design/goa/v3/http"
 	"goa.design/goa/v3/http/middleware"
+	goamiddleware "goa.design/goa/v3/middleware"
 )
 
 // Server is the actual server
@@ -70,7 +71,7 @@ func Server(home string) http.Handler {
 // to correlate.
 func errorHandler(logger *logrus.Logger) func(context.Context, http.ResponseWriter, error) {
 	return func(ctx context.Context, w http.ResponseWriter, err error) {
-		id := ctx.Value(middleware.RequestID).(string)
+		id := ctx.Value(goamiddleware.RequestIDKey).(string)
 		w.Write([]byte("[" + id + "] encoding: " + err.Error()))
 		logger.Printf("[%s] ERROR: %s", id, err.Error())
 	}
