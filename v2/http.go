@@ -20,15 +20,15 @@ import (
 	"net/http"
 	"path/filepath"
 
-	docssvr "github.com/arduino/arduino-create-agent/gen/http/docs/server"
 	indexessvr "github.com/arduino/arduino-create-agent/gen/http/indexes/server"
 	toolssvr "github.com/arduino/arduino-create-agent/gen/http/tools/server"
 	indexessvc "github.com/arduino/arduino-create-agent/gen/indexes"
 	toolssvc "github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/sirupsen/logrus"
-	goahttp "goa.design/goa/http"
-	"goa.design/goa/http/middleware"
+	goahttp "goa.design/goa/v3/http"
+	"goa.design/goa/v3/http/middleware"
+	goamiddleware "goa.design/goa/v3/middleware"
 )
 
 // Server is the actual server
@@ -47,7 +47,7 @@ func Server(home string) http.Handler {
 	}
 	indexesEndpoints := indexessvc.NewEndpoints(&indexesSvc)
 	indexesServer := indexessvr.New(indexesEndpoints, mux, goahttp.RequestDecoder,
-		goahttp.ResponseEncoder, errorHandler(logger))
+		goahttp.ResponseEncoder, errorHandler(logger), nil)
 	indexessvr.Mount(mux, indexesServer)
 
 	// Mount tools
@@ -56,12 +56,8 @@ func Server(home string) http.Handler {
 		Indexes: &indexesSvc,
 	}
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
-	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
+	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger), nil)
 	toolssvr.Mount(mux, toolsServer)
-
-	// Mount docs
-	docssvr.New(nil, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger))
-	docssvr.Mount(mux)
 
 	// Mount middlewares
 	handler := middleware.Log(logAdapter)(mux)
@@ -75,7 +71,7 @@ func Server(home string) http.Handler {
 // to correlate.
 func errorHandler(logger *logrus.Logger) func(context.Context, http.ResponseWriter, error) {
 	return func(ctx context.Context, w http.ResponseWriter, err error) {
-		id := ctx.Value(middleware.RequestIDKey).(string)
+		id := ctx.Value(goamiddleware.RequestIDKey).(string)
 		w.Write([]byte("[" + id + "] encoding: " + err.Error()))
 		logger.Printf("[%s] ERROR: %s", id, err.Error())
 	}

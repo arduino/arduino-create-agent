@@ -15,7 +15,7 @@
 
 package design
 
-import . "goa.design/goa/dsl"
+import . "goa.design/goa/v3/dsl"
 
 var _ = Service("indexes", func() {
 	Description("The indexes service manages the package_index files")
