@@ -24,6 +24,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/arduino/go-paths-helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,7 +48,7 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 	buf, err := testIndex.ReadFile()
 	require.NoError(t, err)
 
-	var data index
+	var data pkgs.Index
 	err = json.Unmarshal(buf, &data)
 	require.NoError(t, err)
 	for _, tc := range testCases {
@@ -79,7 +80,7 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 	buf, err := testIndex.ReadFile()
 	require.NoError(t, err)
 
-	var data index
+	var data pkgs.Index
 	err = json.Unmarshal(buf, &data)
 	require.NoError(t, err)
 	for _, tc := range testCases {
