@@ -19,7 +19,6 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"encoding/json"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -71,7 +70,7 @@ func (c *Indexes) Add(ctx context.Context, payload *indexes.IndexPayload) (*inde
 func (c *Indexes) Get(ctx context.Context, uri string) (index Index, err error) {
 	filename := b64.StdEncoding.EncodeToString([]byte(url.PathEscape(uri)))
 	path := filepath.Join(c.Folder, filename)
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return index, err
 	}
@@ -89,7 +88,7 @@ func (c *Indexes) List(context.Context) ([]string, error) {
 	// Create folder if it doesn't exist
 	_ = os.MkdirAll(c.Folder, 0755)
 	// Read files
-	files, err := ioutil.ReadDir(c.Folder)
+	files, err := os.ReadDir(c.Folder)
 
 	if err != nil {
 		return nil, err

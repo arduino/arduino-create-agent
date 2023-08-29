@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -35,7 +34,7 @@ import (
 // Note that path could be defined and still there could be an error.
 func SaveFileonTempDir(filename string, data io.Reader) (path string, err error) {
 	// Create Temp Directory
-	tmpdir, err := ioutil.TempDir("", "arduino-create-agent")
+	tmpdir, err := os.MkdirTemp("", "arduino-create-agent")
 	if err != nil {
 		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
 	}

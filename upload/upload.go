@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -301,7 +300,7 @@ func form(port, board, file string, auth Auth, l Logger) error {
 
 	// Check the response
 	if res.StatusCode != http.StatusOK {
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		return errors.New("Request error:" + string(body))
 	}
 	return nil

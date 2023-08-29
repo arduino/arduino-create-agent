@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -89,7 +88,7 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 	res := tools.ToolCollection{}
 
 	// Find packagers
-	packagers, err := ioutil.ReadDir(c.Folder)
+	packagers, err := os.ReadDir(c.Folder)
 	if err != nil {
 		if !strings.Contains(err.Error(), "no such file") {
 			return nil, err
@@ -106,7 +105,7 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 		}
 
 		// Find tools
-		toolss, err := ioutil.ReadDir(filepath.Join(c.Folder, packager.Name()))
+		toolss, err := os.ReadDir(filepath.Join(c.Folder, packager.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +113,7 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 		for _, tool := range toolss {
 			// Find versions
 			path := filepath.Join(c.Folder, packager.Name(), tool.Name())
-			versions, err := ioutil.ReadDir(path)
+			versions, err := os.ReadDir(path)
 			if err != nil {
 				continue // we ignore errors because the folders could be dirty
 			}
@@ -264,7 +263,7 @@ func writeInstalled(folder, path string) error {
 	// read installed.json
 	installed := map[string]string{}
 
-	data, err := ioutil.ReadFile(filepath.Join(folder, "installed.json"))
+	data, err := os.ReadFile(filepath.Join(folder, "installed.json"))
 	if err == nil {
 		err = json.Unmarshal(data, &installed)
 		if err != nil {
@@ -283,5 +282,5 @@ func writeInstalled(folder, path string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filepath.Join(folder, "installed.json"), data, 0644)
+	return os.WriteFile(filepath.Join(folder, "installed.json"), data, 0644)
 }
