@@ -33,7 +33,6 @@ import (
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/codeclysm/extract/v3"
-	"github.com/xrash/smetrics"
 )
 
 // Tools is a client that implements github.com/arduino/arduino-create-agent/gen/tools.Service interface.
@@ -161,9 +160,9 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 				if tool.Name == payload.Name &&
 					tool.Version == payload.Version {
 
-					i := findSystem(tool)
+					sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
 
-					return c.install(ctx, path, tool.Systems[i].URL, tool.Systems[i].Checksum)
+					return c.install(ctx, path, sys.URL, sys.Checksum)
 				}
 			}
 		}
@@ -234,30 +233,6 @@ func rename(base string) extract.Renamer {
 		path = filepath.Join(base, path)
 		return path
 	}
-}
-
-func findSystem(tool Tool) int {
-	var systems = map[string]string{
-		"linuxamd64":   "x86_64-linux-gnu",
-		"linux386":     "i686-linux-gnu",
-		"darwinamd64":  "apple-darwin",
-		"windows386":   "i686-mingw32",
-		"windowsamd64": "i686-mingw32",
-		"linuxarm":     "arm-linux-gnueabihf",
-	}
-
-	var correctSystem int
-	maxSimilarity := 0.7
-
-	for i, system := range tool.Systems {
-		similarity := smetrics.Jaro(system.Host, systems[runtime.GOOS+runtime.GOARCH])
-		if similarity > maxSimilarity {
-			correctSystem = i
-			maxSimilarity = similarity
-		}
-	}
-
-	return correctSystem
 }
 
 func writeInstalled(folder, path string) error {
