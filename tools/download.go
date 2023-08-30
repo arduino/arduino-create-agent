@@ -39,39 +39,9 @@ import (
 	"golang.org/x/crypto/openpgp"
 
 	"github.com/arduino/arduino-create-agent/utilities"
+	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/blang/semver"
-	"github.com/xrash/smetrics"
 )
-
-type system struct {
-	Host     string `json:"host"`
-	URL      string `json:"url"`
-	Name     string `json:"archiveFileName"`
-	CheckSum string `json:"checksum"`
-}
-
-type tool struct {
-	Name    string   `json:"name"`
-	Version string   `json:"version"`
-	Systems []system `json:"systems"`
-}
-
-type index struct {
-	Packages []struct {
-		Name  string `json:"name"`
-		Tools []tool `json:"tools"`
-	} `json:"packages"`
-}
-
-var systems = map[string]string{
-	"linuxamd64":   "x86_64-linux-gnu",
-	"linux386":     "i686-linux-gnu",
-	"darwinamd64":  "i686-apple-darwin",
-	"darwinarm64":  "arm64-apple-darwin",
-	"windows386":   "i686-mingw32",
-	"windowsamd64": "i686-mingw32",
-	"linuxarm":     "arm-linux-gnueabihf",
-}
 
 // public vars to allow override in the tests
 var (
@@ -198,7 +168,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 		return err
 	}
 
-	var data index
+	var data pkgs.Index
 	json.Unmarshal(body, &data)
 
 	// Find the tool by name
@@ -244,7 +214,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	checksum := sha256.Sum256(body)
 	checkSumString := "SHA-256:" + hex.EncodeToString(checksum[:sha256.Size])
 
-	if checkSumString != correctSystem.CheckSum {
+	if checkSumString != correctSystem.Checksum {
 		return errors.New("checksum doesn't match")
 	}
 
@@ -298,8 +268,8 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	return t.writeMap()
 }
 
-func findTool(pack, name, version string, data index) (tool, system) {
-	var correctTool tool
+func findTool(pack, name, version string, data pkgs.Index) (pkgs.Tool, pkgs.System) {
+	var correctTool pkgs.Tool
 	correctTool.Version = "0.0"
 
 	for _, p := range data.Packages {
@@ -323,16 +293,7 @@ func findTool(pack, name, version string, data index) (tool, system) {
 	}
 
 	// Find the url based on system
-	var correctSystem system
-	maxSimilarity := 0.7
-
-	for _, s := range correctTool.Systems {
-		similarity := smetrics.Jaro(s.Host, systems[OS+Arch])
-		if similarity > maxSimilarity {
-			correctSystem = s
-			maxSimilarity = similarity
-		}
-	}
+	correctSystem := correctTool.GetFlavourCompatibleWith(OS, Arch)
 
 	return correctTool, correctSystem
 }

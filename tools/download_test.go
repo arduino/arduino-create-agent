@@ -24,6 +24,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/arduino/go-paths-helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,14 +41,14 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 		{"darwin", "amd64", "x86_64-apple-darwin"},
 		{"darwin", "arm64", "arm64-apple-darwin"},
 		{"windows", "386", "i686-mingw32"},
-		{"windows", "amd64", "i686-mingw32"},
+		{"windows", "amd64", "x86_64-mingw32"},
 		{"linux", "arm", "arm-linux-gnueabihf"},
 	}
 	testIndex := paths.New("testdata", "test_tool_index.json")
 	buf, err := testIndex.ReadFile()
 	require.NoError(t, err)
 
-	var data index
+	var data pkgs.Index
 	err = json.Unmarshal(buf, &data)
 	require.NoError(t, err)
 	for _, tc := range testCases {
@@ -60,6 +61,38 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 			require.NotNil(t, correctSystem)
 			require.Equal(t, correctTool.Name, "arduino-fwuploader")
 			require.Equal(t, correctTool.Version, "2.2.2")
+			require.Equal(t, correctSystem.Host, tc.correctOSArch)
+		})
+	}
+}
+
+func TestDownloadFallbackPlatform(t *testing.T) {
+	testCases := []struct {
+		hostOS        string
+		hostArch      string
+		correctOSArch string
+	}{
+		{"darwin", "amd64", "i386-apple-darwin11"},
+		{"darwin", "arm64", "i386-apple-darwin11"},
+		{"windows", "amd64", "i686-mingw32"},
+	}
+	testIndex := paths.New("testdata", "test_tool_index.json")
+	buf, err := testIndex.ReadFile()
+	require.NoError(t, err)
+
+	var data pkgs.Index
+	err = json.Unmarshal(buf, &data)
+	require.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.hostOS+tc.hostArch, func(t *testing.T) {
+			OS = tc.hostOS     // override `runtime.OS` for testing purposes
+			Arch = tc.hostArch // override `runtime.ARCH` for testing purposes
+			// Find the tool by name
+			correctTool, correctSystem := findTool("arduino-test", "arduino-fwuploader", "2.2.0", data)
+			require.NotNil(t, correctTool)
+			require.NotNil(t, correctSystem)
+			require.Equal(t, correctTool.Name, "arduino-fwuploader")
+			require.Equal(t, correctTool.Version, "2.2.0")
 			require.Equal(t, correctSystem.Host, tc.correctOSArch)
 		})
 	}

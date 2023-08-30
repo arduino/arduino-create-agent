@@ -21,6 +21,8 @@
 // cores, and to download tools used for upload.
 package pkgs
 
+import "regexp"
+
 // Index is the go representation of a typical
 // package-index file, stripped from every non-used field.
 type Index struct {
@@ -34,11 +36,106 @@ type Index struct {
 // tool contained in a package-index file, stripped from
 // every non-used field.
 type Tool struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	Systems []struct {
-		Host     string `json:"host"`
-		URL      string `json:"url"`
-		Checksum string `json:"checksum"`
-	} `json:"systems"`
+	Name    string   `json:"name"`
+	Version string   `json:"version"`
+	Systems []System `json:"systems"`
+}
+
+// System is the go representation of the info needed to
+// download a tool for a specific OS/Arch
+type System struct {
+	Host     string `json:"host"`
+	URL      string `json:"url"`
+	Name     string `json:"archiveFileName"`
+	Checksum string `json:"checksum"`
+}
+
+// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L129-L142
+var (
+	regexpLinuxArm   = regexp.MustCompile("arm.*-linux-gnueabihf")
+	regexpLinuxArm64 = regexp.MustCompile("(aarch64|arm64)-linux-gnu")
+	regexpLinux64    = regexp.MustCompile("x86_64-.*linux-gnu")
+	regexpLinux32    = regexp.MustCompile("i[3456]86-.*linux-gnu")
+	regexpWindows32  = regexp.MustCompile("i[3456]86-.*(mingw32|cygwin)")
+	regexpWindows64  = regexp.MustCompile("(amd64|x86_64)-.*(mingw32|cygwin)")
+	regexpMac64      = regexp.MustCompile("x86_64-apple-darwin.*")
+	regexpMac32      = regexp.MustCompile("i[3456]86-apple-darwin.*")
+	regexpMacArm64   = regexp.MustCompile("arm64-apple-darwin.*")
+	regexpFreeBSDArm = regexp.MustCompile("arm.*-freebsd[0-9]*")
+	regexpFreeBSD32  = regexp.MustCompile("i?[3456]86-freebsd[0-9]*")
+	regexpFreeBSD64  = regexp.MustCompile("amd64-freebsd[0-9]*")
+)
+
+// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L144-L176
+func (s *System) isExactMatchWith(osName, osArch string) bool {
+	if s.Host == "all" {
+		return true
+	}
+
+	switch osName + "," + osArch {
+	case "linux,arm", "linux,armbe":
+		return regexpLinuxArm.MatchString(s.Host)
+	case "linux,arm64":
+		return regexpLinuxArm64.MatchString(s.Host)
+	case "linux,amd64":
+		return regexpLinux64.MatchString(s.Host)
+	case "linux,386":
+		return regexpLinux32.MatchString(s.Host)
+	case "windows,386":
+		return regexpWindows32.MatchString(s.Host)
+	case "windows,amd64":
+		return regexpWindows64.MatchString(s.Host)
+	case "darwin,arm64":
+		return regexpMacArm64.MatchString(s.Host)
+	case "darwin,amd64":
+		return regexpMac64.MatchString(s.Host)
+	case "darwin,386":
+		return regexpMac32.MatchString(s.Host)
+	case "freebsd,arm":
+		return regexpFreeBSDArm.MatchString(s.Host)
+	case "freebsd,386":
+		return regexpFreeBSD32.MatchString(s.Host)
+	case "freebsd,amd64":
+		return regexpFreeBSD64.MatchString(s.Host)
+	}
+	return false
+}
+
+// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L178-L198
+func (s *System) isCompatibleWith(osName, osArch string) (bool, int) {
+	if s.isExactMatchWith(osName, osArch) {
+		return true, 1000
+	}
+
+	switch osName + "," + osArch {
+	case "windows,amd64":
+		return regexpWindows32.MatchString(s.Host), 10
+	case "darwin,amd64":
+		return regexpMac32.MatchString(s.Host), 10
+	case "darwin,arm64":
+		// Compatibility guaranteed through Rosetta emulation
+		if regexpMac64.MatchString(s.Host) {
+			// Prefer amd64 version if available
+			return true, 20
+		}
+		return regexpMac32.MatchString(s.Host), 10
+	}
+
+	return false, 0
+}
+
+// GetFlavourCompatibleWith returns the downloadable resource (System) compatible with the specified OS/Arch
+// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L206-L216
+func (t *Tool) GetFlavourCompatibleWith(osName, osArch string) System {
+	var correctSystem System
+	maxSimilarity := -1
+
+	for _, s := range t.Systems {
+		if comp, similarity := s.isCompatibleWith(osName, osArch); comp && similarity > maxSimilarity {
+			correctSystem = s
+			maxSimilarity = similarity
+		}
+	}
+
+	return correctSystem
 }
