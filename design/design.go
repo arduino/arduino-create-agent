@@ -24,5 +24,7 @@ var _ = API("arduino-create-agent", func() {
 	such as detecting which boards are connected and upload sketches on them.`)
 	HTTP(func() {
 		Path("/v2")
+		Consumes("application/json")
+		Consumes("plain/text")
 	})
 })
