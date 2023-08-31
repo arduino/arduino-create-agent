@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 
@@ -56,7 +57,7 @@ func Server(home string) http.Handler {
 		Indexes: &indexesSvc,
 	}
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
-	toolsServer := toolssvr.New(toolsEndpoints, mux, goahttp.RequestDecoder, goahttp.ResponseEncoder, errorHandler(logger), nil)
+	toolsServer := toolssvr.New(toolsEndpoints, mux, CustomRequestDecoder, goahttp.ResponseEncoder, errorHandler(logger), nil)
 	toolssvr.Mount(mux, toolsServer)
 
 	// Mount middlewares
@@ -75,4 +76,15 @@ func errorHandler(logger *logrus.Logger) func(context.Context, http.ResponseWrit
 		w.Write([]byte("[" + id + "] encoding: " + err.Error()))
 		logger.Printf("[%s] ERROR: %s", id, err.Error())
 	}
+}
+
+// CustomRequestDecoder overrides the RequestDecoder provided by goahttp package
+// It returns always a json.NewDecoder for legacy reasons:
+// The web editor sends always request to the agent setting "Content-Type: text/plain"
+// even when it should set "Content-Type: application/json". This breaks the parsing with:
+// "can't decode text/plain to *server.InstallRequestBody" error message.
+// This was working before the bump to goa v3 only because a "text/plain" decoder was not implemented
+// and it was fallbacking to the json decoder. (https://github.com/goadesign/goa/pull/2310)
+func CustomRequestDecoder(r *http.Request) goahttp.Decoder {
+	return json.NewDecoder(r.Body)
 }
