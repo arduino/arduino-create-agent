@@ -16,11 +16,18 @@
 package main
 
 import (
+	"bytes"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
+	"github.com/arduino/arduino-create-agent/upload"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,4 +44,40 @@ func TestValidSignatureKey(t *testing.T) {
 	key, err := x509.ParsePKIXPublicKey(block.Bytes)
 	require.NoError(t, err)
 	require.NotNil(t, key)
+}
+
+func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
+	r := gin.New()
+	r.POST("/", uploadHandler)
+	ts := httptest.NewServer(r)
+
+	uploadEvilFileName := Upload{
+		Port:       "/dev/ttyACM0",
+		Board:      "arduino:avr:uno",
+		Extra:      upload.Extra{Network: true},
+		Hex:        []byte("test"),
+		Filename:   "../evil.txt",
+		ExtraFiles: []additionalFile{{Hex: []byte("test"), Filename: "../evil.txt"}},
+	}
+	uploadEvilExtraFile := Upload{
+		Port:       "/dev/ttyACM0",
+		Board:      "arduino:avr:uno",
+		Extra:      upload.Extra{Network: true},
+		Hex:        []byte("test"),
+		Filename:   "file.txt",
+		ExtraFiles: []additionalFile{{Hex: []byte("test"), Filename: "../evil.txt"}},
+	}
+
+	for _, request := range []Upload{uploadEvilFileName, uploadEvilExtraFile} {
+		payload, err := json.Marshal(request)
+		require.NoError(t, err)
+
+		resp, err := http.Post(ts.URL, "encoding/json", bytes.NewBuffer(payload))
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Contains(t, string(body), "unsafe path join")
+	}
 }
