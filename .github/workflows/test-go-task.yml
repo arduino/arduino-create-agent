@@ -105,6 +105,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: codecov/codecov-action@v3
         with:
-          file: ${{ matrix.module.path }}coverage_unit.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ matrix.module.path }}coverage_unit.txt
           flags: ${{ matrix.module.codecov-flags }}
           fail_ci_if_error: ${{ github.repository == 'arduino/arduino-create-agent' }}
