@@ -60,15 +60,15 @@ jobs:
   build:
     needs: run-determination
     if: needs.run-determination.outputs.result == 'true'
-    
+
     #use the strategy instead because we still use the native build
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-12]
         arch: [-amd64]
         include:
-        - os: windows-2019
-          arch: -386
+          - os: windows-2019
+            arch: -386
 
     defaults:
       run:
@@ -77,7 +77,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-
       - name: Set env vars
         run: |
           echo $(go env GOPATH)/bin >> $GITHUB_PATH
@@ -86,7 +85,7 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Go
         uses: actions/setup-go@v4
@@ -122,7 +121,7 @@ jobs:
         # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
         env:
-          GOARCH: 386  # 32bit architecture (for support)
+          GOARCH: 386 # 32bit architecture (for support)
         run: task go:build-win
         if: runner.os == 'Windows' && matrix.arch == '-386'
 
