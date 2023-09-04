@@ -33,11 +33,11 @@ jobs:
         os: [ubuntu-20.04, windows-2019, macos-12]
         arch: [amd64]
         include:
-        - os: windows-2019
-          arch: 386
-          ext: ".exe"
-        - os: windows-2019
-          ext: ".exe"
+          - os: windows-2019
+            arch: 386
+            ext: ".exe"
+          - os: windows-2019
+            ext: ".exe"
 
     defaults:
       run:
@@ -55,7 +55,7 @@ jobs:
         # This is a workaround while waiting for create-release action to implement auto pre-release based on tag
         id: prerelease
         run: |
-          curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip 
+          curl -L -s https://github.com/fsaintjacques/semver-tool/archive/3.1.0.zip -o /tmp/3.1.0.zip
           unzip -p /tmp/3.1.0.zip semver-tool-3.1.0/src/semver >/tmp/semver && chmod +x /tmp/semver
           if [[ $(/tmp/semver get prerel ${GITHUB_REF/refs\/tags\//}) ]]; then echo "IS_PRE=true" >> $GITHUB_OUTPUT; fi
 
@@ -63,7 +63,7 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Go
         uses: actions/setup-go@v4
@@ -81,7 +81,7 @@ jobs:
       - name: Install Taskfile
         uses: arduino/setup-task@v1
         with:
-          version: '3.x'
+          version: "3.x"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build the Agent for linux
@@ -102,7 +102,7 @@ jobs:
         # building the agent for win requires a different task because of an extra flag
       - name: Build the Agent for win32
         env:
-          GOARCH: 386  # 32bit architecture (for support)
+          GOARCH: 386 # 32bit architecture (for support)
         run: task go:build-win
         if: matrix.os == 'windows-2019' && matrix.arch == '386'
 
@@ -138,7 +138,7 @@ jobs:
       - name: Upload autoupdate files to Arduino downloads servers
         run: |
           aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
-          aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.OLD_TARGET }}      
+          aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.OLD_TARGET }}
         if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload artifacts
@@ -163,9 +163,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains the bundle structure and icons
+          repository: "bcmi-labs/arduino-create-agent-installer" # the repo which contains the bundle structure and icons
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
@@ -218,7 +218,7 @@ jobs:
           if-no-files-found: error
           name: ArduinoCreateAgent.app_${{ matrix.arch }}
           path: ArduinoCreateAgent.app_${{ matrix.arch }}.tar
-          
+
   # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it, uploading it also on s3 download servers for the autoupdate.
   notarize-macos:
     name: Notarize bundle
@@ -262,7 +262,7 @@ jobs:
             "${{ env.KEYCHAIN }}"
 
       - name: Install gon for code signing and app notarization
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: darkvertex/gon #this fork has support for --deep notarization
           path: ${{ env.GON_PATH }}
@@ -297,7 +297,7 @@ jobs:
 
       - name: Sign and notarize binary
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
-        
+
       - name: Upload autoupdate bundle to Arduino downloads servers
         run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
         if: ${{ needs.build.outputs.prerelease != 'true' }}
@@ -338,8 +338,8 @@ jobs:
       INSTALLER_CERT_WINDOWS_PFX: "/tmp/ArduinoCerts2020.pfx"
 
     strategy:
-      fail-fast: false  # if one os is failing continue nonetheless
-      matrix:  # used to generate installers for different OS and not for runs-on
+      fail-fast: false # if one os is failing continue nonetheless
+      matrix: # used to generate installers for different OS and not for runs-on
         os: [ubuntu-20.04, windows-2019]
         arch: [amd64]
         include:
@@ -361,16 +361,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains install.xml
+          repository: "bcmi-labs/arduino-create-agent-installer" # the repo which contains install.xml
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
-          path: artifacts/${{ matrix.platform-name }}/  # path expected by installbuilder
+          path: artifacts/${{ matrix.platform-name }}/ # path expected by installbuilder
 
         # zip artifacts do not mantain executable permission
       - name: Make executable
@@ -417,9 +417,9 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Checkout repo with icons/background
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          repository: 'bcmi-labs/arduino-create-agent-installer'  # the repo which contains the icons/background
+          repository: "bcmi-labs/arduino-create-agent-installer" # the repo which contains the icons/background
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
@@ -515,7 +515,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # fetch all history for the create changelog step to work properly
 
@@ -579,7 +579,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref }}
-          file_glob: true  # If set to true, the file argument can be a glob pattern
+          file_glob: true # If set to true, the file argument can be a glob pattern
           file: release/*
 
       - name: Upload release files on Arduino downloads servers
