@@ -27,6 +27,7 @@ import (
 	"github.com/arduino/arduino-create-agent/gen/indexes"
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
+	"github.com/stretchr/testify/require"
 )
 
 // TestTools performs a series of operations about tools, ensuring it behaves as expected.
@@ -150,6 +151,33 @@ func TestTools(t *testing.T) {
 	if len(installed) != 1 {
 		t.Fatalf("expected %d == %d (%s)", len(installed), 1, "len(installed)")
 	}
+
+	t.Run("payload containing evil names", func(t *testing.T) {
+		evilFileNames := []string{
+			"/",
+			"..",
+			"../",
+			"../evil.txt",
+			"../../../../../../../../../../../../../../../../../../../../tmp/evil.txt",
+			"some/path/../../../../../../../../../../../../../../../../../../../../tmp/evil.txt",
+		}
+		if runtime.GOOS == "windows" {
+			evilFileNames = []string{
+				"..\\",
+				"..\\evil.txt",
+				"..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\tmp\\evil.txt",
+				"some\\path\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\tmp\\evil.txt",
+			}
+		}
+		for _, evilFileName := range evilFileNames {
+			// Here we could inject malicious name also in the Packager and Version field.
+			// Since the path is made by joining all of these 3 fields, we're using only the Name,
+			// as it won't change the result and let us keep the test small and readable.
+			_, err := service.Remove(ctx, &tools.ToolPayload{Name: evilFileName})
+			require.Error(t, err, evilFileName)
+			require.ErrorContains(t, err, "unsafe path join")
+		}
+	})
 }
 
 func strpoint(s string) *string {
