@@ -7,8 +7,7 @@ host: localhost:80
 basePath: /v2
 consumes:
     - application/json
-    - application/xml
-    - application/gob
+    - plain/text
 produces:
     - application/json
     - application/xml
