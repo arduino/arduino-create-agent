@@ -22,14 +22,17 @@ paths:
                                 type: array
                                 items:
                                     type: string
-                                    example: Eveniet iure nihil optio qui.
+                                    example: Rerum et soluta laudantium.
                                 example:
-                                    - Et perferendis eveniet voluptas.
-                                    - Ut aut illum eaque dolor magni.
-                                    - Amet illo veritatis laudantium optio.
+                                    - Et deserunt.
+                                    - Impedit iusto libero explicabo.
+                                    - Dolor adipisci nulla.
+                                    - Quam voluptas voluptates expedita rem ipsum.
                             example:
-                                - Illo enim vero qui rerum ut inventore.
-                                - Dolorem nihil autem minima alias.
+                                - Dignissimos consectetur eos molestiae culpa soluta deserunt.
+                                - Nobis sint dolorem unde.
+                                - Quia doloremque.
+                                - Atque iusto tempore sit quod dolor repellat.
                 "400":
                     description: 'invalid_url: url invalid'
                     content:
@@ -108,15 +111,15 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ToolCollection'
                             example:
-                                - name: avrdude
+                                - name: bossac
                                   packager: arduino
-                                  version: 6.3.0-arduino9
-                                - name: avrdude
+                                  version: 1.7.0-arduino3
+                                - name: bossac
                                   packager: arduino
-                                  version: 6.3.0-arduino9
-                                - name: avrdude
+                                  version: 1.7.0-arduino3
+                                - name: bossac
                                   packager: arduino
-                                  version: 6.3.0-arduino9
+                                  version: 1.7.0-arduino3
     /v2/pkgs/tools/installed:
         get:
             tags:
@@ -131,15 +134,15 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ToolCollection'
                             example:
-                                - name: avrdude
+                                - name: bossac
                                   packager: arduino
-                                  version: 6.3.0-arduino9
-                                - name: avrdude
+                                  version: 1.7.0-arduino3
+                                - name: bossac
                                   packager: arduino
-                                  version: 6.3.0-arduino9
-                                - name: avrdude
+                                  version: 1.7.0-arduino3
+                                - name: bossac
                                   packager: arduino
-                                  version: 6.3.0-arduino9
+                                  version: 1.7.0-arduino3
         post:
             tags:
                 - tools
@@ -152,11 +155,12 @@ paths:
                         schema:
                             $ref: '#/components/schemas/InstallRequestBody'
                         example:
-                            checksum: Beatae dolor adipisci nulla et quam voluptas.
-                            name: avrdude
+                            checksum: SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100
+                            name: bossac
                             packager: arduino
-                            url: Deserunt voluptatem impedit iusto libero.
-                            version: 6.3.0-arduino9
+                            signature: 382898a97b5a86edd74208f10107d2fecbf7059ffe9cc856e045266fb4db4e98802728a0859cfdcda1c0b9075ec01e42dbea1f430b813530d5a6ae1766dfbba64c3e689b59758062dc2ab2e32b2a3491dc2b9a80b9cda4ae514fbe0ec5af210111b6896976053ab76bac55bcecfcececa68adfa3299e3cde6b7f117b3552a7d80ca419374bb497e3c3f12b640cf5b20875416b45e662fc6150b99b178f8e41d6982b4c0a255925ea39773683f9aa9201dc5768b6fc857c87ff602b6a93452a541b8ec10ca07f166e61a9e9d91f0a6090bd2038ed4427af6251039fb9fe8eb62ec30d7b0f3df38bc9de7204dec478fb86f8eb3f71543710790ee169dce039d3e0
+                            url: http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz
+                            version: 1.7.0-arduino3
             responses:
                 "200":
                     description: OK response.
@@ -189,8 +193,8 @@ paths:
                   schema:
                     type: string
                     description: The name of the tool
-                    example: avrdude
-                  example: avrdude
+                    example: bossac
+                  example: bossac
                 - name: version
                   in: path
                   description: The version of the tool
@@ -198,8 +202,8 @@ paths:
                   schema:
                     type: string
                     description: The version of the tool
-                    example: 6.3.0-arduino9
-                  example: 6.3.0-arduino9
+                    example: 1.7.0-arduino3
+                  example: 1.7.0-arduino3
             requestBody:
                 required: true
                 content:
@@ -207,8 +211,9 @@ paths:
                         schema:
                             $ref: '#/components/schemas/RemoveRequestBody'
                         example:
-                            checksum: Ipsa minima quia.
-                            url: Expedita rem ipsum quasi harum nostrum.
+                            checksum: SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100
+                            signature: 382898a97b5a86edd74208f10107d2fecbf7059ffe9cc856e045266fb4db4e98802728a0859cfdcda1c0b9075ec01e42dbea1f430b813530d5a6ae1766dfbba64c3e689b59758062dc2ab2e32b2a3491dc2b9a80b9cda4ae514fbe0ec5af210111b6896976053ab76bac55bcecfcececa68adfa3299e3cde6b7f117b3552a7d80ca419374bb497e3c3f12b640cf5b20875416b45e662fc6150b99b178f8e41d6982b4c0a255925ea39773683f9aa9201dc5768b6fc857c87ff602b6a93452a541b8ec10ca07f166e61a9e9d91f0a6090bd2038ed4427af6251039fb9fe8eb62ec30d7b0f3df38bc9de7204dec478fb86f8eb3f71543710790ee169dce039d3e0
+                            url: http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz
             responses:
                 "200":
                     description: OK response.
@@ -237,7 +242,7 @@ components:
                 name:
                     type: string
                     description: The name of the tool
-                    example: avrdude
+                    example: bossac
                 packager:
                     type: string
                     description: The packager of the tool
@@ -245,12 +250,12 @@ components:
                 version:
                     type: string
                     description: The version of the tool
-                    example: 6.3.0-arduino9
+                    example: 1.7.0-arduino3
             description: A tool is an executable program that can upload sketches.
             example:
-                name: avrdude
+                name: bossac
                 packager: arduino
-                version: 6.3.0-arduino9
+                version: 1.7.0-arduino3
             required:
                 - name
                 - version
@@ -277,7 +282,7 @@ components:
                 temporary:
                     type: boolean
                     description: Is the error temporary?
-                    example: false
+                    example: true
                 timeout:
                     type: boolean
                     description: Is the error a timeout?
@@ -288,8 +293,8 @@ components:
                 id: 123abc
                 message: parameter 'p' must be an integer
                 name: bad_request
-                temporary: false
-                timeout: true
+                temporary: true
+                timeout: false
             required:
                 - name
                 - id
@@ -303,29 +308,36 @@ components:
                 checksum:
                     type: string
                     description: "A checksum of the archive. Mandatory when url is present. \n\tThis ensures that the package is downloaded correcly."
-                    example: Sint odio sed consequatur numquam.
+                    example: SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100
                 name:
                     type: string
                     description: The name of the tool
-                    example: avrdude
+                    example: bossac
                 packager:
                     type: string
                     description: The packager of the tool
                     example: arduino
+                signature:
+                    type: string
+                    description: |-
+                        The signature used to sign the url. Mandatory when url is present.
+                        	This ensure the security of the file downloaded
+                    example: 382898a97b5a86edd74208f10107d2fecbf7059ffe9cc856e045266fb4db4e98802728a0859cfdcda1c0b9075ec01e42dbea1f430b813530d5a6ae1766dfbba64c3e689b59758062dc2ab2e32b2a3491dc2b9a80b9cda4ae514fbe0ec5af210111b6896976053ab76bac55bcecfcececa68adfa3299e3cde6b7f117b3552a7d80ca419374bb497e3c3f12b640cf5b20875416b45e662fc6150b99b178f8e41d6982b4c0a255925ea39773683f9aa9201dc5768b6fc857c87ff602b6a93452a541b8ec10ca07f166e61a9e9d91f0a6090bd2038ed4427af6251039fb9fe8eb62ec30d7b0f3df38bc9de7204dec478fb86f8eb3f71543710790ee169dce039d3e0
                 url:
                     type: string
                     description: "The url where the package can be found. Optional. \n\tIf present checksum must also be present."
-                    example: Et quo doloremque sapiente atque.
+                    example: http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz
                 version:
                     type: string
                     description: The version of the tool
-                    example: 6.3.0-arduino9
+                    example: 1.7.0-arduino3
             example:
-                checksum: Mollitia commodi sunt.
-                name: avrdude
+                checksum: SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100
+                name: bossac
                 packager: arduino
-                url: Quae reprehenderit provident provident debitis illo.
-                version: 6.3.0-arduino9
+                signature: 382898a97b5a86edd74208f10107d2fecbf7059ffe9cc856e045266fb4db4e98802728a0859cfdcda1c0b9075ec01e42dbea1f430b813530d5a6ae1766dfbba64c3e689b59758062dc2ab2e32b2a3491dc2b9a80b9cda4ae514fbe0ec5af210111b6896976053ab76bac55bcecfcececa68adfa3299e3cde6b7f117b3552a7d80ca419374bb497e3c3f12b640cf5b20875416b45e662fc6150b99b178f8e41d6982b4c0a255925ea39773683f9aa9201dc5768b6fc857c87ff602b6a93452a541b8ec10ca07f166e61a9e9d91f0a6090bd2038ed4427af6251039fb9fe8eb62ec30d7b0f3df38bc9de7204dec478fb86f8eb3f71543710790ee169dce039d3e0
+                url: http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz
+                version: 1.7.0-arduino3
             required:
                 - name
                 - version
@@ -347,31 +359,35 @@ components:
                 checksum:
                     type: string
                     description: "A checksum of the archive. Mandatory when url is present. \n\tThis ensures that the package is downloaded correcly."
-                    example: Ea culpa.
+                    example: SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100
+                signature:
+                    type: string
+                    description: |-
+                        The signature used to sign the url. Mandatory when url is present.
+                        	This ensure the security of the file downloaded
+                    example: 382898a97b5a86edd74208f10107d2fecbf7059ffe9cc856e045266fb4db4e98802728a0859cfdcda1c0b9075ec01e42dbea1f430b813530d5a6ae1766dfbba64c3e689b59758062dc2ab2e32b2a3491dc2b9a80b9cda4ae514fbe0ec5af210111b6896976053ab76bac55bcecfcececa68adfa3299e3cde6b7f117b3552a7d80ca419374bb497e3c3f12b640cf5b20875416b45e662fc6150b99b178f8e41d6982b4c0a255925ea39773683f9aa9201dc5768b6fc857c87ff602b6a93452a541b8ec10ca07f166e61a9e9d91f0a6090bd2038ed4427af6251039fb9fe8eb62ec30d7b0f3df38bc9de7204dec478fb86f8eb3f71543710790ee169dce039d3e0
                 url:
                     type: string
                     description: "The url where the package can be found. Optional. \n\tIf present checksum must also be present."
-                    example: Odit officiis illo qui quia provident illo.
+                    example: http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz
             example:
-                checksum: Rerum eum esse corporis ex.
-                url: Molestiae dolor quaerat enim.
+                checksum: SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100
+                signature: 382898a97b5a86edd74208f10107d2fecbf7059ffe9cc856e045266fb4db4e98802728a0859cfdcda1c0b9075ec01e42dbea1f430b813530d5a6ae1766dfbba64c3e689b59758062dc2ab2e32b2a3491dc2b9a80b9cda4ae514fbe0ec5af210111b6896976053ab76bac55bcecfcececa68adfa3299e3cde6b7f117b3552a7d80ca419374bb497e3c3f12b640cf5b20875416b45e662fc6150b99b178f8e41d6982b4c0a255925ea39773683f9aa9201dc5768b6fc857c87ff602b6a93452a541b8ec10ca07f166e61a9e9d91f0a6090bd2038ed4427af6251039fb9fe8eb62ec30d7b0f3df38bc9de7204dec478fb86f8eb3f71543710790ee169dce039d3e0
+                url: http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz
         ToolCollection:
             type: array
             items:
                 $ref: '#/components/schemas/ArduinoTool'
             example:
-                - name: avrdude
+                - name: bossac
                   packager: arduino
-                  version: 6.3.0-arduino9
-                - name: avrdude
+                  version: 1.7.0-arduino3
+                - name: bossac
                   packager: arduino
-                  version: 6.3.0-arduino9
-                - name: avrdude
+                  version: 1.7.0-arduino3
+                - name: bossac
                   packager: arduino
-                  version: 6.3.0-arduino9
-                - name: avrdude
-                  packager: arduino
-                  version: 6.3.0-arduino9
+                  version: 1.7.0-arduino3
 tags:
     - name: indexes
       description: The indexes service manages the package_index files

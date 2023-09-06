@@ -28,6 +28,9 @@ type InstallRequestBody struct {
 	// A checksum of the archive. Mandatory when url is present.
 	// This ensures that the package is downloaded correcly.
 	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
+	// The signature used to sign the url. Mandatory when url is present.
+	// This ensure the security of the file downloaded
+	Signature *string `form:"signature,omitempty" json:"signature,omitempty" xml:"signature,omitempty"`
 }
 
 // RemoveRequestBody is the type of the "tools" service "remove" endpoint HTTP
@@ -39,6 +42,9 @@ type RemoveRequestBody struct {
 	// A checksum of the archive. Mandatory when url is present.
 	// This ensures that the package is downloaded correcly.
 	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
+	// The signature used to sign the url. Mandatory when url is present.
+	// This ensure the security of the file downloaded
+	Signature *string `form:"signature,omitempty" json:"signature,omitempty" xml:"signature,omitempty"`
 }
 
 // AvailableResponseBody is the type of the "tools" service "available"
@@ -77,11 +83,12 @@ type ToolResponse struct {
 // "install" endpoint of the "tools" service.
 func NewInstallRequestBody(p *tools.ToolPayload) *InstallRequestBody {
 	body := &InstallRequestBody{
-		Name:     p.Name,
-		Version:  p.Version,
-		Packager: p.Packager,
-		URL:      p.URL,
-		Checksum: p.Checksum,
+		Name:      p.Name,
+		Version:   p.Version,
+		Packager:  p.Packager,
+		URL:       p.URL,
+		Checksum:  p.Checksum,
+		Signature: p.Signature,
 	}
 	return body
 }
@@ -90,8 +97,9 @@ func NewInstallRequestBody(p *tools.ToolPayload) *InstallRequestBody {
 // "remove" endpoint of the "tools" service.
 func NewRemoveRequestBody(p *tools.ToolPayload) *RemoveRequestBody {
 	body := &RemoveRequestBody{
-		URL:      p.URL,
-		Checksum: p.Checksum,
+		URL:       p.URL,
+		Checksum:  p.Checksum,
+		Signature: p.Signature,
 	}
 	return body
 }
