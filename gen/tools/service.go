@@ -69,6 +69,9 @@ type ToolPayload struct {
 	// A checksum of the archive. Mandatory when url is present.
 	// This ensures that the package is downloaded correcly.
 	Checksum *string
+	// The signature used to sign the url. Mandatory when url is present.
+	// This ensure the security of the file downloaded
+	Signature *string
 }
 
 // MakeNotFound builds a goa.ServiceError from an error.
