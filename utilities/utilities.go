@@ -18,6 +18,12 @@ package utilities
 import (
 	"archive/zip"
 	"bytes"
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +32,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/arduino/arduino-create-agent/globals"
 )
 
 // SaveFileonTempDir creates a temp directory and saves the file data as the
@@ -161,4 +169,23 @@ func SafeJoin(parent, subdir string) (string, error) {
 		return res, fmt.Errorf("unsafe path join: '%s' with '%s'", parent, subdir)
 	}
 	return res, nil
+}
+
+// VerifyInput will verify an input against a signature
+// A valid signature is indicated by returning a nil error.
+func VerifyInput(input string, signature string) error {
+	sign, _ := hex.DecodeString(signature)
+	block, _ := pem.Decode([]byte(globals.SignatureKey))
+	if block == nil {
+		return errors.New("invalid key")
+	}
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return err
+	}
+	rsaKey := key.(*rsa.PublicKey)
+	h := sha256.New()
+	h.Write([]byte(input))
+	d := h.Sum(nil)
+	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, sign)
 }

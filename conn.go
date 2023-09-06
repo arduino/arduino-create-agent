@@ -19,14 +19,7 @@ package main
 
 import (
 	"bytes"
-	"crypto"
-	"crypto/rsa"
-	"crypto/sha256"
-	"crypto/x509"
-	"encoding/hex"
 	"encoding/json"
-	"encoding/pem"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -114,7 +107,7 @@ func uploadHandler(c *gin.Context) {
 			return
 		}
 
-		err := verifyCommandLine(data.Commandline, data.Signature)
+		err := utilities.VerifyInput(data.Commandline, data.Signature)
 
 		if err != nil {
 			c.String(http.StatusBadRequest, "signature is invalid")
@@ -217,23 +210,6 @@ func (l PLogger) Info(args ...interface{}) {
 func send(args map[string]string) {
 	mapB, _ := json.Marshal(args)
 	h.broadcastSys <- mapB
-}
-
-func verifyCommandLine(input string, signature string) error {
-	sign, _ := hex.DecodeString(signature)
-	block, _ := pem.Decode([]byte(*signatureKey))
-	if block == nil {
-		return errors.New("invalid key")
-	}
-	key, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return err
-	}
-	rsaKey := key.(*rsa.PublicKey)
-	h := sha256.New()
-	h.Write([]byte(input))
-	d := h.Sum(nil)
-	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, sign)
 }
 
 func wsHandler() *WsServer {
