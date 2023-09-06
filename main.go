@@ -34,6 +34,7 @@ import (
 	cors "github.com/andela/gin-cors"
 	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
+	"github.com/arduino/arduino-create-agent/globals"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
@@ -78,7 +79,7 @@ var (
 	logDump        = iniConf.String("log", "off", "off = (default)")
 	origins        = iniConf.String("origins", "", "Allowed origin list for CORS")
 	regExpFilter   = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-	signatureKey   = iniConf.String("signatureKey", "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvc0yZr1yUSen7qmE3cxF\nIE12rCksDnqR+Hp7o0nGi9123eCSFcJ7CkIRC8F+8JMhgI3zNqn4cUEn47I3RKD1\nZChPUCMiJCvbLbloxfdJrUi7gcSgUXrlKQStOKF5Iz7xv1M4XOP3JtjXLGo3EnJ1\npFgdWTOyoSrA8/w1rck4c/ISXZSinVAggPxmLwVEAAln6Itj6giIZHKvA2fL2o8z\nCeK057Lu8X6u2CG8tRWSQzVoKIQw/PKK6CNXCAy8vo4EkXudRutnEYHEJlPkVgPn\n2qP06GI+I+9zKE37iqj0k1/wFaCVXHXIvn06YrmjQw6I0dDj/60Wvi500FuRVpn9\ntwIDAQAB\n-----END PUBLIC KEY-----", "Pem-encoded public key to verify signed commandlines")
+	signatureKey   = iniConf.String("signatureKey", globals.SignatureKey, "Pem-encoded public key to verify signed commandlines")
 	updateURL      = iniConf.String("updateUrl", "", "")
 	verbose        = iniConf.Bool("v", true, "show debug logging")
 	crashreport    = iniConf.Bool("crashreport", false, "enable crashreport logging")
