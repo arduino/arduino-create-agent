@@ -110,20 +110,24 @@ var ToolPayload = Type("arduino.tool", func() {
 	TypeName("ToolPayload")
 
 	Attribute("name", String, "The name of the tool", func() {
-		Example("avrdude")
+		Example("bossac")
 	})
 	Attribute("version", String, "The version of the tool", func() {
-		Example("6.3.0-arduino9")
+		Example("1.7.0-arduino3")
 	})
 	Attribute("packager", String, "The packager of the tool", func() {
 		Example("arduino")
 	})
 
 	Attribute("url", String, `The url where the package can be found. Optional. 
-	If present checksum must also be present.`)
+	If present checksum must also be present.`, func() {
+		Example("http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz")
+	})
 
 	Attribute("checksum", String, `A checksum of the archive. Mandatory when url is present. 
-	This ensures that the package is downloaded correcly.`)
+	This ensures that the package is downloaded correcly.`, func() {
+		Example("SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100")
+	})
 
 	Required("name", "version", "packager")
 })
