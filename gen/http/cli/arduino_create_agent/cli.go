@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 
-	indexesc "github.com/arduino/arduino-create-agent/gen/http/indexes/client"
 	toolsc "github.com/arduino/arduino-create-agent/gen/http/tools/client"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -23,15 +22,13 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `indexes (list|add|remove)
-tools (available|installed|install|remove)
+	return `tools (available|installed|install|remove)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` indexes list` + "\n" +
-		os.Args[0] + ` tools available` + "\n" +
+	return os.Args[0] + ` tools available` + "\n" +
 		""
 }
 
@@ -45,16 +42,6 @@ func ParseEndpoint(
 	restore bool,
 ) (goa.Endpoint, any, error) {
 	var (
-		indexesFlags = flag.NewFlagSet("indexes", flag.ContinueOnError)
-
-		indexesListFlags = flag.NewFlagSet("list", flag.ExitOnError)
-
-		indexesAddFlags    = flag.NewFlagSet("add", flag.ExitOnError)
-		indexesAddBodyFlag = indexesAddFlags.String("body", "REQUIRED", "")
-
-		indexesRemoveFlags    = flag.NewFlagSet("remove", flag.ExitOnError)
-		indexesRemoveBodyFlag = indexesRemoveFlags.String("body", "REQUIRED", "")
-
 		toolsFlags = flag.NewFlagSet("tools", flag.ContinueOnError)
 
 		toolsAvailableFlags = flag.NewFlagSet("available", flag.ExitOnError)
@@ -70,11 +57,6 @@ func ParseEndpoint(
 		toolsRemoveNameFlag     = toolsRemoveFlags.String("name", "REQUIRED", "The name of the tool")
 		toolsRemoveVersionFlag  = toolsRemoveFlags.String("version", "REQUIRED", "The version of the tool")
 	)
-	indexesFlags.Usage = indexesUsage
-	indexesListFlags.Usage = indexesListUsage
-	indexesAddFlags.Usage = indexesAddUsage
-	indexesRemoveFlags.Usage = indexesRemoveUsage
-
 	toolsFlags.Usage = toolsUsage
 	toolsAvailableFlags.Usage = toolsAvailableUsage
 	toolsInstalledFlags.Usage = toolsInstalledUsage
@@ -96,8 +78,6 @@ func ParseEndpoint(
 	{
 		svcn = flag.Arg(0)
 		switch svcn {
-		case "indexes":
-			svcf = indexesFlags
 		case "tools":
 			svcf = toolsFlags
 		default:
@@ -115,19 +95,6 @@ func ParseEndpoint(
 	{
 		epn = svcf.Arg(0)
 		switch svcn {
-		case "indexes":
-			switch epn {
-			case "list":
-				epf = indexesListFlags
-
-			case "add":
-				epf = indexesAddFlags
-
-			case "remove":
-				epf = indexesRemoveFlags
-
-			}
-
 		case "tools":
 			switch epn {
 			case "available":
@@ -164,19 +131,6 @@ func ParseEndpoint(
 	)
 	{
 		switch svcn {
-		case "indexes":
-			c := indexesc.NewClient(scheme, host, doer, enc, dec, restore)
-			switch epn {
-			case "list":
-				endpoint = c.List()
-				data = nil
-			case "add":
-				endpoint = c.Add()
-				data, err = indexesc.BuildAddPayload(*indexesAddBodyFlag)
-			case "remove":
-				endpoint = c.Remove()
-				data, err = indexesc.BuildRemovePayload(*indexesRemoveBodyFlag)
-			}
 		case "tools":
 			c := toolsc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -200,57 +154,6 @@ func ParseEndpoint(
 	}
 
 	return endpoint, data, nil
-}
-
-// indexesUsage displays the usage of the indexes command and its subcommands.
-func indexesUsage() {
-	fmt.Fprintf(os.Stderr, `The indexes service manages the package_index files
-Usage:
-    %[1]s [globalflags] indexes COMMAND [flags]
-
-COMMAND:
-    list: List implements list.
-    add: Add implements add.
-    remove: Remove implements remove.
-
-Additional help:
-    %[1]s indexes COMMAND --help
-`, os.Args[0])
-}
-func indexesListUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] indexes list
-
-List implements list.
-
-Example:
-    %[1]s indexes list
-`, os.Args[0])
-}
-
-func indexesAddUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] indexes add -body JSON
-
-Add implements add.
-    -body JSON: 
-
-Example:
-    %[1]s indexes add --body '{
-      "url": "https://downloads.arduino.cc/packages/package_index.json"
-   }'
-`, os.Args[0])
-}
-
-func indexesRemoveUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] indexes remove -body JSON
-
-Remove implements remove.
-    -body JSON: 
-
-Example:
-    %[1]s indexes remove --body '{
-      "url": "https://downloads.arduino.cc/packages/package_index.json"
-   }'
-`, os.Args[0])
 }
 
 // toolsUsage displays the usage of the tools command and its subcommands.
