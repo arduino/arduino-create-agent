@@ -25,11 +25,14 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+
+	"strings"
 
 	"github.com/arduino/arduino-create-agent/globals"
 )
@@ -40,15 +43,21 @@ import (
 // Returns an error if the filename doesn't form a valid path.
 //
 // Note that path could be defined and still there could be an error.
-func SaveFileonTempDir(filename string, data io.Reader) (path string, err error) {
-	// Create Temp Directory
+func SaveFileonTempDir(filename string, data io.Reader) (string, error) {
 	tmpdir, err := os.MkdirTemp("", "arduino-create-agent")
 	if err != nil {
 		return "", errors.New("Could not create temp directory to store downloaded file. Do you have permissions?")
 	}
+	return saveFileonTempDir(tmpdir, filename, data)
+}
 
+func saveFileonTempDir(tmpDir, filename string, data io.Reader) (string, error) {
+	path, err := SafeJoin(tmpDir, filename)
+	if err != nil {
+		return "", err
+	}
 	// Determine filename
-	filename, err = filepath.Abs(tmpdir + "/" + filename)
+	filename, err = filepath.Abs(path)
 	if err != nil {
 		return "", err
 	}
@@ -167,4 +176,17 @@ func VerifyInput(input string, signature string) error {
 	h.Write([]byte(input))
 	d := h.Sum(nil)
 	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, sign)
+}
+
+// SafeJoin performs a filepath.Join of 'parent' and 'subdir' but returns an error
+// if the resulting path points outside of 'parent'.
+func SafeJoin(parent, subdir string) (string, error) {
+	res := filepath.Join(parent, subdir)
+	if !strings.HasSuffix(parent, string(os.PathSeparator)) {
+		parent += string(os.PathSeparator)
+	}
+	if !strings.HasPrefix(res, parent) {
+		return res, fmt.Errorf("unsafe path join: '%s' with '%s'", parent, subdir)
+	}
+	return res, nil
 }

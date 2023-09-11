@@ -133,7 +133,11 @@ func uploadHandler(c *gin.Context) {
 	}
 
 	for _, extraFile := range data.ExtraFiles {
-		path := filepath.Join(tmpdir, extraFile.Filename)
+		path, err := utilities.SafeJoin(tmpdir, extraFile.Filename)
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
 		filePaths = append(filePaths, path)
 		log.Printf("Saving %s on %s", extraFile.Filename, path)
 
@@ -143,7 +147,7 @@ func uploadHandler(c *gin.Context) {
 			return
 		}
 
-		err := os.WriteFile(path, extraFile.Hex, 0644)
+		err = os.WriteFile(path, extraFile.Hex, 0644)
 		if err != nil {
 			c.String(http.StatusBadRequest, err.Error())
 			return

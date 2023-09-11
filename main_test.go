@@ -29,6 +29,7 @@ import (
 
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/upload"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -112,5 +113,40 @@ func TestInstallToolV2(t *testing.T) {
 				require.Equal(t, test.responseCode, resp.StatusCode)
 			}
 		})
+	}
+}
+func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
+	r := gin.New()
+	r.POST("/", uploadHandler)
+	ts := httptest.NewServer(r)
+
+	uploadEvilFileName := Upload{
+		Port:       "/dev/ttyACM0",
+		Board:      "arduino:avr:uno",
+		Extra:      upload.Extra{Network: true},
+		Hex:        []byte("test"),
+		Filename:   "../evil.txt",
+		ExtraFiles: []additionalFile{{Hex: []byte("test"), Filename: "../evil.txt"}},
+	}
+	uploadEvilExtraFile := Upload{
+		Port:       "/dev/ttyACM0",
+		Board:      "arduino:avr:uno",
+		Extra:      upload.Extra{Network: true},
+		Hex:        []byte("test"),
+		Filename:   "file.txt",
+		ExtraFiles: []additionalFile{{Hex: []byte("test"), Filename: "../evil.txt"}},
+	}
+
+	for _, request := range []Upload{uploadEvilFileName, uploadEvilExtraFile} {
+		payload, err := json.Marshal(request)
+		require.NoError(t, err)
+
+		resp, err := http.Post(ts.URL, "encoding/json", bytes.NewBuffer(payload))
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Contains(t, string(body), "unsafe path join")
 	}
 }
