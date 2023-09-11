@@ -28,6 +28,9 @@ type InstallRequestBody struct {
 	// A checksum of the archive. Mandatory when url is present.
 	// This ensures that the package is downloaded correcly.
 	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
+	// The signature used to sign the url. Mandatory when url is present.
+	// This ensure the security of the file downloaded
+	Signature *string `form:"signature,omitempty" json:"signature,omitempty" xml:"signature,omitempty"`
 }
 
 // RemoveRequestBody is the type of the "tools" service "remove" endpoint HTTP
@@ -39,6 +42,9 @@ type RemoveRequestBody struct {
 	// A checksum of the archive. Mandatory when url is present.
 	// This ensures that the package is downloaded correcly.
 	Checksum *string `form:"checksum,omitempty" json:"checksum,omitempty" xml:"checksum,omitempty"`
+	// The signature used to sign the url. Mandatory when url is present.
+	// This ensure the security of the file downloaded
+	Signature *string `form:"signature,omitempty" json:"signature,omitempty" xml:"signature,omitempty"`
 }
 
 // ToolResponseCollection is the type of the "tools" service "available"
@@ -100,11 +106,12 @@ func NewRemoveResponseBody(res *toolsviews.OperationView) *RemoveResponseBody {
 // NewInstallToolPayload builds a tools service install endpoint payload.
 func NewInstallToolPayload(body *InstallRequestBody) *tools.ToolPayload {
 	v := &tools.ToolPayload{
-		Name:     *body.Name,
-		Version:  *body.Version,
-		Packager: *body.Packager,
-		URL:      body.URL,
-		Checksum: body.Checksum,
+		Name:      *body.Name,
+		Version:   *body.Version,
+		Packager:  *body.Packager,
+		URL:       body.URL,
+		Checksum:  body.Checksum,
+		Signature: body.Signature,
 	}
 
 	return v
@@ -113,8 +120,9 @@ func NewInstallToolPayload(body *InstallRequestBody) *tools.ToolPayload {
 // NewRemoveToolPayload builds a tools service remove endpoint payload.
 func NewRemoveToolPayload(body *RemoveRequestBody, packager string, name string, version string) *tools.ToolPayload {
 	v := &tools.ToolPayload{
-		URL:      body.URL,
-		Checksum: body.Checksum,
+		URL:       body.URL,
+		Checksum:  body.Checksum,
+		Signature: body.Signature,
 	}
 	v.Packager = packager
 	v.Name = name
