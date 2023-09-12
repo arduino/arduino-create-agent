@@ -22,6 +22,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"flag"
+	"io"
 	"os"
 	"os/exec"
 	"runtime"
@@ -98,10 +99,6 @@ var (
 	Tools   tools.Tools
 	Systray systray.Systray
 )
-
-type nullWriter int
-
-func (nullWriter) Write([]byte) (int, error) { return 0, nil }
 
 type logWriter struct{}
 
@@ -322,7 +319,7 @@ func loop() {
 
 	if !*verbose {
 		log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
-		log.SetOutput(new(nullWriter)) //route all logging to nullwriter
+		log.SetOutput(io.Discard)
 	}
 
 	// save crashreport to file
