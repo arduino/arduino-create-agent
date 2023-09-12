@@ -22,7 +22,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
 	go.bug.st/downloader/v2 v2.1.1
-	go.bug.st/serial v1.4.1
+	go.bug.st/serial v1.6.0
 	goa.design/goa/v3 v3.12.4
 	golang.org/x/crypto v0.12.0
 	golang.org/x/sys v0.11.0
