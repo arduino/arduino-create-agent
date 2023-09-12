@@ -38,14 +38,8 @@ type OsSerialPort struct {
 	NetworkPort  bool
 }
 
-// GetList will return the OS serial port
-func GetList(network bool) ([]OsSerialPort, error) {
-
-	if network {
-		netportList, err := GetNetworkList()
-		return netportList, err
-	}
-
+// enumerateSerialPorts will return the OS serial port
+func enumerateSerialPorts() ([]OsSerialPort, error) {
 	// will timeout in 2 seconds
 	arrPorts := []OsSerialPort{}
 	ports, err := enumerator.GetDetailedPortsList()

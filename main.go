@@ -307,7 +307,7 @@ func loop() {
 	}
 
 	// list serial ports
-	portList, _ := GetList(false)
+	portList, _ := enumerateSerialPorts()
 	log.Println("Your serial ports:")
 	if len(portList) == 0 {
 		log.Println("\tThere are no serial ports to list.")

@@ -232,7 +232,7 @@ func (p *serport) writerNoBuf() {
 	log.Println(msgstr)
 	h.broadcastSys <- []byte(msgstr)
 	p.portIo.Close()
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 }
 
@@ -321,7 +321,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sh.register <- p
 	defer func() { sh.unregister <- p }()
 
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 
 	// this is internally buffered thread to not send to serial port if blocked
@@ -333,7 +333,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 
 	p.reader(buftype)
 
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 }
 
@@ -346,6 +346,6 @@ func spHandlerClose(p *serport) {
 func spCloseReal(p *serport) {
 	p.bufferwatcher.Close()
 	p.portIo.Close()
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 }
