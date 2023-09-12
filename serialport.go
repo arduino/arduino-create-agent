@@ -300,7 +300,13 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan []byte), sendRaw: make(chan string), portConf: conf, portIo: sp, BufferType: buftype}
+	p := &serport{
+		sendBuffered: make(chan string, 256000),
+		sendNoBuf:    make(chan []byte),
+		sendRaw:      make(chan string),
+		portConf:     conf,
+		portIo:       sp,
+		BufferType:   buftype}
 
 	var bw Bufferflow
 
