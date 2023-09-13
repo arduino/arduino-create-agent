@@ -19,7 +19,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -178,9 +177,10 @@ func discoverLoop() {
 func updateSerialPortList() {
 	ports, err := enumerateSerialPorts()
 	if err != nil {
-		// REPORT
-		fmt.Println("GET SERIAL LIST ERROR:", err)
-		return
+		// TODO: report error?
+
+		// Empty port list if they can not be detected
+		ports = []OsSerialPort{}
 	}
 	list := spListDual(ports)
 	serialPorts.Mu.Lock()
@@ -191,9 +191,10 @@ func updateSerialPortList() {
 func updateNetworkPortList() {
 	ports, err := enumerateNetworkPorts()
 	if err != nil {
-		// REPORT
-		fmt.Println("GET NETWORK LIST ERROR:", err)
-		return
+		// TODO: report error?
+
+		// Empty port list if they can not be detected
+		ports = []OsSerialPort{}
 	}
 	list := spListDual(ports)
 	networkPorts.Mu.Lock()
