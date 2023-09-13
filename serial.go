@@ -174,7 +174,13 @@ func discoverLoop() {
 	}()
 }
 
+var serialEnumeratorLock sync.Mutex
+
 func updateSerialPortList() {
+	if !serialEnumeratorLock.TryLock() {
+		return
+	}
+	defer serialEnumeratorLock.Unlock()
 	ports, err := enumerateSerialPorts()
 	if err != nil {
 		// TODO: report error?
