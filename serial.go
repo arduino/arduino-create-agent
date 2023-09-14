@@ -71,7 +71,7 @@ type SpPortItem struct {
 	ProductID       string
 }
 
-// SerialPorts contains the ports attached to the machine
+// serialPorts contains the ports attached to the machine
 var serialPorts SpPortList
 
 // networkPorts contains the ports on the network
