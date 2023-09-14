@@ -232,7 +232,7 @@ func (p *serport) writerNoBuf() {
 	log.Println(msgstr)
 	h.broadcastSys <- []byte(msgstr)
 	p.portIo.Close()
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 }
 
@@ -300,7 +300,13 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	log.Print("Opened port successfully")
 	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
 	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{sendBuffered: make(chan string, 256000), sendNoBuf: make(chan []byte), sendRaw: make(chan string), portConf: conf, portIo: sp, BufferType: buftype}
+	p := &serport{
+		sendBuffered: make(chan string, 256000),
+		sendNoBuf:    make(chan []byte),
+		sendRaw:      make(chan string),
+		portConf:     conf,
+		portIo:       sp,
+		BufferType:   buftype}
 
 	var bw Bufferflow
 
@@ -321,7 +327,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sh.register <- p
 	defer func() { sh.unregister <- p }()
 
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 
 	// this is internally buffered thread to not send to serial port if blocked
@@ -333,7 +339,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 
 	p.reader(buftype)
 
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 }
 
@@ -346,6 +352,6 @@ func spHandlerClose(p *serport) {
 func spCloseReal(p *serport) {
 	p.bufferwatcher.Close()
 	p.portIo.Close()
-	spListDual(false)
+	updateSerialPortList()
 	spList(false)
 }

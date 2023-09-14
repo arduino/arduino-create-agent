@@ -42,10 +42,10 @@ const timeoutConst = 2
 // SavedNetworkPorts contains the ports which we know are already connected
 var SavedNetworkPorts []OsSerialPort
 
-// GetNetworkList returns a list of Network Ports
+// enumerateNetworkPorts returns a list of Network Ports
 // The research of network ports is articulated in two phases. First we add new ports coming from
 // the bonjour module, then we prune the boards who don't respond to a ping
-func GetNetworkList() ([]OsSerialPort, error) {
+func enumerateNetworkPorts() ([]OsSerialPort, error) {
 	newPorts, err := getPorts()
 	if err != nil {
 		return nil, err

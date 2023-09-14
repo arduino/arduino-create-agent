@@ -71,11 +71,11 @@ type SpPortItem struct {
 	ProductID       string
 }
 
-// SerialPorts contains the ports attached to the machine
-var SerialPorts SpPortList
+// serialPorts contains the ports attached to the machine
+var serialPorts SpPortList
 
-// NetworkPorts contains the ports on the network
-var NetworkPorts SpPortList
+// networkPorts contains the ports on the network
+var networkPorts SpPortList
 
 var sh = serialhub{
 	//write:   	make(chan *serport, chan []byte),
@@ -130,13 +130,13 @@ func spList(network bool) {
 	var ls []byte
 	var err error
 	if network {
-		NetworkPorts.Mu.Lock()
-		ls, err = json.MarshalIndent(&NetworkPorts, "", "\t")
-		NetworkPorts.Mu.Unlock()
+		networkPorts.Mu.Lock()
+		ls, err = json.MarshalIndent(&networkPorts, "", "\t")
+		networkPorts.Mu.Unlock()
 	} else {
-		SerialPorts.Mu.Lock()
-		ls, err = json.MarshalIndent(&SerialPorts, "", "\t")
-		SerialPorts.Mu.Unlock()
+		serialPorts.Mu.Lock()
+		ls, err = json.MarshalIndent(&serialPorts, "", "\t")
+		serialPorts.Mu.Unlock()
 	}
 	if err != nil {
 		//log.Println(err)
@@ -149,81 +149,73 @@ func spList(network bool) {
 
 // discoverLoop periodically update the list of ports found
 func discoverLoop() {
-	SerialPorts.Mu.Lock()
-	SerialPorts.Network = false
-	SerialPorts.Ports = make([]SpPortItem, 0)
-	SerialPorts.Mu.Unlock()
-	NetworkPorts.Mu.Lock()
-	NetworkPorts.Network = true
-	NetworkPorts.Ports = make([]SpPortItem, 0)
-	NetworkPorts.Mu.Unlock()
+	serialPorts.Mu.Lock()
+	serialPorts.Network = false
+	serialPorts.Ports = make([]SpPortItem, 0)
+	serialPorts.Mu.Unlock()
+	networkPorts.Mu.Lock()
+	networkPorts.Network = true
+	networkPorts.Ports = make([]SpPortItem, 0)
+	networkPorts.Mu.Unlock()
 
 	go func() {
 		for {
 			if !upload.Busy {
-				spListDual(false)
+				updateSerialPortList()
 			}
 			time.Sleep(2 * time.Second)
 		}
 	}()
 	go func() {
 		for {
-			spListDual(true)
+			updateNetworkPortList()
 			time.Sleep(2 * time.Second)
 		}
 	}()
 }
 
-func spListDual(network bool) {
+var serialEnumeratorLock sync.Mutex
 
-	// call our os specific implementation of getting the serial list
-	list, err := GetList(network)
-
-	//log.Println(list)
-	//log.Println(err)
-
-	if err != nil {
-		// avoid reporting dummy data if an error occurred
+func updateSerialPortList() {
+	if !serialEnumeratorLock.TryLock() {
 		return
 	}
+	defer serialEnumeratorLock.Unlock()
+	ports, err := enumerateSerialPorts()
+	if err != nil {
+		// TODO: report error?
 
-	// do a quick loop to see if any of our open ports
-	// did not end up in the list port list. this can
-	// happen on windows in a fallback scenario where an
-	// open port can't be identified because it is locked,
-	// so just solve that by manually inserting
-	// if network {
-	// 	for port := range sh.ports {
+		// Empty port list if they can not be detected
+		ports = []OsSerialPort{}
+	}
+	list := spListDual(ports)
+	serialPorts.Mu.Lock()
+	serialPorts.Ports = list
+	serialPorts.Mu.Unlock()
+}
 
-	// 		isFound := false
-	// 		for _, item := range list {
-	// 			if strings.ToLower(port.portConf.Name) == strings.ToLower(item.Name) {
-	// 				isFound = true
-	// 			}
-	// 		}
+func updateNetworkPortList() {
+	ports, err := enumerateNetworkPorts()
+	if err != nil {
+		// TODO: report error?
 
-	// 		if !isFound {
-	// 			// artificially push to front of port list
-	// 			log.Println(fmt.Sprintf("Did not find an open port in the serial port list. We are going to artificially push it onto the list. port:%v", port.portConf.Name))
-	// 			var ossp OsSerialPort
-	// 			ossp.Name = port.portConf.Name
-	// 			ossp.FriendlyName = port.portConf.Name
-	// 			list = append([]OsSerialPort{ossp}, list...)
-	// 		}
-	// 	}
-	// }
+		// Empty port list if they can not be detected
+		ports = []OsSerialPort{}
+	}
+	list := spListDual(ports)
+	networkPorts.Mu.Lock()
+	networkPorts.Ports = list
+	networkPorts.Mu.Unlock()
+}
 
+func spListDual(list []OsSerialPort) []SpPortItem {
 	// we have a full clean list of ports now. iterate thru them
 	// to append the open/close state, baud rates, etc to make
 	// a super clean nice list to send back to browser
-	n := len(list)
-	spl := make([]SpPortItem, n)
-
-	ctr := 0
+	spl := []SpPortItem{}
 
 	for _, item := range list {
-
-		spl[ctr] = SpPortItem{
+		port := SpPortItem{
 			Name:            item.Name,
 			SerialNumber:    item.ISerial,
 			DeviceClass:     item.DeviceClass,
@@ -238,26 +230,15 @@ func spListDual(network bool) {
 		}
 
 		// figure out if port is open
-		myport, isFound := findPortByName(item.Name)
-
-		if isFound {
-			// we found our port
-			spl[ctr].IsOpen = true
-			spl[ctr].Baud = myport.portConf.Baud
-			spl[ctr].BufferAlgorithm = myport.BufferType
+		if myport, isFound := findPortByName(item.Name); isFound {
+			// and update data with the open port parameters
+			port.IsOpen = true
+			port.Baud = myport.portConf.Baud
+			port.BufferAlgorithm = myport.BufferType
 		}
-		ctr++
+		spl = append(spl, port)
 	}
-
-	if network {
-		NetworkPorts.Mu.Lock()
-		NetworkPorts.Ports = spl
-		NetworkPorts.Mu.Unlock()
-	} else {
-		SerialPorts.Mu.Lock()
-		SerialPorts.Ports = spl
-		SerialPorts.Mu.Unlock()
-	}
+	return spl
 }
 
 func spErr(err string) {
