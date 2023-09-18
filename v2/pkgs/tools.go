@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/codeclysm/extract/v3"
 )
 
@@ -216,8 +217,12 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 // Remove deletes the tool folder from Tools Folder
 func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
 	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
+	pathToRemove, err := utilities.SafeJoin(c.Folder, path)
+	if err != nil {
+		return nil, err
+	}
 
-	err := os.RemoveAll(filepath.Join(c.Folder, path))
+	err = os.RemoveAll(pathToRemove)
 	if err != nil {
 		return nil, err
 	}
