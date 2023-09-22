@@ -25,8 +25,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/arduino/go-paths-helper"
-	"golang.org/x/crypto/openpgp"
 )
 
 // Resource represent the index of the system
@@ -129,7 +129,7 @@ func checkGPGSig(signed, signature io.Reader) error {
 	}
 	keyring, _ := openpgp.ReadKeyRing(bytes.NewReader(publicKeyBin))
 
-	_, err = openpgp.CheckDetachedSignature(keyring, signed, signature)
+	_, err = openpgp.CheckDetachedSignature(keyring, signed, signature, nil)
 	return err
 }
 
