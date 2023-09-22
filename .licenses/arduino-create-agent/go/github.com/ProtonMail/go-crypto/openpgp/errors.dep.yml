@@ -1,13 +1,12 @@
 ---
-name: golang.org/x/crypto/openpgp/packet
-version: v0.13.0
+name: github.com/ProtonMail/go-crypto/openpgp/errors
+version: v0.0.0-20230923063757-afb1ddc0824c
 type: go
-summary: Package packet implements parsing and serialization of OpenPGP packets, as
-  specified in RFC 4880.
-homepage: https://pkg.go.dev/golang.org/x/crypto/openpgp/packet
+summary: Package errors contains common error types for the OpenPGP packages.
+homepage: https://pkg.go.dev/github.com/ProtonMail/go-crypto/openpgp/errors
 license: bsd-3-clause
 licenses:
-- sources: crypto@v0.13.0/LICENSE
+- sources: go-crypto@v0.0.0-20230923063757-afb1ddc0824c/LICENSE
   text: |
     Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -36,7 +35,7 @@ licenses:
     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- sources: crypto@v0.13.0/PATENTS
+- sources: go-crypto@v0.0.0-20230923063757-afb1ddc0824c/PATENTS
   text: |
     Additional IP Rights Grant (Patents)
 

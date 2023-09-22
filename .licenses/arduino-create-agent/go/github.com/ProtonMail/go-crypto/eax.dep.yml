@@ -1,14 +1,15 @@
 ---
-name: golang.org/x/crypto/openpgp/elgamal
-version: v0.13.0
+name: github.com/ProtonMail/go-crypto/eax
+version: v0.0.0-20230923063757-afb1ddc0824c
 type: go
-summary: Package elgamal implements ElGamal encryption, suitable for OpenPGP, as specified
-  in "A Public-Key Cryptosystem and a Signature Scheme Based on Discrete Logarithms,"
-  IEEE Transactions on Information Theory, v.
-homepage: https://pkg.go.dev/golang.org/x/crypto/openpgp/elgamal
-license: bsd-3-clause
+summary: 'Package eax provides an implementation of the EAX (encrypt-authenticate-translate)
+  mode of operation, as described in Bellare, Rogaway, and Wagner "THE EAX MODE OF
+  OPERATION: A TWO-PASS AUTHENTICATED-ENCRYPTION SCHEME OPTIMIZED FOR SIMPLICITY AND
+  EFFICIENCY." In FSE''04, volume 3017 of LNCS, 2004'
+homepage: https://pkg.go.dev/github.com/ProtonMail/go-crypto/eax
+license: other
 licenses:
-- sources: crypto@v0.13.0/LICENSE
+- sources: go-crypto@v0.0.0-20230923063757-afb1ddc0824c/LICENSE
   text: |
     Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -37,7 +38,7 @@ licenses:
     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- sources: crypto@v0.13.0/PATENTS
+- sources: go-crypto@v0.0.0-20230923063757-afb1ddc0824c/PATENTS
   text: |
     Additional IP Rights Grant (Patents)
 
