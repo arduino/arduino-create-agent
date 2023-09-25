@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/xrash/smetrics"
 )
 
@@ -47,17 +47,15 @@ import (
 
 // Tools will represent the installed tools
 type Tools struct {
-	Directory   string
-	IndexURL    string
-	LastRefresh time.Time
-	Logger      func(msg string)
-	installed   map[string]string
-	mutex       sync.RWMutex
+	Directory string
+	Index     index.IndexResource
+	Logger    func(msg string)
+	installed map[string]string
+	mutex     sync.RWMutex
 }
 
 // Init creates the Installed map and populates it from a file in .arduino-create
 func (t *Tools) Init() {
-	createDir(t.Directory)
 	t.mutex.Lock()
 	t.installed = make(map[string]string)
 	t.mutex.Unlock()
@@ -127,10 +125,4 @@ func (t *Tools) readMap() error {
 func dir() string {
 	usr, _ := user.Current()
 	return path.Join(usr.HomeDir, ".arduino-create")
-}
-
-// createDir creates the directory where the tools will be stored
-func createDir(directory string) {
-	os.Mkdir(directory, 0777)
-	hideFile(directory)
 }
