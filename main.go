@@ -51,8 +51,7 @@ var (
 	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
 	commit                = "xxxxxxxx"  //don't modify it, Jenkins will take care
 	port                  string
-	portSSL               string
-	requiredToolsAPILevel = "v1"
+	portSSL string
 )
 
 // regular flags
@@ -186,7 +185,7 @@ func loop() {
 			h.broadcastSys <- mapB
 		},
 	}
-	Tools.Init(requiredToolsAPILevel)
+	Tools.Init()
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()
