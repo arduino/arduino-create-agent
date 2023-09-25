@@ -76,8 +76,8 @@ import (
 // if something goes wrong will show a dialog with the error and return an error
 func InstallCertificate(cert *paths.Path) error {
 	log.Infof("Installing certificate: %s", cert)
-    ccert := C.CString(cert.String())
-    defer C.free(unsafe.Pointer(ccert))
+    	ccert := C.CString(cert.String())
+    	defer C.free(unsafe.Pointer(ccert))
 	p := C.installCert(ccert)
 	s := C.GoString(p)
 	if len(s) != 0 {
