@@ -46,6 +46,7 @@ void runApplication(const char *path, const char **argv, int argc) {
 */
 import "C"
 import (
+	"unsafe"
 	"os/exec"
 	"path/filepath"
 
