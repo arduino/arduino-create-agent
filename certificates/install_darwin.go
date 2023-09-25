@@ -76,7 +76,9 @@ import (
 // if something goes wrong will show a dialog with the error and return an error
 func InstallCertificate(cert *paths.Path) error {
 	log.Infof("Installing certificate: %s", cert)
-	p := C.installCert(C.CString(cert.String()))
+    ccert := C.CString(cert.String())
+    defer C.free(unsafe.Pointer(ccert))
+	p := C.installCert(ccert)
 	s := C.GoString(p)
 	if len(s) != 0 {
 		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Error installing certificates\"")
