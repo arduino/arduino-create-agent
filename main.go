@@ -36,6 +36,7 @@ import (
 	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/globals"
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
@@ -48,9 +49,9 @@ import (
 )
 
 var (
-	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
-	commit                = "xxxxxxxx"  //don't modify it, Jenkins will take care
-	port                  string
+	version = "x.x.x-dev" //don't modify it, Jenkins will take care
+	commit  = "xxxxxxxx"  //don't modify it, Jenkins will take care
+	port    string
 	portSSL string
 )
 
@@ -98,6 +99,7 @@ var homeTemplateHTML string
 var (
 	Tools   tools.Tools
 	Systray systray.Systray
+	Index   index.IndexResource
 )
 
 type logWriter struct{}
@@ -175,10 +177,13 @@ func loop() {
 		os.Exit(0)
 	}
 
+	// Instantiate Index
+	Index = index.Init(*indexURL, config.GetDataDir())
+
 	// Instantiate Tools
 	Tools = tools.Tools{
 		Directory: config.GetDataDir().String(),
-		IndexURL:  *indexURL,
+		Index:     Index,
 		Logger: func(msg string) {
 			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
 			mapB, _ := json.Marshal(mapD)
