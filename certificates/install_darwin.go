@@ -64,6 +64,7 @@ const char *installCert(const char *path) {
 */
 import "C"
 import (
+	"unsafe"
 	"errors"
 	"os/exec"
 
