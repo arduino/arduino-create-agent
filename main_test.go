@@ -29,6 +29,7 @@ import (
 
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/upload"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
@@ -87,8 +88,13 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 }
 
 func TestInstallToolV2(t *testing.T) {
+
+	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	// Instantiate Index
+	Index := index.Init(indexURL, config.GetDataDir())
+
 	r := gin.New()
-	goa := v2.Server(config.GetDataDir().String())
+	goa := v2.Server(config.GetDataDir().String(), Index)
 	r.Any("/v2/*path", gin.WrapH(goa))
 	ts := httptest.NewServer(r)
 

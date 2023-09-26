@@ -19,12 +19,10 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"path/filepath"
 
-	indexessvr "github.com/arduino/arduino-create-agent/gen/http/indexes/server"
 	toolssvr "github.com/arduino/arduino-create-agent/gen/http/tools/server"
-	indexessvc "github.com/arduino/arduino-create-agent/gen/indexes"
 	toolssvc "github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/sirupsen/logrus"
 	goahttp "goa.design/goa/v3/http"
@@ -33,7 +31,7 @@ import (
 )
 
 // Server is the actual server
-func Server(home string) http.Handler {
+func Server(directory string, index *index.IndexResource) http.Handler {
 	mux := goahttp.NewMuxer()
 
 	// Instantiate logger
@@ -41,20 +39,10 @@ func Server(home string) http.Handler {
 	logger.SetLevel(logrus.DebugLevel)
 	logAdapter := LogAdapter{Logger: logger}
 
-	// Mount indexes
-	indexesSvc := pkgs.Indexes{
-		Log:    logger,
-		Folder: filepath.Join(home, "indexes"),
-	}
-	indexesEndpoints := indexessvc.NewEndpoints(&indexesSvc)
-	indexesServer := indexessvr.New(indexesEndpoints, mux, goahttp.RequestDecoder,
-		goahttp.ResponseEncoder, errorHandler(logger), nil)
-	indexessvr.Mount(mux, indexesServer)
-
 	// Mount tools
 	toolsSvc := pkgs.Tools{
-		Folder:  home,
-		Indexes: &indexesSvc,
+		Folder: directory,
+		Index:  index,
 	}
 	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
 	toolsServer := toolssvr.New(toolsEndpoints, mux, CustomRequestDecoder, goahttp.ResponseEncoder, errorHandler(logger), nil)
