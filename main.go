@@ -99,7 +99,7 @@ var homeTemplateHTML string
 var (
 	Tools   tools.Tools
 	Systray systray.Systray
-	Index   *index.IndexResource
+	Index   *index.Resource
 )
 
 type logWriter struct{}

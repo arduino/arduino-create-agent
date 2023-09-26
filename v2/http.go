@@ -31,7 +31,7 @@ import (
 )
 
 // Server is the actual server
-func Server(directory string, index *index.IndexResource) http.Handler {
+func Server(directory string, index *index.Resource) http.Handler {
 	mux := goahttp.NewMuxer()
 
 	// Instantiate logger

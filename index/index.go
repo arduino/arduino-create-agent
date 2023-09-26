@@ -29,8 +29,8 @@ import (
 	"golang.org/x/crypto/openpgp"
 )
 
-// IndexResource represent the index of the system
-type IndexResource struct {
+// Resource represent the index of the system
+type Resource struct {
 	LastRefresh    time.Time  // Last time the index was downloaded
 	IndexURL       url.URL    // The URL used to host the index.json
 	IndexFile      paths.Path // The location of the index on the filesystem
@@ -42,7 +42,7 @@ var publicKeyHex string = "99020D0452FAA2FA011000D0C5604932111750628F171E4E612D5
 
 // Init will initialize the IndexResource structure and will return it.
 // It will take indexString as a paramenter.
-func Init(indexString string, directory *paths.Path) *IndexResource {
+func Init(indexString string, directory *paths.Path) *Resource {
 	if directory == nil {
 		log.Fatalf("configuration directory not provided")
 	}
@@ -64,7 +64,7 @@ func Init(indexString string, directory *paths.Path) *IndexResource {
 	indexFile := path.Base(indexParsed.Path) // == package_index.json
 	signatureFile := indexFile + ".sig"
 
-	var ir = IndexResource{
+	var ir = Resource{
 		IndexURL:       *indexParsed,
 		IndexFile:      *directory.Join(indexFile),
 		IndexSignature: *directory.Join(signatureFile),
@@ -82,7 +82,7 @@ func Init(indexString string, directory *paths.Path) *IndexResource {
 
 // DownloadAndVerify will download an index file located at IndexURL and verify the signature
 // if everything matches the files are overwritten
-func (ir *IndexResource) DownloadAndVerify() error {
+func (ir *Resource) DownloadAndVerify() error {
 	// Fetch the index
 	resp, err := http.Get(ir.IndexURL.String())
 	if err != nil {
