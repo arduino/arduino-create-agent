@@ -47,12 +47,9 @@ import (
 //	        └── 1.7.0
 //	            └── bossac
 //
-// It requires an Indexes client to list and read package index files: use the Indexes struct
+// It requires an Index Resource to search for tools
 type Tools struct {
-	Indexes interface {
-		List(context.Context) ([]string, error)
-		Get(context.Context, string) (Index, error)
-	}
+	Index  *index.IndexResource
 	Folder string
 }
 

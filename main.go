@@ -401,7 +401,7 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(config.GetDataDir().String())
+	goa := v2.Server(config.GetDataDir().String(), Index)
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
