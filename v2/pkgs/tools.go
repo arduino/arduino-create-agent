@@ -136,10 +136,16 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
 	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
 
-	if payload.URL != nil {
+	//if URL is defined and is signed we verify the signature and override the name, payload, version parameters
+	if payload.URL != nil && payload.Signature != nil && payload.Checksum != nil {
+		err := utilities.VerifyInput(*payload.URL, *payload.Signature)
+		if err != nil {
+			return nil, err
+		}
 		return c.install(ctx, path, *payload.URL, *payload.Checksum)
 	}
 
+	// otherwise we install from the loaded indexes
 	list, err := c.Indexes.List(ctx)
 	if err != nil {
 		return nil, err
