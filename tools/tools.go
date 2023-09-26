@@ -48,7 +48,7 @@ import (
 // Tools will represent the installed tools
 type Tools struct {
 	Directory string
-	Index     *index.IndexResource
+	Index     *index.Resource
 	Logger    func(msg string)
 	installed map[string]string
 	mutex     sync.RWMutex

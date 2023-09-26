@@ -51,7 +51,7 @@ import (
 //
 // It requires an Index Resource to search for tools
 type Tools struct {
-	Index  *index.IndexResource
+	Index  *index.Resource
 	Folder string
 }
 
