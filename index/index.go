@@ -42,7 +42,7 @@ var publicKeyHex string = "99020D0452FAA2FA011000D0C5604932111750628F171E4E612D5
 
 // Init will initialize the IndexResource structure and will return it.
 // It will take indexString as a paramenter.
-func Init(indexString string, directory *paths.Path) IndexResource {
+func Init(indexString string, directory *paths.Path) *IndexResource {
 	if directory == nil {
 		log.Fatalf("configuration directory not provided")
 	}
@@ -77,7 +77,7 @@ func Init(indexString string, directory *paths.Path) IndexResource {
 		}
 	}
 
-	return ir
+	return &ir
 }
 
 // DownloadAndVerify will download an index file located at IndexURL and verify the signature
