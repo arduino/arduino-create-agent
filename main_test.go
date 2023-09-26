@@ -146,7 +146,7 @@ func TestInstallToolV2(t *testing.T) {
 		{bossacInstallURLOK, http.StatusOK, "ok"},
 		{bossacInstallWrongSig, http.StatusInternalServerError, "verification error"},
 		{bossacInstallWrongCheck, http.StatusInternalServerError, "checksum doesn't match"},
-		{bossacInstallNoURL, http.StatusBadRequest, "tool not found"}, //because the index is not added
+		{bossacInstallNoURL, http.StatusOK, "ok"},
 	}
 
 	for _, test := range tests {

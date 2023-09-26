@@ -17,15 +17,14 @@ package pkgs_test
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/arduino/arduino-create-agent/gen/indexes"
+	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/stretchr/testify/require"
 )
@@ -33,12 +32,6 @@ import (
 // TestTools performs a series of operations about tools, ensuring it behaves as expected.
 // This test depends on the internet so it could fail unexpectedly
 func TestTools(t *testing.T) {
-	// Use local file as index
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "testdata/package_index.json")
-	}))
-	defer ts.Close()
-
 	// Initialize indexes with a temp folder
 	tmp, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -46,31 +39,23 @@ func TestTools(t *testing.T) {
 	}
 	defer os.RemoveAll(tmp)
 
-	indexesClient := pkgs.Indexes{
-		Folder: tmp,
-	}
+	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	// Instantiate Index
+	Index := index.Init(indexURL, config.GetDataDir())
 
 	service := pkgs.Tools{
-		Folder:  tmp,
-		Indexes: &indexesClient,
+		Folder: tmp,
+		Index:  Index,
 	}
 
 	ctx := context.Background()
-
-	// Add a new index
-	_, err = indexesClient.Add(ctx, &indexes.IndexPayload{URL: ts.URL})
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	// List available tools
 	available, err := service.Available(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(available) != 61 {
-		t.Fatalf("expected %d == %d (%s)", len(available), 61, "len(available)")
-	}
+	require.NotEmpty(t, available)
 
 	// Try to install a non-existent tool
 	_, err = service.Install(ctx, &tools.ToolPayload{})

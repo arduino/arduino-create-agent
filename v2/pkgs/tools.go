@@ -29,8 +29,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/codeclysm/extract/v3"
 )
@@ -55,25 +57,29 @@ type Tools struct {
 
 // Available crawles the downloaded package index files and returns a list of tools that can be installed.
 func (c *Tools) Available(ctx context.Context) (res tools.ToolCollection, err error) {
-	list, err := c.Indexes.List(ctx)
+	if !c.Index.IndexFile.Exist() || time.Since(c.Index.LastRefresh) > 1*time.Hour {
+		// Download the file again and save it
+		err := c.Index.DownloadAndVerify()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	body, err := os.ReadFile(c.Index.IndexFile.String())
 	if err != nil {
 		return nil, err
 	}
 
-	for _, url := range list {
-		index, err := c.Indexes.Get(ctx, url)
-		if err != nil {
-			return nil, err
-		}
+	var index Index
+	json.Unmarshal(body, &index)
 
-		for _, packager := range index.Packages {
-			for _, tool := range packager.Tools {
-				res = append(res, &tools.Tool{
-					Packager: packager.Name,
-					Name:     tool.Name,
-					Version:  tool.Version,
-				})
-			}
+	for _, packager := range index.Packages {
+		for _, tool := range packager.Tools {
+			res = append(res, &tools.Tool{
+				Packager: packager.Name,
+				Name:     tool.Name,
+				Version:  tool.Version,
+			})
 		}
 	}
 
@@ -142,31 +148,35 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 		return c.install(ctx, path, *payload.URL, *payload.Checksum)
 	}
 
-	// otherwise we install from the loaded indexes
-	list, err := c.Indexes.List(ctx)
+	// otherwise we install from the default index
+	if !c.Index.IndexFile.Exist() || time.Since(c.Index.LastRefresh) > 1*time.Hour {
+		// Download the file again and save it
+		err := c.Index.DownloadAndVerify()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	body, err := os.ReadFile(c.Index.IndexFile.String())
 	if err != nil {
 		return nil, err
 	}
 
-	for _, url := range list {
-		index, err := c.Indexes.Get(ctx, url)
-		if err != nil {
-			return nil, err
+	var index Index
+	json.Unmarshal(body, &index)
+
+	for _, packager := range index.Packages {
+		if packager.Name != payload.Packager {
+			continue
 		}
 
-		for _, packager := range index.Packages {
-			if packager.Name != payload.Packager {
-				continue
-			}
+		for _, tool := range packager.Tools {
+			if tool.Name == payload.Name &&
+				tool.Version == payload.Version {
 
-			for _, tool := range packager.Tools {
-				if tool.Name == payload.Name &&
-					tool.Version == payload.Version {
+				sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
 
-					sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
-
-					return c.install(ctx, path, sys.URL, sys.Checksum)
-				}
+				return c.install(ctx, path, sys.URL, sys.Checksum)
 			}
 		}
 	}
