@@ -21,7 +21,6 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/stretchr/testify v1.8.4
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
-	go.bug.st/downloader/v2 v2.1.1
 	go.bug.st/serial v1.6.1
 	goa.design/goa/v3 v3.13.1
 	golang.org/x/crypto v0.13.0
