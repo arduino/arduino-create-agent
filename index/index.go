@@ -70,11 +70,8 @@ func Init(indexString string, directory *paths.Path) *Resource {
 		IndexSignature: *directory.Join(signatureFile),
 	}
 
-	if !ir.IndexFile.Exist() || time.Since(ir.LastRefresh) > 1*time.Hour {
-		// Download the file again and save it
-		if err := ir.DownloadAndVerify(); err != nil {
-			log.Fatalf("cannot download index: %s", err)
-		}
+	if err := ir.DownloadAndVerify(); err != nil {
+		log.Fatalf("cannot download index: %s", err)
 	}
 
 	return &ir
