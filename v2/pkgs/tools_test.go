@@ -43,10 +43,7 @@ func TestTools(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.Tools{
-		Folder: tmp,
-		Index:  Index,
-	}
+	service := pkgs.New(Index, tmp)
 
 	ctx := context.Background()
 
@@ -123,12 +120,11 @@ func TestEvilFilename(t *testing.T) {
 	// Initialize indexes with a temp folder
 	tmp := t.TempDir()
 
-	service := pkgs.Tools{
-		Folder: tmp,
-		Indexes: &pkgs.Indexes{
-			Folder: tmp,
-		},
-	}
+	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	// Instantiate Index
+	Index := index.Init(indexURL, config.GetDataDir())
+
+	service := pkgs.New(Index, tmp)
 
 	ctx := context.Background()
 

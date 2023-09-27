@@ -50,13 +50,23 @@ import (
 //
 // It requires an Index Resource to search for tools
 type Tools struct {
-	Index  *index.Resource
-	Folder string
+	index  *index.Resource
+	folder string
+}
+
+// New will return a Tool object, allowing the caller to execute operations on it.
+// The New function will accept an index as parameter (used to download the indexes)
+// and a folder used to download the indexes
+func New(index *index.Resource, folder string) *Tools {
+	return &Tools{
+		index:  index,
+		folder: folder,
+	}
 }
 
 // Available crawles the downloaded package index files and returns a list of tools that can be installed.
-func (c *Tools) Available(ctx context.Context) (res tools.ToolCollection, err error) {
-	body, err := c.Index.Read()
+func (t *Tools) Available(ctx context.Context) (res tools.ToolCollection, err error) {
+	body, err := t.index.Read()
 	if err != nil {
 		return nil, err
 	}
@@ -78,16 +88,16 @@ func (c *Tools) Available(ctx context.Context) (res tools.ToolCollection, err er
 }
 
 // Installed crawles the Tools Folder and finds the installed tools.
-func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
+func (t *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 	res := tools.ToolCollection{}
 
 	// Find packagers
-	packagers, err := os.ReadDir(c.Folder)
+	packagers, err := os.ReadDir(t.folder)
 	if err != nil {
 		if !strings.Contains(err.Error(), "no such file") {
 			return nil, err
 		}
-		err = os.MkdirAll(c.Folder, 0755)
+		err = os.MkdirAll(t.folder, 0755)
 		if err != nil {
 			return nil, err
 		}
@@ -99,14 +109,14 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 		}
 
 		// Find tools
-		toolss, err := os.ReadDir(filepath.Join(c.Folder, packager.Name()))
+		toolss, err := os.ReadDir(filepath.Join(t.folder, packager.Name()))
 		if err != nil {
 			return nil, err
 		}
 
 		for _, tool := range toolss {
 			// Find versions
-			path := filepath.Join(c.Folder, packager.Name(), tool.Name())
+			path := filepath.Join(t.folder, packager.Name(), tool.Name())
 			versions, err := os.ReadDir(path)
 			if err != nil {
 				continue // we ignore errors because the folders could be dirty
@@ -127,7 +137,7 @@ func (c *Tools) Installed(ctx context.Context) (tools.ToolCollection, error) {
 
 // Install crawles the Index folder, downloads the specified tool, extracts the archive in the Tools Folder.
 // It checks for the Signature specified in the package index.
-func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
+func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
 	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
 
 	//if URL is defined and is signed we verify the signature and override the name, payload, version parameters
@@ -136,11 +146,11 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 		if err != nil {
 			return nil, err
 		}
-		return c.install(ctx, path, *payload.URL, *payload.Checksum)
+		return t.install(ctx, path, *payload.URL, *payload.Checksum)
 	}
 
 	// otherwise we install from the default index
-	body, err := c.Index.Read()
+	body, err := t.index.Read()
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +169,7 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 
 				sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
 
-				return c.install(ctx, path, sys.URL, sys.Checksum)
+				return t.install(ctx, path, sys.URL, sys.Checksum)
 			}
 		}
 	}
@@ -169,7 +179,7 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 			payload.Packager, payload.Name, payload.Version))
 }
 
-func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools.Operation, error) {
+func (t *Tools) install(ctx context.Context, path, url, checksum string) (*tools.Operation, error) {
 	// Download
 	res, err := http.Get(url)
 	if err != nil {
@@ -181,7 +191,7 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	var buffer bytes.Buffer
 	reader := io.TeeReader(res.Body, &buffer)
 
-	safePath, err := utilities.SafeJoin(c.Folder, path)
+	safePath, err := utilities.SafeJoin(t.folder, path)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +202,7 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 		return nil, err
 	}
 
-	err = extract.Archive(ctx, reader, c.Folder, rename(path))
+	err = extract.Archive(ctx, reader, t.folder, rename(path))
 	if err != nil {
 		os.RemoveAll(safePath)
 		return nil, err
@@ -207,7 +217,7 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	}
 
 	// Write installed.json for retrocompatibility with v1
-	err = writeInstalled(c.Folder, path)
+	err = writeInstalled(t.folder, path)
 	if err != nil {
 		return nil, err
 	}
@@ -216,9 +226,9 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 }
 
 // Remove deletes the tool folder from Tools Folder
-func (c *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
+func (t *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.Operation, error) {
 	path := filepath.Join(payload.Packager, payload.Name, payload.Version)
-	pathToRemove, err := utilities.SafeJoin(c.Folder, path)
+	pathToRemove, err := utilities.SafeJoin(t.folder, path)
 	if err != nil {
 		return nil, err
 	}
