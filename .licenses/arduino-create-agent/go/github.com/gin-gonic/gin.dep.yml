@@ -1,6 +1,6 @@
 ---
 name: github.com/gin-gonic/gin
-version: v1.9.0
+version: v1.9.1
 type: go
 summary: Package gin implements a HTTP web framework called gin.
 homepage: https://pkg.go.dev/github.com/gin-gonic/gin
