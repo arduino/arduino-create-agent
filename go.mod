@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/andela/gin-cors v0.0.0-20160928171741-e8c3436a37e2
 	github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e
-	github.com/arduino/go-paths-helper v1.9.1
+	github.com/arduino/go-paths-helper v1.9.2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.1.1
 	github.com/getlantern/systray v1.1.0
