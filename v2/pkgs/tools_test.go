@@ -43,10 +43,7 @@ func TestTools(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.Tools{
-		Folder: tmp,
-		Index:  Index,
-	}
+	service := pkgs.New(Index, tmp)
 
 	ctx := context.Background()
 

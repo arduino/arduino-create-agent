@@ -40,11 +40,8 @@ func Server(directory string, index *index.Resource) http.Handler {
 	logAdapter := LogAdapter{Logger: logger}
 
 	// Mount tools
-	toolsSvc := pkgs.Tools{
-		Folder: directory,
-		Index:  index,
-	}
-	toolsEndpoints := toolssvc.NewEndpoints(&toolsSvc)
+	toolsSvc := pkgs.New(index, directory)
+	toolsEndpoints := toolssvc.NewEndpoints(toolsSvc)
 	toolsServer := toolssvr.New(toolsEndpoints, mux, CustomRequestDecoder, goahttp.ResponseEncoder, errorHandler(logger), nil)
 	toolssvr.Mount(mux, toolsServer)
 
