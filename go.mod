@@ -25,7 +25,7 @@ require (
 	go.bug.st/serial v1.6.1
 	goa.design/goa/v3 v3.12.4
 	golang.org/x/crypto v0.12.0
-	golang.org/x/sys v0.11.0
+	golang.org/x/sys v0.12.0
 	gopkg.in/inconshreveable/go-update.v0 v0.0.0-20150814200126-d8b0b1d421aa
 )
 
