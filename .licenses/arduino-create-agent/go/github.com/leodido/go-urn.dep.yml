@@ -1,8 +1,8 @@
 ---
 name: github.com/leodido/go-urn
-version: v1.2.1
+version: v1.2.4
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/leodido/go-urn
 license: mit
 licenses:

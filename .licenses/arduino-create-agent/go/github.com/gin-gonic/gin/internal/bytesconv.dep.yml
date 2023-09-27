@@ -1,12 +1,12 @@
 ---
 name: github.com/gin-gonic/gin/internal/bytesconv
-version: v1.9.0
+version: v1.9.1
 type: go
 summary:
 homepage: https://pkg.go.dev/github.com/gin-gonic/gin/internal/bytesconv
 license: mit
 licenses:
-- sources: gin@v1.9.0/LICENSE
+- sources: gin@v1.9.1/LICENSE
   text: |
     The MIT License (MIT)
 

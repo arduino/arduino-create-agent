@@ -7,6 +7,8 @@ apps:
 
 reviewed:
   go:
+    - golang.org/x/net/html
+    - golang.org/x/net/html/atom
     - golang.org/x/crypto/curve25519
 
 # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-dependencies/AGPL-3.0/.licensed.yml
