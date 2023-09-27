@@ -135,3 +135,15 @@ func checkGPGSig(signed, signature io.Reader) error {
 	_, err = openpgp.CheckDetachedSignature(keyring, signed, signature)
 	return err
 }
+
+// Read will read the index file. In case it doesn't exists or the latest downloaded
+// version is older than 1 hour, it will be downloaded again.
+func (ir *Resource) Read() ([]byte, error) {
+	if !ir.IndexFile.Exist() || time.Since(ir.LastRefresh) > 1*time.Hour {
+		// Download the file again and save it
+		if err := ir.DownloadAndVerify(); err != nil {
+			return nil, err
+		}
+	}
+	return ir.IndexFile.ReadFile()
+}

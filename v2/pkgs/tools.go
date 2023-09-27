@@ -29,7 +29,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/index"
@@ -57,15 +56,7 @@ type Tools struct {
 
 // Available crawles the downloaded package index files and returns a list of tools that can be installed.
 func (c *Tools) Available(ctx context.Context) (res tools.ToolCollection, err error) {
-	if !c.Index.IndexFile.Exist() || time.Since(c.Index.LastRefresh) > 1*time.Hour {
-		// Download the file again and save it
-		err := c.Index.DownloadAndVerify()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	body, err := os.ReadFile(c.Index.IndexFile.String())
+	body, err := c.Index.Read()
 	if err != nil {
 		return nil, err
 	}
@@ -149,15 +140,7 @@ func (c *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 	}
 
 	// otherwise we install from the default index
-	if !c.Index.IndexFile.Exist() || time.Since(c.Index.LastRefresh) > 1*time.Hour {
-		// Download the file again and save it
-		err := c.Index.DownloadAndVerify()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	body, err := os.ReadFile(c.Index.IndexFile.String())
+	body, err := c.Index.Read()
 	if err != nil {
 		return nil, err
 	}
