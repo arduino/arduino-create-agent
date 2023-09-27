@@ -34,7 +34,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
@@ -79,15 +78,7 @@ func pathExists(path string) bool {
 // if it already exists.
 func (t *Tools) Download(pack, name, version, behaviour string) error {
 
-	if !t.Index.IndexFile.Exist() || time.Since(t.Index.LastRefresh) > 1*time.Hour {
-		// Download the file again and save it
-		err := t.Index.DownloadAndVerify()
-		if err != nil {
-			return err
-		}
-	}
-
-	body, err := os.ReadFile(t.Index.IndexFile.String())
+	body, err := t.Index.Read()
 	if err != nil {
 		return err
 	}
