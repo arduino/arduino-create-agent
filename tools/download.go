@@ -78,7 +78,7 @@ func pathExists(path string) bool {
 // if it already exists.
 func (t *Tools) Download(pack, name, version, behaviour string) error {
 
-	body, err := t.Index.Read()
+	body, err := t.index.Read()
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	correctTool, correctSystem := findTool(pack, name, version, data)
 
 	if correctTool.Name == "" || correctSystem.URL == "" {
-		t.Logger("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
+		t.logger("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
 		return nil
 	}
 
@@ -98,21 +98,17 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 
 	// Check if it already exists
 	if behaviour == "keep" {
-		t.mutex.RLock()
-		location, ok := t.installed[key]
-		t.mutex.RUnlock()
+		location, ok := t.getMapValue(key)
 		if ok && pathExists(location) {
 			// overwrite the default tool with this one
-			t.mutex.Lock()
-			t.installed[correctTool.Name] = location
-			t.mutex.Unlock()
-			t.Logger("The tool is already present on the system")
+			t.setMapValue(correctTool.Name, location)
+			t.logger("The tool is already present on the system")
 			return t.writeMap()
 		}
 	}
 
 	// Download the tool
-	t.Logger("Downloading tool " + name + " from " + correctSystem.URL)
+	t.logger("Downloading tool " + name + " from " + correctSystem.URL)
 	resp, err := http.Get(correctSystem.URL)
 	if err != nil {
 		return err
@@ -134,9 +130,9 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	}
 
 	// Decompress
-	t.Logger("Unpacking tool " + name)
+	t.logger("Unpacking tool " + name)
 
-	location := path.Join(dir(), pack, correctTool.Name, correctTool.Version)
+	location := t.directory.Join(pack, correctTool.Name, correctTool.Version).String()
 	err = os.RemoveAll(location)
 
 	if err != nil {
@@ -150,18 +146,18 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 
 	switch srcType {
 	case "application/zip":
-		location, err = extractZip(t.Logger, body, location)
+		location, err = extractZip(t.logger, body, location)
 	case "application/x-bz2":
 	case "application/octet-stream":
-		location, err = extractBz2(t.Logger, body, location)
+		location, err = extractBz2(t.logger, body, location)
 	case "application/x-gzip":
-		location, err = extractTarGz(t.Logger, body, location)
+		location, err = extractTarGz(t.logger, body, location)
 	default:
 		return errors.New("Unknown extension for file " + correctSystem.URL)
 	}
 
 	if err != nil {
-		t.Logger("Error extracting the archive: " + err.Error())
+		t.logger("Error extracting the archive: " + err.Error())
 		return err
 	}
 
@@ -171,15 +167,13 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	}
 
 	// Ensure that the files are executable
-	t.Logger("Ensure that the files are executable")
+	t.logger("Ensure that the files are executable")
 
 	// Update the tool map
-	t.Logger("Updating map with location " + location)
+	t.logger("Updating map with location " + location)
 
-	t.mutex.Lock()
-	t.installed[name] = location
-	t.installed[name+"-"+correctTool.Version] = location
-	t.mutex.Unlock()
+	t.setMapValue(name, location)
+	t.setMapValue(name+"-"+correctTool.Version, location)
 	return t.writeMap()
 }
 
@@ -475,11 +469,11 @@ func (t *Tools) installDrivers(location string) error {
 		preamble = "./"
 	}
 	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
-		t.Logger("Installing drivers")
+		t.logger("Installing drivers")
 		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
 		if ok == OkPressed {
 			os.Chdir(location)
-			t.Logger(preamble + "post_install" + extension)
+			t.logger(preamble + "post_install" + extension)
 			oscmd := exec.Command(preamble + "post_install" + extension)
 			if OS != "linux" {
 				// spawning a shell could be the only way to let the user type his password
