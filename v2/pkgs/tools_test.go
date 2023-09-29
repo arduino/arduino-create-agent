@@ -131,33 +131,77 @@ func TestTools(t *testing.T) {
 	if len(installed) != 0 {
 		t.Fatalf("expected %d == %d (%s)", len(installed), 0, "len(installed)")
 	}
+}
 
-	t.Run("payload containing evil names", func(t *testing.T) {
-		evilFileNames := []string{
-			"/",
-			"..",
-			"../",
-			"../evil.txt",
-			"../../../../../../../../../../../../../../../../../../../../tmp/evil.txt",
-			"some/path/../../../../../../../../../../../../../../../../../../../../tmp/evil.txt",
+func TestEvilFilename(t *testing.T) {
+
+	// Initialize indexes with a temp folder
+	tmp := t.TempDir()
+
+	service := pkgs.Tools{
+		Folder: tmp,
+		Indexes: &pkgs.Indexes{
+			Folder: tmp,
+		},
+	}
+
+	ctx := context.Background()
+
+	type test struct {
+		fileName string
+		errBody  string
+	}
+
+	evilFileNames := []string{
+		"/",
+		"..",
+		"../",
+		"../evil.txt",
+		"../../../../../../../../../../../../../../../../../../../../tmp/evil.txt",
+		"some/path/../../../../../../../../../../../../../../../../../../../../tmp/evil.txt",
+	}
+	if runtime.GOOS == "windows" {
+		evilFileNames = []string{
+			"..\\",
+			"..\\evil.txt",
+			"..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\tmp\\evil.txt",
+			"some\\path\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\tmp\\evil.txt",
 		}
-		if runtime.GOOS == "windows" {
-			evilFileNames = []string{
-				"..\\",
-				"..\\evil.txt",
-				"..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\tmp\\evil.txt",
-				"some\\path\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\..\\tmp\\evil.txt",
-			}
-		}
-		for _, evilFileName := range evilFileNames {
+	}
+	tests := []test{}
+	for _, evilFileName := range evilFileNames {
+		tests = append(tests, test{fileName: evilFileName,
+			errBody: "unsafe path join"})
+	}
+
+	toolsTemplate := tools.ToolPayload{
+		// We'll replace the name directly in the test
+		Checksum:  strpoint("SHA-256:1ae54999c1f97234a5c603eb99ad39313b11746a4ca517269a9285afa05f9100"),
+		Signature: strpoint("382898a97b5a86edd74208f10107d2fecbf7059ffe9cc856e045266fb4db4e98802728a0859cfdcda1c0b9075ec01e42dbea1f430b813530d5a6ae1766dfbba64c3e689b59758062dc2ab2e32b2a3491dc2b9a80b9cda4ae514fbe0ec5af210111b6896976053ab76bac55bcecfcececa68adfa3299e3cde6b7f117b3552a7d80ca419374bb497e3c3f12b640cf5b20875416b45e662fc6150b99b178f8e41d6982b4c0a255925ea39773683f9aa9201dc5768b6fc857c87ff602b6a93452a541b8ec10ca07f166e61a9e9d91f0a6090bd2038ed4427af6251039fb9fe8eb62ec30d7b0f3df38bc9de7204dec478fb86f8eb3f71543710790ee169dce039d3e0"),
+		URL:       strpoint("http://downloads.arduino.cc/tools/bossac-1.7.0-arduino3-linux64.tar.gz"),
+	}
+
+	for _, test := range tests {
+		t.Run("REMOVE payload containing evil names: "+test.fileName, func(t *testing.T) {
 			// Here we could inject malicious name also in the Packager and Version field.
 			// Since the path is made by joining all of these 3 fields, we're using only the Name,
 			// as it won't change the result and let us keep the test small and readable.
-			_, err := service.Remove(ctx, &tools.ToolPayload{Name: evilFileName})
-			require.Error(t, err, evilFileName)
-			require.ErrorContains(t, err, "unsafe path join")
-		}
-	})
+			_, err := service.Remove(ctx, &tools.ToolPayload{Name: test.fileName})
+			require.Error(t, err, test)
+			require.ErrorContains(t, err, test.errBody)
+		})
+	}
+	for _, test := range tests {
+		toolsTemplate.Name = test.fileName
+		t.Run("INSTALL payload containing evil names: "+toolsTemplate.Name, func(t *testing.T) {
+			// Here we could inject malicious name also in the Packager and Version field.
+			// Since the path is made by joining all of these 3 fields, we're using only the Name,
+			// as it won't change the result and let us keep the test small and readable.
+			_, err := service.Install(ctx, &toolsTemplate)
+			require.Error(t, err, test)
+			require.ErrorContains(t, err, test.errBody)
+		})
+	}
 }
 
 func strpoint(s string) *string {
