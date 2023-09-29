@@ -180,17 +180,14 @@ func loop() {
 	// Instantiate Index
 	Index = index.Init(*indexURL, config.GetDataDir())
 
-	// Instantiate Tools
-	Tools = tools.Tools{
-		Directory: config.GetDataDir().String(),
-		Index:     Index,
-		Logger: func(msg string) {
-			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
-			mapB, _ := json.Marshal(mapD)
-			h.broadcastSys <- mapB
-		},
+	logger := func(msg string) {
+		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 	}
-	Tools.Init()
+
+	// Instantiate Tools
+	Tools = *tools.New(config.GetDataDir(), Index, logger)
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()
