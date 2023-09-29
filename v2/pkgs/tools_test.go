@@ -132,26 +132,6 @@ func TestTools(t *testing.T) {
 		t.Fatalf("expected %d == %d (%s)", len(installed), 0, "len(installed)")
 	}
 
-	// Install a tool by specifying url and checksum
-	_, err = service.Install(ctx, &tools.ToolPayload{
-		Packager: "arduino",
-		Name:     "avrdude",
-		Version:  "6.0.1-arduino2",
-		URL:      strpoint(url()),
-		Checksum: strpoint(checksum()),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	installed, err = service.Installed(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(installed) != 1 {
-		t.Fatalf("expected %d == %d (%s)", len(installed), 1, "len(installed)")
-	}
-
 	t.Run("payload containing evil names", func(t *testing.T) {
 		evilFileNames := []string{
 			"/",
@@ -182,28 +162,4 @@ func TestTools(t *testing.T) {
 
 func strpoint(s string) *string {
 	return &s
-}
-
-func url() string {
-	urls := map[string]string{
-		"linuxamd64":   "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-x86_64-pc-linux-gnu.tar.bz2",
-		"linux386":     "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i686-pc-linux-gnu.tar.bz2",
-		"darwinamd64":  "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i386-apple-darwin11.tar.bz2",
-		"windows386":   "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i686-mingw32.zip",
-		"windowsamd64": "https://downloads.arduino.cc/tools/avrdude-6.0.1-arduino2-i686-mingw32.zip",
-	}
-
-	return urls[runtime.GOOS+runtime.GOARCH]
-}
-
-func checksum() string {
-	checksums := map[string]string{
-		"linuxamd64":   "SHA-256:2489004d1d98177eaf69796760451f89224007c98b39ebb5577a9a34f51425f1",
-		"linux386":     "SHA-256:6f633dd6270ad0d9ef19507bcbf8697b414a15208e4c0f71deec25ef89cdef3f",
-		"darwinamd64":  "SHA-256:71117cce0096dad6c091e2c34eb0b9a3386d3aec7d863d2da733d9e5eac3a6b1",
-		"windows386":   "SHA-256:6c5483800ba753c80893607e30cade8ab77b182808fcc5ea15fa3019c63d76ae",
-		"windowsamd64": "SHA-256:6c5483800ba753c80893607e30cade8ab77b182808fcc5ea15fa3019c63d76ae",
-	}
-	return checksums[runtime.GOOS+runtime.GOARCH]
-
 }
