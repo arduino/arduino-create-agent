@@ -191,15 +191,20 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	var buffer bytes.Buffer
 	reader := io.TeeReader(res.Body, &buffer)
 
+	safePath, err := utilities.SafeJoin(c.Folder, path)
+	if err != nil {
+		return nil, err
+	}
+
 	// Cleanup
-	err = os.RemoveAll(filepath.Join(c.Folder, path))
+	err = os.RemoveAll(safePath)
 	if err != nil {
 		return nil, err
 	}
 
 	err = extract.Archive(ctx, reader, c.Folder, rename(path))
 	if err != nil {
-		os.RemoveAll(path)
+		os.RemoveAll(safePath)
 		return nil, err
 	}
 
@@ -207,7 +212,7 @@ func (c *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	sumString := "SHA-256:" + hex.EncodeToString(sum[:sha256.Size])
 
 	if sumString != checksum {
-		os.RemoveAll(path)
+		os.RemoveAll(safePath)
 		return nil, errors.New("checksum doesn't match")
 	}
 
@@ -249,7 +254,11 @@ func writeInstalled(folder, path string) error {
 	// read installed.json
 	installed := map[string]string{}
 
-	data, err := os.ReadFile(filepath.Join(folder, "installed.json"))
+	installedFile, err := utilities.SafeJoin(folder, "installed.json")
+	if err != nil {
+		return err
+	}
+	data, err := os.ReadFile(installedFile)
 	if err == nil {
 		err = json.Unmarshal(data, &installed)
 		if err != nil {
@@ -260,13 +269,17 @@ func writeInstalled(folder, path string) error {
 	parts := strings.Split(path, string(filepath.Separator))
 	tool := parts[len(parts)-2]
 	toolWithVersion := fmt.Sprint(tool, "-", parts[len(parts)-1])
-	installed[tool] = filepath.Join(folder, path)
-	installed[toolWithVersion] = filepath.Join(folder, path)
+	toolFile, err := utilities.SafeJoin(folder, path)
+	if err != nil {
+		return err
+	}
+	installed[tool] = toolFile
+	installed[toolWithVersion] = toolFile
 
 	data, err = json.Marshal(installed)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(folder, "installed.json"), data, 0644)
+	return os.WriteFile(installedFile, data, 0644)
 }
