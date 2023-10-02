@@ -13,21 +13,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package tools
+package index
 
 import (
-	"os/exec"
+	"syscall"
 )
 
-func hideFile(path string) {
-
-}
-
-// TellCommandNotToSpawnShell will now spawn a shell
-func TellCommandNotToSpawnShell(_ *exec.Cmd) {
-}
-
-// MessageBox will open a dialog
-func MessageBox(title, text string) int {
-	return 6
+// hideFile will set the hidden attribute on the file
+func hideFile(path string) error {
+	filenameW, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		return err
+	}
+	err = syscall.SetFileAttributes(filenameW, syscall.FILE_ATTRIBUTE_HIDDEN)
+	if err != nil {
+		return err
+	}
+	return nil
 }

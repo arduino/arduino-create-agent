@@ -17,66 +17,89 @@ package tools
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
-	"os/user"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
+	"github.com/arduino/arduino-create-agent/index"
+	"github.com/arduino/go-paths-helper"
 	"github.com/xrash/smetrics"
 )
 
 // Tools handle the tools necessary for an upload on a board.
 // It provides a means to download a tool from the arduino servers.
 //
-// - *Directory* contains the location where the tools are downloaded.
-// - *IndexURL* contains the url where the tools description is contained.
-// - *Logger* is a StdLogger used for reporting debug and info messages
-// - *installed* contains a map of the tools and their exact location
+// - *directory* contains the location where the tools are downloaded.
+// - *indexURL* contains the url where the tools description is contained.
+// - *logger* is a StdLogger used for reporting debug and info messages
+// - *installed* contains a map[string]string of the tools installed and their exact location
 //
 // Usage:
-// You have to instantiate the struct by passing it the required parameters:
-//     _tools := tools.Tools{
-//         Directory: "/home/user/.arduino-create",
-//         IndexURL: "https://downloads.arduino.cc/packages/package_index.json"
-//         Logger: log.Logger
-//     }
+// You have to call the New() function passing it the required parameters:
+//
+// 	index = index.Init("https://downloads.arduino.cc/packages/package_staging_index.json", dataDir)
+// 	tools := tools.New(dataDir, index, logger)
 
 // Tools will represent the installed tools
 type Tools struct {
-	Directory   string
-	IndexURL    string
-	LastRefresh time.Time
-	Logger      func(msg string)
-	installed   map[string]string
-	mutex       sync.RWMutex
+	directory *paths.Path
+	index     *index.Resource
+	logger    func(msg string)
+	installed map[string]string
+	mutex     sync.RWMutex
 }
 
-// Init creates the Installed map and populates it from a file in .arduino-create
-func (t *Tools) Init(APIlevel string) {
-	createDir(t.Directory)
-	t.mutex.Lock()
-	t.installed = make(map[string]string)
-	t.mutex.Unlock()
-	t.readMap()
-	t.mutex.RLock()
-	if t.installed["apilevel"] != APIlevel {
-		t.mutex.RUnlock()
-		// wipe the folder and reinitialize the data
-		os.RemoveAll(t.Directory)
-		createDir(t.Directory)
-		t.mutex.Lock()
-		t.installed = make(map[string]string)
-		t.installed["apilevel"] = APIlevel
-		t.mutex.Unlock()
-		t.writeMap()
-		t.readMap()
-	} else {
-		t.mutex.RUnlock()
+// New will return a Tool object, allowing the caller to execute operations on it.
+// The New functions accept the directory to use to host the tools,
+// an index (used to download the tools),
+// and a logger to log the operations
+func New(directory *paths.Path, index *index.Resource, logger func(msg string)) *Tools {
+	t := &Tools{
+		directory: directory,
+		index:     index,
+		logger:    logger,
+		installed: map[string]string{},
+		mutex:     sync.RWMutex{},
 	}
+	_ = t.readMap()
+	return t
+}
+
+func (t *Tools) setMapValue(key, value string) {
+	t.mutex.Lock()
+	t.installed[key] = value
+	t.mutex.Unlock()
+}
+
+func (t *Tools) getMapValue(key string) (string, bool) {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	value, ok := t.installed[key]
+	return value, ok
+}
+
+// writeMap() writes installed map to the json file "installed.json"
+func (t *Tools) writeMap() error {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	b, err := json.Marshal(t.installed)
+	if err != nil {
+		return err
+	}
+	filePath := t.directory.Join("installed.json")
+	return filePath.WriteFile(b)
+}
+
+// readMap() reads the installed map from json file "installed.json"
+func (t *Tools) readMap() error {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	filePath := t.directory.Join("installed.json")
+	b, err := filePath.ReadFile()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, &t.installed)
 }
 
 // GetLocation extracts the toolname from a command like
@@ -88,22 +111,16 @@ func (t *Tools) GetLocation(command string) (string, error) {
 	var ok bool
 
 	// Load installed
-	t.mutex.RLock()
-	fmt.Println(t.installed)
-	t.mutex.RUnlock()
-
 	err := t.readMap()
 	if err != nil {
 		return "", err
 	}
 
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-	fmt.Println(t.installed)
-
 	// use string similarity to resolve a runtime var with a "similar" map element
-	if location, ok = t.installed[command]; !ok {
+	if location, ok = t.getMapValue(command); !ok {
 		maxSimilarity := 0.0
+		t.mutex.RLock()
+		defer t.mutex.RUnlock()
 		for i, candidate := range t.installed {
 			similarity := smetrics.Jaro(command, i)
 			if similarity > 0.8 && similarity > maxSimilarity {
@@ -113,39 +130,4 @@ func (t *Tools) GetLocation(command string) (string, error) {
 		}
 	}
 	return filepath.ToSlash(location), nil
-}
-
-// writeMap() writes installed map to the json file "installed.json"
-func (t *Tools) writeMap() error {
-	t.mutex.Lock()
-	b, err := json.Marshal(t.installed)
-	defer t.mutex.Unlock()
-	if err != nil {
-		return err
-	}
-	filePath := path.Join(dir(), "installed.json")
-	return os.WriteFile(filePath, b, 0644)
-}
-
-// readMap() reads the installed map from json file "installed.json"
-func (t *Tools) readMap() error {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
-	filePath := path.Join(dir(), "installed.json")
-	b, err := os.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, &t.installed)
-}
-
-func dir() string {
-	usr, _ := user.Current()
-	return path.Join(usr.HomeDir, ".arduino-create")
-}
-
-// createDir creates the directory where the tools will be stored
-func createDir(directory string) {
-	os.Mkdir(directory, 0777)
-	hideFile(directory)
 }

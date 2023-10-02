@@ -36,6 +36,7 @@ import (
 	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/globals"
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
@@ -48,11 +49,10 @@ import (
 )
 
 var (
-	version               = "x.x.x-dev" //don't modify it, Jenkins will take care
-	commit                = "xxxxxxxx"  //don't modify it, Jenkins will take care
-	port                  string
-	portSSL               string
-	requiredToolsAPILevel = "v1"
+	version = "x.x.x-dev" //don't modify it, Jenkins will take care
+	commit  = "xxxxxxxx"  //don't modify it, Jenkins will take care
+	port    string
+	portSSL string
 )
 
 // regular flags
@@ -99,6 +99,7 @@ var homeTemplateHTML string
 var (
 	Tools   tools.Tools
 	Systray systray.Systray
+	Index   *index.Resource
 )
 
 type logWriter struct{}
@@ -176,17 +177,17 @@ func loop() {
 		os.Exit(0)
 	}
 
-	// Instantiate Tools
-	Tools = tools.Tools{
-		Directory: config.GetDataDir().String(),
-		IndexURL:  *indexURL,
-		Logger: func(msg string) {
-			mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
-			mapB, _ := json.Marshal(mapD)
-			h.broadcastSys <- mapB
-		},
+	// Instantiate Index
+	Index = index.Init(*indexURL, config.GetDataDir())
+
+	logger := func(msg string) {
+		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+		mapB, _ := json.Marshal(mapD)
+		h.broadcastSys <- mapB
 	}
-	Tools.Init(requiredToolsAPILevel)
+
+	// Instantiate Tools
+	Tools = *tools.New(config.GetDataDir(), Index, logger)
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()
@@ -397,7 +398,7 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(config.GetDataDir().String())
+	goa := v2.Server(config.GetDataDir().String(), Index)
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
