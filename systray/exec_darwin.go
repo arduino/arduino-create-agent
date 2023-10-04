@@ -48,6 +48,7 @@ import "C"
 import (
 	"os/exec"
 	"path/filepath"
+	"unsafe"
 
 	"github.com/sirupsen/logrus"
 )
@@ -67,7 +68,9 @@ func execApp(path string, args ...string) error {
 		C.setCharArray(argv, C.int(i), C.CString(arg))
 	}
 
-	C.runApplication(C.CString(path), argv, argc)
+	cpath := C.CString(path)
+	defer C.free(unsafe.Pointer(cpath))
+	C.runApplication(cpath, argv, argc)
 
 	C.freeCharArray(argv, argc)
 	return nil
