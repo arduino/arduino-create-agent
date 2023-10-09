@@ -185,6 +185,22 @@ func TestEvilFilename(t *testing.T) {
 	}
 }
 
+func TestInstalledHead(t *testing.T) {
+	// Initialize indexes with a temp folder
+	tmp := t.TempDir()
+
+	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	// Instantiate Index
+	Index := index.Init(indexURL, config.GetDataDir())
+
+	service := pkgs.New(Index, tmp)
+
+	ctx := context.Background()
+
+	err := service.Installedhead(ctx)
+	require.NoError(t, err)
+}
+
 func strpoint(s string) *string {
 	return &s
 }
