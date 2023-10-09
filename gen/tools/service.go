@@ -18,6 +18,8 @@ import (
 type Service interface {
 	// Available implements available.
 	Available(context.Context) (res ToolCollection, err error)
+	// Installedhead implements installedhead.
+	Installedhead(context.Context) (err error)
 	// Installed implements installed.
 	Installed(context.Context) (res ToolCollection, err error)
 	// Install implements install.
@@ -34,7 +36,7 @@ const ServiceName = "tools"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [4]string{"available", "installed", "install", "remove"}
+var MethodNames = [5]string{"available", "installedhead", "installed", "install", "remove"}
 
 // Operation is the result type of the tools service install method.
 type Operation struct {

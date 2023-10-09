@@ -15,19 +15,21 @@ import (
 
 // Client is the "tools" service client.
 type Client struct {
-	AvailableEndpoint goa.Endpoint
-	InstalledEndpoint goa.Endpoint
-	InstallEndpoint   goa.Endpoint
-	RemoveEndpoint    goa.Endpoint
+	AvailableEndpoint     goa.Endpoint
+	InstalledheadEndpoint goa.Endpoint
+	InstalledEndpoint     goa.Endpoint
+	InstallEndpoint       goa.Endpoint
+	RemoveEndpoint        goa.Endpoint
 }
 
 // NewClient initializes a "tools" service client given the endpoints.
-func NewClient(available, installed, install, remove goa.Endpoint) *Client {
+func NewClient(available, installedhead, installed, install, remove goa.Endpoint) *Client {
 	return &Client{
-		AvailableEndpoint: available,
-		InstalledEndpoint: installed,
-		InstallEndpoint:   install,
-		RemoveEndpoint:    remove,
+		AvailableEndpoint:     available,
+		InstalledheadEndpoint: installedhead,
+		InstalledEndpoint:     installed,
+		InstallEndpoint:       install,
+		RemoveEndpoint:        remove,
 	}
 }
 
@@ -39,6 +41,12 @@ func (c *Client) Available(ctx context.Context) (res ToolCollection, err error) 
 		return
 	}
 	return ires.(ToolCollection), nil
+}
+
+// Installedhead calls the "installedhead" endpoint of the "tools" service.
+func (c *Client) Installedhead(ctx context.Context) (err error) {
+	_, err = c.InstalledheadEndpoint(ctx, nil)
+	return
 }
 
 // Installed calls the "installed" endpoint of the "tools" service.

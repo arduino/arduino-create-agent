@@ -16,6 +16,11 @@ func AvailableToolsPath() string {
 	return "/v2/pkgs/tools/available"
 }
 
+// InstalledheadToolsPath returns the URL path to the tools service installedhead HTTP endpoint.
+func InstalledheadToolsPath() string {
+	return "/v2/pkgs/tools/installed"
+}
+
 // InstalledToolsPath returns the URL path to the tools service installed HTTP endpoint.
 func InstalledToolsPath() string {
 	return "/v2/pkgs/tools/installed"

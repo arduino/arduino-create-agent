@@ -15,25 +15,28 @@ import (
 
 // Endpoints wraps the "tools" service endpoints.
 type Endpoints struct {
-	Available goa.Endpoint
-	Installed goa.Endpoint
-	Install   goa.Endpoint
-	Remove    goa.Endpoint
+	Available     goa.Endpoint
+	Installedhead goa.Endpoint
+	Installed     goa.Endpoint
+	Install       goa.Endpoint
+	Remove        goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "tools" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		Available: NewAvailableEndpoint(s),
-		Installed: NewInstalledEndpoint(s),
-		Install:   NewInstallEndpoint(s),
-		Remove:    NewRemoveEndpoint(s),
+		Available:     NewAvailableEndpoint(s),
+		Installedhead: NewInstalledheadEndpoint(s),
+		Installed:     NewInstalledEndpoint(s),
+		Install:       NewInstallEndpoint(s),
+		Remove:        NewRemoveEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "tools" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Available = m(e.Available)
+	e.Installedhead = m(e.Installedhead)
 	e.Installed = m(e.Installed)
 	e.Install = m(e.Install)
 	e.Remove = m(e.Remove)
@@ -49,6 +52,14 @@ func NewAvailableEndpoint(s Service) goa.Endpoint {
 		}
 		vres := NewViewedToolCollection(res, "default")
 		return vres, nil
+	}
+}
+
+// NewInstalledheadEndpoint returns an endpoint function that calls the method
+// "installedhead" of service "tools".
+func NewInstalledheadEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		return nil, s.Installedhead(ctx)
 	}
 }
 

@@ -53,6 +53,14 @@ paths:
                                 - name: bossac
                                   packager: arduino
                                   version: 1.7.0-arduino3
+        head:
+            tags:
+                - tools
+            summary: installedhead tools
+            operationId: tools#installedhead
+            responses:
+                "200":
+                    description: OK response.
         post:
             tags:
                 - tools
