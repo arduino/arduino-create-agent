@@ -24,7 +24,7 @@ require (
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
 	go.bug.st/serial v1.6.1
 	goa.design/goa/v3 v3.13.1
-	golang.org/x/sys v0.12.0
+	golang.org/x/sys v0.13.0
 	gopkg.in/inconshreveable/go-update.v0 v0.0.0-20150814200126-d8b0b1d421aa
 )
 
@@ -80,7 +80,7 @@ require (
 	github.com/ugorji/go v1.1.6 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
