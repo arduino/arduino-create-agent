@@ -43,7 +43,7 @@ def agent(pytestconfig):
         
         # we give some time to the agent to start and listen to
         # incoming requests
-        time.sleep(.5)
+        time.sleep(1)
 
         # we block here until the test function using this fixture has returned
         yield runner
