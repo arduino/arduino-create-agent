@@ -76,6 +76,48 @@ func DecodeAvailableResponse(decoder func(*http.Response) goahttp.Decoder, resto
 	}
 }
 
+// BuildInstalledheadRequest instantiates a HTTP request object with method and
+// path set to call the "tools" service "installedhead" endpoint
+func (c *Client) BuildInstalledheadRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: InstalledheadToolsPath()}
+	req, err := http.NewRequest("HEAD", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tools", "installedhead", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeInstalledheadResponse returns a decoder for responses returned by the
+// tools installedhead endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeInstalledheadResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tools", "installedhead", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildInstalledRequest instantiates a HTTP request object with method and
 // path set to call the "tools" service "installed" endpoint
 func (c *Client) BuildInstalledRequest(ctx context.Context, v any) (*http.Request, error) {

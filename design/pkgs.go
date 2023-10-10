@@ -28,6 +28,13 @@ var _ = Service("tools", func() {
 		})
 	})
 
+	Method("installedhead", func() {
+		HTTP(func() {
+			HEAD("/pkgs/tools/installed")
+			Response(StatusOK)
+		})
+	})
+
 	Method("installed", func() {
 		Result(CollectionOf(Tool))
 		HTTP(func() {

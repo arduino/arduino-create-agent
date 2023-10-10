@@ -168,3 +168,19 @@ func TestInstallToolV2(t *testing.T) {
 		})
 	}
 }
+
+func TestInstalledHead(t *testing.T) {
+	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	// Instantiate Index
+	Index := index.Init(indexURL, config.GetDataDir())
+
+	r := gin.New()
+	goa := v2.Server(config.GetDataDir().String(), Index)
+	r.Any("/v2/*path", gin.WrapH(goa))
+	ts := httptest.NewServer(r)
+
+	resp, err := http.Head(ts.URL + "/v2/pkgs/tools/installed")
+	require.NoError(t, err)
+	require.NotEqual(t, resp.StatusCode, http.StatusMethodNotAllowed)
+	require.Equal(t, resp.StatusCode, http.StatusOK)
+}

@@ -64,6 +64,14 @@ func New(index *index.Resource, folder string) *Tools {
 	}
 }
 
+// Installedhead is here only because it was required by the front-end.
+// Probably when we bumped GOA something changed:
+// Before that the frontend was able to perform the HEAD request to `v2/pkgs/tools/installed`.
+// After the bump we have to implement it explicitly. Currently I do not know a better way in achieving the same result.
+func (t *Tools) Installedhead(ctx context.Context) (err error) {
+	return nil
+}
+
 // Available crawles the downloaded package index files and returns a list of tools that can be installed.
 func (t *Tools) Available(ctx context.Context) (res tools.ToolCollection, err error) {
 	body, err := t.index.Read()

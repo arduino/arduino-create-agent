@@ -61,6 +61,16 @@ paths:
                         $ref: '#/definitions/ToolsInstallResponseBody'
             schemes:
                 - http
+        head:
+            tags:
+                - tools
+            summary: installedhead tools
+            operationId: tools#installedhead
+            responses:
+                "200":
+                    description: OK response.
+            schemes:
+                - http
     /pkgs/tools/installed/{packager}/{name}/{version}:
         delete:
             tags:

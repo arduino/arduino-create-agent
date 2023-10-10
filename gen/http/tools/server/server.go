@@ -18,11 +18,12 @@ import (
 
 // Server lists the tools service endpoint HTTP handlers.
 type Server struct {
-	Mounts    []*MountPoint
-	Available http.Handler
-	Installed http.Handler
-	Install   http.Handler
-	Remove    http.Handler
+	Mounts        []*MountPoint
+	Available     http.Handler
+	Installedhead http.Handler
+	Installed     http.Handler
+	Install       http.Handler
+	Remove        http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -53,14 +54,16 @@ func New(
 	return &Server{
 		Mounts: []*MountPoint{
 			{"Available", "GET", "/v2/pkgs/tools/available"},
+			{"Installedhead", "HEAD", "/v2/pkgs/tools/installed"},
 			{"Installed", "GET", "/v2/pkgs/tools/installed"},
 			{"Install", "POST", "/v2/pkgs/tools/installed"},
 			{"Remove", "DELETE", "/v2/pkgs/tools/installed/{packager}/{name}/{version}"},
 		},
-		Available: NewAvailableHandler(e.Available, mux, decoder, encoder, errhandler, formatter),
-		Installed: NewInstalledHandler(e.Installed, mux, decoder, encoder, errhandler, formatter),
-		Install:   NewInstallHandler(e.Install, mux, decoder, encoder, errhandler, formatter),
-		Remove:    NewRemoveHandler(e.Remove, mux, decoder, encoder, errhandler, formatter),
+		Available:     NewAvailableHandler(e.Available, mux, decoder, encoder, errhandler, formatter),
+		Installedhead: NewInstalledheadHandler(e.Installedhead, mux, decoder, encoder, errhandler, formatter),
+		Installed:     NewInstalledHandler(e.Installed, mux, decoder, encoder, errhandler, formatter),
+		Install:       NewInstallHandler(e.Install, mux, decoder, encoder, errhandler, formatter),
+		Remove:        NewRemoveHandler(e.Remove, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -70,6 +73,7 @@ func (s *Server) Service() string { return "tools" }
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Available = m(s.Available)
+	s.Installedhead = m(s.Installedhead)
 	s.Installed = m(s.Installed)
 	s.Install = m(s.Install)
 	s.Remove = m(s.Remove)
@@ -81,6 +85,7 @@ func (s *Server) MethodNames() []string { return tools.MethodNames[:] }
 // Mount configures the mux to serve the tools endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
 	MountAvailableHandler(mux, h.Available)
+	MountInstalledheadHandler(mux, h.Installedhead)
 	MountInstalledHandler(mux, h.Installed)
 	MountInstallHandler(mux, h.Install)
 	MountRemoveHandler(mux, h.Remove)
@@ -120,6 +125,50 @@ func NewAvailableHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "available")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "tools")
+		var err error
+		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountInstalledheadHandler configures the mux to serve the "tools" service
+// "installedhead" endpoint.
+func MountInstalledheadHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("HEAD", "/v2/pkgs/tools/installed", f)
+}
+
+// NewInstalledheadHandler creates a HTTP handler which loads the HTTP request
+// and calls the "tools" service "installedhead" endpoint.
+func NewInstalledheadHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		encodeResponse = EncodeInstalledheadResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "installedhead")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "tools")
 		var err error
 		res, err := endpoint(ctx, nil)

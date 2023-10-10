@@ -22,7 +22,7 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `tools (available|installed|install|remove)
+	return `tools (available|installedhead|installed|install|remove)
 `
 }
 
@@ -46,6 +46,8 @@ func ParseEndpoint(
 
 		toolsAvailableFlags = flag.NewFlagSet("available", flag.ExitOnError)
 
+		toolsInstalledheadFlags = flag.NewFlagSet("installedhead", flag.ExitOnError)
+
 		toolsInstalledFlags = flag.NewFlagSet("installed", flag.ExitOnError)
 
 		toolsInstallFlags    = flag.NewFlagSet("install", flag.ExitOnError)
@@ -59,6 +61,7 @@ func ParseEndpoint(
 	)
 	toolsFlags.Usage = toolsUsage
 	toolsAvailableFlags.Usage = toolsAvailableUsage
+	toolsInstalledheadFlags.Usage = toolsInstalledheadUsage
 	toolsInstalledFlags.Usage = toolsInstalledUsage
 	toolsInstallFlags.Usage = toolsInstallUsage
 	toolsRemoveFlags.Usage = toolsRemoveUsage
@@ -100,6 +103,9 @@ func ParseEndpoint(
 			case "available":
 				epf = toolsAvailableFlags
 
+			case "installedhead":
+				epf = toolsInstalledheadFlags
+
 			case "installed":
 				epf = toolsInstalledFlags
 
@@ -137,6 +143,9 @@ func ParseEndpoint(
 			case "available":
 				endpoint = c.Available()
 				data = nil
+			case "installedhead":
+				endpoint = c.Installedhead()
+				data = nil
 			case "installed":
 				endpoint = c.Installed()
 				data = nil
@@ -164,6 +173,7 @@ Usage:
 
 COMMAND:
     available: Available implements available.
+    installedhead: Installedhead implements installedhead.
     installed: Installed implements installed.
     install: Install implements install.
     remove: Remove implements remove.
@@ -179,6 +189,16 @@ Available implements available.
 
 Example:
     %[1]s tools available
+`, os.Args[0])
+}
+
+func toolsInstalledheadUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tools installedhead
+
+Installedhead implements installedhead.
+
+Example:
+    %[1]s tools installedhead
 `, os.Args[0])
 }
 

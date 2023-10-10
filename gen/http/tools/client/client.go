@@ -21,6 +21,10 @@ type Client struct {
 	// endpoint.
 	AvailableDoer goahttp.Doer
 
+	// Installedhead Doer is the HTTP client used to make requests to the
+	// installedhead endpoint.
+	InstalledheadDoer goahttp.Doer
+
 	// Installed Doer is the HTTP client used to make requests to the installed
 	// endpoint.
 	InstalledDoer goahttp.Doer
@@ -53,6 +57,7 @@ func NewClient(
 ) *Client {
 	return &Client{
 		AvailableDoer:       doer,
+		InstalledheadDoer:   doer,
 		InstalledDoer:       doer,
 		InstallDoer:         doer,
 		RemoveDoer:          doer,
@@ -78,6 +83,25 @@ func (c *Client) Available() goa.Endpoint {
 		resp, err := c.AvailableDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("tools", "available", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Installedhead returns an endpoint that makes HTTP requests to the tools
+// service installedhead server.
+func (c *Client) Installedhead() goa.Endpoint {
+	var (
+		decodeResponse = DecodeInstalledheadResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildInstalledheadRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.InstalledheadDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tools", "installedhead", err)
 		}
 		return decodeResponse(resp)
 	}
