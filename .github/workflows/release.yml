@@ -394,7 +394,11 @@ jobs:
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
       - name: Launch Bitrock installbuilder
         run: |
-          ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.platform-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
+          if [[ ${{matrix.platform-name}} == "linux" ]]; then
+            ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.platform-name }}-x64 --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
+          else
+            ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.platform-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
+          fi
 
       - name: Generate archive
         run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
