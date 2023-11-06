@@ -315,7 +315,6 @@ jobs:
           notarize {
             path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
             bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
-            staple = true
           }
 
           EOF
