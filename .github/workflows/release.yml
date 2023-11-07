@@ -295,7 +295,7 @@ jobs:
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
       - name: Zip output app bundle
-        run: ditto -c -k --keepParent ArduinoCreateAgent.app/ ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+        run: ditto -c -k ArduinoCreateAgent.app/ ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Remove gon used for code signing
         run: |
@@ -455,10 +455,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
+          path: ArduinoCreateAgent.app
 
       - name: unzip artifact
+        working-directory: ArduinoCreateAgent.app
         run: |
           unzip ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+          rm ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Install create-dmg
         run: brew install create-dmg
