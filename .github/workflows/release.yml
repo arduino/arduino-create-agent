@@ -295,7 +295,7 @@ jobs:
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
       - name: Zip output app bundle
-        run: ditto -c -k --keepParent ArduinoCreateAgent.app/ ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+        run: ditto -c -k ArduinoCreateAgent.app/ ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Remove gon used for code signing
         run: |
