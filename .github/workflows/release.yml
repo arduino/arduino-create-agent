@@ -20,6 +20,7 @@ env:
   INSTALLER_CERT_MAC_PATH: "/tmp/ArduinoCerts2020.p12"
   AC_USERNAME: ${{ secrets.AC_USERNAME }} # used by gon
   AC_PASSWORD: ${{ secrets.AC_PASSWORD }} # used by gon
+  AC_PROVIDER: ${{ secrets.AC_PROVIDER }} # used by gon
   # See: https://github.com/actions/setup-go/tree/v3#readme
   GO_VERSION: "1.20"
 
@@ -261,7 +262,7 @@ jobs:
             -k "${{ env.KEYCHAIN_PASSWORD }}" \
             "${{ env.KEYCHAIN }}"
 
-      - name: Install gon for code signing and app notarization
+      - name: Install gon for code signing
         uses: actions/checkout@v4
         with:
           repository: darkvertex/gon #this fork has support for --deep notarization
@@ -288,15 +289,39 @@ jobs:
             deep = true
           }
 
-          # Ask Gon for zip output to force notarization process to take place.
-          # The CI will upload the zip output
-          zip {
-            output_path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
-          }
           EOF
 
-      - name: Sign and notarize binary
+      - name: Sign app bundle
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
+
+      - name: Zip output app bundle
+        run: ditto -c -k --keepParent ArduinoCreateAgent.app/ ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+
+      - name: Remove gon used for code signing
+        run: |
+          rm /usr/local/bin/gon
+          rm ${{ env.GON_CONFIG_PATH }}
+
+      - name: Install gon for app notarization
+        run: |
+          wget -q https://github.com/Bearer/gon/releases/download/v0.0.27/gon_macos.zip
+          unzip gon_macos.zip -d /usr/local/bin
+  
+      - name: Write gon config to file
+        run: |
+          cat > "${{ env.GON_CONFIG_PATH }}" <<EOF
+          # See: https://github.com/Bearer/gon#configuration-file
+
+          notarize {
+            path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
+            bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
+          }
+
+          EOF
+  
+      - name: Notarize app bundle
+        run: |
+          gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
       - name: Upload autoupdate bundle to Arduino downloads servers
         run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
@@ -430,13 +455,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
-          path: ArduinoCreateAgent.app
 
       - name: unzip artifact
-        working-directory: ArduinoCreateAgent.app
         run: |
           unzip ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
-          rm ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Install create-dmg
         run: brew install create-dmg
@@ -475,7 +497,7 @@ jobs:
 
       - name: Install gon for code signing and app notarization
         run: |
-          wget -q https://github.com/mitchellh/gon/releases/download/v0.2.5/gon_macos.zip
+          wget -q https://github.com/Bearer/gon/releases/download/v0.0.27/gon_macos.zip
           unzip gon_macos.zip -d /usr/local/bin
 
       - name: Write gon config to file
@@ -490,17 +512,13 @@ jobs:
           }
 
           # Ask Gon for zip output to force notarization process to take place.
-          # The CI will not upload the zip output
           zip {
             output_path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
           }
           EOF
 
       - name: Code sign and notarize app
-        run: |
-          echo "gon will notarize executable in ArduinoCreateAgent-osx/ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"
-          gon -log-level=debug -log-json gon.config_installer.hcl
-        timeout-minutes: 30
+        run: gon -log-level=debug -log-json gon.config_installer.hcl
 
       #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
