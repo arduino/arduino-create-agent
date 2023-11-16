@@ -370,14 +370,17 @@ jobs:
         include:
           - os: ubuntu-20.04
             platform-name: linux
+            installbuilder-name: linux-x64
             installer-extension: .run
           - os: windows-2019
             arch: 386
             platform-name: windows
+            installbuilder-name: windows
             extension: .exe
             installer-extension: .exe
           - os: windows-2019
             platform-name: windows
+            installbuilder-name: windows
             extension: .exe
             installer-extension: .exe
 
@@ -418,12 +421,7 @@ jobs:
 
         # installbuilder reads the env vars with certs paths and use it to sign the installer.
       - name: Launch Bitrock installbuilder
-        run: |
-          if [[ ${{matrix.platform-name}} == "linux" ]]; then
-            ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.platform-name }}-x64 --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
-          else
-            ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.platform-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
-          fi
+        run: ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.installbuilder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
 
       - name: Generate archive
         run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
