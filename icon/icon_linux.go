@@ -1,5 +1,3 @@
-//go:build windows
-
 package icon
 
 import _ "embed" // import embed to embed the icon
@@ -16,10 +14,10 @@ func GetIconHiber() []byte {
 
 // data represents the icon
 //
-//go:embed icon_win.ico
+//go:embed icon_linux.png
 var data []byte
 
 // dataHibernate represents the icon hibernated
 //
-//go:embed icon_win_hiber.ico
+//go:embed icon_linux_hiber.png
 var dataHibernate []byte

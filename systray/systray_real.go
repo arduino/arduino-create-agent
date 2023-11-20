@@ -50,7 +50,7 @@ func (s *Systray) Quit() {
 
 // start creates a systray icon with menu options to go to arduino create, open debug, pause/quit the agent
 func (s *Systray) start() {
-	systray.SetIcon(icon.GetIcon())
+	systray.SetTemplateIcon(icon.GetIcon(), icon.GetIcon())
 
 	// Add version
 	menuVer := systray.AddMenuItem("Agent version "+s.Version, "")
@@ -136,7 +136,7 @@ func RemoveCrashes() {
 
 // starthibernate creates a systray icon with menu options to resume/quit the agent
 func (s *Systray) startHibernate() {
-	systray.SetIcon(icon.GetIconHiber())
+	systray.SetTemplateIcon(icon.GetIconHiber(), icon.GetIconHiber())
 
 	mResume := systray.AddMenuItem("Resume Agent", "")
 	systray.AddSeparator()
