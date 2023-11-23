@@ -320,7 +320,7 @@ func loop() {
 	}
 
 	if !*verbose {
-		log.Println("You can enter verbose mode to see all logging by starting with the -v command line switch.")
+		log.Println("You can enter verbose mode to see all logging by setting the v key in the configuration file to true.")
 		log.SetOutput(io.Discard)
 	}
 
