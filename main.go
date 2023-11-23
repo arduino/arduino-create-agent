@@ -22,6 +22,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"flag"
+	"html/template"
 	"io"
 	"os"
 	"os/exec"
@@ -29,7 +30,6 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	cors "github.com/andela/gin-cors"
