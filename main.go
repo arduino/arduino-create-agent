@@ -386,8 +386,6 @@ func loop() {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.GET("/certificate.crt", cert.CertHandler)
-	r.DELETE("/certificate.crt", cert.DeleteCertHandler)
 	r.POST("/upload", uploadHandler)
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
