@@ -44,7 +44,7 @@
                 if (messages.length > MESSAGES_MAX_COUNT) {
                     messages.shift();
                 }
-                log.innerHTML = messages.join('<br><br>');
+                log.textContent = messages.join('<br><br>');
                 if (autoscroll.checked) {
                     log.scrollTop = log.scrollHeight - log.clientHeight;
                 }
