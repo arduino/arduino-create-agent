@@ -6,8 +6,8 @@ github.com/andela/gin-cors v0.0.0-20160928171741-e8c3436a37e2 h1:CEix/eilscZqWgZ
 github.com/andela/gin-cors v0.0.0-20160928171741-e8c3436a37e2/go.mod h1:qLg54VlozD6sRu86y3SzM1iybe6G2eaoZGKuGdxSsdc=
 github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e h1:gmlrLhRuuIY/hw9EvvLCUvMDXMFZBtIVW29tMYGchkw=
 github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e/go.mod h1:2E4tNTNWuf4CtG/pF/Y+fRO6JXxVEcbDDStjZYtMK2c=
-github.com/arduino/go-paths-helper v1.9.2 h1:omR8DPTL4nbUCWfGey5D+e3WvWfA2zEgoM6ZBRNt7ls=
-github.com/arduino/go-paths-helper v1.9.2/go.mod h1:V82BWgAAp4IbmlybxQdk9Bpkz8M4Qyx+RAFKaG9NuvU=
+github.com/arduino/go-paths-helper v1.10.0 h1:oeE6Mcl4lsz+knC3lzaCWkRQa3n3FbwdRSeGhy6uGbM=
+github.com/arduino/go-paths-helper v1.10.0/go.mod h1:LgEVnv+cqSl05vXD5LaUZGquDsX5OKmPNDJtjTL8928=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
