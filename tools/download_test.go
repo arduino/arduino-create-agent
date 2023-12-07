@@ -17,7 +17,6 @@ package tools
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -91,34 +90,6 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 			require.Equal(t, correctTool.Name, "arduino-fwuploader")
 			require.Equal(t, correctTool.Version, "2.2.0")
 			require.Equal(t, correctSystem.Host, tc.correctOSArch)
-		})
-	}
-}
-
-func Test_findBaseDir(t *testing.T) {
-	cases := []struct {
-		dirList []string
-		want    string
-	}{
-		{[]string{"bin/bossac"}, "bin/"},
-		{[]string{"bin/", "bin/bossac"}, "bin/"},
-		{[]string{"bin/", "bin/bossac", "example"}, ""},
-		{[]string{"avrdude/bin/",
-			"avrdude/bin/avrdude.exe",
-			"avrdude/bin/remove_giveio.bat",
-			"avrdude/bin/status_giveio.bat",
-			"avrdude/bin/giveio.sys",
-			"avrdude/bin/loaddrv.exe",
-			"avrdude/bin/libusb0.dll",
-			"avrdude/bin/install_giveio.bat",
-			"avrdude/etc/avrdude.conf"}, "avrdude/"},
-		{[]string{"pax_global_header", "bin/", "bin/bossac"}, "bin/"},
-	}
-	for _, tt := range cases {
-		t.Run(fmt.Sprintln(tt.dirList), func(t *testing.T) {
-			if got := findBaseDir(tt.dirList); got != tt.want {
-				t.Errorf("findBaseDir() = got %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
