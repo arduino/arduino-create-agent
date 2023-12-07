@@ -18,15 +18,12 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"path"
 	"testing"
+	"time"
 
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/arduino/go-paths-helper"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -126,71 +123,43 @@ func Test_findBaseDir(t *testing.T) {
 	}
 }
 
-func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
-	urls := []string{
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-armhf-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-aarch64-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i386-apple-darwin11.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-x86_64-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-w64-mingw32.zip",
+func TestDownload(t *testing.T) {
+	testCases := []struct {
+		name    string
+		version string
+	}{
+		{"avrdude", "6.3.0-arduino17"},
+		{"bossac", "1.6.1-arduino"},
+		{"bossac", "1.7.0-arduino3"},
+		{"bossac", "1.9.1-arduino2"},
+		{"openocd", "0.11.0-arduino2"},
+		{"dfu-util", "0.10.0-arduino1"},
+		{"rp2040tools", "1.0.6"},
+		{"esptool_py", "4.5.1"},
+		{"arduino-fwuploader", "2.2.2"},
 	}
-	expectedDirList := []string{"bin", "etc"}
-
-	tmpDir, err := os.MkdirTemp("", "download_test")
-	if err != nil {
-		t.Fatal(err)
+	// prepare the test environment
+	tempDir := t.TempDir()
+	tempDirPath := paths.New(tempDir)
+	testIndex := index.Resource{
+		IndexFile:   *paths.New("testdata", "test_tool_index.json"),
+		LastRefresh: time.Now(),
 	}
-	defer os.RemoveAll(tmpDir)
+	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) })
 
-	for _, url := range urls {
-		t.Log("Downloading tool from " + url)
-		resp, err := http.Get(url)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-		defer resp.Body.Close()
+	for _, tc := range testCases {
+		t.Run(tc.name+"-"+tc.version, func(t *testing.T) {
+			// Download the tool
+			err := testTools.Download("arduino-test", tc.name, tc.version, "replace")
+			require.NoError(t, err)
 
-		// Read the body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
+			// Check that the tool has been downloaded
+			toolDir := tempDirPath.Join("arduino-test", tc.name, tc.version)
+			require.DirExists(t, toolDir.String())
 
-		location := path.Join(tmpDir, "username", "arduino", "avrdude", "6.3.0-arduino14")
-		os.MkdirAll(location, os.ModePerm)
-		err = os.RemoveAll(location)
-
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-
-		srcType, err := mimeType(body)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-
-		switch srcType {
-		case "application/zip":
-			location, err = extractZip(func(msg string) { t.Log(msg) }, body, location)
-		case "application/x-bz2":
-		case "application/octet-stream":
-			location, err = extractBz2(func(msg string) { t.Log(msg) }, body, location)
-		case "application/x-gzip":
-			location, err = extractTarGz(func(msg string) { t.Log(msg) }, body, location)
-		default:
-			t.Errorf("no suitable type found")
-		}
-		files, err := os.ReadDir(location)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-		dirList := []string{}
-		for _, f := range files {
-			dirList = append(dirList, f.Name())
-		}
-
-		assert.ElementsMatchf(t, dirList, expectedDirList, "error message %s", "formatted")
+			// Check that the tool has been installed
+			_, ok := testTools.getMapValue(tc.name + "-" + tc.version)
+			require.True(t, ok)
+		})
 	}
-
 }
