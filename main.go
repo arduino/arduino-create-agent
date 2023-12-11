@@ -357,7 +357,7 @@ func loop() {
 
 	r := gin.New()
 
-	socketHandler := wsHandler().ServeHTTP
+	//socketHandler := wsHandler().ServeHTTP
 
 	extraOrigins := []string{
 		"https://create.arduino.cc",
@@ -385,14 +385,16 @@ func loop() {
 
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
+	socketHandler := ServeWS
+
 	r.GET("/", homeHandler)
 	r.GET("/certificate.crt", cert.CertHandler)
 	r.DELETE("/certificate.crt", cert.DeleteCertHandler)
 	r.POST("/upload", uploadHandler)
-	r.GET("/socket.io/", socketHandler)
-	r.POST("/socket.io/", socketHandler)
-	r.Handle("WS", "/socket.io/", socketHandler)
-	r.Handle("WSS", "/socket.io/", socketHandler)
+	r.GET("/ws", socketHandler)
+	r.POST("/ws", socketHandler)
+	//r.Handle("WS", "/socket.io/", socketHandler)
+	//r.Handle("WSS", "/socket.io/", socketHandler)
 	r.GET("/info", infoHandler)
 	r.POST("/killbrowser", killBrowserHandler)
 	r.POST("/pause", pauseHandler)

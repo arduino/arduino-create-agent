@@ -28,13 +28,13 @@ import (
 	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
-	socketio "github.com/googollee/go-socket.io"
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
 type connection struct {
 	// The websocket connection.
-	ws socketio.Socket
+	ws *websocket.Conn
 
 	// Buffered channel of outbound messages.
 	send chan []byte
@@ -42,21 +42,35 @@ type connection struct {
 
 func (c *connection) writer() {
 	for message := range c.send {
-		err := c.ws.Emit("message", string(message))
+		err := c.ws.WriteMessage(websocket.TextMessage, message)
 		if err != nil {
 			break
 		}
 	}
 }
 
-// WsServer overrides socket.io server to set the CORS
-type WsServer struct {
-	Server *socketio.Server
+func (c *connection) reader() {
+	for {
+		mt, payload, err := c.ws.ReadMessage()
+		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				return
+			}
+			log.Error("ME:", err)
+		}
+		log.Info("Received message: ", string(payload))
+		switch mt {
+		case websocket.TextMessage:
+			h.broadcast <- payload
+		case websocket.CloseMessage:
+			h.unregister <- c
+		default:
+			log.Warn("Unknown message type")
+		}
+	}
 }
 
-func (s *WsServer) ServeHTTP(c *gin.Context) {
-	s.Server.ServeHTTP(c.Writer, c.Request)
-}
+var upgrader = websocket.Upgrader{} // use default options
 
 type additionalFile struct {
 	Hex      []byte `json:"hex"`
@@ -212,31 +226,14 @@ func send(args map[string]string) {
 	h.broadcastSys <- mapB
 }
 
-func wsHandler() *WsServer {
-	server, err := socketio.NewServer(nil)
+func ServeWS(ctx *gin.Context) {
+	ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
+		return
 	}
-
-	server.On("connection", func(so socketio.Socket) {
-		c := &connection{send: make(chan []byte, 256*10), ws: so}
-		h.register <- c
-		so.On("command", func(message string) {
-			h.broadcast <- []byte(message)
-		})
-
-		so.On("disconnection", func() {
-			h.unregister <- c
-		})
-		go c.writer()
-	})
-	server.On("error", func(so socketio.Socket, err error) {
-		log.Println("error:", err)
-	})
-
-	wrapper := WsServer{
-		Server: server,
-	}
-
-	return &wrapper
+	c := &connection{send: make(chan []byte, 256*10), ws: ws}
+	h.register <- c
+	go c.reader()
+	go c.writer()
 }
