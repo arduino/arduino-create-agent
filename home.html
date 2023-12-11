@@ -69,6 +69,7 @@
 	            return false;
 	        }
 	        socket.emit('command', input.val());
+            input.val('');
 	    });
 
 	    $('#export').click(function() {
@@ -99,7 +100,7 @@
 	    } else {
 	        appendLog('Your browser does not support WebSockets.')
         }
-        
+
         $("#input").focus();
 	});
 </script>
@@ -109,7 +110,7 @@ html, body {
     height: 100%;
 }
 
-body {    
+body {
     margin: 0px;
     padding: 0px;
     background: #F8F9F9;
@@ -119,7 +120,7 @@ body {
 
 #container {
     display: flex;
-    flex-direction: column;    
+    flex-direction: column;
     height: 100vh;
     width: 100%;
 }
@@ -134,15 +135,15 @@ body {
     overflow-y: auto;
 }
 
-#footer {    
-    display: flex;    
+#footer {
+    display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    margin: 0px 15px 0px;    
+    margin: 0px 15px 0px;
 }
 
-#form {    
+#form {
     display: flex;
     flex-grow: 1;
     margin-bottom: 15px;
@@ -153,8 +154,8 @@ body {
 }
 
 #secondary-controls div {
-    display: inline-block;        
-    padding: 10px 15px;    
+    display: inline-block;
+    padding: 10px 15px;
 }
 
 #autoscroll,
@@ -177,7 +178,7 @@ body {
     box-shadow: 0 4px #95a5a6;
     margin-bottom: 4px;
     color: #000;
-    cursor: pointer;    
+    cursor: pointer;
     font-size: 14px;
     letter-spacing: 1.28px;
     line-height: normal;
@@ -189,20 +190,20 @@ body {
 }
 
 .button:hover {
-    box-shadow: 0 2px #95a5a6;    
+    box-shadow: 0 2px #95a5a6;
     outline: none;
     transform: translateY(2px);
 }
 
 .button:active {
-    box-shadow: none;    
+    box-shadow: none;
     transform: translateY(4px);
 }
 
 .textfield {
     background-color: #dae3e3;
     width: auto;
-    height: auto;    
+    height: auto;
     padding: 10px 8px;
     margin-left: 8px;
     vertical-align: top;
