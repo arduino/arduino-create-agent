@@ -1,16 +1,16 @@
 ---
-name: github.com/andela/gin-cors
-version: v0.0.0-20160928171741-e8c3436a37e2
+name: github.com/gin-contrib/cors
+version: v1.5.0
 type: go
-summary: This code implements the flow chart that can be found here.
-homepage: https://pkg.go.dev/github.com/andela/gin-cors
+summary: 
+homepage: https://pkg.go.dev/github.com/gin-contrib/cors
 license: mit
 licenses:
 - sources: LICENSE
-  text: |+
-    The MIT License (MIT)
+  text: |
+    MIT License
 
-    Copyright (c) 2015 Jamie Stackhouse
+    Copyright (c) 2016 Gin-Gonic
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,4 @@ licenses:
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
-
-- sources: README.md
-  text: The code is licensed under the MIT License. See LICENSE file for more details.
 notices: []
