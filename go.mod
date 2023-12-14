@@ -1,6 +1,6 @@
 module github.com/arduino/arduino-create-agent
 
-go 1.20
+go 1.21
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
