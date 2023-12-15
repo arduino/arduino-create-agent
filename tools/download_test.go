@@ -105,18 +105,20 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 
 func TestDownload(t *testing.T) {
 	testCases := []struct {
-		name    string
-		version string
+		name         string
+		version      string
+		filesCreated []string
 	}{
-		{"avrdude", "6.3.0-arduino17"},
-		{"bossac", "1.6.1-arduino"},
-		{"bossac", "1.7.0-arduino3"},
-		{"bossac", "1.9.1-arduino2"},
-		{"openocd", "0.11.0-arduino2"},
-		{"dfu-util", "0.10.0-arduino1"},
-		{"rp2040tools", "1.0.6"},
-		{"esptool_py", "4.5.1"},
-		{"arduino-fwuploader", "2.2.2"},
+		{"avrdude", "6.3.0-arduino17", []string{"bin", "etc"}},
+		{"bossac", "1.6.1-arduino", []string{"bossac"}},
+		{"bossac", "1.7.0-arduino3", []string{"bossac"}},
+		{"bossac", "1.9.1-arduino2", []string{"bossac"}},
+		{"openocd", "0.11.0-arduino2", []string{"bin", "share"}},
+		{"dfu-util", "0.10.0-arduino1", []string{"dfu-prefix", "dfu-suffix", "dfu-util"}},
+		{"rp2040tools", "1.0.6", []string{"elf2uf2", "picotool", "pioasm", "rp2040load"}},
+		{"esptool_py", "4.5.1", []string{"esptool", "esptool.py"}},
+		{"arduino-fwuploader", "2.2.2", []string{"arduino-fwuploader", "LICENSE.txt"}},
+		{"fwupdater", "0.1.12", []string{"firmwares", "FirmwareUploader", "LICENSE.txt"}}, // old legacy tool
 	}
 	// prepare the test environment
 	tempDir := t.TempDir()
@@ -136,6 +138,16 @@ func TestDownload(t *testing.T) {
 			// Check that the tool has been downloaded
 			toolDir := tempDirPath.Join("arduino-test", tc.name, tc.version)
 			require.DirExists(t, toolDir.String())
+
+			// Check that the files have been created
+			for _, file := range tc.filesCreated {
+				filePath := toolDir.Join(file)
+				if filePath.IsDir() {
+					require.DirExists(t, filePath.String())
+				} else {
+					require.FileExists(t, filePath.String())
+				}
+			}
 
 			// Check that the tool has been installed
 			_, ok := testTools.getMapValue(tc.name + "-" + tc.version)
