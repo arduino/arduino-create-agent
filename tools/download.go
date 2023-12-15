@@ -22,15 +22,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
+	"github.com/arduino/go-paths-helper"
 	"github.com/blang/semver"
 	"github.com/codeclysm/extract/v3"
 )
@@ -120,38 +121,46 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 		return errors.New("checksum doesn't match")
 	}
 
-	// Decompress
+	tempPath := paths.TempDir()
+	// Create a temporary dir to extract package
+	if err := tempPath.MkdirAll(); err != nil {
+		return fmt.Errorf("creating temp dir for extraction: %s", err)
+	}
+	tempDir, err := tempPath.MkTempDir("package-")
+	if err != nil {
+		return fmt.Errorf("creating temp dir for extraction: %s", err)
+	}
+	defer tempDir.RemoveAll()
+
 	t.logger("Unpacking tool " + name)
-
-	location := t.directory.Join(pack, correctTool.Name, correctTool.Version).String()
-	err = os.RemoveAll(location)
-
-	if err != nil {
-		return err
-	}
-
 	ctx := context.Background()
-
 	reader := bytes.NewReader(body)
-	err = extract.Archive(ctx, reader, location, func(original string) string {
-		// Split the original path into components
-		components := strings.Split(original, string(os.PathSeparator))
-		// If there's a root directory, remove it
-		if len(components) > 1 {
-			return filepath.Join(components[1:]...)
+	// Extract into temp directory
+	if err := extract.Archive(ctx, reader, tempDir.String(), nil); err != nil {
+		return fmt.Errorf("extracting archive: %s", err)
+	}
+
+	location := t.directory.Join(pack, correctTool.Name, correctTool.Version)
+	err = location.RemoveAll()
+	if err != nil {
+		return err
+	}
+
+	// Check package content and find package root dir
+	root, err := findPackageRoot(tempDir)
+	if err != nil {
+		return fmt.Errorf("searching package root dir: %s", err)
+	}
+
+	if err := root.Rename(location); err != nil {
+		if err := root.CopyDirTo(location); err != nil {
+			return fmt.Errorf("moving extracted archive to destination dir: %s", err)
 		}
-		return original
-	})
-	if err != nil {
-		return err
 	}
 
-	if err != nil {
-		t.logger("Error extracting the archive: " + err.Error())
-		return err
-	}
-
-	err = t.installDrivers(location)
+	// if the tool contains a post_install script, run it: it means it is a tool that needs to install drivers
+	// AFAIK this is only the case for the windows-driver tool
+	err = t.installDrivers(location.String())
 	if err != nil {
 		return err
 	}
@@ -160,11 +169,25 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	t.logger("Ensure that the files are executable")
 
 	// Update the tool map
-	t.logger("Updating map with location " + location)
+	t.logger("Updating map with location " + location.String())
 
-	t.setMapValue(name, location)
-	t.setMapValue(name+"-"+correctTool.Version, location)
+	t.setMapValue(name, location.String())
+	t.setMapValue(name+"-"+correctTool.Version, location.String())
 	return t.writeMap()
+}
+
+func findPackageRoot(parent *paths.Path) (*paths.Path, error) {
+	files, err := parent.ReadDir()
+	if err != nil {
+		return nil, fmt.Errorf("reading package root dir: %s", err)
+	}
+	files.FilterOutPrefix("__MACOSX")
+
+	// if there is only one dir, it is the root dir
+	if len(files) == 1 && files[0].IsDir() {
+		return files[0], nil
+	}
+	return parent, nil
 }
 
 func findTool(pack, name, version string, data pkgs.Index) (pkgs.Tool, pkgs.System) {
