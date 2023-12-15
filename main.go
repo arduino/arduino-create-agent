@@ -392,7 +392,6 @@ func loop() {
 	r.Handle("WS", "/socket.io/", socketHandler)
 	r.Handle("WSS", "/socket.io/", socketHandler)
 	r.GET("/info", infoHandler)
-	r.POST("/killbrowser", killBrowserHandler)
 	r.POST("/pause", pauseHandler)
 	r.POST("/update", updateHandler)
 
