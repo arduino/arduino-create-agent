@@ -51,9 +51,8 @@ type serialhub struct {
 
 // SpPortList is the serial port list
 type SpPortList struct {
-	Ports   []SpPortItem
-	Network bool
-	Mu      sync.Mutex `json:"-"`
+	Ports []SpPortItem
+	Mu    sync.Mutex `json:"-"`
 }
 
 // SpPortItem is the serial port item
@@ -66,16 +65,12 @@ type SpPortItem struct {
 	Baud            int
 	BufferAlgorithm string
 	Ver             string
-	NetworkPort     bool
 	VendorID        string
 	ProductID       string
 }
 
 // serialPorts contains the ports attached to the machine
 var serialPorts SpPortList
-
-// networkPorts contains the ports on the network
-var networkPorts SpPortList
 
 var sh = serialhub{
 	//write:   	make(chan *serport, chan []byte),
@@ -126,18 +121,12 @@ func write(wr writeRequest) {
 }
 
 // spList broadcasts a Json representation of the ports found
-func spList(network bool) {
+func spList() {
 	var ls []byte
 	var err error
-	if network {
-		networkPorts.Mu.Lock()
-		ls, err = json.MarshalIndent(&networkPorts, "", "\t")
-		networkPorts.Mu.Unlock()
-	} else {
-		serialPorts.Mu.Lock()
-		ls, err = json.MarshalIndent(&serialPorts, "", "\t")
-		serialPorts.Mu.Unlock()
-	}
+	serialPorts.Mu.Lock()
+	ls, err = json.MarshalIndent(&serialPorts, "", "\t")
+	serialPorts.Mu.Unlock()
 	if err != nil {
 		//log.Println(err)
 		h.broadcastSys <- []byte("Error creating json on port list " +
@@ -150,25 +139,14 @@ func spList(network bool) {
 // discoverLoop periodically update the list of ports found
 func discoverLoop() {
 	serialPorts.Mu.Lock()
-	serialPorts.Network = false
 	serialPorts.Ports = make([]SpPortItem, 0)
 	serialPorts.Mu.Unlock()
-	networkPorts.Mu.Lock()
-	networkPorts.Network = true
-	networkPorts.Ports = make([]SpPortItem, 0)
-	networkPorts.Mu.Unlock()
 
 	go func() {
 		for {
 			if !upload.Busy {
 				updateSerialPortList()
 			}
-			time.Sleep(2 * time.Second)
-		}
-	}()
-	go func() {
-		for {
-			updateNetworkPortList()
 			time.Sleep(2 * time.Second)
 		}
 	}()
@@ -194,20 +172,6 @@ func updateSerialPortList() {
 	serialPorts.Mu.Unlock()
 }
 
-func updateNetworkPortList() {
-	ports, err := enumerateNetworkPorts()
-	if err != nil {
-		// TODO: report error?
-
-		// Empty port list if they can not be detected
-		ports = []OsSerialPort{}
-	}
-	list := spListDual(ports)
-	networkPorts.Mu.Lock()
-	networkPorts.Ports = list
-	networkPorts.Mu.Unlock()
-}
-
 func spListDual(list []OsSerialPort) []SpPortItem {
 	// we have a full clean list of ports now. iterate thru them
 	// to append the open/close state, baud rates, etc to make
@@ -224,7 +188,6 @@ func spListDual(list []OsSerialPort) []SpPortItem {
 			Baud:            0,
 			BufferAlgorithm: "",
 			Ver:             version,
-			NetworkPort:     item.NetworkPort,
 			VendorID:        item.IDVendor,
 			ProductID:       item.IDProduct,
 		}

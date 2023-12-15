@@ -56,42 +56,6 @@ func TestSerial(t *testing.T) {
 	}
 }
 
-var TestNetworkData = []struct {
-	Name        string
-	Port        string
-	Board       string
-	Files       []string
-	Commandline string
-	Extra       upload.Extra
-}{
-	{
-		"yun",
-		"",
-		"",
-		[]string{"filename"},
-		"",
-		upload.Extra{
-			Use1200bpsTouch:   true,
-			WaitForUploadPort: true,
-			Network:           true,
-			Auth:              upload.Auth{},
-		},
-	},
-}
-
-func TestNetwork(t *testing.T) {
-	logger := logrus.New()
-	logger.Level = logrus.DebugLevel
-
-	home, _ := homedir.Dir()
-
-	for _, test := range TestNetworkData {
-		commandline := strings.Replace(test.Commandline, "$HOME", home, -1)
-		err := upload.Network(test.Port, test.Board, test.Files, commandline, test.Extra.Auth, logger, test.Extra.SSH)
-		log.Println(err)
-	}
-}
-
 var TestResolveData = []struct {
 	Board        string
 	File         string

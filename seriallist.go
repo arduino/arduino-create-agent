@@ -35,7 +35,6 @@ type OsSerialPort struct {
 	IDProduct    string
 	IDVendor     string
 	ISerial      string
-	NetworkPort  bool
 }
 
 // enumerateSerialPorts will return the OS serial port
