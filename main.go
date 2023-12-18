@@ -29,10 +29,8 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
-	"strings"
 	"time"
 
-	cors "github.com/andela/gin-cors"
 	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/globals"
@@ -42,6 +40,7 @@ import (
 	"github.com/arduino/arduino-create-agent/updater"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	paths "github.com/arduino/go-paths-helper"
+	cors "github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
 	log "github.com/sirupsen/logrus"
@@ -373,14 +372,16 @@ func loop() {
 		extraOrigins = append(extraOrigins, "https://127.0.0.1:"+port)
 	}
 
-	r.Use(cors.Middleware(cors.Config{
-		Origins:         *origins + ", " + strings.Join(extraOrigins, ", "),
-		Methods:         "GET, PUT, POST, DELETE",
-		RequestHeaders:  "Origin, Authorization, Content-Type",
-		ExposedHeaders:  "",
-		MaxAge:          50 * time.Second,
-		Credentials:     true,
-		ValidateHeaders: false,
+	allowOrigings := []string{*origins}
+	allowOrigings = append(allowOrigings, extraOrigins...)
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:        allowOrigings,
+		AllowMethods:        []string{"PUT", "GET", "POST", "DELETE"},
+		AllowHeaders:        []string{"Origin", "Authorization", "Content-Type"},
+		ExposeHeaders:       []string{},
+		AllowCredentials:    true,
+		MaxAge:              50 * time.Second,
+		AllowPrivateNetwork: true,
 	}))
 
 	r.LoadHTMLFiles("templates/nofirefox.html")
