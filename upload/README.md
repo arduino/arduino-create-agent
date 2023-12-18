@@ -1,12 +1,10 @@
-use 'godoc cmd/github.com/arduino/arduino-create-agent/upload' for documentation on the github.com/arduino/arduino-create-agent/upload command 
-
 Package upload
 =====================
 
     import "github.com/arduino/arduino-create-agent/upload"
 
 Package upload allows to upload sketches into a board connected to the
-computer It can do it via serial port or via network
+computer It can do it via serial port
 
 **Usage for a serial upload**
 
@@ -18,17 +16,6 @@ err := upload.Serial("/dev/ttyACM0", commandline, upload.Extra{}, nil)
 ```
 
 note that the commandline contains the path of the sketch (sketch.hex)
-
-**Usage for a network upload**
-
-Make sure that you have a compiled sketch somewhere on your disk
-
-```go
- err := upload.Network("127.0.10.120", "arduino:avr:yun, "./sketch.hex", "", upload.Auth{}, nil)
-```
-
-The commandline can be empty or it can contain instructions (depends on the
-board)
 
 **Resolving commandlines**
 
@@ -74,13 +61,6 @@ Kill stops any upload process as soon as possible
 
 
 ```go
-func Network(port, board, file, commandline string, auth Auth, l Logger) error
-```
-
-Network performs a network upload
-
-
-```go
 func Resolve(port, board, file, commandline string, extra Extra, t Locater) (string, error)
 ```
 
@@ -99,20 +79,10 @@ Types
 
 
 ```go
-type Auth struct {
-    Username string `json:"username"`
-    Password string `json:"password"`
-}
-```
-Auth contains username and password used for a network upload
-
-
-```go
 type Extra struct {
     Use1200bpsTouch   bool   `json:"use_1200bps_touch"`
     WaitForUploadPort bool   `json:"wait_for_upload_port"`
     Network           bool   `json:"network"`
-    Auth              Auth   `json:"auth"`
 }
 ```
 Extra contains some options used during the upload
@@ -133,5 +103,3 @@ type Logger interface {
 }
 ```
 Logger is an interface implemented by most loggers (like logrus)
-
-

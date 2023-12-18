@@ -177,8 +177,7 @@ func checkCmd(m []byte) {
 		// will catch send and sendnobuf and sendraw
 		go spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
-		go spList(false)
-		go spList(true)
+		go spList()
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		go func() {
 			args := strings.Split(s, " ")

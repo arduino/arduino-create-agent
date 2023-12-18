@@ -32,11 +32,7 @@
                 let printMsg = msg;
                 if (jsonMsg.Ports) {
                     const validKeys = ['Name', 'SerialNumber', 'IsOpen', 'VendorID', 'ProductID'];
-                    if (jsonMsg.Network) {
-                        printMsg = "Network Ports:\n"+JSON.stringify(jsonMsg.Ports, validKeys, 2);
-                    } else {
-                        printMsg = "Serial Ports:\n"+JSON.stringify(jsonMsg.Ports, validKeys, 2);
-                    }
+                    printMsg = "Serial Ports:\n"+JSON.stringify(jsonMsg.Ports, validKeys, 2);
                 } else if (Object.keys(jsonMsg).length !== 0) {
                     printMsg = JSON.stringify(jsonMsg, undefined, 2);
                 }

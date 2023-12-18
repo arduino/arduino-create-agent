@@ -20,6 +20,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -170,8 +171,7 @@ func uploadHandler(c *gin.Context) {
 
 		// Upload
 		if data.Extra.Network {
-			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Network"})
-			err = upload.Network(data.Port, data.Board, filePaths, commandline, data.Extra.Auth, l, data.Extra.SSH)
+			err = errors.New("network upload is not supported anymore, pease use OTA instead")
 		} else {
 			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
 			err = upload.Serial(data.Port, commandline, data.Extra, l)

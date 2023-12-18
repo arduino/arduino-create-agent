@@ -33,7 +33,6 @@ def test_list(socketio, message):
     print (message)
     assert any("list" in i for i in message)
     assert any("Ports" in i for i in message)
-    assert any("Network" in i for i in message)
 
 
 # NOTE run the following tests with a board connected to the PC
