@@ -17,6 +17,7 @@ package tools
 
 import (
 	"encoding/json"
+	"runtime"
 	"testing"
 	"time"
 
@@ -40,6 +41,10 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 		{"windows", "amd64", "x86_64-mingw32"},
 		{"linux", "arm", "arm-linux-gnueabihf"},
 	}
+	defer func() {
+		OS = runtime.GOOS     // restore `runtime.OS`
+		Arch = runtime.GOARCH // restore `runtime.ARCH`
+	}()
 	testIndex := paths.New("testdata", "test_tool_index.json")
 	buf, err := testIndex.ReadFile()
 	require.NoError(t, err)
@@ -72,6 +77,10 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 		{"darwin", "arm64", "i386-apple-darwin11"},
 		{"windows", "amd64", "i686-mingw32"},
 	}
+	defer func() {
+		OS = runtime.GOOS     // restore `runtime.OS`
+		Arch = runtime.GOARCH // restore `runtime.ARCH`
+	}()
 	testIndex := paths.New("testdata", "test_tool_index.json")
 	buf, err := testIndex.ReadFile()
 	require.NoError(t, err)
