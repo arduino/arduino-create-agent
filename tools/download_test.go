@@ -116,9 +116,9 @@ func TestDownload(t *testing.T) {
 		{"openocd", "0.11.0-arduino2", []string{"bin", "share"}},
 		{"dfu-util", "0.10.0-arduino1", []string{"dfu-prefix", "dfu-suffix", "dfu-util"}},
 		{"rp2040tools", "1.0.6", []string{"elf2uf2", "picotool", "pioasm", "rp2040load"}},
-		{"esptool_py", "4.5.1", []string{"esptool", "esptool.py"}},
-		{"arduino-fwuploader", "2.2.2", []string{"arduino-fwuploader", "LICENSE.txt"}},
-		{"fwupdater", "0.1.12", []string{"firmwares", "FirmwareUploader", "LICENSE.txt"}}, // old legacy tool
+		{"esptool_py", "4.5.1", []string{"esptool"}},
+		{"arduino-fwuploader", "2.2.2", []string{"arduino-fwuploader"}},
+		{"fwupdater", "0.1.12", []string{"firmwares", "FirmwareUploader"}}, // old legacy tool
 	}
 	// prepare the test environment
 	tempDir := t.TempDir()
@@ -145,7 +145,11 @@ func TestDownload(t *testing.T) {
 				if filePath.IsDir() {
 					require.DirExists(t, filePath.String())
 				} else {
-					require.FileExists(t, filePath.String())
+					if OS == "windows" {
+						require.FileExists(t, filePath.String()+".exe")
+					} else {
+						require.FileExists(t, filePath.String())
+					}
 				}
 			}
 
