@@ -16,11 +16,8 @@
 package tools
 
 import (
-	"archive/tar"
-	"archive/zip"
 	"bytes"
-	"compress/bzip2"
-	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -30,14 +27,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 
-	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
+	"github.com/arduino/go-paths-helper"
 	"github.com/blang/semver"
+	"github.com/codeclysm/extract/v3"
 )
 
 // public vars to allow override in the tests
@@ -45,10 +41,6 @@ var (
 	OS   = runtime.GOOS
 	Arch = runtime.GOARCH
 )
-
-func mimeType(data []byte) (string, error) {
-	return http.DetectContentType(data[0:512]), nil
-}
 
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
@@ -129,39 +121,46 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 		return errors.New("checksum doesn't match")
 	}
 
-	// Decompress
+	tempPath := paths.TempDir()
+	// Create a temporary dir to extract package
+	if err := tempPath.MkdirAll(); err != nil {
+		return fmt.Errorf("creating temp dir for extraction: %s", err)
+	}
+	tempDir, err := tempPath.MkTempDir("package-")
+	if err != nil {
+		return fmt.Errorf("creating temp dir for extraction: %s", err)
+	}
+	defer tempDir.RemoveAll()
+
 	t.logger("Unpacking tool " + name)
+	ctx := context.Background()
+	reader := bytes.NewReader(body)
+	// Extract into temp directory
+	if err := extract.Archive(ctx, reader, tempDir.String(), nil); err != nil {
+		return fmt.Errorf("extracting archive: %s", err)
+	}
 
-	location := t.directory.Join(pack, correctTool.Name, correctTool.Version).String()
-	err = os.RemoveAll(location)
-
+	location := t.directory.Join(pack, correctTool.Name, correctTool.Version)
+	err = location.RemoveAll()
 	if err != nil {
 		return err
 	}
 
-	srcType, err := mimeType(body)
+	// Check package content and find package root dir
+	root, err := findPackageRoot(tempDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("searching package root dir: %s", err)
 	}
 
-	switch srcType {
-	case "application/zip":
-		location, err = extractZip(t.logger, body, location)
-	case "application/x-bz2":
-	case "application/octet-stream":
-		location, err = extractBz2(t.logger, body, location)
-	case "application/x-gzip":
-		location, err = extractTarGz(t.logger, body, location)
-	default:
-		return errors.New("Unknown extension for file " + correctSystem.URL)
+	if err := root.Rename(location); err != nil {
+		if err := root.CopyDirTo(location); err != nil {
+			return fmt.Errorf("moving extracted archive to destination dir: %s", err)
+		}
 	}
 
-	if err != nil {
-		t.logger("Error extracting the archive: " + err.Error())
-		return err
-	}
-
-	err = t.installDrivers(location)
+	// if the tool contains a post_install script, run it: it means it is a tool that needs to install drivers
+	// AFAIK this is only the case for the windows-driver tool
+	err = t.installDrivers(location.String())
 	if err != nil {
 		return err
 	}
@@ -170,11 +169,25 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	t.logger("Ensure that the files are executable")
 
 	// Update the tool map
-	t.logger("Updating map with location " + location)
+	t.logger("Updating map with location " + location.String())
 
-	t.setMapValue(name, location)
-	t.setMapValue(name+"-"+correctTool.Version, location)
+	t.setMapValue(name, location.String())
+	t.setMapValue(name+"-"+correctTool.Version, location.String())
 	return t.writeMap()
+}
+
+func findPackageRoot(parent *paths.Path) (*paths.Path, error) {
+	files, err := parent.ReadDir()
+	if err != nil {
+		return nil, fmt.Errorf("reading package root dir: %s", err)
+	}
+	files.FilterOutPrefix("__MACOSX")
+
+	// if there is only one dir, it is the root dir
+	if len(files) == 1 && files[0].IsDir() {
+		return files[0], nil
+	}
+	return parent, nil
 }
 
 func findTool(pack, name, version string, data pkgs.Index) (pkgs.Tool, pkgs.System) {
@@ -205,258 +218,6 @@ func findTool(pack, name, version string, data pkgs.Index) (pkgs.Tool, pkgs.Syst
 	correctSystem := correctTool.GetFlavourCompatibleWith(OS, Arch)
 
 	return correctTool, correctSystem
-}
-
-func commonPrefix(sep byte, paths []string) string {
-	// Handle special cases.
-	switch len(paths) {
-	case 0:
-		return ""
-	case 1:
-		return path.Clean(paths[0])
-	}
-
-	c := []byte(path.Clean(paths[0]))
-
-	// We add a trailing sep to handle: common prefix directory is included in the path list
-	// (e.g. /home/user1, /home/user1/foo, /home/user1/bar).
-	// path.Clean will have cleaned off trailing / separators with
-	// the exception of the root directory, "/" making it "//"
-	// but this will get fixed up to "/" below).
-	c = append(c, sep)
-
-	// Ignore the first path since it's already in c
-	for _, v := range paths[1:] {
-		// Clean up each path before testing it
-		v = path.Clean(v) + string(sep)
-
-		// Find the first non-common byte and truncate c
-		if len(v) < len(c) {
-			c = c[:len(v)]
-		}
-		for i := 0; i < len(c); i++ {
-			if v[i] != c[i] {
-				c = c[:i]
-				break
-			}
-		}
-	}
-
-	// Remove trailing non-separator characters and the final separator
-	for i := len(c) - 1; i >= 0; i-- {
-		if c[i] == sep {
-			c = c[:i]
-			break
-		}
-	}
-
-	return string(c)
-}
-
-func removeStringFromSlice(s []string, r string) []string {
-	for i, v := range s {
-		if v == r {
-			return append(s[:i], s[i+1:]...)
-		}
-	}
-	return s
-}
-
-func findBaseDir(dirList []string) string {
-	if len(dirList) == 1 {
-		return path.Dir(dirList[0]) + "/"
-	}
-
-	// https://github.com/backdrop-ops/contrib/issues/55#issuecomment-73814500
-	dontdiff := []string{"pax_global_header"}
-	for _, v := range dontdiff {
-		dirList = removeStringFromSlice(dirList, v)
-	}
-
-	commonBaseDir := commonPrefix('/', dirList)
-	if commonBaseDir != "" {
-		commonBaseDir = commonBaseDir + "/"
-	}
-	return commonBaseDir
-}
-
-func extractZip(log func(msg string), body []byte, location string) (string, error) {
-	path, _ := utilities.SaveFileonTempDir("tooldownloaded.zip", bytes.NewReader(body))
-	r, err := zip.OpenReader(path)
-	if err != nil {
-		return location, err
-	}
-
-	var dirList []string
-
-	for _, f := range r.File {
-		dirList = append(dirList, f.Name)
-	}
-
-	basedir := findBaseDir(dirList)
-	log(fmt.Sprintf("selected baseDir %s from Zip Archive Content: %v", basedir, dirList))
-
-	for _, f := range r.File {
-		fullname := filepath.Join(location, strings.Replace(f.Name, basedir, "", -1))
-		log(fmt.Sprintf("generated fullname %s removing %s from %s", fullname, basedir, f.Name))
-		if f.FileInfo().IsDir() {
-			os.MkdirAll(fullname, f.FileInfo().Mode().Perm())
-		} else {
-			os.MkdirAll(filepath.Dir(fullname), 0755)
-			perms := f.FileInfo().Mode().Perm()
-			out, err := os.OpenFile(fullname, os.O_CREATE|os.O_RDWR, perms)
-			if err != nil {
-				return location, err
-			}
-			rc, err := f.Open()
-			if err != nil {
-				return location, err
-			}
-			_, err = io.CopyN(out, rc, f.FileInfo().Size())
-			if err != nil {
-				return location, err
-			}
-			rc.Close()
-			out.Close()
-
-			mtime := f.FileInfo().ModTime()
-			err = os.Chtimes(fullname, mtime, mtime)
-			if err != nil {
-				return location, err
-			}
-		}
-	}
-	return location, nil
-}
-
-func extractTarGz(log func(msg string), body []byte, location string) (string, error) {
-	bodyCopy := make([]byte, len(body))
-	copy(bodyCopy, body)
-	tarFile, _ := gzip.NewReader(bytes.NewReader(body))
-	tarReader := tar.NewReader(tarFile)
-
-	var dirList []string
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		dirList = append(dirList, header.Name)
-	}
-
-	basedir := findBaseDir(dirList)
-	log(fmt.Sprintf("selected baseDir %s from TarGz Archive Content: %v", basedir, dirList))
-
-	tarFile, _ = gzip.NewReader(bytes.NewReader(bodyCopy))
-	tarReader = tar.NewReader(tarFile)
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return location, err
-		}
-
-		path := filepath.Join(location, strings.Replace(header.Name, basedir, "", -1))
-		info := header.FileInfo()
-
-		// Create parent folder
-		dirmode := info.Mode() | os.ModeDir | 0700
-		if err = os.MkdirAll(filepath.Dir(path), dirmode); err != nil {
-			return location, err
-		}
-
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return location, err
-			}
-			continue
-		}
-
-		if header.Typeflag == tar.TypeSymlink {
-			_ = os.Symlink(header.Linkname, path)
-			continue
-		}
-
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			continue
-		}
-		_, err = io.Copy(file, tarReader)
-		if err != nil {
-			return location, err
-		}
-		file.Close()
-	}
-	return location, nil
-}
-
-func extractBz2(log func(msg string), body []byte, location string) (string, error) {
-	bodyCopy := make([]byte, len(body))
-	copy(bodyCopy, body)
-	tarFile := bzip2.NewReader(bytes.NewReader(body))
-	tarReader := tar.NewReader(tarFile)
-
-	var dirList []string
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		dirList = append(dirList, header.Name)
-	}
-
-	basedir := findBaseDir(dirList)
-	log(fmt.Sprintf("selected baseDir %s from Bz2 Archive Content: %v", basedir, dirList))
-
-	tarFile = bzip2.NewReader(bytes.NewReader(bodyCopy))
-	tarReader = tar.NewReader(tarFile)
-
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			continue
-			//return location, err
-		}
-
-		path := filepath.Join(location, strings.Replace(header.Name, basedir, "", -1))
-		info := header.FileInfo()
-
-		// Create parent folder
-		dirmode := info.Mode() | os.ModeDir | 0700
-		if err = os.MkdirAll(filepath.Dir(path), dirmode); err != nil {
-			return location, err
-		}
-
-		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
-				return location, err
-			}
-			continue
-		}
-
-		if header.Typeflag == tar.TypeSymlink {
-			_ = os.Symlink(header.Linkname, path)
-			continue
-		}
-
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
-		if err != nil {
-			continue
-			//return location, err
-		}
-		_, err = io.Copy(file, tarReader)
-		if err != nil {
-			return location, err
-		}
-		file.Close()
-	}
-	return location, nil
 }
 
 func (t *Tools) installDrivers(location string) error {

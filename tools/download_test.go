@@ -17,16 +17,13 @@ package tools
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"path"
+	"runtime"
 	"testing"
+	"time"
 
+	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/arduino/go-paths-helper"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,6 +41,10 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 		{"windows", "amd64", "x86_64-mingw32"},
 		{"linux", "arm", "arm-linux-gnueabihf"},
 	}
+	defer func() {
+		OS = runtime.GOOS     // restore `runtime.OS`
+		Arch = runtime.GOARCH // restore `runtime.ARCH`
+	}()
 	testIndex := paths.New("testdata", "test_tool_index.json")
 	buf, err := testIndex.ReadFile()
 	require.NoError(t, err)
@@ -76,6 +77,10 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 		{"darwin", "arm64", "i386-apple-darwin11"},
 		{"windows", "amd64", "i686-mingw32"},
 	}
+	defer func() {
+		OS = runtime.GOOS     // restore `runtime.OS`
+		Arch = runtime.GOARCH // restore `runtime.ARCH`
+	}()
 	testIndex := paths.New("testdata", "test_tool_index.json")
 	buf, err := testIndex.ReadFile()
 	require.NoError(t, err)
@@ -98,99 +103,59 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 	}
 }
 
-func Test_findBaseDir(t *testing.T) {
-	cases := []struct {
-		dirList []string
-		want    string
+func TestDownload(t *testing.T) {
+	testCases := []struct {
+		name         string
+		version      string
+		filesCreated []string
 	}{
-		{[]string{"bin/bossac"}, "bin/"},
-		{[]string{"bin/", "bin/bossac"}, "bin/"},
-		{[]string{"bin/", "bin/bossac", "example"}, ""},
-		{[]string{"avrdude/bin/",
-			"avrdude/bin/avrdude.exe",
-			"avrdude/bin/remove_giveio.bat",
-			"avrdude/bin/status_giveio.bat",
-			"avrdude/bin/giveio.sys",
-			"avrdude/bin/loaddrv.exe",
-			"avrdude/bin/libusb0.dll",
-			"avrdude/bin/install_giveio.bat",
-			"avrdude/etc/avrdude.conf"}, "avrdude/"},
-		{[]string{"pax_global_header", "bin/", "bin/bossac"}, "bin/"},
+		{"avrdude", "6.3.0-arduino17", []string{"bin", "etc"}},
+		{"bossac", "1.6.1-arduino", []string{"bossac"}},
+		{"bossac", "1.7.0-arduino3", []string{"bossac"}},
+		{"bossac", "1.9.1-arduino2", []string{"bossac"}},
+		{"openocd", "0.11.0-arduino2", []string{"bin", "share"}},
+		{"dfu-util", "0.10.0-arduino1", []string{"dfu-prefix", "dfu-suffix", "dfu-util"}},
+		{"rp2040tools", "1.0.6", []string{"elf2uf2", "picotool", "pioasm", "rp2040load"}},
+		{"esptool_py", "4.5.1", []string{"esptool"}},
+		{"arduino-fwuploader", "2.2.2", []string{"arduino-fwuploader"}},
+		{"fwupdater", "0.1.12", []string{"firmwares", "FirmwareUploader"}}, // old legacy tool
 	}
-	for _, tt := range cases {
-		t.Run(fmt.Sprintln(tt.dirList), func(t *testing.T) {
-			if got := findBaseDir(tt.dirList); got != tt.want {
-				t.Errorf("findBaseDir() = got %v, want %v", got, tt.want)
+	// prepare the test environment
+	tempDir := t.TempDir()
+	tempDirPath := paths.New(tempDir)
+	testIndex := index.Resource{
+		IndexFile:   *paths.New("testdata", "test_tool_index.json"),
+		LastRefresh: time.Now(),
+	}
+	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) })
+
+	for _, tc := range testCases {
+		t.Run(tc.name+"-"+tc.version, func(t *testing.T) {
+			// Download the tool
+			err := testTools.Download("arduino-test", tc.name, tc.version, "replace")
+			require.NoError(t, err)
+
+			// Check that the tool has been downloaded
+			toolDir := tempDirPath.Join("arduino-test", tc.name, tc.version)
+			require.DirExists(t, toolDir.String())
+
+			// Check that the files have been created
+			for _, file := range tc.filesCreated {
+				filePath := toolDir.Join(file)
+				if filePath.IsDir() {
+					require.DirExists(t, filePath.String())
+				} else {
+					if OS == "windows" {
+						require.FileExists(t, filePath.String()+".exe")
+					} else {
+						require.FileExists(t, filePath.String())
+					}
+				}
 			}
+
+			// Check that the tool has been installed
+			_, ok := testTools.getMapValue(tc.name + "-" + tc.version)
+			require.True(t, ok)
 		})
 	}
-}
-
-func TestTools_DownloadAndUnpackBehaviour(t *testing.T) {
-	urls := []string{
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-armhf-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-aarch64-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i386-apple-darwin11.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-x86_64-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-pc-linux-gnu.tar.bz2",
-		"https://downloads.arduino.cc/tools/avrdude-6.3.0-arduino14-i686-w64-mingw32.zip",
-	}
-	expectedDirList := []string{"bin", "etc"}
-
-	tmpDir, err := os.MkdirTemp("", "download_test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	for _, url := range urls {
-		t.Log("Downloading tool from " + url)
-		resp, err := http.Get(url)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-		defer resp.Body.Close()
-
-		// Read the body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-
-		location := path.Join(tmpDir, "username", "arduino", "avrdude", "6.3.0-arduino14")
-		os.MkdirAll(location, os.ModePerm)
-		err = os.RemoveAll(location)
-
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-
-		srcType, err := mimeType(body)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-
-		switch srcType {
-		case "application/zip":
-			location, err = extractZip(func(msg string) { t.Log(msg) }, body, location)
-		case "application/x-bz2":
-		case "application/octet-stream":
-			location, err = extractBz2(func(msg string) { t.Log(msg) }, body, location)
-		case "application/x-gzip":
-			location, err = extractTarGz(func(msg string) { t.Log(msg) }, body, location)
-		default:
-			t.Errorf("no suitable type found")
-		}
-		files, err := os.ReadDir(location)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-		dirList := []string{}
-		for _, f := range files {
-			dirList = append(dirList, f.Name())
-		}
-
-		assert.ElementsMatchf(t, dirList, expectedDirList, "error message %s", "formatted")
-	}
-
 }
