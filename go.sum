@@ -4,8 +4,8 @@ github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c h1:kMFnB0vCcX
 github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azugULFRteWMNc0=
 github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e h1:gmlrLhRuuIY/hw9EvvLCUvMDXMFZBtIVW29tMYGchkw=
 github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e/go.mod h1:2E4tNTNWuf4CtG/pF/Y+fRO6JXxVEcbDDStjZYtMK2c=
-github.com/arduino/go-paths-helper v1.10.1 h1:j8InnhLrSeoPiOvTnZL0XMFt7l407ciTBJJJs7W9bs4=
-github.com/arduino/go-paths-helper v1.10.1/go.mod h1:jcpW4wr0u69GlXhTYydsdsqAjLaYK5n7oWHfKqOG6LM=
+github.com/arduino/go-paths-helper v1.11.0 h1:hkpGb9AtCTByTj2FKutuHWb3klDf4kAKL10hW+fN+oE=
+github.com/arduino/go-paths-helper v1.11.0/go.mod h1:jcpW4wr0u69GlXhTYydsdsqAjLaYK5n7oWHfKqOG6LM=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
