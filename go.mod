@@ -3,7 +3,7 @@ module github.com/arduino/arduino-create-agent
 go 1.21
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
+	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e
 	github.com/arduino/go-paths-helper v1.10.1
 	github.com/blang/semver v3.5.1+incompatible

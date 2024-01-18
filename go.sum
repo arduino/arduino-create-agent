@@ -1,7 +1,7 @@
 github.com/AnatolyRugalev/goregen v0.1.0 h1:xrdXkLaskMnbxW0x4FWNj2yoednv0X2bcTBWpuJGYfE=
 github.com/AnatolyRugalev/goregen v0.1.0/go.mod h1:sVlY1tjcirqLBRZnCcIq1+7/Lwmqz5g7IK8AStjOVzI=
-github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c h1:kMFnB0vCcX7IL/m9Y5LO+KQYv+t1CQOiFe6+SV2J7bE=
-github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azugULFRteWMNc0=
+github.com/ProtonMail/go-crypto v1.0.0 h1:LRuvITjQWX+WIfr930YHG2HNfjR1uOfyf5vE0kC2U78=
+github.com/ProtonMail/go-crypto v1.0.0/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azugULFRteWMNc0=
 github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e h1:gmlrLhRuuIY/hw9EvvLCUvMDXMFZBtIVW29tMYGchkw=
 github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e/go.mod h1:2E4tNTNWuf4CtG/pF/Y+fRO6JXxVEcbDDStjZYtMK2c=
 github.com/arduino/go-paths-helper v1.10.1 h1:j8InnhLrSeoPiOvTnZL0XMFt7l407ciTBJJJs7W9bs4=
