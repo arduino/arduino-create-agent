@@ -1,12 +1,12 @@
 ---
 name: goa.design/goa/v3/middleware
-version: v3.14.0
+version: v3.14.6
 type: go
 summary: Package middleware contains transport independent middlewares.
 homepage: https://pkg.go.dev/goa.design/goa/v3/middleware
 license: mit
 licenses:
-- sources: v3@v3.14.0/LICENSE
+- sources: v3@v3.14.6/LICENSE
   text: |
     The MIT License (MIT)
 

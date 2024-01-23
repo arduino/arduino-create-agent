@@ -1,6 +1,6 @@
 ---
 name: github.com/go-chi/chi/v5
-version: v5.0.10
+version: v5.0.11
 type: go
 summary: Package chi is a small, idiomatic and composable router for building HTTP
   services.
@@ -35,7 +35,7 @@ licenses:
 
     Licensed under [MIT License](./LICENSE)
 
-    [GoDoc]: https://pkg.go.dev/github.com/go-chi/chi?tab=versions
+    [GoDoc]: https://pkg.go.dev/github.com/go-chi/chi/v5
     [GoDoc Widget]: https://godoc.org/github.com/go-chi/chi?status.svg
     [Travis]: https://travis-ci.org/go-chi/chi
     [Travis Widget]: https://travis-ci.org/go-chi/chi.svg?branch=master

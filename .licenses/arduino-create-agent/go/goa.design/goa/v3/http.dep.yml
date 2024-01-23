@@ -1,13 +1,13 @@
 ---
 name: goa.design/goa/v3/http
-version: v3.14.0
+version: v3.14.6
 type: go
 summary: Package http contains HTTP specific constructs that complement the code generated
   by Goa.
 homepage: https://pkg.go.dev/goa.design/goa/v3/http
 license: mit
 licenses:
-- sources: v3@v3.14.0/LICENSE
+- sources: v3@v3.14.6/LICENSE
   text: |
     The MIT License (MIT)
 
