@@ -47,6 +47,8 @@ reviewed:
     - golang.org/x/crypto/argon2
     - golang.org/x/crypto/blake2b
     - golang.org/x/crypto/sha3
+    - golang.org/x/net/internal/socks
+    - golang.org/x/net/proxy
 
 # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-dependencies/AGPL-3.0/.licensed.yml
 allowed:
