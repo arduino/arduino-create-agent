@@ -1,14 +1,15 @@
 ---
-name: google.golang.org/protobuf/reflect/protoreflect
-version: v1.32.0
+name: golang.org/x/net/proxy
+version: v0.20.0
 type: go
-summary: Package protoreflect provides interfaces to dynamically manipulate messages.
-homepage: https://pkg.go.dev/google.golang.org/protobuf/reflect/protoreflect
-license: bsd-3-clause
+summary: Package proxy provides support for a variety of protocols to proxy network
+  data.
+homepage: https://pkg.go.dev/golang.org/x/net/proxy
+license: other
 licenses:
-- sources: protobuf@v1.32.0/LICENSE
+- sources: net@v0.20.0/LICENSE
   text: |
-    Copyright (c) 2018 The Go Authors. All rights reserved.
+    Copyright (c) 2009 The Go Authors. All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are
@@ -35,7 +36,7 @@ licenses:
     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-- sources: protobuf@v1.32.0/PATENTS
+- sources: net@v0.20.0/PATENTS
   text: |
     Additional IP Rights Grant (Patents)
 

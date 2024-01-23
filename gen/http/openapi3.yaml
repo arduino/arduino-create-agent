@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
     title: Arduino Create Agent
     description: "A companion of Arduino Create. \n\tAllows the website to perform operations on the user computer, \n\tsuch as detecting which boards are connected and upload sketches on them."
-    version: "1.0"
+    version: 0.0.1
 servers:
     - url: http://localhost:80
       description: Default server for arduino-create-agent
