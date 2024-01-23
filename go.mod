@@ -3,7 +3,7 @@ module github.com/arduino/arduino-create-agent
 go 1.21
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.0
 	github.com/arduino/arduino-cli v0.0.0-20230630155703-fe6d7499eb5e
 	github.com/arduino/go-paths-helper v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
@@ -31,7 +31,7 @@ require (
 	github.com/bytedance/sonic v1.10.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
-	github.com/cloudflare/circl v1.3.3 // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/creack/goselect v0.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimfeld/httppath v0.0.0-20170720192232-ee938bf73598 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/ugorji/go v1.1.6 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	golang.org/x/arch v0.5.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
