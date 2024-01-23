@@ -1,6 +1,6 @@
 ---
 name: github.com/juju/errors
-version: v0.0.0-20200330140219-3fe23663418f
+version: v1.0.0
 type: go
 summary: Package errors provides an easy way to annotate errors without losing the
   original error context.

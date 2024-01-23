@@ -1,12 +1,12 @@
 ---
 name: github.com/arduino/arduino-cli/arduino/serialutils
-version: v0.0.0-20230630155703-fe6d7499eb5e
+version: v0.35.0
 type: go
 summary:
 homepage: https://pkg.go.dev/github.com/arduino/arduino-cli/arduino/serialutils
 license: gpl-3.0-only
 licenses:
-- sources: arduino-cli@v0.0.0-20230630155703-fe6d7499eb5e/LICENSE.txt
+- sources: arduino-cli@v0.35.0/LICENSE.txt
   text: |2
                         GNU GENERAL PUBLIC LICENSE
                            Version 3, 29 June 2007
@@ -682,7 +682,7 @@ licenses:
     the library.  If this is what you want to do, use the GNU Lesser General
     Public License instead of this License.  But first, please read
     <https://www.gnu.org/licenses/why-not-lgpl.html>.
-- sources: arduino-cli@v0.0.0-20230630155703-fe6d7499eb5e/license_header.tpl
+- sources: arduino-cli@v0.35.0/license_header.tpl
   text: |
     This file is part of arduino-cli.
 
@@ -698,7 +698,7 @@ licenses:
     modify or otherwise use the software for commercial activities involving the
     Arduino software without disclosing the source code of your own applications.
     To purchase a commercial license, send an email to license@arduino.cc.
-- sources: arduino-cli@v0.0.0-20230630155703-fe6d7499eb5e/README.md
+- sources: arduino-cli@v0.35.0/README.md
   text: |-
     Arduino CLI is licensed under the [GPL 3.0] license.
 

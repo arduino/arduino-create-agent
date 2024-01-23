@@ -1,12 +1,12 @@
 ---
 name: github.com/arduino/arduino-cli/i18n
-version: v0.0.0-20230630155703-fe6d7499eb5e
+version: v0.35.0
 type: go
 summary:
 homepage: https://pkg.go.dev/github.com/arduino/arduino-cli/i18n
 license: gpl-3.0-only
 licenses:
-- sources: arduino-cli@v0.0.0-20230630155703-fe6d7499eb5e/LICENSE.txt
+- sources: arduino-cli@v0.35.0/LICENSE.txt
   text: |2
                         GNU GENERAL PUBLIC LICENSE
                            Version 3, 29 June 2007
@@ -682,7 +682,7 @@ licenses:
     the library.  If this is what you want to do, use the GNU Lesser General
     Public License instead of this License.  But first, please read
     <https://www.gnu.org/licenses/why-not-lgpl.html>.
-- sources: arduino-cli@v0.0.0-20230630155703-fe6d7499eb5e/license_header.tpl
+- sources: arduino-cli@v0.35.0/license_header.tpl
   text: |
     This file is part of arduino-cli.
 
