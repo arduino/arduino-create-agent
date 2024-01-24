@@ -29,6 +29,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"time"
 
 	cert "github.com/arduino/arduino-create-agent/certificates"
@@ -372,10 +373,15 @@ func loop() {
 		extraOrigins = append(extraOrigins, "https://127.0.0.1:"+port)
 	}
 
-	allowOrigings := []string{*origins}
-	allowOrigings = append(allowOrigings, extraOrigins...)
+	allowOrigins := strings.Split(*origins, ",")
+	// We need to trim possible spaces from the origins, otherwise the CORS middleware
+	// validation might not work as expected
+	for i := range allowOrigins {
+		allowOrigins[i] = strings.TrimSpace(allowOrigins[i])
+	}
+	allowOrigins = append(allowOrigins, extraOrigins...)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:        allowOrigings,
+		AllowOrigins:        allowOrigins,
 		AllowMethods:        []string{"PUT", "GET", "POST", "DELETE"},
 		AllowHeaders:        []string{"Origin", "Authorization", "Content-Type"},
 		ExposeHeaders:       []string{},
