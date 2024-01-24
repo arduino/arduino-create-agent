@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.0
-	github.com/arduino/arduino-cli v0.35.0
+	github.com/arduino/arduino-cli v0.35.1
 	github.com/arduino/go-paths-helper v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.1.1
