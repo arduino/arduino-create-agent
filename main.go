@@ -381,6 +381,7 @@ func loop() {
 	}
 	allowOrigins = append(allowOrigins, extraOrigins...)
 	r.Use(cors.New(cors.Config{
+		AllowWildcard:       true,
 		AllowOrigins:        allowOrigins,
 		AllowMethods:        []string{"PUT", "GET", "POST", "DELETE"},
 		AllowHeaders:        []string{"Origin", "Authorization", "Content-Type"},
