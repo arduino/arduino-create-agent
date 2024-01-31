@@ -610,5 +610,7 @@ jobs:
       - name: Update version file (used by frontend to trigger autoupdate and create filename)
         run: |
           echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
+          # TODO remove this when we will have a new frontend
           aws s3 cp /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
+          aws s3 cp /tmp/agent-version.json s3://${{ secrets.DOWNLOADS_BUCKET }}/agent-metadata/
         if: ${{ needs.build.outputs.prerelease != 'true' }}
