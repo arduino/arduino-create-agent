@@ -222,7 +222,7 @@ jobs:
   notarize-macos:
     name: Notarize bundle
 
-    # for not they are exaclty the same
+    # for now they are exaclty the same
     strategy:
       matrix:
         arch: [amd64, arm64]
