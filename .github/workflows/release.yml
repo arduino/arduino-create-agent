@@ -9,7 +9,6 @@ env:
   # As defined by the Taskfile's PROJECT_NAME variable
   PROJECT_NAME: arduino-create-agent
   TARGET: "/CreateAgent/Stable/"
-  OLD_TARGET: "/CreateBridge/" # compatibility with older releases (we can't change config.ini)
   VERSION_TARGET: "arduino-create-static/agent-metadata/"
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -139,7 +138,6 @@ jobs:
       - name: Upload autoupdate files to Arduino downloads servers
         run: |
           aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
-          aws s3 sync public/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.OLD_TARGET }}
         if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload artifacts
@@ -224,7 +222,7 @@ jobs:
   notarize-macos:
     name: Notarize bundle
 
-    # for not they are exaclty the same
+    # for now they are exaclty the same
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -356,7 +354,7 @@ jobs:
 
     env:
       # vars used by installbuilder
-      INSTALLBUILDER_PATH: "/opt/installbuilder-23.7.0/bin/builder"
+      INSTALLBUILDER_PATH: "/opt/installbuilder-23.11.0/bin/builder"
       INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
       # installbuilder will read this vars automatically (defined in installer.xml):
       INSTALLER_CERT_WINDOWS_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
@@ -385,7 +383,7 @@ jobs:
             installer-extension: .exe
 
     container:
-      image: floydpink/ubuntu-install-builder:23.7.0
+      image: floydpink/ubuntu-install-builder:23.11.0
 
     steps:
       - name: Checkout
@@ -498,7 +496,7 @@ jobs:
 
       - name: Install gon for code signing and app notarization
         run: |
-          wget -q https://github.com/Bearer/gon/releases/download/v0.0.27/gon_macos.zip
+          wget -q https://github.com/Bearer/gon/releases/download/v0.0.36/gon_macos.zip
           unzip gon_macos.zip -d /usr/local/bin
 
       - name: Write gon config to file
@@ -612,5 +610,7 @@ jobs:
       - name: Update version file (used by frontend to trigger autoupdate and create filename)
         run: |
           echo {\"Version\": \"${GITHUB_REF##*/}\"} > /tmp/agent-version.json
+          # TODO remove this when we will have a new frontend
           aws s3 cp /tmp/agent-version.json s3://${{ env.VERSION_TARGET }}
+          aws s3 cp /tmp/agent-version.json s3://${{ secrets.DOWNLOADS_BUCKET }}/agent-metadata/
         if: ${{ needs.build.outputs.prerelease != 'true' }}
