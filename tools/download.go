@@ -223,7 +223,8 @@ func findTool(pack, name, version string, data pkgs.Index) (pkgs.Tool, pkgs.Syst
 func (t *Tools) installDrivers(location string) error {
 	OkPressed := 6
 	extension := ".bat"
-	preamble := ""
+	// add .\ to force locality
+	preamble := ".\\"
 	if OS != "windows" {
 		extension = ".sh"
 		// add ./ to force locality
