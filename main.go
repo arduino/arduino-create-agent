@@ -364,7 +364,7 @@ func loop() {
 	go func() {
 		for {
 			if !upload.Busy {
-				updateSerialPortList()
+				serialPorts.Update()
 			}
 			time.Sleep(2 * time.Second)
 		}

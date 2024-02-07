@@ -134,7 +134,7 @@ func (sp *SerialPortList) List() {
 
 var serialEnumeratorLock sync.Mutex
 
-func updateSerialPortList() {
+func (sp *SerialPortList) Update() {
 	if !serialEnumeratorLock.TryLock() {
 		return
 	}
