@@ -164,7 +164,7 @@ func updateSerialPortList() {
 		// TODO: report error?
 
 		// Empty port list if they can not be detected
-		ports = []OsSerialPort{}
+		ports = []*OsSerialPort{}
 	}
 	list := spListDual(ports)
 	serialPorts.Mu.Lock()
@@ -172,7 +172,7 @@ func updateSerialPortList() {
 	serialPorts.Mu.Unlock()
 }
 
-func spListDual(list []OsSerialPort) []SpPortItem {
+func spListDual(list []*OsSerialPort) []SpPortItem {
 	// we have a full clean list of ports now. iterate thru them
 	// to append the open/close state, baud rates, etc to make
 	// a super clean nice list to send back to browser

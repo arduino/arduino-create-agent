@@ -38,9 +38,9 @@ type OsSerialPort struct {
 }
 
 // enumerateSerialPorts will return the OS serial port
-func enumerateSerialPorts() ([]OsSerialPort, error) {
+func enumerateSerialPorts() ([]*OsSerialPort, error) {
 	// will timeout in 2 seconds
-	arrPorts := []OsSerialPort{}
+	arrPorts := []*OsSerialPort{}
 	ports, err := enumerator.GetDetailedPortsList()
 	if err != nil {
 		return arrPorts, err
@@ -53,14 +53,19 @@ func enumerateSerialPorts() ([]OsSerialPort, error) {
 			vidString := fmt.Sprintf("0x%s", vid)
 			pidString := fmt.Sprintf("0x%s", pid)
 			if vid != "0000" && pid != "0000" {
-				arrPorts = append(arrPorts, OsSerialPort{Name: element.Name, IDVendor: vidString, IDProduct: pidString, ISerial: element.SerialNumber})
+				arrPorts = append(arrPorts, &OsSerialPort{
+					Name:      element.Name,
+					IDVendor:  vidString,
+					IDProduct: pidString,
+					ISerial:   element.SerialNumber,
+				})
 			}
 		}
 	}
 
 	// see if we should filter the list
 	if portsFilter != nil {
-		arrPorts = slices.DeleteFunc(arrPorts, func(port OsSerialPort) bool {
+		arrPorts = slices.DeleteFunc(arrPorts, func(port *OsSerialPort) bool {
 			match := portsFilter.MatchString(port.Name)
 			if !match {
 				log.Debugf("ignoring port not matching filter. port: %v\n", port)
