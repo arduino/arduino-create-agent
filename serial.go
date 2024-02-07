@@ -137,10 +137,6 @@ func (sp *SerialPortList) List() {
 
 // discoverLoop periodically update the list of ports found
 func discoverLoop() {
-	serialPorts.Mu.Lock()
-	serialPorts.Ports = make([]SpPortItem, 0)
-	serialPorts.Mu.Unlock()
-
 	go func() {
 		for {
 			if !upload.Busy {
