@@ -49,8 +49,8 @@ type serialhub struct {
 	mu sync.Mutex
 }
 
-// SpPortList is the serial port list
-type SpPortList struct {
+// SerialPortList is the serial port list
+type SerialPortList struct {
 	Ports []SpPortItem
 	Mu    sync.Mutex `json:"-"`
 }
@@ -70,7 +70,7 @@ type SpPortItem struct {
 }
 
 // serialPorts contains the ports attached to the machine
-var serialPorts SpPortList
+var serialPorts SerialPortList
 
 var sh = serialhub{
 	//write:   	make(chan *serport, chan []byte),
@@ -121,7 +121,7 @@ func write(wr writeRequest) {
 }
 
 // List broadcasts a Json representation of the ports found
-func (sp *SpPortList) List() {
+func (sp *SerialPortList) List() {
 	sp.Mu.Lock()
 	ls, err := json.MarshalIndent(&serialPorts, "", "\t")
 	sp.Mu.Unlock()
