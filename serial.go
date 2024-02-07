@@ -120,13 +120,12 @@ func write(wr writeRequest) {
 	// no default since we alredy verified in spWrite()
 }
 
-// spList broadcasts a Json representation of the ports found
-func spList() {
-	var ls []byte
-	var err error
-	serialPorts.Mu.Lock()
-	ls, err = json.MarshalIndent(&serialPorts, "", "\t")
-	serialPorts.Mu.Unlock()
+// List broadcasts a Json representation of the ports found
+func (sp *SpPortList) List() {
+	sp.Mu.Lock()
+	ls, err := json.MarshalIndent(&serialPorts, "", "\t")
+	sp.Mu.Unlock()
+
 	if err != nil {
 		//log.Println(err)
 		h.broadcastSys <- []byte("Error creating json on port list " +
