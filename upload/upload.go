@@ -23,8 +23,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/arduino/arduino-cli/arduino/serialutils"
 	"github.com/arduino/arduino-create-agent/utilities"
+	serialutils "github.com/arduino/go-serial-utils"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"go.bug.st/serial/enumerator"
@@ -120,7 +120,7 @@ func Kill() {
 // sometimes) and an error (usually because the port listing failed)
 func reset(port string, wait bool, l Logger) (string, error) {
 	info(l, "Restarting in bootloader mode")
-	newPort, err := serialutils.Reset(port, wait, nil, false) // TODO use callbacks to print as the cli does
+	newPort, err := serialutils.Reset(port, wait, false, nil, nil) // TODO use callbacks to print reset progress
 	if err != nil {
 		info(l, err)
 		return "", err
