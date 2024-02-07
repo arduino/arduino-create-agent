@@ -49,7 +49,7 @@ func PartiallyResolve(board, file, platformPath, commandline string, extra Extra
 	commandline = strings.Replace(commandline, "{fqbn}", board, -1)
 
 	// search for runtime variables and replace with values from Locater
-	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
+	var runtimeRe = regexp.MustCompile(`\{(.*?)\}`)
 	runtimeVars := runtimeRe.FindAllString(commandline, -1)
 
 	for _, element := range runtimeVars {
