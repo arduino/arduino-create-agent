@@ -40,6 +40,7 @@ import (
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
+	"github.com/arduino/arduino-create-agent/upload"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	paths "github.com/arduino/go-paths-helper"
 	cors "github.com/gin-contrib/cors"
@@ -360,7 +361,14 @@ func loop() {
 	// launch our dummy data routine
 	//go d.run()
 
-	go discoverLoop()
+	go func() {
+		for {
+			if !upload.Busy {
+				updateSerialPortList()
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}()
 
 	r := gin.New()
 

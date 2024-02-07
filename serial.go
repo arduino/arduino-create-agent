@@ -22,9 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/arduino/arduino-create-agent/upload"
 )
 
 type writeRequest struct {
@@ -133,18 +130,6 @@ func (sp *SerialPortList) List() {
 	} else {
 		h.broadcastSys <- ls
 	}
-}
-
-// discoverLoop periodically update the list of ports found
-func discoverLoop() {
-	go func() {
-		for {
-			if !upload.Busy {
-				updateSerialPortList()
-			}
-			time.Sleep(2 * time.Second)
-		}
-	}()
 }
 
 var serialEnumeratorLock sync.Mutex
