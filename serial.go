@@ -48,8 +48,9 @@ type serialhub struct {
 
 // SerialPortList is the serial port list
 type SerialPortList struct {
-	Ports []SpPortItem
-	Mu    sync.Mutex `json:"-"`
+	Ports           []SpPortItem
+	Mu              sync.Mutex `json:"-"`
+	enumerationLock sync.Mutex
 }
 
 // SpPortItem is the serial port item
@@ -132,13 +133,13 @@ func (sp *SerialPortList) List() {
 	}
 }
 
-var serialEnumeratorLock sync.Mutex
-
 func (sp *SerialPortList) Update() {
-	if !serialEnumeratorLock.TryLock() {
+	if !sp.enumerationLock.TryLock() {
+		// already enumerating...
 		return
 	}
-	defer serialEnumeratorLock.Unlock()
+	defer sp.enumerationLock.Unlock()
+
 	ports, err := enumerateSerialPorts()
 	if err != nil {
 		// TODO: report error?
