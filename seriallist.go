@@ -19,7 +19,7 @@ package main
 
 import (
 	"fmt"
-	"regexp"
+	"slices"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -59,21 +59,14 @@ func enumerateSerialPorts() ([]OsSerialPort, error) {
 	}
 
 	// see if we should filter the list
-	if len(*regExpFilter) > 0 {
-		// yes, user asked for a filter
-		reFilter := regexp.MustCompile("(?i)" + *regExpFilter)
-
-		newarrPorts := []OsSerialPort{}
-		for _, element := range arrPorts {
-			// if matches regex, include
-			if reFilter.MatchString(element.Name) {
-				newarrPorts = append(newarrPorts, element)
-			} else {
-				log.Debugf("serial port did not match. port: %v\n", element)
+	if portsFilter != nil {
+		arrPorts = slices.DeleteFunc(arrPorts, func(port OsSerialPort) bool {
+			match := portsFilter.MatchString(port.Name)
+			if !match {
+				log.Debugf("ignoring port not matching filter. port: %v\n", port)
 			}
-
-		}
-		arrPorts = newarrPorts
+			return match
+		})
 	}
 
 	return arrPorts, err
