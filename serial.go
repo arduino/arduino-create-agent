@@ -49,7 +49,7 @@ type serialhub struct {
 // SerialPortList is the serial port list
 type SerialPortList struct {
 	Ports           []SpPortItem
-	Mu              sync.Mutex `json:"-"`
+	portsLock       sync.Mutex
 	enumerationLock sync.Mutex
 }
 
@@ -120,9 +120,9 @@ func write(wr writeRequest) {
 
 // List broadcasts a Json representation of the ports found
 func (sp *SerialPortList) List() {
-	sp.Mu.Lock()
-	ls, err := json.MarshalIndent(&serialPorts, "", "\t")
-	sp.Mu.Unlock()
+	sp.portsLock.Lock()
+	ls, err := json.MarshalIndent(sp, "", "\t")
+	sp.portsLock.Unlock()
 
 	if err != nil {
 		//log.Println(err)
@@ -148,9 +148,10 @@ func (sp *SerialPortList) Update() {
 		ports = []*OsSerialPort{}
 	}
 	list := spListDual(ports)
-	serialPorts.Mu.Lock()
+
+	serialPorts.portsLock.Lock()
 	serialPorts.Ports = list
-	serialPorts.Mu.Unlock()
+	serialPorts.portsLock.Unlock()
 }
 
 func spListDual(list []*OsSerialPort) []SpPortItem {
