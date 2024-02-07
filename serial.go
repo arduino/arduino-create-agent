@@ -147,20 +147,12 @@ func (sp *SerialPortList) Update() {
 		// Empty port list if they can not be detected
 		ports = []*OsSerialPort{}
 	}
-	list := spListDual(ports)
 
-	serialPorts.portsLock.Lock()
-	serialPorts.Ports = list
-	serialPorts.portsLock.Unlock()
-}
-
-func spListDual(list []*OsSerialPort) []SpPortItem {
 	// we have a full clean list of ports now. iterate thru them
 	// to append the open/close state, baud rates, etc to make
 	// a super clean nice list to send back to browser
-	spl := []SpPortItem{}
-
-	for _, item := range list {
+	list := []SpPortItem{}
+	for _, item := range ports {
 		port := SpPortItem{
 			Name:            item.Name,
 			SerialNumber:    item.ISerial,
@@ -181,9 +173,12 @@ func spListDual(list []*OsSerialPort) []SpPortItem {
 			port.Baud = myport.portConf.Baud
 			port.BufferAlgorithm = myport.BufferType
 		}
-		spl = append(spl, port)
+		list = append(list, port)
 	}
-	return spl
+
+	serialPorts.portsLock.Lock()
+	serialPorts.Ports = list
+	serialPorts.portsLock.Unlock()
 }
 
 func spErr(err string) {
