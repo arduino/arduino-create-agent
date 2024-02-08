@@ -22,6 +22,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/sirupsen/logrus"
+	"go.bug.st/serial/enumerator"
 )
 
 type writeRequest struct {
@@ -150,43 +153,52 @@ func (sp *SerialPortList) Update() {
 	}
 	defer sp.enumerationLock.Unlock()
 
-	ports, err := enumerateSerialPorts()
-	if err != nil {
-		// TODO: report error?
+	livePorts, _ := enumerator.GetDetailedPortsList()
+	// TODO: report error?
 
-		// Empty port list if they can not be detected
-		ports = []*OsSerialPort{}
-	}
+	var ports []SpPortItem
+	for _, livePort := range livePorts {
+		if !livePort.IsUSB {
+			continue
+		}
+		vid, pid := "0x"+livePort.VID, "0x"+livePort.PID
+		if vid == "0x0000" || pid == "0x0000" {
+			continue
+		}
+		if portsFilter != nil && !portsFilter.MatchString(livePort.Name) {
+			logrus.Debugf("ignoring port not matching filter. port: %v\n", livePort)
+			continue
+		}
 
-	// we have a full clean list of ports now. iterate thru them
-	// to append the open/close state, baud rates, etc to make
-	// a super clean nice list to send back to browser
-	list := []SpPortItem{}
-	for _, item := range ports {
 		port := SpPortItem{
-			Name:            item.Name,
-			SerialNumber:    item.SerialNumber,
+			Name:            livePort.Name,
+			SerialNumber:    livePort.SerialNumber,
+			VendorID:        vid,
+			ProductID:       pid,
+			Ver:             version,
 			IsOpen:          false,
 			IsPrimary:       false,
 			Baud:            0,
 			BufferAlgorithm: "",
-			Ver:             version,
-			VendorID:        item.VID,
-			ProductID:       item.PID,
 		}
 
+		// we have a full clean list of ports now. iterate thru them
+		// to append the open/close state, baud rates, etc to make
+		// a super clean nice list to send back to browser
+
 		// figure out if port is open
-		if myport, isFound := sh.FindPortByName(item.Name); isFound {
+		if myport, isFound := sh.FindPortByName(port.Name); isFound {
 			// and update data with the open port parameters
 			port.IsOpen = true
 			port.Baud = myport.portConf.Baud
 			port.BufferAlgorithm = myport.BufferType
 		}
-		list = append(list, port)
+
+		ports = append(ports, port)
 	}
 
 	serialPorts.portsLock.Lock()
-	serialPorts.Ports = list
+	serialPorts.Ports = ports
 	serialPorts.portsLock.Unlock()
 }
 
