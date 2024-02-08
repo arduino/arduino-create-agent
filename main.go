@@ -316,17 +316,6 @@ func loop() {
 		}
 	}
 
-	// list serial ports
-	portList, _ := enumerateSerialPorts()
-	log.Println("Your serial ports:")
-	if len(portList) == 0 {
-		log.Println("\tThere are no serial ports to list.")
-	}
-	for _, element := range portList {
-		log.Printf("\t%v\n", element)
-
-	}
-
 	if !*verbose {
 		log.Println("You can enter verbose mode to see all logging by setting the v key in the configuration file to true.")
 		log.SetOutput(io.Discard)
