@@ -18,8 +18,6 @@
 package main
 
 import (
-	"slices"
-
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial/enumerator"
 )
@@ -35,36 +33,30 @@ type OsSerialPort struct {
 // enumerateSerialPorts will return the OS serial port
 func enumerateSerialPorts() ([]*OsSerialPort, error) {
 	// will timeout in 2 seconds
-	arrPorts := []*OsSerialPort{}
 	ports, err := enumerator.GetDetailedPortsList()
 	if err != nil {
-		return arrPorts, err
+		return nil, err
 	}
 
-	for _, element := range ports {
-		if element.IsUSB {
-			vid, pid := "0x"+element.VID, "0x"+element.PID
-			if vid != "0x0000" && pid != "0x0000" {
-				arrPorts = append(arrPorts, &OsSerialPort{
-					Name:         element.Name,
-					VID:          vid,
-					PID:          pid,
-					SerialNumber: element.SerialNumber,
-				})
-			}
+	var res []*OsSerialPort
+	for _, port := range ports {
+		if !port.IsUSB {
+			continue
 		}
-	}
-
-	// see if we should filter the list
-	if portsFilter != nil {
-		arrPorts = slices.DeleteFunc(arrPorts, func(port *OsSerialPort) bool {
-			match := portsFilter.MatchString(port.Name)
-			if !match {
-				log.Debugf("ignoring port not matching filter. port: %v\n", port)
-			}
-			return match
+		vid, pid := "0x"+port.VID, "0x"+port.PID
+		if vid == "0x0000" || pid == "0x0000" {
+			continue
+		}
+		if portsFilter != nil && !portsFilter.MatchString(port.Name) {
+			log.Debugf("ignoring port not matching filter. port: %v\n", port)
+			continue
+		}
+		res = append(res, &OsSerialPort{
+			Name:         port.Name,
+			VID:          vid,
+			PID:          pid,
+			SerialNumber: port.SerialNumber,
 		})
 	}
-
-	return arrPorts, err
+	return res, err
 }
