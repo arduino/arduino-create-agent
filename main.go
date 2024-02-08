@@ -102,7 +102,7 @@ var homeTemplateHTML string
 
 // global clients
 var (
-	Tools   tools.Tools
+	Tools   *tools.Tools
 	Systray systray.Systray
 	Index   *index.Resource
 )
@@ -252,7 +252,7 @@ func loop() {
 
 	// Instantiate Index and Tools
 	Index = index.Init(*indexURL, config.GetDataDir())
-	Tools = *tools.New(config.GetDataDir(), Index, logger)
+	Tools = tools.New(config.GetDataDir(), Index, logger)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {

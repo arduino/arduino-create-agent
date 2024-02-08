@@ -161,7 +161,7 @@ func uploadHandler(c *gin.Context) {
 
 	go func() {
 		// Resolve commandline
-		commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, &Tools)
+		commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, Tools)
 		if err != nil {
 			send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 			return
