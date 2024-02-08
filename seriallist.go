@@ -18,7 +18,6 @@
 package main
 
 import (
-	"fmt"
 	"slices"
 
 	log "github.com/sirupsen/logrus"
@@ -28,12 +27,9 @@ import (
 // OsSerialPort is the Os serial port
 type OsSerialPort struct {
 	Name         string
-	DeviceClass  string
-	Manufacturer string
-	Product      string
-	IDProduct    string
-	IDVendor     string
-	ISerial      string
+	PID          string
+	VID          string
+	SerialNumber string
 }
 
 // enumerateSerialPorts will return the OS serial port
@@ -47,16 +43,13 @@ func enumerateSerialPorts() ([]*OsSerialPort, error) {
 
 	for _, element := range ports {
 		if element.IsUSB {
-			vid := element.VID
-			pid := element.PID
-			vidString := fmt.Sprintf("0x%s", vid)
-			pidString := fmt.Sprintf("0x%s", pid)
-			if vid != "0000" && pid != "0000" {
+			vid, pid := "0x"+element.VID, "0x"+element.PID
+			if vid != "0x0000" && pid != "0x0000" {
 				arrPorts = append(arrPorts, &OsSerialPort{
-					Name:      element.Name,
-					IDVendor:  vidString,
-					IDProduct: pidString,
-					ISerial:   element.SerialNumber,
+					Name:         element.Name,
+					VID:          vid,
+					PID:          pid,
+					SerialNumber: element.SerialNumber,
 				})
 			}
 		}

@@ -165,15 +165,14 @@ func (sp *SerialPortList) Update() {
 	for _, item := range ports {
 		port := SpPortItem{
 			Name:            item.Name,
-			SerialNumber:    item.ISerial,
-			DeviceClass:     item.DeviceClass,
+			SerialNumber:    item.SerialNumber,
 			IsOpen:          false,
 			IsPrimary:       false,
 			Baud:            0,
 			BufferAlgorithm: "",
 			Ver:             version,
-			VendorID:        item.IDVendor,
-			ProductID:       item.IDProduct,
+			VendorID:        item.VID,
+			ProductID:       item.PID,
 		}
 
 		// figure out if port is open
