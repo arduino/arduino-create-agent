@@ -101,7 +101,15 @@ func (sh *serialhub) run() {
 			sh.mu.Unlock()
 		case wr := <-sh.write:
 			// if user sent in the commands as one text mode line
-			write(wr)
+			switch wr.buffer {
+			case "send":
+				wr.p.sendBuffered <- wr.d
+			case "sendnobuf":
+				wr.p.sendNoBuf <- []byte(wr.d)
+			case "sendraw":
+				wr.p.sendRaw <- wr.d
+			}
+			// no default since we alredy verified in spWrite()
 		}
 	}
 }
@@ -118,18 +126,6 @@ func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
 		}
 	}
 	return nil, false
-}
-
-func write(wr writeRequest) {
-	switch wr.buffer {
-	case "send":
-		wr.p.sendBuffered <- wr.d
-	case "sendnobuf":
-		wr.p.sendNoBuf <- []byte(wr.d)
-	case "sendraw":
-		wr.p.sendRaw <- wr.d
-	}
-	// no default since we alredy verified in spWrite()
 }
 
 // List broadcasts a Json representation of the ports found
