@@ -20,7 +20,6 @@ package main
 import (
 	"fmt"
 	"slices"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"go.bug.st/serial/enumerator"
@@ -75,18 +74,4 @@ func enumerateSerialPorts() ([]*OsSerialPort, error) {
 	}
 
 	return arrPorts, err
-}
-
-func findPortByName(portname string) (*serport, bool) {
-	portnamel := strings.ToLower(portname)
-	sh.mu.Lock()
-	defer sh.mu.Unlock()
-	for port := range sh.ports {
-		if strings.ToLower(port.portConf.Name) == portnamel {
-			// we found our port
-			//spHandlerClose(port)
-			return port, true
-		}
-	}
-	return nil, false
 }

@@ -106,6 +106,20 @@ func (sh *serialhub) run() {
 	}
 }
 
+func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+
+	for port := range sh.ports {
+		if strings.EqualFold(port.portConf.Name, portname) {
+			// we found our port
+			//spHandlerClose(port)
+			return port, true
+		}
+	}
+	return nil, false
+}
+
 func write(wr writeRequest) {
 	switch wr.buffer {
 	case "send":
@@ -167,7 +181,7 @@ func (sp *SerialPortList) Update() {
 		}
 
 		// figure out if port is open
-		if myport, isFound := findPortByName(item.Name); isFound {
+		if myport, isFound := sh.FindPortByName(item.Name); isFound {
 			// and update data with the open port parameters
 			port.IsOpen = true
 			port.Baud = myport.portConf.Baud
@@ -193,7 +207,7 @@ func spClose(portname string) {
 	// that should cause an unregister channel call back
 	// to myself
 
-	myport, isFound := findPortByName(portname)
+	myport, isFound := sh.FindPortByName(portname)
 
 	if isFound {
 		// we found our port
@@ -221,7 +235,7 @@ func spWrite(arg string) {
 	//log.Println("The data is:" + args[2] + "---")
 
 	// see if we have this port open
-	myport, isFound := findPortByName(portname)
+	myport, isFound := sh.FindPortByName(portname)
 
 	if !isFound {
 		// we couldn't find the port, so send err
