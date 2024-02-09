@@ -1,10 +1,10 @@
 ---
-name: github.com/getlantern/hidden
-version: v0.0.0-20190325191715-f02dbb02be55
+name: fyne.io/systray
+version: v1.10.0
 type: go
-summary: Package hidden provides the ability to "hide" binary data in a string using
-  a hex encoding with non-printing characters.
-homepage: https://pkg.go.dev/github.com/getlantern/hidden
+summary: Package systray is a cross-platform Go library to place an icon and menu
+  in the notification area.
+homepage: https://pkg.go.dev/fyne.io/systray
 license: apache-2.0
 licenses:
 - sources: LICENSE
@@ -198,7 +198,7 @@ licenses:
           same "printed page" as the copyright notice for easier
           identification within third-party archives.
 
-       Copyright 2016 Brave New Software Project, Inc.
+       Copyright 2014 Brave New Software Project, Inc.
 
        Licensed under the Apache License, Version 2.0 (the "License");
        you may not use this file except in compliance with the License.

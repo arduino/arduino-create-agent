@@ -93,9 +93,9 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
 
-        # build the agent without GUI support (no tray icon) for integration testing
+        # build the agent for integration testing
       - name: Build the Agent-cli
-        run: task go:build-cli
+        run: task go:build
         if: matrix.operating-system != 'windows-latest'
 
       - name: Build the Agent-cli for win
