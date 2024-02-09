@@ -4,8 +4,8 @@ github.com/AnatolyRugalev/goregen v0.1.0 h1:xrdXkLaskMnbxW0x4FWNj2yoednv0X2bcTBW
 github.com/AnatolyRugalev/goregen v0.1.0/go.mod h1:sVlY1tjcirqLBRZnCcIq1+7/Lwmqz5g7IK8AStjOVzI=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.0 h1:nHGfwXmFvJrSR9xu8qL7BkO4DqTHXE9N5vPhgY2I+j0=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.0/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
-github.com/arduino/arduino-cli v0.35.0 h1:tkSpGun1hMgJPkvZJjofejWD+ivhCpvsl49H4n81iSc=
-github.com/arduino/arduino-cli v0.35.0/go.mod h1:9aoXZdVGQ9uwf2M1nCSB+T051KbldslMFiJaHVycVsg=
+github.com/arduino/arduino-cli v0.35.2 h1:XvAOnAZWlEnHc9b9pLFWjfP8ozBMnus14Xgu9wR/aiY=
+github.com/arduino/arduino-cli v0.35.2/go.mod h1:9aoXZdVGQ9uwf2M1nCSB+T051KbldslMFiJaHVycVsg=
 github.com/arduino/go-paths-helper v1.12.0 h1:xizOQtI9iHdl19qXd1EmWg5i9W//2bOCOYwlNv8F61E=
 github.com/arduino/go-paths-helper v1.12.0/go.mod h1:jcpW4wr0u69GlXhTYydsdsqAjLaYK5n7oWHfKqOG6LM=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
