@@ -55,6 +55,7 @@ allowed:
   # The following are based on: https://www.gnu.org/licenses/license-list.html#GPLCompatibleLicenses
   - gpl-1.0-or-later
   - gpl-1.0+ # Deprecated ID for `gpl-1.0-or-later`
+  - gpl-2.0
   - gpl-2.0-or-later
   - gpl-2.0+ # Deprecated ID for `gpl-2.0-or-later`
   - gpl-3.0-only

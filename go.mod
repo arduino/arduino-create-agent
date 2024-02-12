@@ -7,6 +7,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.0
 	github.com/arduino/go-paths-helper v1.12.0
 	github.com/arduino/go-serial-utils v0.1.2
+	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.1.1
 	github.com/gin-contrib/cors v1.5.0
@@ -28,6 +29,7 @@ require (
 
 require (
 	github.com/AnatolyRugalev/goregen v0.1.0 // indirect
+	github.com/arduino/go-properties-orderedmap v1.8.0 // indirect
 	github.com/bytedance/sonic v1.10.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect

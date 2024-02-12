@@ -40,7 +40,6 @@ import (
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/updater"
-	"github.com/arduino/arduino-create-agent/upload"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	paths "github.com/arduino/go-paths-helper"
 	cors "github.com/gin-contrib/cors"
@@ -343,21 +342,14 @@ func loop() {
 		}
 	}
 
+	// launch the discoveries for the running system
+	go serialPorts.Run()
 	// launch the hub routine which is the singleton for the websocket server
 	go h.run()
 	// launch our serial port routine
 	go sh.run()
 	// launch our dummy data routine
 	//go d.run()
-
-	go func() {
-		for {
-			if !upload.Busy {
-				serialPorts.Update()
-			}
-			time.Sleep(2 * time.Second)
-		}
-	}()
 
 	r := gin.New()
 

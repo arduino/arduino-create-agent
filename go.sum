@@ -4,10 +4,15 @@ github.com/AnatolyRugalev/goregen v0.1.0 h1:xrdXkLaskMnbxW0x4FWNj2yoednv0X2bcTBW
 github.com/AnatolyRugalev/goregen v0.1.0/go.mod h1:sVlY1tjcirqLBRZnCcIq1+7/Lwmqz5g7IK8AStjOVzI=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.0 h1:nHGfwXmFvJrSR9xu8qL7BkO4DqTHXE9N5vPhgY2I+j0=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.0/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
+github.com/arduino/go-paths-helper v1.0.1/go.mod h1:HpxtKph+g238EJHq4geEPv9p+gl3v5YYu35Yb+w31Ck=
 github.com/arduino/go-paths-helper v1.12.0 h1:xizOQtI9iHdl19qXd1EmWg5i9W//2bOCOYwlNv8F61E=
 github.com/arduino/go-paths-helper v1.12.0/go.mod h1:jcpW4wr0u69GlXhTYydsdsqAjLaYK5n7oWHfKqOG6LM=
+github.com/arduino/go-properties-orderedmap v1.8.0 h1:wEfa6hHdpezrVOh787OmClsf/Kd8qB+zE3P2Xbrn0CQ=
+github.com/arduino/go-properties-orderedmap v1.8.0/go.mod h1:DKjD2VXY/NZmlingh4lSFMEYCVubfeArCsGPGDwb2yk=
 github.com/arduino/go-serial-utils v0.1.2 h1:MRFwME4w/uaVkJ1R+wzz4KSbI9cF9IDVrYorazvjpTk=
 github.com/arduino/go-serial-utils v0.1.2/go.mod h1:kzIsNPgz8DFAd1sAFKve4ubxrdGcwQ4XzvRLlztsgnE=
+github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0 h1:v7og6LpskewFabmaShKVzWXl5MXbmsxaRP3yo4dJta8=
+github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0/go.mod h1:1dgblsmK2iBx3L5iNTyRIokeaxbTLUrYiUbHBK6yC3Y=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
