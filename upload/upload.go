@@ -30,9 +30,6 @@ import (
 	"go.bug.st/serial/enumerator"
 )
 
-// Busy tells wether the programmer is doing something
-var Busy = false
-
 // Extra contains some options used during the upload
 type Extra struct {
 	Use1200bpsTouch   bool `json:"use_1200bps_touch"`
@@ -82,9 +79,6 @@ func fixupPort(port, commandline string) string {
 
 // Serial performs a serial upload
 func Serial(port, commandline string, extra Extra, l Logger) error {
-	Busy = true
-	defer func() { Busy = false }()
-
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
 		var err error
