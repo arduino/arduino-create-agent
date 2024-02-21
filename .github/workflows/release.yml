@@ -594,25 +594,16 @@ jobs:
           echo "</details>" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create Github Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Github Release and upload artifacts
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           body: ${{ steps.release_body.outputs.RBODY}}
           draft: false
           prerelease: ${{ needs.build.outputs.prerelease }}
-
-      - name: Upload release files on Github
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref }}
-          file_glob: true # If set to true, the file argument can be a glob pattern
-          file: release/*
-
+          # NOTE: "Artifact is a directory" warnings are expected and don't indicate a problem
+          # (all the files we need are in the DIST_DIR root)
+          artifacts: release/*
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
