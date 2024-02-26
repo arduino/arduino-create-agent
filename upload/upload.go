@@ -46,6 +46,7 @@ func PartiallyResolve(board, file, platformPath, commandline string, extra Extra
 	commandline = strings.Replace(commandline, "{build.path}", filepath.ToSlash(filepath.Dir(file)), -1)
 	commandline = strings.Replace(commandline, "{build.project_name}", strings.TrimSuffix(filepath.Base(file), filepath.Ext(filepath.Base(file))), -1)
 	commandline = strings.Replace(commandline, "{runtime.platform.path}", filepath.ToSlash(platformPath), -1)
+	commandline = strings.Replace(commandline, "{fqbn}", board, -1)
 
 	// search for runtime variables and replace with values from Locater
 	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
