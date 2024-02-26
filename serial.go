@@ -183,7 +183,7 @@ func (sp *SerialPortList) runSerialDiscovery() {
 
 	events, err := d.StartSync(10)
 	if err != nil {
-		logrus.Errorf("Error downloading serial-discovery: %s", err)
+		logrus.Errorf("Error starting event watcher on serial-discovery: %s", err)
 		panic(err)
 	}
 
