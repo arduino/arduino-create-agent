@@ -59,29 +59,31 @@ var TestResolveData = []struct {
 	Board        string
 	File         string
 	PlatformPath string
-	Commandline  string
+	CommandLine  string
 	Extra        Extra
 	Result       string
 }{
-	{"arduino:avr:leonardo",
-		"./upload_test.hex",
-		"",
-		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
-		Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
-		`$loc$loc{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v $loc{upload.verify} -patmega32u4 -cavr109 -P$loc{serial.port} -b57600 -D "-Uflash:w:./upload_test.hex:i"`,
+	{
+		Board:        "arduino:avr:leonardo",
+		File:         "./upload_test.hex",
+		PlatformPath: "",
+		CommandLine:  `{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
+		Extra:        Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
+		Result:       `$loc$loc{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v $loc{upload.verify} -patmega32u4 -cavr109 -P$loc{serial.port} -b57600 -D "-Uflash:w:./upload_test.hex:i"`,
 	},
-	{"arduino:renesas_uno:unor4wifi",
-		"UpdateFirmware.bin",
-		"",
-		`{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a {serial.port} -b {fqbn} -v --retries 5"`,
-		Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
-		`$loc{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a $loc{serial.port} -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
+	{
+		Board:        "arduino:renesas_uno:unor4wifi",
+		File:         "UpdateFirmware.bin",
+		PlatformPath: "",
+		CommandLine:  `{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a {serial.port} -b {fqbn} -v --retries 5"`,
+		Extra:        Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
+		Result:       `$loc{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a $loc{serial.port} -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
 	},
 }
 
 func TestResolve(t *testing.T) {
 	for _, test := range TestResolveData {
-		result, _ := PartiallyResolve(test.Board, test.File, test.PlatformPath, test.Commandline, test.Extra, mockTools{})
+		result, _ := PartiallyResolve(test.Board, test.File, test.PlatformPath, test.CommandLine, test.Extra, mockTools{})
 		if result != test.Result {
 			t.Error("expected " + test.Result + ", got " + result)
 			continue
@@ -91,22 +93,24 @@ func TestResolve(t *testing.T) {
 
 var TestFixupData = []struct {
 	Port        string
-	Commandline string
+	CommandLine string
 	Result      string
 }{
-	{"/dev/ttyACM0",
-		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
-		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
+	{
+		Port:        "/dev/ttyACM0",
+		CommandLine: `{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
+		Result:      `{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
 	},
-	{"/dev/cu.usbmodemDC5475C5557C2",
-		`{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a {serial.port} -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
-		`{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a /dev/cu.usbmodemDC5475C5557C2 -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
+	{
+		Port:        "/dev/cu.usbmodemDC5475C5557C2",
+		CommandLine: `{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a {serial.port} -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
+		Result:      `{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a /dev/cu.usbmodemDC5475C5557C2 -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
 	},
 }
 
 func TestFixupPort(t *testing.T) {
 	for _, test := range TestFixupData {
-		result := fixupPort(test.Port, test.Commandline)
+		result := fixupPort(test.Port, test.CommandLine)
 		if result != test.Result {
 			t.Error("expected " + test.Result + ", got " + result)
 			continue
