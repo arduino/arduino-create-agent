@@ -68,7 +68,14 @@ var TestResolveData = []struct {
 		"",
 		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
 		Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
-		`$loc$loc{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v $loc{upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:./upload_test.hex:i"`,
+		`$loc$loc{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v $loc{upload.verify} -patmega32u4 -cavr109 -P$loc{serial.port} -b57600 -D "-Uflash:w:./upload_test.hex:i"`,
+	},
+	{"arduino:renesas_uno:unor4wifi",
+		"UpdateFirmware.bin",
+		"",
+		`{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a {serial.port} -b {fqbn} -v --retries 5"`,
+		Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
+		`$loc{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a $loc{serial.port} -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
 	},
 }
 
