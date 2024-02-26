@@ -66,7 +66,7 @@ var TestResolveData = []struct {
 	{"arduino:avr:leonardo",
 		"./upload_test.hex",
 		"",
-		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
+		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
 		Extra{Use1200bpsTouch: true, WaitForUploadPort: true},
 		`$loc$loc{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v $loc{upload.verify} -patmega32u4 -cavr109 -P$loc{serial.port} -b57600 -D "-Uflash:w:./upload_test.hex:i"`,
 	},
@@ -81,7 +81,32 @@ var TestResolveData = []struct {
 
 func TestResolve(t *testing.T) {
 	for _, test := range TestResolveData {
-		result, _ := upload.PartiallyResolve(test.Board, test.File, test.PlatformPath, test.Commandline, test.Extra, mockTools{})
+		result, _ := PartiallyResolve(test.Board, test.File, test.PlatformPath, test.Commandline, test.Extra, mockTools{})
+		if result != test.Result {
+			t.Error("expected " + test.Result + ", got " + result)
+			continue
+		}
+	}
+}
+
+var TestFixupData = []struct {
+	Port        string
+	Commandline string
+	Result      string
+}{
+	{"/dev/ttyACM0",
+		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P{serial.port} -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
+		`{runtime.tools.avrdude.path}/bin/avrdude -C{runtime.tools.avrdude.path}/etc/avrdude.conf -v {upload.verify} -patmega32u4 -cavr109 -P/dev/ttyACM0 -b57600 -D "-Uflash:w:{build.path}/{build.project_name}.hex:i"`,
+	},
+	{"/dev/cu.usbmodemDC5475C5557C2",
+		`{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a {serial.port} -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
+		`{runtime.tools.arduino-fwuploader.path}/arduino-fwuploader firmware flash -a /dev/cu.usbmodemDC5475C5557C2 -b arduino:renesas_uno:unor4wifi -v --retries 5"`,
+	},
+}
+
+func TestFixupPort(t *testing.T) {
+	for _, test := range TestFixupData {
+		result := fixupPort(test.Port, test.Commandline)
 		if result != test.Result {
 			t.Error("expected " + test.Result + ", got " + result)
 			continue
