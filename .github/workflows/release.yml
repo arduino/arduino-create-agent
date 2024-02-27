@@ -5,6 +5,10 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+*"
 
+permissions:
+  contents: write
+  id-token: write # This is required for requesting the JWT
+
 env:
   # As defined by the Taskfile's PROJECT_NAME variable
   PROJECT_NAME: arduino-create-agent
@@ -47,9 +51,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     environment: production
-    permissions:
-      contents: write
-      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Set env vars
@@ -236,9 +237,6 @@ jobs:
       GON_PATH: ${{ github.workspace }}/gon
     needs: [build, create-macos-bundle]
     environment: production
-    permissions:
-      contents: write
-      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Download artifact
@@ -545,9 +543,6 @@ jobs:
     runs-on: ubuntu-20.04
     environment: production
     needs: [build, package, generate-sign-dmg]
-    permissions:
-      contents: write
-      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Checkout
