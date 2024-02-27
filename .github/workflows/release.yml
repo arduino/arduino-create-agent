@@ -537,7 +537,7 @@ jobs:
     runs-on: ubuntu-20.04
     environment: production
     needs: [build, package, generate-sign-dmg]
-    permission:
+    permissions:
       contents: write
       id-token: write # This is required for requesting the JWT
 
