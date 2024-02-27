@@ -139,6 +139,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: "github_${{ env.PROJECT_NAME }}"
           aws-region: ${{ env.AWS_REGION }}
+        if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: |
@@ -333,6 +334,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: "github_${{ env.PROJECT_NAME }}"
           aws-region: ${{ env.AWS_REGION }}
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload autoupdate bundle to Arduino downloads servers
         run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
@@ -611,6 +613,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: "github_${{ env.PROJECT_NAME }}"
           aws-region: ${{ env.AWS_REGION }}
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload release files on Arduino downloads servers
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
