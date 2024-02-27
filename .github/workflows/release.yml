@@ -5,6 +5,10 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+*"
 
+permissions:
+  contents: write
+  id-token: write # This is required for requesting the JWT
+
 env:
   # As defined by the Taskfile's PROJECT_NAME variable
   PROJECT_NAME: arduino-create-agent
@@ -46,6 +50,7 @@ jobs:
       CGO_ENABLED: 0
 
     runs-on: ${{ matrix.os }}
+    environment: production
 
     steps:
       - name: Set env vars
@@ -134,6 +139,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: "github_${{ env.PROJECT_NAME }}"
           aws-region: ${{ env.AWS_REGION }}
+        if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: |
@@ -231,6 +237,7 @@ jobs:
     env:
       GON_PATH: ${{ github.workspace }}/gon
     needs: [build, create-macos-bundle]
+    environment: production
 
     steps:
       - name: Download artifact
@@ -327,6 +334,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: "github_${{ env.PROJECT_NAME }}"
           aws-region: ${{ env.AWS_REGION }}
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload autoupdate bundle to Arduino downloads servers
         run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
@@ -537,9 +545,6 @@ jobs:
     runs-on: ubuntu-20.04
     environment: production
     needs: [build, package, generate-sign-dmg]
-    permission:
-      contents: write
-      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Checkout
@@ -591,25 +596,16 @@ jobs:
           echo "</details>" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create Github Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Github Release and upload artifacts
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           body: ${{ steps.release_body.outputs.RBODY}}
           draft: false
           prerelease: ${{ needs.build.outputs.prerelease }}
-
-      - name: Upload release files on Github
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref }}
-          file_glob: true # If set to true, the file argument can be a glob pattern
-          file: release/*
-
+          # NOTE: "Artifact is a directory" warnings are expected and don't indicate a problem
+          # (all the files we need are in the DIST_DIR root)
+          artifacts: release/*
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -617,6 +613,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: "github_${{ env.PROJECT_NAME }}"
           aws-region: ${{ env.AWS_REGION }}
+        if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload release files on Arduino downloads servers
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
