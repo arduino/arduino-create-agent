@@ -46,6 +46,9 @@ jobs:
       CGO_ENABLED: 0
 
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Set env vars
@@ -231,6 +234,9 @@ jobs:
     env:
       GON_PATH: ${{ github.workspace }}/gon
     needs: [build, create-macos-bundle]
+    permissions:
+      contents: write
+      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Download artifact
