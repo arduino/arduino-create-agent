@@ -10,8 +10,6 @@ env:
   PROJECT_NAME: arduino-create-agent
   TARGET: "/CreateAgent/Stable/"
   VERSION_TARGET: "arduino-create-static/agent-metadata/"
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
   KEYCHAIN: "sign.keychain"
   KEYCHAIN_PASSWORD: keychainpassword # Arbitrary password for a keychain that exists only for the duration of the job, so not secret
@@ -129,6 +127,13 @@ jobs:
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows-${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch == '386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
+      
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: "github_${{ env.PROJECT_NAME }}"
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload autoupdate files to Arduino downloads servers
         run: |
@@ -315,6 +320,13 @@ jobs:
       - name: Notarize app bundle
         run: |
           gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: "github_${{ env.PROJECT_NAME }}"
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload autoupdate bundle to Arduino downloads servers
         run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
@@ -523,7 +535,11 @@ jobs:
 
   create-release:
     runs-on: ubuntu-20.04
+    environment: production
     needs: [build, package, generate-sign-dmg]
+    permission:
+      contents: write
+      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Checkout
@@ -593,6 +609,14 @@ jobs:
           tag: ${{ github.ref }}
           file_glob: true # If set to true, the file argument can be a glob pattern
           file: release/*
+
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: "github_${{ env.PROJECT_NAME }}"
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload release files on Arduino downloads servers
         run: aws s3 sync release/ s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}
