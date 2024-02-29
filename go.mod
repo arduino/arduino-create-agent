@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	fyne.io/systray v1.10.0
-	github.com/ProtonMail/go-crypto v1.1.0-alpha.0
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.1
 	github.com/arduino/arduino-cli v0.35.0
 	github.com/arduino/go-paths-helper v1.12.0
 	github.com/blang/semver v3.5.1+incompatible
