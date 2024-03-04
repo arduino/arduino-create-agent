@@ -75,7 +75,7 @@ var (
 	hostname       = iniConf.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
 	httpProxy      = iniConf.String("httpProxy", "", "Proxy server for HTTP requests")
 	httpsProxy     = iniConf.String("httpsProxy", "", "Proxy server for HTTPS requests")
-	indexURL       = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_staging_index.json", "The address from where to download the index json containing the location of upload tools")
+	indexURL       = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_index.json", "The address from where to download the index json containing the location of upload tools")
 	iniConf        = flag.NewFlagSet("ini", flag.ContinueOnError)
 	logDump        = iniConf.String("log", "off", "off = (default)")
 	origins        = iniConf.String("origins", "", "Allowed origin list for CORS")
