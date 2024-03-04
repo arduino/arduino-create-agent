@@ -177,17 +177,11 @@ func loop() {
 		os.Exit(0)
 	}
 
-	// Instantiate Index
-	Index = index.Init(*indexURL, config.GetDataDir())
-
 	logger := func(msg string) {
 		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 	}
-
-	// Instantiate Tools
-	Tools = *tools.New(config.GetDataDir(), Index, logger)
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()
@@ -250,6 +244,10 @@ func loop() {
 			log.Infof("using additional config from %s", additionalConfigPath.String())
 		}
 	}
+
+	// Instantiate Index and Tools
+	Index = index.Init(*indexURL, config.GetDataDir())
+	Tools = *tools.New(config.GetDataDir(), Index, logger)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
