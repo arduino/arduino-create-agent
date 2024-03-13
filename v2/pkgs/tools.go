@@ -188,16 +188,28 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 }
 
 func (t *Tools) install(ctx context.Context, path, url, checksum string) (*tools.Operation, error) {
-	// Download
+	// Download the archive
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	// Use a teereader to only read once
 	var buffer bytes.Buffer
-	reader := io.TeeReader(res.Body, &buffer)
+
+	// We copy the body of the response to a buffer to calculate the checksum
+	_, err = io.Copy(&buffer, res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the checksum
+	sum := sha256.Sum256(buffer.Bytes())
+	sumString := "SHA-256:" + hex.EncodeToString(sum[:sha256.Size])
+
+	if sumString != checksum {
+		return nil, errors.New("checksum of downloaded file doesn't match, expected: " + checksum + " got: " + sumString)
+	}
 
 	safePath, err := utilities.SafeJoin(t.folder, path)
 	if err != nil {
@@ -210,18 +222,10 @@ func (t *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 		return nil, err
 	}
 
-	err = extract.Archive(ctx, reader, t.folder, rename(path))
+	err = extract.Archive(ctx, &buffer, t.folder, rename(path))
 	if err != nil {
 		os.RemoveAll(safePath)
 		return nil, err
-	}
-
-	sum := sha256.Sum256(buffer.Bytes())
-	sumString := "SHA-256:" + hex.EncodeToString(sum[:sha256.Size])
-
-	if sumString != checksum {
-		os.RemoveAll(safePath)
-		return nil, errors.New("checksum doesn't match")
 	}
 
 	// Write installed.json for retrocompatibility with v1
