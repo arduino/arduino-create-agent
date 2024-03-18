@@ -21,11 +21,13 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
+	"github.com/arduino/go-paths-helper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -203,4 +205,72 @@ func TestInstalledHead(t *testing.T) {
 
 func strpoint(s string) *string {
 	return &s
+}
+
+func TestInstall(t *testing.T) {
+	// Initialize indexes with a temp folder
+	tmp := t.TempDir()
+
+	testIndex := &index.Resource{
+		IndexFile:   *paths.New("testdata", "test_tool_index.json"),
+		LastRefresh: time.Now(),
+	}
+
+	tool := pkgs.New(testIndex, tmp)
+
+	ctx := context.Background()
+
+	testCases := []tools.ToolPayload{
+		// https://github.com/arduino/arduino-create-agent/issues/920
+		{Name: "avrdude", Version: "6.3.0-arduino17", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "bossac", Version: "1.6.1-arduino", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "bossac", Version: "1.7.0-arduino3", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "bossac", Version: "1.9.1-arduino2", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "openocd", Version: "0.11.0-arduino2", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "dfu-util", Version: "0.10.0-arduino1", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "rp2040tools", Version: "1.0.6", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "esptool_py", Version: "4.5.1", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		// At the moment we don't install these ones because they are packaged in a different way: they do not have a top level dir, causing the rename funcion to behave incorrectly
+		// {Name: "fwupdater", Version: "0.1.12", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		// {Name: "arduino-fwuploader", Version: "2.2.2", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+	}
+
+	expectedFiles := map[string][]string{
+		"avrdude-6.3.0-arduino17":  {"bin", "etc"},
+		"bossac-1.6.1-arduino":     {"bossac"},
+		"bossac-1.7.0-arduino3":    {"bossac"},
+		"bossac-1.9.1-arduino2":    {"bossac"},
+		"openocd-0.11.0-arduino2":  {"bin", "share"},
+		"dfu-util-0.10.0-arduino1": {"dfu-prefix", "dfu-suffix", "dfu-util"},
+		"rp2040tools-1.0.6":        {"elf2uf2", "picotool", "pioasm", "rp2040load"},
+		"esptool_py-4.5.1":         {"esptool"},
+		// "fwupdater-0.1.12":         {"firmwares", "FirmwareUploader"}, // old legacy tool
+		// "arduino-fwuploader-2.2.2": {"arduino-fwuploader"},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.Name+"-"+tc.Version, func(t *testing.T) {
+			// Install the Tool
+			_, err := tool.Install(ctx, &tc)
+			require.NoError(t, err)
+
+			// Check that the tool has been downloaded
+			toolDir := paths.New(tmp).Join("arduino-test", tc.Name, tc.Version)
+			require.DirExists(t, toolDir.String())
+
+			// Check that the files have been created
+			for _, file := range expectedFiles[tc.Name+"-"+tc.Version] {
+				filePath := toolDir.Join(file)
+				if filePath.IsDir() {
+					require.DirExists(t, filePath.String())
+				} else {
+					if runtime.GOOS == "windows" {
+						require.FileExists(t, filePath.String()+".exe")
+					} else {
+						require.FileExists(t, filePath.String())
+					}
+				}
+			}
+		})
+	}
+
 }

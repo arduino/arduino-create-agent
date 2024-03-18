@@ -145,7 +145,7 @@ func TestInstallToolV2(t *testing.T) {
 	tests := []test{
 		{bossacInstallURLOK, http.StatusOK, "ok"},
 		{bossacInstallWrongSig, http.StatusInternalServerError, "verification error"},
-		{bossacInstallWrongCheck, http.StatusInternalServerError, "checksum doesn't match"},
+		{bossacInstallWrongCheck, http.StatusInternalServerError, "checksum of downloaded file doesn't match"},
 		{bossacInstallNoURL, http.StatusOK, "ok"},
 	}
 
