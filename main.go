@@ -361,7 +361,8 @@ func loop() {
 		"https://create.arduino.cc",
 		"https://cloud.arduino.cc",
 		"https://app.arduino.cc",
-		"https://register.arduino.cc",
+		"https://board-registration.arduino.cc",
+		"https://*.app.arduino.cc",
 	}
 
 	for i := 8990; i < 9001; i++ {
