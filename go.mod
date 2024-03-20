@@ -5,8 +5,9 @@ go 1.21
 require (
 	fyne.io/systray v1.10.0
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.0
-	github.com/arduino/arduino-cli v0.35.0
 	github.com/arduino/go-paths-helper v1.12.0
+	github.com/arduino/go-serial-utils v0.1.2
+	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v3 v3.1.1
 	github.com/gin-contrib/cors v1.5.0
@@ -28,6 +29,7 @@ require (
 
 require (
 	github.com/AnatolyRugalev/goregen v0.1.0 // indirect
+	github.com/arduino/go-properties-orderedmap v1.8.0 // indirect
 	github.com/bytedance/sonic v1.10.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
@@ -56,13 +58,13 @@ require (
 	github.com/kr/binarydist v0.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
-	github.com/leonelquinteros/gotext v1.4.0 // indirect
 	github.com/manveru/faker v0.0.0-20171103152722-9fbc68a78c4d // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/tevino/abool v1.2.0 // indirect
@@ -76,5 +78,6 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

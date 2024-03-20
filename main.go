@@ -26,6 +26,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -69,23 +70,26 @@ var (
 
 // iniflags
 var (
-	address        = iniConf.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
-	appName        = iniConf.String("appName", "", "")
-	gcType         = iniConf.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
-	hostname       = iniConf.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
-	httpProxy      = iniConf.String("httpProxy", "", "Proxy server for HTTP requests")
-	httpsProxy     = iniConf.String("httpsProxy", "", "Proxy server for HTTPS requests")
-	indexURL       = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_index.json", "The address from where to download the index json containing the location of upload tools")
-	iniConf        = flag.NewFlagSet("ini", flag.ContinueOnError)
-	logDump        = iniConf.String("log", "off", "off = (default)")
-	origins        = iniConf.String("origins", "", "Allowed origin list for CORS")
-	regExpFilter   = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-	signatureKey   = iniConf.String("signatureKey", globals.SignatureKey, "Pem-encoded public key to verify signed commandlines")
-	updateURL      = iniConf.String("updateUrl", "", "")
-	verbose        = iniConf.Bool("v", true, "show debug logging")
-	crashreport    = iniConf.Bool("crashreport", false, "enable crashreport logging")
-	autostartMacOS = iniConf.Bool("autostartMacOS", true, "the Arduino Create Agent is able to start automatically after login on macOS (launchd agent)")
+	address           = iniConf.String("address", "127.0.0.1", "The address where to listen. Defaults to localhost")
+	appName           = iniConf.String("appName", "", "")
+	gcType            = iniConf.String("gc", "std", "Type of garbage collection. std = Normal garbage collection allowing system to decide (this has been known to cause a stop the world in the middle of a CNC job which can cause lost responses from the CNC controller and thus stalled jobs. use max instead to solve.), off = let memory grow unbounded (you have to send in the gc command manually to garbage collect or you will run out of RAM eventually), max = Force garbage collection on each recv or send on a serial port (this minimizes stop the world events and thus lost serial responses, but increases CPU usage)")
+	hostname          = iniConf.String("hostname", "unknown-hostname", "Override the hostname we get from the OS")
+	httpProxy         = iniConf.String("httpProxy", "", "Proxy server for HTTP requests")
+	httpsProxy        = iniConf.String("httpsProxy", "", "Proxy server for HTTPS requests")
+	indexURL          = iniConf.String("indexURL", "https://downloads.arduino.cc/packages/package_index.json", "The address from where to download the index json containing the location of upload tools")
+	iniConf           = flag.NewFlagSet("ini", flag.ContinueOnError)
+	logDump           = iniConf.String("log", "off", "off = (default)")
+	origins           = iniConf.String("origins", "", "Allowed origin list for CORS")
+	portsFilterRegexp = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
+	signatureKey      = iniConf.String("signatureKey", globals.SignatureKey, "Pem-encoded public key to verify signed commandlines")
+	updateURL         = iniConf.String("updateUrl", "", "")
+	verbose           = iniConf.Bool("v", true, "show debug logging")
+	crashreport       = iniConf.Bool("crashreport", false, "enable crashreport logging")
+	autostartMacOS    = iniConf.Bool("autostartMacOS", true, "the Arduino Create Agent is able to start automatically after login on macOS (launchd agent)")
 )
+
+// the ports filter provided by the user via the -regex flag, if any
+var portsFilter *regexp.Regexp
 
 var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHTML))
 
@@ -97,7 +101,7 @@ var homeTemplateHTML string
 
 // global clients
 var (
-	Tools   tools.Tools
+	Tools   *tools.Tools
 	Systray systray.Systray
 	Index   *index.Resource
 )
@@ -247,7 +251,7 @@ func loop() {
 
 	// Instantiate Index and Tools
 	Index = index.Init(*indexURL, config.GetDataDir())
-	Tools = *tools.New(config.GetDataDir(), Index, logger)
+	Tools = tools.New(config.GetDataDir(), Index, logger)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
@@ -302,19 +306,13 @@ func loop() {
 	}
 
 	// see if they provided a regex filter
-	if len(*regExpFilter) > 0 {
-		log.Printf("You specified a serial port regular expression filter: %v\n", *regExpFilter)
-	}
-
-	// list serial ports
-	portList, _ := enumerateSerialPorts()
-	log.Println("Your serial ports:")
-	if len(portList) == 0 {
-		log.Println("\tThere are no serial ports to list.")
-	}
-	for _, element := range portList {
-		log.Printf("\t%v\n", element)
-
+	if len(*portsFilterRegexp) > 0 {
+		log.Printf("You specified a serial port regular expression filter: %v\n", *portsFilterRegexp)
+		if filter, err := regexp.Compile("(?i)" + *portsFilterRegexp); err != nil {
+			log.Panicf("Error compiling the regex filter: %v\n", err)
+		} else {
+			portsFilter = filter
+		}
 	}
 
 	if !*verbose {
@@ -344,14 +342,14 @@ func loop() {
 		}
 	}
 
+	// launch the discoveries for the running system
+	go serialPorts.Run()
 	// launch the hub routine which is the singleton for the websocket server
 	go h.run()
 	// launch our serial port routine
 	go sh.run()
 	// launch our dummy data routine
 	//go d.run()
-
-	go discoverLoop()
 
 	r := gin.New()
 

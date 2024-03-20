@@ -23,15 +23,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/arduino/arduino-cli/arduino/serialutils"
 	"github.com/arduino/arduino-create-agent/utilities"
+	serialutils "github.com/arduino/go-serial-utils"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"go.bug.st/serial/enumerator"
 )
-
-// Busy tells wether the programmer is doing something
-var Busy = false
 
 // Extra contains some options used during the upload
 type Extra struct {
@@ -49,7 +46,7 @@ func PartiallyResolve(board, file, platformPath, commandline string, extra Extra
 	commandline = strings.Replace(commandline, "{fqbn}", board, -1)
 
 	// search for runtime variables and replace with values from Locater
-	var runtimeRe = regexp.MustCompile("\\{(.*?)\\}")
+	var runtimeRe = regexp.MustCompile(`\{(.*?)\}`)
 	runtimeVars := runtimeRe.FindAllString(commandline, -1)
 
 	for _, element := range runtimeVars {
@@ -82,9 +79,6 @@ func fixupPort(port, commandline string) string {
 
 // Serial performs a serial upload
 func Serial(port, commandline string, extra Extra, l Logger) error {
-	Busy = true
-	defer func() { Busy = false }()
-
 	// some boards needs to be resetted
 	if extra.Use1200bpsTouch {
 		var err error
@@ -120,7 +114,7 @@ func Kill() {
 // sometimes) and an error (usually because the port listing failed)
 func reset(port string, wait bool, l Logger) (string, error) {
 	info(l, "Restarting in bootloader mode")
-	newPort, err := serialutils.Reset(port, wait, nil, false) // TODO use callbacks to print as the cli does
+	newPort, err := serialutils.Reset(port, wait, false, nil, nil) // TODO use callbacks to print reset progress
 	if err != nil {
 		info(l, err)
 		return "", err

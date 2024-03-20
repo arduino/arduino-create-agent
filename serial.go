@@ -19,12 +19,14 @@ package main
 
 import (
 	"encoding/json"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/arduino/arduino-create-agent/upload"
+	discovery "github.com/arduino/pluggable-discovery-protocol-handler/v2"
+	"github.com/sirupsen/logrus"
 )
 
 type writeRequest struct {
@@ -49,10 +51,10 @@ type serialhub struct {
 	mu sync.Mutex
 }
 
-// SpPortList is the serial port list
-type SpPortList struct {
-	Ports []SpPortItem
-	Mu    sync.Mutex `json:"-"`
+// SerialPortList is the serial port list
+type SerialPortList struct {
+	Ports     []*SpPortItem
+	portsLock sync.Mutex
 }
 
 // SpPortItem is the serial port item
@@ -70,7 +72,7 @@ type SpPortItem struct {
 }
 
 // serialPorts contains the ports attached to the machine
-var serialPorts SpPortList
+var serialPorts SerialPortList
 
 var sh = serialhub{
 	//write:   	make(chan *serport, chan []byte),
@@ -103,30 +105,39 @@ func (sh *serialhub) run() {
 			sh.mu.Unlock()
 		case wr := <-sh.write:
 			// if user sent in the commands as one text mode line
-			write(wr)
+			switch wr.buffer {
+			case "send":
+				wr.p.sendBuffered <- wr.d
+			case "sendnobuf":
+				wr.p.sendNoBuf <- []byte(wr.d)
+			case "sendraw":
+				wr.p.sendRaw <- wr.d
+			}
+			// no default since we alredy verified in spWrite()
 		}
 	}
 }
 
-func write(wr writeRequest) {
-	switch wr.buffer {
-	case "send":
-		wr.p.sendBuffered <- wr.d
-	case "sendnobuf":
-		wr.p.sendNoBuf <- []byte(wr.d)
-	case "sendraw":
-		wr.p.sendRaw <- wr.d
+func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+
+	for port := range sh.ports {
+		if strings.EqualFold(port.portConf.Name, portname) {
+			// we found our port
+			//spHandlerClose(port)
+			return port, true
+		}
 	}
-	// no default since we alredy verified in spWrite()
+	return nil, false
 }
 
-// spList broadcasts a Json representation of the ports found
-func spList() {
-	var ls []byte
-	var err error
-	serialPorts.Mu.Lock()
-	ls, err = json.MarshalIndent(&serialPorts, "", "\t")
-	serialPorts.Mu.Unlock()
+// List broadcasts a Json representation of the ports found
+func (sp *SerialPortList) List() {
+	sp.portsLock.Lock()
+	ls, err := json.MarshalIndent(sp, "", "\t")
+	sp.portsLock.Unlock()
+
 	if err != nil {
 		//log.Println(err)
 		h.broadcastSys <- []byte("Error creating json on port list " +
@@ -136,72 +147,118 @@ func spList() {
 	}
 }
 
-// discoverLoop periodically update the list of ports found
-func discoverLoop() {
-	serialPorts.Mu.Lock()
-	serialPorts.Ports = make([]SpPortItem, 0)
-	serialPorts.Mu.Unlock()
+// Run is the main loop for port discovery and management
+func (sp *SerialPortList) Run() {
+	for retries := 0; retries < 10; retries++ {
+		sp.runSerialDiscovery()
 
-	go func() {
-		for {
-			if !upload.Busy {
-				updateSerialPortList()
-			}
-			time.Sleep(2 * time.Second)
-		}
-	}()
+		logrus.Errorf("Serial discovery stopped working, restarting it in 10 seconds...")
+		time.Sleep(10 * time.Second)
+	}
+	logrus.Errorf("Failed restarting serial discovery. Giving up...")
 }
 
-var serialEnumeratorLock sync.Mutex
+func (sp *SerialPortList) runSerialDiscovery() {
+	// First ensure that all the discoveries are available
+	if err := Tools.Download("builtin", "serial-discovery", "latest", "keep"); err != nil {
+		logrus.Errorf("Error downloading serial-discovery: %s", err)
+		panic(err)
+	}
+	sd, err := Tools.GetLocation("serial-discovery")
+	if err != nil {
+		logrus.Errorf("Error downloading serial-discovery: %s", err)
+		panic(err)
+	}
+	d := discovery.NewClient("serial", sd+"/serial-discovery")
+	dLogger := logrus.WithField("discovery", "serial")
+	if *verbose {
+		d.SetLogger(dLogger)
+	}
+	d.SetUserAgent("arduino-create-agent/" + version)
+	if err := d.Run(); err != nil {
+		logrus.Errorf("Error running serial-discovery: %s", err)
+		panic(err)
+	}
+	defer d.Quit()
 
-func updateSerialPortList() {
-	if !serialEnumeratorLock.TryLock() {
+	events, err := d.StartSync(10)
+	if err != nil {
+		logrus.Errorf("Error starting event watcher on serial-discovery: %s", err)
+		panic(err)
+	}
+
+	logrus.Infof("Serial discovery started, watching for events")
+	for ev := range events {
+		logrus.WithField("event", ev).Debugf("Serial discovery event")
+		switch ev.Type {
+		case "add":
+			sp.add(ev.Port)
+		case "remove":
+			sp.remove(ev.Port)
+		}
+	}
+
+	sp.reset()
+	logrus.Errorf("Serial discovery stopped.")
+}
+
+func (sp *SerialPortList) reset() {
+	sp.portsLock.Lock()
+	defer sp.portsLock.Unlock()
+	sp.Ports = []*SpPortItem{}
+}
+
+func (sp *SerialPortList) add(addedPort *discovery.Port) {
+	if addedPort.Protocol != "serial" {
 		return
 	}
-	defer serialEnumeratorLock.Unlock()
-	ports, err := enumerateSerialPorts()
-	if err != nil {
-		// TODO: report error?
-
-		// Empty port list if they can not be detected
-		ports = []OsSerialPort{}
+	props := addedPort.Properties
+	if !props.ContainsKey("vid") {
+		return
 	}
-	list := spListDual(ports)
-	serialPorts.Mu.Lock()
-	serialPorts.Ports = list
-	serialPorts.Mu.Unlock()
+	vid, pid := props.Get("vid"), props.Get("pid")
+	if vid == "0x0000" || pid == "0x0000" {
+		return
+	}
+	if portsFilter != nil && !portsFilter.MatchString(addedPort.Address) {
+		logrus.Debugf("ignoring port not matching filter. port: %v\n", addedPort.Address)
+		return
+	}
+
+	sp.portsLock.Lock()
+	defer sp.portsLock.Unlock()
+
+	// If the port is already in the list, just update the metadata...
+	for _, oldPort := range sp.Ports {
+		if oldPort.Name == addedPort.Address {
+			oldPort.SerialNumber = props.Get("serialNumber")
+			oldPort.VendorID = vid
+			oldPort.ProductID = pid
+			return
+		}
+	}
+	// ...otherwise, add it to the list
+	sp.Ports = append(sp.Ports, &SpPortItem{
+		Name:            addedPort.Address,
+		SerialNumber:    props.Get("serialNumber"),
+		VendorID:        vid,
+		ProductID:       pid,
+		Ver:             version,
+		IsOpen:          false,
+		IsPrimary:       false,
+		Baud:            0,
+		BufferAlgorithm: "",
+	})
 }
 
-func spListDual(list []OsSerialPort) []SpPortItem {
-	// we have a full clean list of ports now. iterate thru them
-	// to append the open/close state, baud rates, etc to make
-	// a super clean nice list to send back to browser
-	spl := []SpPortItem{}
+func (sp *SerialPortList) remove(removedPort *discovery.Port) {
+	sp.portsLock.Lock()
+	defer sp.portsLock.Unlock()
 
-	for _, item := range list {
-		port := SpPortItem{
-			Name:            item.Name,
-			SerialNumber:    item.ISerial,
-			DeviceClass:     item.DeviceClass,
-			IsOpen:          false,
-			IsPrimary:       false,
-			Baud:            0,
-			BufferAlgorithm: "",
-			Ver:             version,
-			VendorID:        item.IDVendor,
-			ProductID:       item.IDProduct,
-		}
-
-		// figure out if port is open
-		if myport, isFound := findPortByName(item.Name); isFound {
-			// and update data with the open port parameters
-			port.IsOpen = true
-			port.Baud = myport.portConf.Baud
-			port.BufferAlgorithm = myport.BufferType
-		}
-		spl = append(spl, port)
-	}
-	return spl
+	// Remove the port from the list
+	sp.Ports = slices.DeleteFunc(sp.Ports, func(oldPort *SpPortItem) bool {
+		return oldPort.Name == removedPort.Address
+	})
 }
 
 func spErr(err string) {
@@ -216,7 +273,7 @@ func spClose(portname string) {
 	// that should cause an unregister channel call back
 	// to myself
 
-	myport, isFound := findPortByName(portname)
+	myport, isFound := sh.FindPortByName(portname)
 
 	if isFound {
 		// we found our port
@@ -244,7 +301,7 @@ func spWrite(arg string) {
 	//log.Println("The data is:" + args[2] + "---")
 
 	// see if we have this port open
-	myport, isFound := findPortByName(portname)
+	myport, isFound := sh.FindPortByName(portname)
 
 	if !isFound {
 		// we couldn't find the port, so send err

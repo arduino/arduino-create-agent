@@ -232,8 +232,7 @@ func (p *serport) writerNoBuf() {
 	log.Println(msgstr)
 	h.broadcastSys <- []byte(msgstr)
 	p.portIo.Close()
-	updateSerialPortList()
-	spList()
+	serialPorts.List()
 }
 
 // this method runs as its own thread because it's instantiated
@@ -327,8 +326,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sh.register <- p
 	defer func() { sh.unregister <- p }()
 
-	updateSerialPortList()
-	spList()
+	serialPorts.List()
 
 	// this is internally buffered thread to not send to serial port if blocked
 	go p.writerBuffered()
@@ -339,8 +337,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 
 	p.reader(buftype)
 
-	updateSerialPortList()
-	spList()
+	serialPorts.List()
 }
 
 func spHandlerClose(p *serport) {
@@ -352,6 +349,5 @@ func spHandlerClose(p *serport) {
 func spCloseReal(p *serport) {
 	p.bufferwatcher.Close()
 	p.portIo.Close()
-	updateSerialPortList()
-	spList()
+	serialPorts.List()
 }
