@@ -55,7 +55,7 @@ func (s *Systray) start() {
 	menuVer.Disable()
 
 	// Add links
-	mURL := systray.AddMenuItem("Go to Arduino Create", "Arduino Create")
+	mURL := systray.AddMenuItem("Go to Arduino Cloud", "Arduino Cloud")
 	mDebug := systray.AddMenuItem("Open Debug Console", "Debug console")
 	mConfig := systray.AddMenuItem("Open Configuration", "Config File")
 
@@ -85,7 +85,7 @@ func (s *Systray) start() {
 		for {
 			select {
 			case <-mURL.ClickedCh:
-				_ = open.Start("https://create.arduino.cc")
+				_ = open.Start("https://app.arduino.cc")
 			case <-mDebug.ClickedCh:
 				_ = open.Start(s.DebugURL())
 			case <-mConfig.ClickedCh:
