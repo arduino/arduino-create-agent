@@ -174,7 +174,7 @@ jobs:
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.PROJECT_NAME }}-macos-12-amd64 # if we want to support darwin-arm64 in the future for real this has to change.
           path: ${{ env.EXE_PATH }}
@@ -241,7 +241,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}
 
@@ -408,7 +408,7 @@ jobs:
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
           path: artifacts/${{ matrix.platform-name }}/ # path expected by installbuilder
@@ -459,7 +459,7 @@ jobs:
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
           path: ArduinoCreateAgent.app
@@ -553,7 +553,7 @@ jobs:
           fetch-depth: 0 # fetch all history for the create changelog step to work properly
 
       - name: Download artifact
-        uses: actions/download-artifact@v3 # download all the artifacts
+        uses: actions/download-artifact@v4 # download all the artifacts
 
       #  mandatory step because upload-release-action does not support multiple folders
       - name: prepare artifacts for the release
