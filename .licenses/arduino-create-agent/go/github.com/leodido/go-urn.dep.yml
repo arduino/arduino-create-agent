@@ -1,6 +1,6 @@
 ---
 name: github.com/leodido/go-urn
-version: v1.2.4
+version: v1.4.0
 type: go
 summary:
 homepage: https://pkg.go.dev/github.com/leodido/go-urn

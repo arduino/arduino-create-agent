@@ -1,12 +1,12 @@
 ---
 name: github.com/gabriel-vasile/mimetype/internal/json
-version: v1.4.2
+version: v1.4.3
 type: go
 summary: Package json provides a JSON value parser state machine.
 homepage: https://pkg.go.dev/github.com/gabriel-vasile/mimetype/internal/json
 license: mit
 licenses:
-- sources: mimetype@v1.4.2/LICENSE
+- sources: mimetype@v1.4.3/LICENSE
   text: |
     MIT License
 

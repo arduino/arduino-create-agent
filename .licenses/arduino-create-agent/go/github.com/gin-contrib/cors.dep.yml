@@ -1,8 +1,8 @@
 ---
 name: github.com/gin-contrib/cors
-version: v1.5.0
+version: v1.7.0
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/gin-contrib/cors
 license: mit
 licenses:

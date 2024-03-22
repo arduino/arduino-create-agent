@@ -1,6 +1,6 @@
 ---
 name: github.com/gabriel-vasile/mimetype
-version: v1.4.2
+version: v1.4.3
 type: go
 summary: Package mimetype uses magic number signatures to detect the MIME type of
   a file.
