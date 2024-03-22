@@ -1,6 +1,6 @@
 ---
 name: goa.design/goa/v3/pkg
-version: v3.14.6
+version: v3.15.2
 type: go
 summary: Package goa implements a Go framework for writing microservices that promotes
   best practice by providing a single source of truth from which server code, client
@@ -8,7 +8,7 @@ summary: Package goa implements a Go framework for writing microservices that pr
 homepage: https://pkg.go.dev/goa.design/goa/v3/pkg
 license: mit
 licenses:
-- sources: v3@v3.14.6/LICENSE
+- sources: v3@v3.15.2/LICENSE
   text: |
     The MIT License (MIT)
 

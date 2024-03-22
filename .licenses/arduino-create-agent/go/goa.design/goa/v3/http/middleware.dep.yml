@@ -1,6 +1,6 @@
 ---
 name: goa.design/goa/v3/http/middleware
-version: v3.14.6
+version: v3.15.2
 type: go
 summary: Package middleware contains HTTP middlewares that wrap a HTTP handler to
   provide ancilliary functionality such as capturing HTTP details into the request
@@ -8,7 +8,7 @@ summary: Package middleware contains HTTP middlewares that wrap a HTTP handler t
 homepage: https://pkg.go.dev/goa.design/goa/v3/http/middleware
 license: mit
 licenses:
-- sources: v3@v3.14.6/LICENSE
+- sources: v3@v3.15.2/LICENSE
   text: |
     The MIT License (MIT)
 
