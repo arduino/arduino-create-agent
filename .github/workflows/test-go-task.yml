@@ -98,7 +98,7 @@ jobs:
 
       - name: Send unit tests coverage to Codecov
         if: runner.os == 'Linux'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ matrix.module.path }}coverage_unit.txt
