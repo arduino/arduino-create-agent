@@ -1,6 +1,6 @@
 ---
 name: github.com/go-chi/chi/v5
-version: v5.0.11
+version: v5.0.12
 type: go
 summary: Package chi is a small, idiomatic and composable router for building HTTP
   services.

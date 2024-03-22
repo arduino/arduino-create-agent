@@ -1,6 +1,6 @@
 ---
 name: github.com/google/uuid
-version: v1.5.0
+version: v1.6.0
 type: go
 summary: Package uuid generates and inspects UUIDs.
 homepage: https://pkg.go.dev/github.com/google/uuid
