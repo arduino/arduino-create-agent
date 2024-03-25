@@ -128,7 +128,7 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
