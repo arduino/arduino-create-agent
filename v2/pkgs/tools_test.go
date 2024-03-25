@@ -41,7 +41,7 @@ func TestTools(t *testing.T) {
 	}
 	defer os.RemoveAll(tmp)
 
-	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	indexURL := "https://downloads.arduino.cc/packages/package_index.json"
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
@@ -122,7 +122,7 @@ func TestEvilFilename(t *testing.T) {
 	// Initialize indexes with a temp folder
 	tmp := t.TempDir()
 
-	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	indexURL := "https://downloads.arduino.cc/packages/package_index.json"
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
@@ -191,7 +191,7 @@ func TestInstalledHead(t *testing.T) {
 	// Initialize indexes with a temp folder
 	tmp := t.TempDir()
 
-	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	indexURL := "https://downloads.arduino.cc/packages/package_index.json"
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
