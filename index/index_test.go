@@ -9,12 +9,12 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	indexURL := "https://downloads.arduino.cc/packages/package_index.json"
 	// Instantiate Index
 	tempDir := paths.New(t.TempDir()).Join(".arduino-create")
 	Index := Init(indexURL, tempDir)
 	require.DirExists(t, tempDir.String())
-	fileName := "package_staging_index.json"
+	fileName := "package_index.json"
 	signatureName := fileName + ".sig"
 	parsedURL, _ := url.Parse(indexURL)
 	require.Equal(t, Index.IndexURL, *parsedURL)

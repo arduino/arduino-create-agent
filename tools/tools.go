@@ -37,7 +37,7 @@ import (
 // Usage:
 // You have to call the New() function passing it the required parameters:
 //
-// 	index = index.Init("https://downloads.arduino.cc/packages/package_staging_index.json", dataDir)
+// 	index = index.Init("https://downloads.arduino.cc/packages/package_index.json", dataDir)
 // 	tools := tools.New(dataDir, index, logger)
 
 // Tools will represent the installed tools

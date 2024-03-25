@@ -89,7 +89,7 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 
 func TestInstallToolV2(t *testing.T) {
 
-	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	indexURL := "https://downloads.arduino.cc/packages/package_index.json"
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
@@ -170,7 +170,7 @@ func TestInstallToolV2(t *testing.T) {
 }
 
 func TestInstalledHead(t *testing.T) {
-	indexURL := "https://downloads.arduino.cc/packages/package_staging_index.json"
+	indexURL := "https://downloads.arduino.cc/packages/package_index.json"
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
