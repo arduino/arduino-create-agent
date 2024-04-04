@@ -64,12 +64,15 @@ func (s *Systray) start() {
 	s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 
 	mGenCerts := systray.AddMenuItem("Generate and Install HTTPS certificates", "HTTPS Certs")
+	mRemoveCerts := systray.AddMenuItem("Remove HTTPS certificates", "")
 	// On linux/windows chrome/firefox/edge(chromium) the agent works without problems on plain HTTP,
 	// so we disable the menuItem to generate/install the certificates
 	if runtime.GOOS != "darwin" {
 		s.updateMenuItem(mGenCerts, true)
+		s.updateMenuItem(mRemoveCerts, true)
 	} else {
 		s.updateMenuItem(mGenCerts, config.CertsExist())
+		s.updateMenuItem(mRemoveCerts, !config.CertsExist())
 	}
 
 	// Add pause/quit
@@ -100,6 +103,15 @@ func (s *Systray) start() {
 				// if something goes wrong during the cert install we remove them, so the user is able to retry
 				if err != nil {
 					log.Errorf("cannot install certificates something went wrong: %s", err)
+					cert.DeleteCertificates(certDir)
+				}
+				s.Restart()
+			case <-mRemoveCerts.ClickedCh:
+				err := cert.UninstallCertificates()
+				if err != nil {
+					log.Errorf("cannot uninstall certificates something went wrong: %s", err)
+				} else {
+					certDir := config.GetCertificatesDir()
 					cert.DeleteCertificates(certDir)
 				}
 				s.Restart()
