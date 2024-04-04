@@ -30,3 +30,9 @@ func InstallCertificate(cert *paths.Path) error {
 	log.Warn("platform not supported for the certificate install")
 	return errors.New("platform not supported for the certificate install")
 }
+
+// UninstallCertificates won't do anything on unsupported Operative Systems
+func UninstallCertificates() error {
+	log.Warn("platform not supported for the certificates uninstall")
+	return errors.New("platform not supported for the certificates uninstall")
+}

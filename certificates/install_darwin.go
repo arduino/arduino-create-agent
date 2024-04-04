@@ -18,7 +18,9 @@ package certificates
 //inspired by https://stackoverflow.com/questions/12798950/ios-install-ssl-certificate-programmatically
 
 /*
+// Explicitly tell the GCC compiler that the language is Objective-C.
 #cgo CFLAGS: -x objective-c
+// Pass the list of macOS frameworks needed by this piece of Objective-C code.
 #cgo LDFLAGS: -framework Cocoa
 #import <Cocoa/Cocoa.h>
 
@@ -61,6 +63,32 @@ const char *installCert(const char *path) {
     return "";
 }
 
+const char *uninstallCert() {
+    // Each line is a key-value of the dictionary. Note: the the inverted order, value first then key.
+    NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
+        (id)kSecClassCertificate, kSecClass,
+        CFSTR("Arduino"), kSecAttrLabel,
+        kSecMatchLimitOne, kSecMatchLimit,
+        kCFBooleanTrue, kSecReturnAttributes,
+        nil];
+
+    OSStatus err = noErr;
+    // Use this function to check for errors
+    err = SecItemCopyMatching((CFDictionaryRef)dict, nil);
+    if (err == noErr) {
+        err = SecItemDelete((CFDictionaryRef)dict);
+        if (err != noErr) {
+            NSString *errString = [@"Could not delete the certificates. Error: " stringByAppendingFormat:@"%d", err];
+            NSLog(@"%@", errString);
+            return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];;
+        }
+    } else if (err != errSecItemNotFound){
+        NSString *errString = [@"Error: " stringByAppendingFormat:@"%d", err];
+        NSLog(@"%@", errString);
+        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];;
+    }
+    return "";
+}
 */
 import "C"
 import (
@@ -83,6 +111,20 @@ func InstallCertificate(cert *paths.Path) error {
 	s := C.GoString(p)
 	if len(s) != 0 {
 		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Error installing certificates\"")
+		_ = oscmd.Run()
+		return errors.New(s)
+	}
+	return nil
+}
+
+// UninstallCertificates will uninstall the certificates from the system keychain on macos,
+// if something goes wrong will show a dialog with the error and return an error
+func UninstallCertificates() error {
+	log.Infof("Uninstalling certificates")
+	p := C.uninstallCert()
+	s := C.GoString(p)
+	if len(s) != 0 {
+		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Error uninstalling certificates\"")
 		_ = oscmd.Run()
 		return errors.New(s)
 	}
