@@ -112,6 +112,7 @@ func InstallCertificate(cert *paths.Path) error {
 	if len(s) != 0 {
 		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Arduino Agent: Error installing certificates\"")
 		_ = oscmd.Run()
+		_ = UninstallCertificates()
 		return errors.New(s)
 	}
 	return nil
