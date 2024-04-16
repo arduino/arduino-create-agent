@@ -29,24 +29,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type writeRequest struct {
-	p      *serport
-	d      string
-	buffer string
-}
-
 type serialhub struct {
 	// Opened serial ports.
 	ports map[*serport]bool
-
-	//write chan *serport, chan []byte
-	write chan writeRequest
-
-	// Register requests from the connections.
-	register chan *serport
-
-	// Unregister requests from connections.
-	unregister chan *serport
 
 	mu sync.Mutex
 }
@@ -75,46 +60,39 @@ type SpPortItem struct {
 var serialPorts SerialPortList
 
 var sh = serialhub{
-	//write:   	make(chan *serport, chan []byte),
-	write:      make(chan writeRequest),
-	register:   make(chan *serport),
-	unregister: make(chan *serport),
-	ports:      make(map[*serport]bool),
+	ports: make(map[*serport]bool),
 }
 
-func (sh *serialhub) run() {
+// Register serial ports from the connections.
+func (sh *serialhub) Register(port *serport) {
+	sh.mu.Lock()
+	//log.Print("Registering a port: ", p.portConf.Name)
+	h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	sh.ports[port] = true
+	sh.mu.Unlock()
+}
 
-	//log.Print("Inside run of serialhub")
-	//cmdIdCtr := 0
+// Unregister requests from connections.
+func (sh *serialhub) Unregister(port *serport) {
+	sh.mu.Lock()
+	//log.Print("Unregistering a port: ", p.portConf.Name)
+	h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
+	delete(sh.ports, port)
+	close(port.sendBuffered)
+	close(port.sendNoBuf)
+	sh.mu.Unlock()
+}
 
-	for {
-		select {
-		case p := <-sh.register:
-			sh.mu.Lock()
-			//log.Print("Registering a port: ", p.portConf.Name)
-			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + ",\"BufferType\":\"" + p.BufferType + "\"}")
-			sh.ports[p] = true
-			sh.mu.Unlock()
-		case p := <-sh.unregister:
-			sh.mu.Lock()
-			//log.Print("Unregistering a port: ", p.portConf.Name)
-			h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
-			delete(sh.ports, p)
-			close(p.sendBuffered)
-			close(p.sendNoBuf)
-			sh.mu.Unlock()
-		case wr := <-sh.write:
-			// if user sent in the commands as one text mode line
-			switch wr.buffer {
-			case "send":
-				wr.p.sendBuffered <- wr.d
-			case "sendnobuf":
-				wr.p.sendNoBuf <- []byte(wr.d)
-			case "sendraw":
-				wr.p.sendRaw <- wr.d
-			}
-			// no default since we alredy verified in spWrite()
-		}
+// Write data to the serial port.
+func (sh *serialhub) Write(port *serport, data string, sendMode string) {
+	// if user sent in the commands as one text mode line
+	switch sendMode {
+	case "send":
+		port.sendBuffered <- data
+	case "sendnobuf":
+		port.sendNoBuf <- []byte(data)
+	case "sendraw":
+		port.sendRaw <- data
 	}
 }
 
@@ -296,38 +274,30 @@ func spWrite(arg string) {
 		spErr(errstr)
 		return
 	}
+	bufferingMode := args[0]
 	portname := strings.Trim(args[1], " ")
+	data := args[2]
+
 	//log.Println("The port to write to is:" + portname + "---")
-	//log.Println("The data is:" + args[2] + "---")
+	//log.Println("The data is:" + data + "---")
 
-	// see if we have this port open
-	myport, isFound := sh.FindPortByName(portname)
-
-	if !isFound {
+	// See if we have this port open
+	port, ok := sh.FindPortByName(portname)
+	if !ok {
 		// we couldn't find the port, so send err
 		spErr("We could not find the serial port " + portname + " that you were trying to write to.")
 		return
 	}
 
-	// we found our port
-	// create our write request
-	var wr writeRequest
-	wr.p = myport
-
-	// see if args[0] is send or sendnobuf or sendraw
-	switch args[0] {
+	// see if bufferingMode is valid
+	switch bufferingMode {
 	case "send", "sendnobuf", "sendraw":
-		wr.buffer = args[0]
+		// valid buffering mode, go ahead
 	default:
 		spErr("Unsupported send command:" + args[0] + ". Please specify a valid one")
 		return
 	}
 
-	// include newline or not in the write? that is the question.
-	// for now lets skip the newline
-	//wr.d = []byte(args[2] + "\n")
-	wr.d = args[2] //[]byte(args[2])
-
 	// send it to the write channel
-	sh.write <- wr
+	sh.Write(port, data, bufferingMode)
 }

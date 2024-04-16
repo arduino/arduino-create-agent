@@ -323,8 +323,8 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	bw.Init()
 	p.bufferwatcher = bw
 
-	sh.register <- p
-	defer func() { sh.unregister <- p }()
+	sh.Register(p)
+	defer sh.Unregister(p)
 
 	serialPorts.List()
 

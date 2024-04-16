@@ -346,8 +346,6 @@ func loop() {
 	go serialPorts.Run()
 	// launch the hub routine which is the singleton for the websocket server
 	go h.run()
-	// launch our serial port routine
-	go sh.run()
 	// launch our dummy data routine
 	//go d.run()
 
