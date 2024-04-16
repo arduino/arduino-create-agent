@@ -161,14 +161,12 @@ func (p *serport) reader(buftype string) {
 			// Keep track of time difference between two consecutive read with n == 0 and err == nil
 			// we get here if the port has been disconnected while open (cpu usage will jump to 100%)
 			// let's close the port only if the events are extremely fast (<1ms)
-			if err == nil {
-				diff := time.Since(timeCheckOpen)
-				if diff.Nanoseconds() < 1000000 {
-					p.isClosingDueToError = true
-					break
-				}
-				timeCheckOpen = time.Now()
+			diff := time.Since(timeCheckOpen)
+			if diff.Nanoseconds() < 1000000 {
+				p.isClosingDueToError = true
+				break
 			}
+			timeCheckOpen = time.Now()
 		}
 	}
 	if p.isClosingDueToError {
