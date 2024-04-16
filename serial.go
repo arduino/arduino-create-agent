@@ -239,6 +239,33 @@ func (sp *SerialPortList) remove(removedPort *discovery.Port) {
 	})
 }
 
+func (sp *SerialPortList) MarkPortAsOpened(portname string) {
+	sp.portsLock.Lock()
+	defer sp.portsLock.Unlock()
+	port := sp.getPortByName(portname)
+	if port != nil {
+		port.IsOpen = true
+	}
+}
+
+func (sp *SerialPortList) MarkPortAsClosed(portname string) {
+	sp.portsLock.Lock()
+	defer sp.portsLock.Unlock()
+	port := sp.getPortByName(portname)
+	if port != nil {
+		port.IsOpen = false
+	}
+}
+
+func (sp *SerialPortList) getPortByName(portname string) *SpPortItem {
+	for _, port := range sp.Ports {
+		if port.Name == portname {
+			return port
+		}
+	}
+	return nil
+}
+
 func spErr(err string) {
 	//log.Println("Sending err back: ", err)
 	//h.broadcastSys <- []byte(err)
