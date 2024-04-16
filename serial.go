@@ -239,6 +239,7 @@ func (sp *SerialPortList) remove(removedPort *discovery.Port) {
 	})
 }
 
+// MarkPortAsOpened marks a port as opened by the user
 func (sp *SerialPortList) MarkPortAsOpened(portname string) {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
@@ -248,6 +249,7 @@ func (sp *SerialPortList) MarkPortAsOpened(portname string) {
 	}
 }
 
+// MarkPortAsClosed marks a port as no more opened by the user
 func (sp *SerialPortList) MarkPortAsClosed(portname string) {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
