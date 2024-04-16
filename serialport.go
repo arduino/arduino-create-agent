@@ -39,6 +39,7 @@ type serport struct {
 	// The serial port connection.
 	portConf *SerialConfig
 	portIo   io.ReadWriteCloser
+	portName string
 
 	// Keep track of whether we're being actively closed
 	// just so we don't show scary error messages
@@ -305,6 +306,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 		sendRaw:      make(chan string),
 		portConf:     conf,
 		portIo:       sp,
+		portName:     portname,
 		BufferType:   buftype}
 
 	var bw Bufferflow
@@ -326,6 +328,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sh.Register(p)
 	defer sh.Unregister(p)
 
+	serialPorts.MarkPortAsOpened(portname)
 	serialPorts.List()
 
 	// this is internally buffered thread to not send to serial port if blocked
@@ -349,5 +352,6 @@ func spHandlerClose(p *serport) {
 func spCloseReal(p *serport) {
 	p.bufferwatcher.Close()
 	p.portIo.Close()
+	serialPorts.MarkPortAsClosed(p.portName)
 	serialPorts.List()
 }
