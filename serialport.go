@@ -47,9 +47,6 @@ type serport struct {
 
 	isClosingDueToError bool
 
-	// counter incremented on queue, decremented on write
-	itemsInBuffer int
-
 	// buffered channel containing up to 25600 outbound messages.
 	sendBuffered chan string
 
@@ -223,10 +220,6 @@ func (p *serport) writerNoBuf() {
 
 		// if we get here, we were able to write successfully
 		// to the serial port because it blocks until it can write
-
-		// decrement counter
-		p.itemsInBuffer--
-		log.Printf("itemsInBuffer:%v\n", p.itemsInBuffer)
 
 		// FINALLY, OF ALL THE CODE IN THIS PROJECT
 		// WE TRULY/FINALLY GET TO WRITE TO THE SERIAL PORT!
