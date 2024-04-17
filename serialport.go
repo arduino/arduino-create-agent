@@ -167,7 +167,7 @@ func (p *serport) reader(buftype string) {
 		}
 	}
 	if p.isClosingDueToError {
-		spCloseReal(p)
+		p.Close()
 	}
 }
 
@@ -348,12 +348,12 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 }
 
 func spHandlerClose(p *serport) {
-	p.isClosing = true
 	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
-	spCloseReal(p)
+	p.Close()
 }
 
-func spCloseReal(p *serport) {
+func (p *serport) Close() {
+	p.isClosing = true
 	p.bufferwatcher.Close()
 	p.portIo.Close()
 	serialPorts.MarkPortAsClosed(p.portName)
