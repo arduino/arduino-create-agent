@@ -124,9 +124,6 @@ func uploadHandler(c *gin.Context) {
 		return
 	}
 
-	var filePaths []string
-	filePaths = append(filePaths, filePath)
-
 	tmpdir, err := os.MkdirTemp("", "extrafiles")
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
@@ -139,7 +136,6 @@ func uploadHandler(c *gin.Context) {
 			c.String(http.StatusBadRequest, err.Error())
 			return
 		}
-		filePaths = append(filePaths, path)
 		log.Printf("Saving %s on %s", extraFile.Filename, path)
 
 		err = os.MkdirAll(filepath.Dir(path), 0744)

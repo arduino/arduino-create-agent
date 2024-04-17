@@ -47,9 +47,6 @@ type serport struct {
 
 	isClosingDueToError bool
 
-	// counter incremented on queue, decremented on write
-	itemsInBuffer int
-
 	// buffered channel containing up to 25600 outbound messages.
 	sendBuffered chan string
 
@@ -161,18 +158,29 @@ func (p *serport) reader(buftype string) {
 			// Keep track of time difference between two consecutive read with n == 0 and err == nil
 			// we get here if the port has been disconnected while open (cpu usage will jump to 100%)
 			// let's close the port only if the events are extremely fast (<1ms)
-			if err == nil {
-				diff := time.Since(timeCheckOpen)
-				if diff.Nanoseconds() < 1000000 {
-					p.isClosingDueToError = true
-					break
-				}
-				timeCheckOpen = time.Now()
+			diff := time.Since(timeCheckOpen)
+			if diff.Nanoseconds() < 1000000 {
+				p.isClosingDueToError = true
+				break
 			}
+			timeCheckOpen = time.Now()
 		}
 	}
 	if p.isClosingDueToError {
-		spCloseReal(p)
+		p.Close()
+	}
+}
+
+// Write data to the serial port.
+func (p *serport) Write(data string, sendMode string) {
+	// if user sent in the commands as one text mode line
+	switch sendMode {
+	case "send":
+		p.sendBuffered <- data
+	case "sendnobuf":
+		p.sendNoBuf <- []byte(data)
+	case "sendraw":
+		p.sendRaw <- data
 	}
 }
 
@@ -212,10 +220,6 @@ func (p *serport) writerNoBuf() {
 
 		// if we get here, we were able to write successfully
 		// to the serial port because it blocks until it can write
-
-		// decrement counter
-		p.itemsInBuffer--
-		log.Printf("itemsInBuffer:%v\n", p.itemsInBuffer)
 
 		// FINALLY, OF ALL THE CODE IN THIS PROJECT
 		// WE TRULY/FINALLY GET TO WRITE TO THE SERIAL PORT!
@@ -343,13 +347,8 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	serialPorts.List()
 }
 
-func spHandlerClose(p *serport) {
+func (p *serport) Close() {
 	p.isClosing = true
-	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
-	spCloseReal(p)
-}
-
-func spCloseReal(p *serport) {
 	p.bufferwatcher.Close()
 	p.portIo.Close()
 	serialPorts.MarkPortAsClosed(p.portName)

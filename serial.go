@@ -83,19 +83,6 @@ func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Unlock()
 }
 
-// Write data to the serial port.
-func (sh *serialhub) Write(port *serport, data string, sendMode string) {
-	// if user sent in the commands as one text mode line
-	switch sendMode {
-	case "send":
-		port.sendBuffered <- data
-	case "sendnobuf":
-		port.sendNoBuf <- []byte(data)
-	case "sendraw":
-		port.sendRaw <- data
-	}
-}
-
 func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
@@ -275,18 +262,10 @@ func spErr(err string) {
 }
 
 func spClose(portname string) {
-	// look up the registered port by name
-	// then call the close method inside serialport
-	// that should cause an unregister channel call back
-	// to myself
-
-	myport, isFound := sh.FindPortByName(portname)
-
-	if isFound {
-		// we found our port
-		spHandlerClose(myport)
+	if myport, ok := sh.FindPortByName(portname); ok {
+		h.broadcastSys <- []byte("Closing serial port " + portname)
+		myport.Close()
 	} else {
-		// we couldn't find the port, so send err
 		spErr("We could not find the serial port " + portname + " that you were trying to close.")
 	}
 }
@@ -328,5 +307,5 @@ func spWrite(arg string) {
 	}
 
 	// send it to the write channel
-	sh.Write(port, data, bufferingMode)
+	port.Write(data, bufferingMode)
 }
