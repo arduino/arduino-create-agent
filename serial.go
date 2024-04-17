@@ -262,18 +262,10 @@ func spErr(err string) {
 }
 
 func spClose(portname string) {
-	// look up the registered port by name
-	// then call the close method inside serialport
-	// that should cause an unregister channel call back
-	// to myself
-
-	myport, isFound := sh.FindPortByName(portname)
-
-	if isFound {
-		// we found our port
-		spHandlerClose(myport)
+	if myport, ok := sh.FindPortByName(portname); ok {
+		h.broadcastSys <- []byte("Closing serial port " + portname)
+		myport.Close()
 	} else {
-		// we couldn't find the port, so send err
 		spErr("We could not find the serial port " + portname + " that you were trying to close.")
 	}
 }

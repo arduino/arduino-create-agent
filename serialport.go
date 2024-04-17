@@ -347,11 +347,6 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	serialPorts.List()
 }
 
-func spHandlerClose(p *serport) {
-	h.broadcastSys <- []byte("Closing serial port " + p.portConf.Name)
-	p.Close()
-}
-
 func (p *serport) Close() {
 	p.isClosing = true
 	p.bufferwatcher.Close()
