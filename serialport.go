@@ -174,6 +174,19 @@ func (p *serport) reader(buftype string) {
 	}
 }
 
+// Write data to the serial port.
+func (p *serport) Write(data string, sendMode string) {
+	// if user sent in the commands as one text mode line
+	switch sendMode {
+	case "send":
+		p.sendBuffered <- data
+	case "sendnobuf":
+		p.sendNoBuf <- []byte(data)
+	case "sendraw":
+		p.sendRaw <- data
+	}
+}
+
 // this method runs as its own thread because it's instantiated
 // as a "go" method. so if it blocks inside, it is ok
 func (p *serport) writerBuffered() {

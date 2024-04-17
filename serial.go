@@ -83,19 +83,6 @@ func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Unlock()
 }
 
-// Write data to the serial port.
-func (sh *serialhub) Write(port *serport, data string, sendMode string) {
-	// if user sent in the commands as one text mode line
-	switch sendMode {
-	case "send":
-		port.sendBuffered <- data
-	case "sendnobuf":
-		port.sendNoBuf <- []byte(data)
-	case "sendraw":
-		port.sendRaw <- data
-	}
-}
-
 func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
@@ -328,5 +315,5 @@ func spWrite(arg string) {
 	}
 
 	// send it to the write channel
-	sh.Write(port, data, bufferingMode)
+	port.Write(data, bufferingMode)
 }
