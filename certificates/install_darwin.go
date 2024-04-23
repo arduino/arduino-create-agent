@@ -89,11 +89,46 @@ const char *uninstallCert() {
     }
     return "";
 }
+
+const char *getExpirationDate(){
+    // Create a key-value dictionary used to query the Keychain and look for the "Arduino" root certificate.
+    NSDictionary *getquery = @{
+                (id)kSecClass:     (id)kSecClassCertificate,
+                (id)kSecAttrLabel: @"Arduino",
+                (id)kSecReturnRef: @YES,
+            };
+
+    OSStatus err = noErr;
+    SecCertificateRef cert = NULL;
+
+    // Use this function to check for errors
+    err = SecItemCopyMatching((CFDictionaryRef)getquery, (CFTypeRef *)&cert);
+
+    if (err != errSecItemNotFound && err != noErr){
+        NSString *errString = [@"Error: " stringByAppendingFormat:@"%d", err];
+        NSLog(@"%@", errString);
+        return "";
+    }
+
+    // Get data from the certificate. We just need the "invalidity date" property.
+    CFDictionaryRef valuesDict = SecCertificateCopyValues(cert, (__bridge CFArrayRef)@[(__bridge id)kSecOIDInvalidityDate], NULL);
+
+    // TODO: Error checking.
+    CFDictionaryRef invalidityDateDictionaryRef = CFDictionaryGetValue(valuesDict, kSecOIDInvalidityDate);
+    CFTypeRef invalidityRef = CFDictionaryGetValue(invalidityDateDictionaryRef, kSecPropertyKeyValue);
+    id expirationDateValue = CFBridgingRelease(invalidityRef);
+
+    CFRelease(valuesDict);
+
+    NSString *outputString = [@"" stringByAppendingFormat:@"%@", expirationDateValue];
+    return [outputString cStringUsingEncoding:[NSString defaultCStringEncoding]];
+}
 */
 import "C"
 import (
 	"errors"
 	"os/exec"
+	"strings"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -130,4 +165,15 @@ func UninstallCertificates() error {
 		return errors.New(s)
 	}
 	return nil
+}
+
+// GetExpirationDate returns the expiration date of a certificate stored in the keychain
+func GetExpirationDate() (string, error) {
+	log.Infof("Retrieving certificate's expiration date")
+	p := C.getExpirationDate()
+	s := strings.ReplaceAll(C.GoString(p), " +0000", "")
+	if len(s) != 0 {
+		return s, nil
+	}
+	return "", nil
 }
