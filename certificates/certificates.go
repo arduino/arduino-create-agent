@@ -267,3 +267,12 @@ func DeleteCertificates(certDir *paths.Path) {
 	certDir.Join("cert.pem").Remove()
 	certDir.Join("cert.cer").Remove()
 }
+
+// isExpired checks if a certificate is expired or about to expire (less than 1 month)
+func isExpired() bool {
+	bound := time.Now().AddDate(0, 1, 0)
+	// TODO: manage errors
+	dateS, _ := GetExpirationDate()
+	date, _ := time.Parse(time.DateTime, dateS)
+	return date.Before(bound)
+}
