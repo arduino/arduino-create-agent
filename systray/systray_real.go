@@ -21,6 +21,7 @@ package systray
 
 import (
 	"os"
+	"os/exec"
 	"runtime"
 
 	"fyne.io/systray"
@@ -65,11 +66,13 @@ func (s *Systray) start() {
 
 	mGenCerts := systray.AddMenuItem("Generate and Install HTTPS certificates", "HTTPS Certs")
 	mRemoveCerts := systray.AddMenuItem("Remove HTTPS certificates", "")
+	mCertsInfo := systray.AddMenuItem("Show HTTPS certificates info", "")
 	// On linux/windows chrome/firefox/edge(chromium) the agent works without problems on plain HTTP,
 	// so we disable the menuItem to generate/install the certificates
 	if runtime.GOOS != "darwin" {
 		s.updateMenuItem(mGenCerts, true)
 		s.updateMenuItem(mRemoveCerts, true)
+		s.updateMenuItem(mCertsInfo, true)
 	} else {
 		s.updateMenuItem(mGenCerts, config.CertsExist())
 		s.updateMenuItem(mRemoveCerts, !config.CertsExist())
@@ -115,6 +118,19 @@ func (s *Systray) start() {
 					cert.DeleteCertificates(certDir)
 				}
 				s.Restart()
+			case <-mCertsInfo.ClickedCh:
+				infoMsg := "The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\n\nYour HTTPS certificate status:\n"
+				if config.CertsExist() {
+					expDate, err := cert.GetExpirationDate()
+					if err != nil {
+						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
+					}
+					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate
+				} else {
+					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
+				}
+				oscmd := exec.Command("osascript", "-e", "display dialog \""+infoMsg+"\" buttons \"OK\" with title \"Arduino Agent: certificates info\"")
+				_ = oscmd.Run()
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:
