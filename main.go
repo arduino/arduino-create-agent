@@ -86,6 +86,7 @@ var (
 	verbose           = iniConf.Bool("v", true, "show debug logging")
 	crashreport       = iniConf.Bool("crashreport", false, "enable crashreport logging")
 	autostartMacOS    = iniConf.Bool("autostartMacOS", true, "the Arduino Create Agent is able to start automatically after login on macOS (launchd agent)")
+	installCerts      = iniConf.Bool("installCerts", false, "install the HTTPS certificate for Safari and keep it updated")
 )
 
 // the ports filter provided by the user via the -regex flag, if any
@@ -220,6 +221,34 @@ func loop() {
 		configPath = config.GenerateConfig(configDir)
 	}
 
+	// if the default browser is Safari, prompt the user to install HTTPS certificates
+	// and eventually install them
+	if runtime.GOOS == "darwin" {
+		if exist, err := installCertsKeyExists(configPath.String()); err != nil {
+			log.Panicf("config.ini cannot be parsed: %s", err)
+		} else if !exist {
+			if cert.PromptInstallCertsSafari() {
+				err = modifyIni(configPath.String(), "true")
+				if err != nil {
+					log.Panicf("config.ini cannot be parsed: %s", err)
+				}
+				certDir := config.GetCertificatesDir()
+				cert.GenerateCertificates(certDir)
+				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
+				// if something goes wrong during the cert install we remove them, so the user is able to retry
+				if err != nil {
+					log.Errorf("cannot install certificates something went wrong: %s", err)
+					cert.DeleteCertificates(certDir)
+				}
+			} else {
+				err = modifyIni(configPath.String(), "false")
+				if err != nil {
+					log.Panicf("config.ini cannot be parsed: %s", err)
+				}
+			}
+		}
+	}
+
 	// Parse the config.ini
 	args, err := parseIni(configPath.String())
 	if err != nil {
@@ -339,6 +368,13 @@ func loop() {
 			config.InstallPlistFile()
 		} else {
 			config.UninstallPlistFile()
+		}
+	}
+
+	// check if the HTTPS certificates are expired and prompt the user to update them on macOS
+	if runtime.GOOS == "darwin" {
+		if *installCerts && config.CertsExist() {
+			cert.PromptExpiredCerts(config.GetCertificatesDir())
 		}
 	}
 
@@ -486,4 +522,28 @@ func parseIni(filename string) (args []string, err error) {
 	}
 
 	return args, nil
+}
+
+func modifyIni(filename string, value string) error {
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false, AllowPythonMultilineValues: true}, filename)
+	if err != nil {
+		return err
+	}
+	_, err = cfg.Section("").NewKey("installCerts", value)
+	if err != nil {
+		return err
+	}
+	err = cfg.SaveTo(filename)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func installCertsKeyExists(filename string) (bool, error) {
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false, AllowPythonMultilineValues: true}, filename)
+	if err != nil {
+		return false, err
+	}
+	return cfg.Section("").HasKey("installCerts"), nil
 }

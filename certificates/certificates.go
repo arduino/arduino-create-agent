@@ -30,6 +30,7 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/arduino/go-paths-helper"
@@ -277,4 +278,38 @@ func isExpired() (bool, error) {
 	}
 	date, _ := time.Parse(time.DateTime, dateS)
 	return date.Before(bound), nil
+}
+
+// PromptInstallCertsSafari prompts the user to install the HTTPS certificates if they are using Safari
+func PromptInstallCertsSafari() bool {
+	if GetDefaultBrowserName() != "Safari" {
+		return false
+	}
+	oscmd := exec.Command("osascript", "-e", "display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.\" buttons {\"Do not install\", \"Install the certificate for Safari\"} default button 2 with title \"Install Certificates\"")
+	pressed, _ := oscmd.Output()
+	return string(pressed) == "button returned:Install the certificate for Safari"
+}
+
+// PromptExpiredCerts prompts the user to update the HTTPS certificates if they are using Safari
+func PromptExpiredCerts(certDir *paths.Path) {
+	if expired, err := isExpired(); err != nil {
+		log.Errorf("cannot check if certificates are expired something went wrong: %s", err)
+	} else if expired {
+		oscmd := exec.Command("osascript", "-e", "display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nYour certificate is expired or close to expiration. Do you want to update it?\" buttons {\"Do not update\", \"Update the certificate for Safari\"} default button 2 with title \"Update Certificates\"")
+		if pressed, _ := oscmd.Output(); string(pressed) == "button returned:Update the certificate for Safari" {
+			err := UninstallCertificates()
+			if err != nil {
+				log.Errorf("cannot uninstall certificates something went wrong: %s", err)
+			} else {
+				DeleteCertificates(certDir)
+				GenerateCertificates(certDir)
+				err := InstallCertificate(certDir.Join("ca.cert.cer"))
+				// if something goes wrong during the cert install we remove them, so the user is able to retry
+				if err != nil {
+					log.Errorf("cannot install certificates something went wrong: %s", err)
+					DeleteCertificates(certDir)
+				}
+			}
+		}
+	}
 }
