@@ -42,3 +42,9 @@ func GetExpirationDate() (string, error) {
 	log.Warn("platform not supported for retrieving certificates expiration date")
 	return "", errors.New("platform not supported for retrieving certificates expiration date")
 }
+
+// GetDefaultBrowserName won't do anything on unsupported Operative Systems
+func GetDefaultBrowserName() string {
+	log.Warn("platform not supported for retrieving default browser name")
+	return ""
+}

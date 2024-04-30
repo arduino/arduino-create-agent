@@ -138,6 +138,18 @@ const char *getExpirationDate(char *expirationDate){
 
     return "";
 }
+
+const char *getDefaultBrowserName() {
+    NSURL *defaultBrowserURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:[NSURL URLWithString:@"http://"]];
+    if (defaultBrowserURL) {
+        NSBundle *defaultBrowserBundle = [NSBundle bundleWithURL:defaultBrowserURL];
+        NSString *defaultBrowser = [defaultBrowserBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
+
+        return [defaultBrowser cStringUsingEncoding:[NSString defaultCStringEncoding]];
+    }
+
+    return "";
+}
 */
 import "C"
 import (
@@ -196,4 +208,11 @@ func GetExpirationDate() (string, error) {
 	}
 	date := C.GoString(dateString)
 	return strings.ReplaceAll(date, " +0000", ""), nil
+}
+
+// GetDefaultBrowserName returns the name of the default browser
+func GetDefaultBrowserName() string {
+	log.Infof("Retrieving default browser name")
+	p := C.getDefaultBrowserName()
+	return C.GoString(p)
 }
