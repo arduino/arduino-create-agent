@@ -14,8 +14,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import requests
+import pytest
+from sys import platform
 
 
+@pytest.mark.skipif(
+    platform == "darwin",
+    reason="on macOS the user is prompted to install certificates",
+)
 def test_get_tools(base_url, agent):
     
     resp = requests.get(f"{base_url}/v2/pkgs/tools/installed")

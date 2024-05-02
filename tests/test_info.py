@@ -15,8 +15,14 @@
 
 import re
 import requests
+import pytest
+from sys import platform
 
 
+@pytest.mark.skipif(
+    platform == "darwin",
+    reason="on macOS the user is prompted to install certificates",
+)
 def test_version(base_url, agent):
     
     resp = requests.get(f"{base_url}/info")
