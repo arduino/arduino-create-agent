@@ -1,6 +1,6 @@
 ---
 name: github.com/go-playground/validator/v10
-version: v10.19.0
+version: v10.20.0
 type: go
 summary: Package validator implements value validations for structs and individual
   fields based on tags.
