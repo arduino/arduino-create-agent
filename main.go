@@ -227,7 +227,12 @@ func loop() {
 		if exist, err := installCertsKeyExists(configPath.String()); err != nil {
 			log.Panicf("config.ini cannot be parsed: %s", err)
 		} else if !exist {
-			if cert.PromptInstallCertsSafari() {
+			if config.CertsExist() {
+				err = config.SetInstallCertsIni(configPath.String(), "true")
+				if err != nil {
+					log.Panicf("config.ini cannot be parsed: %s", err)
+				}
+			} else if cert.PromptInstallCertsSafari() {
 				err = config.SetInstallCertsIni(configPath.String(), "true")
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
