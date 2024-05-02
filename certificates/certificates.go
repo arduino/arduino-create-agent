@@ -285,7 +285,7 @@ func PromptInstallCertsSafari() bool {
 	if GetDefaultBrowserName() != "Safari" {
 		return false
 	}
-	oscmd := exec.Command("osascript", "-e", "display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.\" buttons {\"Do not install\", \"Install the certificate for Safari\"} default button 2 with title \"Install Certificates\"")
+	oscmd := exec.Command("osascript", "-e", "display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.\" buttons {\"Do not install\", \"Install the certificate for Safari\"} default button 2 with title \"Arduino Agent: Install Certificates\"")
 	pressed, _ := oscmd.Output()
 	return string(pressed) == "button returned:Install the certificate for Safari"
 }
@@ -295,7 +295,7 @@ func PromptExpiredCerts(certDir *paths.Path) {
 	if expired, err := isExpired(); err != nil {
 		log.Errorf("cannot check if certificates are expired something went wrong: %s", err)
 	} else if expired {
-		oscmd := exec.Command("osascript", "-e", "display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nYour certificate is expired or close to expiration. Do you want to update it?\" buttons {\"Do not update\", \"Update the certificate for Safari\"} default button 2 with title \"Update Certificates\"")
+		oscmd := exec.Command("osascript", "-e", "display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nYour certificate is expired or close to expiration. Do you want to update it?\" buttons {\"Do not update\", \"Update the certificate for Safari\"} default button 2 with title \"Arduino Agent: Update Certificates\"")
 		if pressed, _ := oscmd.Output(); string(pressed) == "button returned:Update the certificate for Safari" {
 			err := UninstallCertificates()
 			if err != nil {
