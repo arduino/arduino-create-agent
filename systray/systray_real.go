@@ -108,6 +108,10 @@ func (s *Systray) start() {
 					log.Errorf("cannot install certificates something went wrong: %s", err)
 					cert.DeleteCertificates(certDir)
 				}
+				err = config.SetInstallCertsIni(s.currentConfigFilePath.String(), "true")
+				if err != nil {
+					log.Errorf("cannot set installCerts value in config.ini: %s", err)
+				}
 				s.Restart()
 			case <-mRemoveCerts.ClickedCh:
 				err := cert.UninstallCertificates()

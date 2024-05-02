@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/arduino/go-paths-helper"
+	"github.com/go-ini/ini"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -123,4 +124,21 @@ func GenerateConfig(destDir *paths.Path) *paths.Path {
 	}
 	log.Infof("generated config in %s", configPath)
 	return configPath
+}
+
+// SetInstallCertsIni sets installCerts value to true in the config
+func SetInstallCertsIni(filename string, value string) error {
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false, AllowPythonMultilineValues: true}, filename)
+	if err != nil {
+		return err
+	}
+	_, err = cfg.Section("").NewKey("installCerts", value)
+	if err != nil {
+		return err
+	}
+	err = cfg.SaveTo(filename)
+	if err != nil {
+		return err
+	}
+	return nil
 }

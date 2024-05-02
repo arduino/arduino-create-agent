@@ -228,7 +228,7 @@ func loop() {
 			log.Panicf("config.ini cannot be parsed: %s", err)
 		} else if !exist {
 			if cert.PromptInstallCertsSafari() {
-				err = modifyIni(configPath.String(), "true")
+				err = config.SetInstallCertsIni(configPath.String(), "true")
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
 				}
@@ -241,7 +241,7 @@ func loop() {
 					cert.DeleteCertificates(certDir)
 				}
 			} else {
-				err = modifyIni(configPath.String(), "false")
+				err = config.SetInstallCertsIni(configPath.String(), "false")
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
 				}
@@ -522,22 +522,6 @@ func parseIni(filename string) (args []string, err error) {
 	}
 
 	return args, nil
-}
-
-func modifyIni(filename string, value string) error {
-	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: false, AllowPythonMultilineValues: true}, filename)
-	if err != nil {
-		return err
-	}
-	_, err = cfg.Section("").NewKey("installCerts", value)
-	if err != nil {
-		return err
-	}
-	err = cfg.SaveTo(filename)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func installCertsKeyExists(filename string) (bool, error) {
