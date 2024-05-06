@@ -154,12 +154,12 @@ const char *getDefaultBrowserName() {
 import "C"
 import (
 	"errors"
-	"os/exec"
 	"strings"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/go-paths-helper"
 )
 
@@ -172,9 +172,8 @@ func InstallCertificate(cert *paths.Path) error {
 	p := C.installCert(ccert)
 	s := C.GoString(p)
 	if len(s) != 0 {
-		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Arduino Agent: Error installing certificates\"")
-		_ = oscmd.Run()
-		_ = UninstallCertificates()
+		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error installing certificates\"")
+		UninstallCertificates()
 		return errors.New(s)
 	}
 	return nil
@@ -187,8 +186,7 @@ func UninstallCertificates() error {
 	p := C.uninstallCert()
 	s := C.GoString(p)
 	if len(s) != 0 {
-		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Arduino Agent: Error uninstalling certificates\"")
-		_ = oscmd.Run()
+		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error uninstalling certificates\"")
 		return errors.New(s)
 	}
 	return nil
@@ -202,8 +200,7 @@ func GetExpirationDate() (string, error) {
 	p := C.getExpirationDate(dateString)
 	s := C.GoString(p)
 	if len(s) != 0 {
-		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Arduino Agent: Error retrieving expiration date\"")
-		_ = oscmd.Run()
+		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error retrieving expiration date\"")
 		return "", errors.New(s)
 	}
 	date := C.GoString(dateString)

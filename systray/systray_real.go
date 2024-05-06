@@ -21,13 +21,13 @@ package systray
 
 import (
 	"os"
-	"os/exec"
 	"runtime"
 
 	"fyne.io/systray"
 	cert "github.com/arduino/arduino-create-agent/certificates"
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/icon"
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/go-ini/ini"
 	log "github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
@@ -133,8 +133,7 @@ func (s *Systray) start() {
 				} else {
 					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
 				}
-				oscmd := exec.Command("osascript", "-e", "display dialog \""+infoMsg+"\" buttons \"OK\" with title \"Arduino Agent: certificates info\"")
-				_ = oscmd.Run()
+				utilities.UserPrompt("display dialog \"" + infoMsg + "\" buttons \"OK\" with title \"Arduino Agent: certificates info\"")
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:
