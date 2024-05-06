@@ -22,6 +22,7 @@ package systray
 import (
 	"os"
 	"runtime"
+	"strings"
 
 	"fyne.io/systray"
 	cert "github.com/arduino/arduino-create-agent/certificates"
@@ -64,18 +65,11 @@ func (s *Systray) start() {
 	mRmCrashes := systray.AddMenuItem("Remove crash reports", "")
 	s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 
-	mGenCerts := systray.AddMenuItem("Generate and Install HTTPS certificates", "HTTPS Certs")
-	mRemoveCerts := systray.AddMenuItem("Remove HTTPS certificates", "")
-	mCertsInfo := systray.AddMenuItem("Show HTTPS certificates info", "")
+	mManageCerts := systray.AddMenuItem("Manage HTTPS certificates", "HTTPS Certs")
 	// On linux/windows chrome/firefox/edge(chromium) the agent works without problems on plain HTTP,
 	// so we disable the menuItem to generate/install the certificates
 	if runtime.GOOS != "darwin" {
-		s.updateMenuItem(mGenCerts, true)
-		s.updateMenuItem(mRemoveCerts, true)
-		s.updateMenuItem(mCertsInfo, true)
-	} else {
-		s.updateMenuItem(mGenCerts, config.CertsExist())
-		s.updateMenuItem(mRemoveCerts, !config.CertsExist())
+		s.updateMenuItem(mManageCerts, true)
 	}
 
 	// Add pause/quit
@@ -99,41 +93,46 @@ func (s *Systray) start() {
 			case <-mRmCrashes.ClickedCh:
 				RemoveCrashes()
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
-			case <-mGenCerts.ClickedCh:
-				certDir := config.GetCertificatesDir()
-				cert.GenerateCertificates(certDir)
-				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
-				// if something goes wrong during the cert install we remove them, so the user is able to retry
-				if err != nil {
-					log.Errorf("cannot install certificates something went wrong: %s", err)
-					cert.DeleteCertificates(certDir)
-				}
-				err = config.SetInstallCertsIni(s.currentConfigFilePath.String(), "true")
-				if err != nil {
-					log.Errorf("cannot set installCerts value in config.ini: %s", err)
-				}
-				s.Restart()
-			case <-mRemoveCerts.ClickedCh:
-				err := cert.UninstallCertificates()
-				if err != nil {
-					log.Errorf("cannot uninstall certificates something went wrong: %s", err)
-				} else {
-					certDir := config.GetCertificatesDir()
-					cert.DeleteCertificates(certDir)
-				}
-				s.Restart()
-			case <-mCertsInfo.ClickedCh:
+			case <-mManageCerts.ClickedCh:
 				infoMsg := "The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\n\nYour HTTPS certificate status:\n"
+				buttons := "{\"OK\", \"Install certificate for Safari\"}"
+				certDir := config.GetCertificatesDir()
 				if config.CertsExist() {
 					expDate, err := cert.GetExpirationDate()
 					if err != nil {
 						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
 					}
 					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate
+					buttons = "{\"OK\", \"Uninstall certificate for Safari\"}"
 				} else {
 					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
 				}
-				utilities.UserPrompt("display dialog \"" + infoMsg + "\" buttons \"OK\" with title \"Arduino Agent: certificates info\"")
+				pressedButton := utilities.UserPrompt("display dialog \"" + infoMsg + "\" buttons " + buttons + " with title \"Arduino Agent: manage HTTPS certificates\"")
+				if strings.Contains(pressedButton, "Install certificate for Safari") {
+					cert.GenerateCertificates(certDir)
+					err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
+					// if something goes wrong during the cert install we remove them, so the user is able to retry
+					if err != nil {
+						log.Errorf("cannot install certificates something went wrong: %s", err)
+						cert.DeleteCertificates(certDir)
+					}
+					err = config.SetInstallCertsIni(s.currentConfigFilePath.String(), "true")
+					if err != nil {
+						log.Errorf("cannot set installCerts value in config.ini: %s", err)
+					}
+				} else if strings.Contains(pressedButton, "Uninstall certificate for Safari") {
+					err := cert.UninstallCertificates()
+					if err != nil {
+						log.Errorf("cannot uninstall certificates something went wrong: %s", err)
+					} else {
+						cert.DeleteCertificates(certDir)
+						err = config.SetInstallCertsIni(s.currentConfigFilePath.String(), "false")
+						if err != nil {
+							log.Errorf("cannot set installCerts value in config.ini: %s", err)
+						}
+					}
+				}
+				s.Restart()
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:
