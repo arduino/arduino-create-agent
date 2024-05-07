@@ -237,14 +237,7 @@ func loop() {
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
 				}
-				certDir := config.GetCertificatesDir()
-				cert.GenerateCertificates(certDir)
-				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
-				// if something goes wrong during the cert install we remove them, so the user is able to retry
-				if err != nil {
-					log.Errorf("cannot install certificates something went wrong: %s", err)
-					cert.DeleteCertificates(certDir)
-				}
+				cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
 			} else {
 				err = config.SetInstallCertsIni(configPath.String(), "false")
 				if err != nil {
@@ -384,14 +377,7 @@ func loop() {
 			} else if cert.PromptInstallCertsSafari() {
 				// installing the certificates from scratch at this point should only happen if
 				// something went wrong during previous installation attempts
-				certDir := config.GetCertificatesDir()
-				cert.GenerateCertificates(certDir)
-				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
-				// if something goes wrong during the cert install we remove them, so the user is able to retry
-				if err != nil {
-					log.Errorf("cannot install certificates something went wrong: %s", err)
-					cert.DeleteCertificates(certDir)
-				}
+				cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
 			} else {
 				err = config.SetInstallCertsIni(configPath.String(), "false")
 				if err != nil {

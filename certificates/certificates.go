@@ -302,14 +302,19 @@ func PromptExpiredCerts(certDir *paths.Path) {
 				log.Errorf("cannot uninstall certificates something went wrong: %s", err)
 			} else {
 				DeleteCertificates(certDir)
-				GenerateCertificates(certDir)
-				err := InstallCertificate(certDir.Join("ca.cert.cer"))
-				// if something goes wrong during the cert install we remove them, so the user is able to retry
-				if err != nil {
-					log.Errorf("cannot install certificates something went wrong: %s", err)
-					DeleteCertificates(certDir)
-				}
+				GenerateAndInstallCertificates(certDir)
 			}
 		}
+	}
+}
+
+// GenerateAndInstallCertificates generates and installs the certificates
+func GenerateAndInstallCertificates(certDir *paths.Path) {
+	GenerateCertificates(certDir)
+	err := InstallCertificate(certDir.Join("ca.cert.cer"))
+	// if something goes wrong during the cert install we remove them, so the user is able to retry
+	if err != nil {
+		log.Errorf("cannot install certificates something went wrong: %s", err)
+		DeleteCertificates(certDir)
 	}
 }
