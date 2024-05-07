@@ -95,7 +95,7 @@ func (s *Systray) start() {
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 			case <-mManageCerts.ClickedCh:
 				infoMsg := "The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\n\nYour HTTPS certificate status:\n"
-				buttons := "{\"Install certificate for Safari\", \"OK\"} default button \"OK\""
+				buttons := "{\"Install the certificate for Safari\", \"OK\"} default button \"OK\""
 				certDir := config.GetCertificatesDir()
 				if config.CertsExist() {
 					expDate, err := cert.GetExpirationDate()
@@ -103,7 +103,7 @@ func (s *Systray) start() {
 						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
 					}
 					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate
-					buttons = "{\"Uninstall certificate for Safari\", \"OK\"} default button \"OK\""
+					buttons = "{\"Uninstall the certificate for Safari\", \"OK\"} default button \"OK\""
 				} else {
 					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
 				}
