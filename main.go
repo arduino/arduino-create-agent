@@ -378,8 +378,26 @@ func loop() {
 
 	// check if the HTTPS certificates are expired and prompt the user to update them on macOS
 	if runtime.GOOS == "darwin" {
-		if *installCerts && config.CertsExist() {
-			cert.PromptExpiredCerts(config.GetCertificatesDir())
+		if *installCerts {
+			if config.CertsExist() {
+				cert.PromptExpiredCerts(config.GetCertificatesDir())
+			} else if cert.PromptInstallCertsSafari() {
+				// installing the certificates from scratch at this point should only happen if
+				// something went wrong during previous installation attempts
+				certDir := config.GetCertificatesDir()
+				cert.GenerateCertificates(certDir)
+				err := cert.InstallCertificate(certDir.Join("ca.cert.cer"))
+				// if something goes wrong during the cert install we remove them, so the user is able to retry
+				if err != nil {
+					log.Errorf("cannot install certificates something went wrong: %s", err)
+					cert.DeleteCertificates(certDir)
+				}
+			} else {
+				err = config.SetInstallCertsIni(configPath.String(), "false")
+				if err != nil {
+					log.Panicf("config.ini cannot be parsed: %s", err)
+				}
+			}
 		}
 	}
 
