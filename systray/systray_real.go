@@ -114,6 +114,7 @@ func (s *Systray) start() {
 					if err != nil {
 						log.Errorf("cannot set installCerts value in config.ini: %s", err)
 					}
+					s.Restart()
 				} else if strings.Contains(pressedButton, "Uninstall certificate for Safari") {
 					err := cert.UninstallCertificates()
 					if err != nil {
@@ -125,8 +126,8 @@ func (s *Systray) start() {
 							log.Errorf("cannot set installCerts value in config.ini: %s", err)
 						}
 					}
+					s.Restart()
 				}
-				s.Restart()
 			case <-mPause.ClickedCh:
 				s.Pause()
 			case <-mQuit.ClickedCh:
