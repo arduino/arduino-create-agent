@@ -283,9 +283,6 @@ func isExpired() (bool, error) {
 
 // PromptInstallCertsSafari prompts the user to install the HTTPS certificates if they are using Safari
 func PromptInstallCertsSafari() bool {
-	if GetDefaultBrowserName() != "Safari" {
-		return false
-	}
 	buttonPressed := utilities.UserPrompt("display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.\" buttons {\"Do not install\", \"Install the certificate for Safari\"} default button 2 with title \"Arduino Agent: Install Certificates\"")
 	return strings.Contains(string(buttonPressed), "button returned:Install the certificate for Safari")
 }

@@ -223,7 +223,7 @@ func loop() {
 
 	// if the default browser is Safari, prompt the user to install HTTPS certificates
 	// and eventually install them
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == "darwin" && cert.GetDefaultBrowserName() == "Safari" {
 		if exist, err := installCertsKeyExists(configPath.String()); err != nil {
 			log.Panicf("config.ini cannot be parsed: %s", err)
 		} else if !exist {
@@ -370,7 +370,7 @@ func loop() {
 	}
 
 	// check if the HTTPS certificates are expired and prompt the user to update them on macOS
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == "darwin" && cert.GetDefaultBrowserName() == "Safari" {
 		if *installCerts {
 			if config.CertsExist() {
 				cert.PromptExpiredCerts(config.GetCertificatesDir())
