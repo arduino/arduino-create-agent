@@ -223,7 +223,7 @@ func loop() {
 
 	// if the default browser is Safari, prompt the user to install HTTPS certificates
 	// and eventually install them
-	if runtime.GOOS == "darwin" && cert.GetDefaultBrowserName() == "Safari" {
+	if runtime.GOOS == "darwin" {
 		if exist, err := installCertsKeyExists(configPath.String()); err != nil {
 			log.Panicf("config.ini cannot be parsed: %s", err)
 		} else if !exist {
@@ -232,7 +232,7 @@ func loop() {
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
 				}
-			} else if cert.PromptInstallCertsSafari() {
+			} else if cert.GetDefaultBrowserName() == "Safari" && cert.PromptInstallCertsSafari() {
 				err = config.SetInstallCertsIni(configPath.String(), "true")
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
