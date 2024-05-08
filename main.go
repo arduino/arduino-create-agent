@@ -369,20 +369,18 @@ func loop() {
 		}
 	}
 
-	// check if the HTTPS certificates are expired and prompt the user to update them on macOS
-	if runtime.GOOS == "darwin" && cert.GetDefaultBrowserName() == "Safari" {
-		if *installCerts {
-			if config.CertsExist() {
-				cert.PromptExpiredCerts(config.GetCertificatesDir())
-			} else if cert.PromptInstallCertsSafari() {
-				// installing the certificates from scratch at this point should only happen if
-				// something went wrong during previous installation attempts
-				cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
-			} else {
-				err = config.SetInstallCertsIni(configPath.String(), "false")
-				if err != nil {
-					log.Panicf("config.ini cannot be parsed: %s", err)
-				}
+	// check if the HTTPS certificates are expired or expiring and prompt the user to update them on macOS
+	if runtime.GOOS == "darwin" && *installCerts {
+		if config.CertsExist() {
+			cert.PromptExpiredCerts(config.GetCertificatesDir())
+		} else if cert.PromptInstallCertsSafari() {
+			// installing the certificates from scratch at this point should only happen if
+			// something went wrong during previous installation attempts
+			cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
+		} else {
+			err = config.SetInstallCertsIni(configPath.String(), "false")
+			if err != nil {
+				log.Panicf("config.ini cannot be parsed: %s", err)
 			}
 		}
 	}
