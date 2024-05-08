@@ -30,8 +30,10 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/go-paths-helper"
 	log "github.com/sirupsen/logrus"
 )
@@ -266,4 +268,50 @@ func DeleteCertificates(certDir *paths.Path) {
 	certDir.Join("key.pem").Remove()
 	certDir.Join("cert.pem").Remove()
 	certDir.Join("cert.cer").Remove()
+}
+
+// isExpired checks if a certificate is expired or about to expire (less than 1 month)
+func isExpired() (bool, error) {
+	bound := time.Now().AddDate(0, 1, 0)
+	dateS, err := GetExpirationDate()
+	if err != nil {
+		return false, err
+	}
+	date, _ := time.Parse(time.DateTime, dateS)
+	return date.Before(bound), nil
+}
+
+// PromptInstallCertsSafari prompts the user to install the HTTPS certificates if they are using Safari
+func PromptInstallCertsSafari() bool {
+	buttonPressed := utilities.UserPrompt("display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.\" buttons {\"Do not install\", \"Install the certificate for Safari\"} default button 2 with title \"Arduino Agent: Install certificate\"")
+	return strings.Contains(string(buttonPressed), "button returned:Install the certificate for Safari")
+}
+
+// PromptExpiredCerts prompts the user to update the HTTPS certificates if they are using Safari
+func PromptExpiredCerts(certDir *paths.Path) {
+	if expired, err := isExpired(); err != nil {
+		log.Errorf("cannot check if certificates are expired something went wrong: %s", err)
+	} else if expired {
+		buttonPressed := utilities.UserPrompt("display dialog \"The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nYour certificate is expired or close to expiration. Do you want to update it?\" buttons {\"Do not update\", \"Update the certificate for Safari\"} default button 2 with title \"Arduino Agent: Update certificate\"")
+		if strings.Contains(string(buttonPressed), "button returned:Update the certificate for Safari") {
+			err := UninstallCertificates()
+			if err != nil {
+				log.Errorf("cannot uninstall certificates something went wrong: %s", err)
+			} else {
+				DeleteCertificates(certDir)
+				GenerateAndInstallCertificates(certDir)
+			}
+		}
+	}
+}
+
+// GenerateAndInstallCertificates generates and installs the certificates
+func GenerateAndInstallCertificates(certDir *paths.Path) {
+	GenerateCertificates(certDir)
+	err := InstallCertificate(certDir.Join("ca.cert.cer"))
+	// if something goes wrong during the cert install we remove them, so the user is able to retry
+	if err != nil {
+		log.Errorf("cannot install certificates something went wrong: %s", err)
+		DeleteCertificates(certDir)
+	}
 }

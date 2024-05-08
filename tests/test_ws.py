@@ -17,16 +17,25 @@ import time
 import json
 import base64
 import pytest
+from sys import platform
 
 from common import running_on_ci
 message = []
 
 
+@pytest.mark.skipif(
+    platform == "darwin",
+    reason="on macOS the user is prompted to install certificates",
+)
 def test_ws_connection(socketio):
     print('my sid is', socketio.sid)
     assert socketio.sid is not None
 
 
+@pytest.mark.skipif(
+    platform == "darwin",
+    reason="on macOS the user is prompted to install certificates",
+)
 def test_list(socketio, message):
     socketio.emit('command', 'list')
     time.sleep(.2)

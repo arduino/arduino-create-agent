@@ -149,3 +149,10 @@ func VerifyInput(input string, signature string) error {
 	d := h.Sum(nil)
 	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, sign)
 }
+
+// UserPrompt executes an osascript and returns the pressed button
+func UserPrompt(dialog string) string {
+	oscmd := exec.Command("osascript", "-e", dialog)
+	pressedButton, _ := oscmd.Output()
+	return string(pressedButton)
+}

@@ -89,15 +89,77 @@ const char *uninstallCert() {
     }
     return "";
 }
+
+const char *getExpirationDate(char *expirationDate){
+    // Create a key-value dictionary used to query the Keychain and look for the "Arduino" root certificate.
+    NSDictionary *getquery = @{
+                (id)kSecClass:     (id)kSecClassCertificate,
+                (id)kSecAttrLabel: @"Arduino",
+                (id)kSecReturnRef: @YES,
+            };
+
+    OSStatus err = noErr;
+    SecCertificateRef cert = NULL;
+
+    // Use this function to check for errors
+    err = SecItemCopyMatching((CFDictionaryRef)getquery, (CFTypeRef *)&cert);
+
+    if (err != noErr){
+        NSString *errString = [@"Error: " stringByAppendingFormat:@"%d", err];
+        NSLog(@"%@", errString);
+        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
+    }
+
+    // Get data from the certificate. We just need the "invalidity date" property.
+    CFDictionaryRef valuesDict = SecCertificateCopyValues(cert, (__bridge CFArrayRef)@[(__bridge id)kSecOIDInvalidityDate], NULL);
+
+    id expirationDateValue;
+    if(valuesDict){
+        CFDictionaryRef invalidityDateDictionaryRef = CFDictionaryGetValue(valuesDict, kSecOIDInvalidityDate);
+        if(invalidityDateDictionaryRef){
+            CFTypeRef invalidityRef = CFDictionaryGetValue(invalidityDateDictionaryRef, kSecPropertyKeyValue);
+            if(invalidityRef){
+                expirationDateValue = CFBridgingRelease(invalidityRef);
+            }
+        }
+        CFRelease(valuesDict);
+    }
+
+    NSString *outputString = [@"" stringByAppendingFormat:@"%@", expirationDateValue];
+    if([outputString isEqualToString:@""]){
+        NSString *errString = @"Error: the expiration date of the certificate could not be found";
+        NSLog(@"%@", errString);
+        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
+    }
+
+    // This workaround allows to obtain the expiration date alongside the error message
+    strncpy(expirationDate, [outputString cStringUsingEncoding:[NSString defaultCStringEncoding]], 32);
+    expirationDate[32-1] = 0;
+
+    return "";
+}
+
+const char *getDefaultBrowserName() {
+    NSURL *defaultBrowserURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:[NSURL URLWithString:@"http://"]];
+    if (defaultBrowserURL) {
+        NSBundle *defaultBrowserBundle = [NSBundle bundleWithURL:defaultBrowserURL];
+        NSString *defaultBrowser = [defaultBrowserBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
+
+        return [defaultBrowser cStringUsingEncoding:[NSString defaultCStringEncoding]];
+    }
+
+    return "";
+}
 */
 import "C"
 import (
 	"errors"
-	"os/exec"
+	"strings"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/go-paths-helper"
 )
 
@@ -110,9 +172,8 @@ func InstallCertificate(cert *paths.Path) error {
 	p := C.installCert(ccert)
 	s := C.GoString(p)
 	if len(s) != 0 {
-		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Arduino Agent: Error installing certificates\"")
-		_ = oscmd.Run()
-		_ = UninstallCertificates()
+		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error installing certificates\"")
+		UninstallCertificates()
 		return errors.New(s)
 	}
 	return nil
@@ -125,9 +186,30 @@ func UninstallCertificates() error {
 	p := C.uninstallCert()
 	s := C.GoString(p)
 	if len(s) != 0 {
-		oscmd := exec.Command("osascript", "-e", "display dialog \""+s+"\" buttons \"OK\" with title \"Arduino Agent: Error uninstalling certificates\"")
-		_ = oscmd.Run()
+		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error uninstalling certificates\"")
 		return errors.New(s)
 	}
 	return nil
+}
+
+// GetExpirationDate returns the expiration date of a certificate stored in the keychain
+func GetExpirationDate() (string, error) {
+	log.Infof("Retrieving certificate's expiration date")
+	dateString := C.CString("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") // 32 characters string
+	defer C.free(unsafe.Pointer(dateString))
+	p := C.getExpirationDate(dateString)
+	s := C.GoString(p)
+	if len(s) != 0 {
+		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error retrieving expiration date\"")
+		return "", errors.New(s)
+	}
+	date := C.GoString(dateString)
+	return strings.ReplaceAll(date, " +0000", ""), nil
+}
+
+// GetDefaultBrowserName returns the name of the default browser
+func GetDefaultBrowserName() string {
+	log.Infof("Retrieving default browser name")
+	p := C.getDefaultBrowserName()
+	return C.GoString(p)
 }
