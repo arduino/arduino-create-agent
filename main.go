@@ -232,16 +232,18 @@ func loop() {
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
 				}
-			} else if cert.GetDefaultBrowserName() == "Safari" && cert.PromptInstallCertsSafari() {
-				err = config.SetInstallCertsIni(configPath.String(), "true")
-				if err != nil {
-					log.Panicf("config.ini cannot be parsed: %s", err)
-				}
-				cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
-			} else {
-				err = config.SetInstallCertsIni(configPath.String(), "false")
-				if err != nil {
-					log.Panicf("config.ini cannot be parsed: %s", err)
+			} else if cert.GetDefaultBrowserName() == "Safari" {
+				if cert.PromptInstallCertsSafari() {
+					err = config.SetInstallCertsIni(configPath.String(), "true")
+					if err != nil {
+						log.Panicf("config.ini cannot be parsed: %s", err)
+					}
+					cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
+				} else {
+					err = config.SetInstallCertsIni(configPath.String(), "false")
+					if err != nil {
+						log.Panicf("config.ini cannot be parsed: %s", err)
+					}
 				}
 			}
 		}
