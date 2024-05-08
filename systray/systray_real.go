@@ -108,14 +108,14 @@ func (s *Systray) start() {
 					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
 				}
 				pressedButton := utilities.UserPrompt("display dialog \"" + infoMsg + "\" buttons " + buttons + " with title \"Arduino Agent: Manage HTTPS certificate\"")
-				if strings.Contains(pressedButton, "Install certificate for Safari") {
+				if strings.Contains(pressedButton, "Install the certificate for Safari") {
 					cert.GenerateAndInstallCertificates(certDir)
 					err := config.SetInstallCertsIni(s.currentConfigFilePath.String(), "true")
 					if err != nil {
 						log.Errorf("cannot set installCerts value in config.ini: %s", err)
 					}
 					s.Restart()
-				} else if strings.Contains(pressedButton, "Uninstall certificate for Safari") {
+				} else if strings.Contains(pressedButton, "Uninstall the certificate for Safari") {
 					err := cert.UninstallCertificates()
 					if err != nil {
 						log.Errorf("cannot uninstall certificates something went wrong: %s", err)
