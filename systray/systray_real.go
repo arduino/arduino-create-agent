@@ -22,6 +22,7 @@ package systray
 import (
 	"os"
 	"runtime"
+	"time"
 
 	"fyne.io/systray"
 	cert "github.com/arduino/arduino-create-agent/certificates"
@@ -102,7 +103,7 @@ func (s *Systray) start() {
 					if err != nil {
 						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
 					}
-					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate
+					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate.Format(time.DateTime)
 					buttons = "{\"OK\", \"Uninstall the certificate for Safari\"}"
 					defaultButton = "Uninstall the certificate for Safari"
 					pressedButton := utilities.UserPrompt(infoMsg, buttons, defaultButton, "Arduino Agent: Manage HTTPS certificate")

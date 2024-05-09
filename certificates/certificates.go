@@ -271,11 +271,10 @@ func DeleteCertificates(certDir *paths.Path) {
 // IsExpired checks if a certificate is expired or about to expire (less than 1 month)
 func IsExpired() (bool, error) {
 	bound := time.Now().AddDate(0, 1, 0)
-	dateS, err := GetExpirationDate()
+	date, err := GetExpirationDate()
 	if err != nil {
 		return false, err
 	}
-	date, _ := time.Parse(time.DateTime, dateS)
 	return date.Before(bound), nil
 }
 

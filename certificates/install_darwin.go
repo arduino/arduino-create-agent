@@ -111,11 +111,11 @@ const char *getExpirationDate(char *expirationDate){
     }
 
     // Get data from the certificate. We just need the "invalidity date" property.
-    CFDictionaryRef valuesDict = SecCertificateCopyValues(cert, (__bridge CFArrayRef)@[(__bridge id)kSecOIDInvalidityDate], NULL);
+    CFDictionaryRef valuesDict = SecCertificateCopyValues(cert, (__bridge CFArrayRef)@[(__bridge id)kSecOIDX509V1ValidityNotAfter], NULL);
 
     id expirationDateValue;
     if(valuesDict){
-        CFDictionaryRef invalidityDateDictionaryRef = CFDictionaryGetValue(valuesDict, kSecOIDInvalidityDate);
+        CFDictionaryRef invalidityDateDictionaryRef = CFDictionaryGetValue(valuesDict, kSecOIDX509V1ValidityNotAfter);
         if(invalidityDateDictionaryRef){
             CFTypeRef invalidityRef = CFDictionaryGetValue(invalidityDateDictionaryRef, kSecPropertyKeyValue);
             if(invalidityRef){
@@ -173,7 +173,8 @@ const char *certInKeychain() {
 import "C"
 import (
 	"errors"
-	"strings"
+	"strconv"
+	"time"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -212,7 +213,7 @@ func UninstallCertificates() error {
 }
 
 // GetExpirationDate returns the expiration date of a certificate stored in the keychain
-func GetExpirationDate() (string, error) {
+func GetExpirationDate() (time.Time, error) {
 	log.Infof("Retrieving certificate's expiration date")
 	dateString := C.CString("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") // 32 characters string
 	defer C.free(unsafe.Pointer(dateString))
@@ -222,8 +223,8 @@ func GetExpirationDate() (string, error) {
 		utilities.UserPrompt(s, "\"OK\"", "OK", "Arduino Agent: Error retrieving expiration date")
 		return "", errors.New(s)
 	}
-	date := C.GoString(dateString)
-	return strings.ReplaceAll(date, " +0000", ""), nil
+	dateValue, _ := strconv.Atoi(C.GoString(dateString))
+	return time.Unix(dateValue, 0).AddDate(31, 0, 0), nil
 }
 
 // GetDefaultBrowserName returns the name of the default browser
