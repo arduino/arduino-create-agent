@@ -22,7 +22,6 @@ package systray
 import (
 	"os"
 	"runtime"
-	"strings"
 
 	"fyne.io/systray"
 	cert "github.com/arduino/arduino-create-agent/certificates"
@@ -95,7 +94,8 @@ func (s *Systray) start() {
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 			case <-mManageCerts.ClickedCh:
 				infoMsg := "The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\n\nYour HTTPS certificate status:\n"
-				buttons := "{\"Install the certificate for Safari\", \"OK\"} default button \"OK\""
+				buttons := "{\"OK\", \"Install the certificate for Safari\"}"
+				defaultButton := "Install the certificate for Safari"
 				certDir := config.GetCertificatesDir()
 				if config.CertsExist() {
 					expDate, err := cert.GetExpirationDate()
@@ -103,30 +103,33 @@ func (s *Systray) start() {
 						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
 					}
 					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate
-					buttons = "{\"Uninstall the certificate for Safari\", \"OK\"} default button \"OK\""
+					buttons = "{\"OK\", \"Uninstall the certificate for Safari\"}"
+					defaultButton = "Uninstall the certificate for Safari"
+					pressedButton := utilities.UserPrompt(infoMsg, buttons, defaultButton, "Arduino Agent: Manage HTTPS certificate")
+					if pressedButton {
+						err := cert.UninstallCertificates()
+						if err != nil {
+							log.Errorf("cannot uninstall certificates something went wrong: %s", err)
+						} else {
+							cert.DeleteCertificates(certDir)
+							err = config.SetInstallCertsIni(s.currentConfigFilePath.String(), "false")
+							if err != nil {
+								log.Errorf("cannot set installCerts value in config.ini: %s", err)
+							}
+						}
+						s.Restart()
+					}
 				} else {
 					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
-				}
-				pressedButton := utilities.UserPrompt("display dialog \"" + infoMsg + "\" buttons " + buttons + " with title \"Arduino Agent: Manage HTTPS certificate\"")
-				if strings.Contains(pressedButton, "Install the certificate for Safari") {
-					cert.GenerateAndInstallCertificates(certDir)
-					err := config.SetInstallCertsIni(s.currentConfigFilePath.String(), "true")
-					if err != nil {
-						log.Errorf("cannot set installCerts value in config.ini: %s", err)
-					}
-					s.Restart()
-				} else if strings.Contains(pressedButton, "Uninstall the certificate for Safari") {
-					err := cert.UninstallCertificates()
-					if err != nil {
-						log.Errorf("cannot uninstall certificates something went wrong: %s", err)
-					} else {
-						cert.DeleteCertificates(certDir)
-						err = config.SetInstallCertsIni(s.currentConfigFilePath.String(), "false")
+					pressedButton := utilities.UserPrompt(infoMsg, buttons, defaultButton, "Arduino Agent: Manage HTTPS certificate")
+					if pressedButton {
+						cert.GenerateAndInstallCertificates(certDir)
+						err := config.SetInstallCertsIni(s.currentConfigFilePath.String(), "true")
 						if err != nil {
 							log.Errorf("cannot set installCerts value in config.ini: %s", err)
 						}
+						s.Restart()
 					}
-					s.Restart()
 				}
 			case <-mPause.ClickedCh:
 				s.Pause()

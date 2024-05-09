@@ -151,8 +151,8 @@ func VerifyInput(input string, signature string) error {
 }
 
 // UserPrompt executes an osascript and returns the pressed button
-func UserPrompt(dialog string) string {
-	oscmd := exec.Command("osascript", "-e", dialog)
+func UserPrompt(dialog string, buttons string, defaultButton string, title string) bool {
+	oscmd := exec.Command("osascript", "-e", "display dialog \""+dialog+"\" buttons "+buttons+" default button\""+defaultButton+"\" with title \""+title+"\"")
 	pressedButton, _ := oscmd.Output()
-	return string(pressedButton)
+	return strings.Contains(string(pressedButton), "button returned:"+defaultButton)
 }
