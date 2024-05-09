@@ -157,7 +157,7 @@ jobs:
   create-macos-bundle:
     needs: build
 
-    # for not they are exaclty the same
+    # for now they are exaclty the same
     strategy:
       matrix:
         arch: [amd64, arm64]
