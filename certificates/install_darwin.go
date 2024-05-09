@@ -221,9 +221,9 @@ func GetExpirationDate() (time.Time, error) {
 	s := C.GoString(p)
 	if len(s) != 0 {
 		utilities.UserPrompt(s, "\"OK\"", "OK", "Arduino Agent: Error retrieving expiration date")
-		return "", errors.New(s)
+		return time.Time{}, errors.New(s)
 	}
-	dateValue, _ := strconv.Atoi(C.GoString(dateString))
+	dateValue, _ := strconv.ParseInt(C.GoString(dateString), 10, 64)
 	return time.Unix(dateValue, 0).AddDate(31, 0, 0), nil
 }
 
