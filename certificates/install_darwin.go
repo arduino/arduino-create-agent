@@ -150,6 +150,25 @@ const char *getDefaultBrowserName() {
 
     return "";
 }
+
+const char *certInKeychain() {
+    // Each line is a key-value of the dictionary. Note: the the inverted order, value first then key.
+    NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
+        (id)kSecClassCertificate, kSecClass,
+        CFSTR("Arduino"), kSecAttrLabel,
+        kSecMatchLimitOne, kSecMatchLimit,
+        kCFBooleanTrue, kSecReturnAttributes,
+        nil];
+
+    OSStatus err = noErr;
+    // Use this function to check for errors
+    err = SecItemCopyMatching((CFDictionaryRef)dict, nil);
+    NSString *exists = @"false";
+    if (err == noErr) {
+        exists = @"true";
+    }
+    return [exists cStringUsingEncoding:[NSString defaultCStringEncoding]];;
+}
 */
 import "C"
 import (
@@ -212,4 +231,15 @@ func GetDefaultBrowserName() string {
 	log.Infof("Retrieving default browser name")
 	p := C.getDefaultBrowserName()
 	return C.GoString(p)
+}
+
+// CertInKeychain checks if the certificate is stored inside the keychain
+func CertInKeychain() bool {
+	log.Infof("Checking if the Arduino certificate is in the keychain")
+	p := C.certInKeychain()
+	s := C.GoString(p)
+	if s == "true" {
+		return true
+	}
+	return false
 }

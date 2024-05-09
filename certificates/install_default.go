@@ -48,3 +48,9 @@ func GetDefaultBrowserName() string {
 	log.Warn("platform not supported for retrieving default browser name")
 	return ""
 }
+
+// CertInKeychain won't do anything on unsupported Operative Systems
+func CertInKeychain() bool {
+	log.Warn("platform not supported for verifying the certificate existence")
+	return false
+}

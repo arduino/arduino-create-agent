@@ -97,7 +97,7 @@ func (s *Systray) start() {
 				buttons := "{\"OK\", \"Install the certificate for Safari\"}"
 				defaultButton := "Install the certificate for Safari"
 				certDir := config.GetCertificatesDir()
-				if config.CertsExist() {
+				if cert.CertInKeychain() || config.CertsExist() {
 					expDate, err := cert.GetExpirationDate()
 					if err != nil {
 						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)

@@ -227,7 +227,7 @@ func loop() {
 		if exist, err := installCertsKeyExists(configPath.String()); err != nil {
 			log.Panicf("config.ini cannot be parsed: %s", err)
 		} else if !exist {
-			if config.CertsExist() {
+			if cert.CertInKeychain() || config.CertsExist() {
 				err = config.SetInstallCertsIni(configPath.String(), "true")
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
@@ -373,7 +373,7 @@ func loop() {
 
 	// check if the HTTPS certificates are expired or expiring and prompt the user to update them on macOS
 	if runtime.GOOS == "darwin" && *installCerts {
-		if config.CertsExist() {
+		if cert.CertInKeychain() || config.CertsExist() {
 			certDir := config.GetCertificatesDir()
 			if expired, err := cert.IsExpired(); err != nil {
 				log.Errorf("cannot check if certificates are expired something went wrong: %s", err)
