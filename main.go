@@ -178,7 +178,7 @@ func loop() {
 	// If we are updating manually from 1.2.7 to 1.3.0 we have to uninstall the old agent manually first.
 	// This check will inform the user if he needs to run the uninstall first
 	if runtime.GOOS == "darwin" && oldInstallExists() {
-		utilities.UserPrompt("Old agent installation of the Arduino Create Agent found, please uninstall it before launching the new one", "\"OK\"", "OK", "Error")
+		utilities.UserPrompt("Old agent installation of the Arduino Create Agent found, please uninstall it before launching the new one", "\"OK\"", "OK", "OK", "Error")
 		os.Exit(0)
 	}
 
@@ -378,7 +378,7 @@ func loop() {
 			if expired, err := cert.IsExpired(); err != nil {
 				log.Errorf("cannot check if certificates are expired something went wrong: %s", err)
 			} else if expired {
-				buttonPressed := utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nYour certificate is expired or close to expiration. Do you want to update it?", "{\"Do not update\", \"Update the certificate for Safari\"}", "Update the certificate for Safari", "Arduino Agent: Update certificate")
+				buttonPressed := utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nYour certificate is expired or close to expiration. Do you want to update it?", "{\"Do not update\", \"Update the certificate for Safari\"}", "Update the certificate for Safari", "Update the certificate for Safari", "Arduino Agent: Update certificate")
 				if buttonPressed {
 					err := cert.UninstallCertificates()
 					if err != nil {
@@ -555,5 +555,5 @@ func installCertsKeyExists(filename string) (bool, error) {
 }
 
 func promptInstallCertsSafari() bool {
-	return utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.", "{\"Do not install\", \"Install the certificate for Safari\"}", "Install the certificate for Safari", "Arduino Agent: Install certificate")
+	return utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.", "{\"Do not install\", \"Install the certificate for Safari\"}", "Install the certificate for Safari", "Install the certificate for Safari", "Arduino Agent: Install certificate")
 }

@@ -95,8 +95,8 @@ func (s *Systray) start() {
 				s.updateMenuItem(mRmCrashes, config.LogsIsEmpty())
 			case <-mManageCerts.ClickedCh:
 				infoMsg := "The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\n\nYour HTTPS certificate status:\n"
-				buttons := "{\"OK\", \"Install the certificate for Safari\"}"
-				defaultButton := "Install the certificate for Safari"
+				buttons := "{\"Install the certificate for Safari\", \"OK\"}"
+				toPress := "Install the certificate for Safari"
 				certDir := config.GetCertificatesDir()
 				if cert.CertInKeychain() || config.CertsExist() {
 					expDate, err := cert.GetExpirationDate()
@@ -104,9 +104,9 @@ func (s *Systray) start() {
 						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
 					}
 					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate.Format(time.DateTime)
-					buttons = "{\"OK\", \"Uninstall the certificate for Safari\"}"
-					defaultButton = "Uninstall the certificate for Safari"
-					pressedButton := utilities.UserPrompt(infoMsg, buttons, defaultButton, "Arduino Agent: Manage HTTPS certificate")
+					buttons = "{\"Uninstall the certificate for Safari\", \"OK\"}"
+					toPress = "Uninstall the certificate for Safari"
+					pressedButton := utilities.UserPrompt(infoMsg, buttons, "OK", toPress, "Arduino Agent: Manage HTTPS certificate")
 					if pressedButton {
 						err := cert.UninstallCertificates()
 						if err != nil {
@@ -122,7 +122,7 @@ func (s *Systray) start() {
 					}
 				} else {
 					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
-					pressedButton := utilities.UserPrompt(infoMsg, buttons, defaultButton, "Arduino Agent: Manage HTTPS certificate")
+					pressedButton := utilities.UserPrompt(infoMsg, buttons, "OK", toPress, "Arduino Agent: Manage HTTPS certificate")
 					if pressedButton {
 						cert.GenerateAndInstallCertificates(certDir)
 						err := config.SetInstallCertsIni(s.currentConfigFilePath.String(), "true")
