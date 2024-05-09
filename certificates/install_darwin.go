@@ -24,6 +24,13 @@ package certificates
 #cgo LDFLAGS: -framework Cocoa
 #import <Cocoa/Cocoa.h>
 
+
+// Used to return error strings (as NSString) as a C-string to the Go code.
+const char *toErrorString(NSString *errString) {
+    NSLog(@"%@", errString);
+    return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
+}
+
 const char *installCert(const char *path) {
     NSURL *url = [NSURL fileURLWithPath:@(path) isDirectory:NO];
     NSData *rootCertData = [NSData dataWithContentsOfURL:url];
@@ -90,7 +97,9 @@ const char *uninstallCert() {
     return "";
 }
 
-const char *getExpirationDate(char *expirationDate){
+// Returns the expiration date "kSecOIDX509V1ValidityNotAfter" of the Arduino certificate.
+// The value is returned as a CFAbsoluteTime: a long number of seconds from the date of 1 Jan 2001 00:00:00 GMT.
+const char *getExpirationDate(long *expirationDate) {
     // Create a key-value dictionary used to query the Keychain and look for the "Arduino" root certificate.
     NSDictionary *getquery = @{
                 (id)kSecClass:     (id)kSecClassCertificate,
@@ -101,42 +110,32 @@ const char *getExpirationDate(char *expirationDate){
     OSStatus err = noErr;
     SecCertificateRef cert = NULL;
 
-    // Use this function to check for errors
+    // Search the keychain for certificates matching the query above.
     err = SecItemCopyMatching((CFDictionaryRef)getquery, (CFTypeRef *)&cert);
-
     if (err != noErr){
         NSString *errString = [@"Error: " stringByAppendingFormat:@"%d", err];
         NSLog(@"%@", errString);
         return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
     }
 
-    // Get data from the certificate. We just need the "invalidity date" property.
-    CFDictionaryRef valuesDict = SecCertificateCopyValues(cert, (__bridge CFArrayRef)@[(__bridge id)kSecOIDX509V1ValidityNotAfter], NULL);
+    // Get data from the certificate, as a dictionary of properties. We just need the "invalidity not after" property.
+    CFDictionaryRef certDict = SecCertificateCopyValues(cert,
+        (__bridge CFArrayRef)@[(__bridge id)kSecOIDX509V1ValidityNotAfter], NULL);
+    if (certDict == NULL) return toErrorString(@"SecCertificateCopyValues failed");
 
-    id expirationDateValue;
-    if(valuesDict){
-        CFDictionaryRef invalidityDateDictionaryRef = CFDictionaryGetValue(valuesDict, kSecOIDX509V1ValidityNotAfter);
-        if(invalidityDateDictionaryRef){
-            CFTypeRef invalidityRef = CFDictionaryGetValue(invalidityDateDictionaryRef, kSecPropertyKeyValue);
-            if(invalidityRef){
-                expirationDateValue = CFBridgingRelease(invalidityRef);
-            }
-        }
-        CFRelease(valuesDict);
-    }
 
-    NSString *outputString = [@"" stringByAppendingFormat:@"%@", expirationDateValue];
-    if([outputString isEqualToString:@""]){
-        NSString *errString = @"Error: the expiration date of the certificate could not be found";
-        NSLog(@"%@", errString);
-        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
-    }
+    // Get the "validity not after" property as a dictionary, and get the "value" key (that is a number).
+    CFDictionaryRef validityNotAfterDict = CFDictionaryGetValue(certDict, kSecOIDX509V1ValidityNotAfter);
+    if (validityNotAfterDict == NULL) return toErrorString(@"CFDictionaryGetValue (validity) failed");
 
-    // This workaround allows to obtain the expiration date alongside the error message
-    strncpy(expirationDate, [outputString cStringUsingEncoding:[NSString defaultCStringEncoding]], 32);
-    expirationDate[32-1] = 0;
+    CFNumberRef number = (CFNumberRef)CFDictionaryGetValue(validityNotAfterDict, kSecPropertyKeyValue);
+    if (number == NULL) return toErrorString(@"CFDictionaryGetValue (keyValue) failed");
 
-    return "";
+    CFNumberGetValue(number, kCFNumberSInt64Type, expirationDate);
+    // NSLog(@"Certificate validity not after: %ld", *expirationDate);
+
+    CFRelease(certDict);
+    return ""; // No error.
 }
 
 const char *getDefaultBrowserName() {
@@ -173,7 +172,6 @@ const char *certInKeychain() {
 import "C"
 import (
 	"errors"
-	"strconv"
 	"time"
 	"unsafe"
 
@@ -215,16 +213,20 @@ func UninstallCertificates() error {
 // GetExpirationDate returns the expiration date of a certificate stored in the keychain
 func GetExpirationDate() (time.Time, error) {
 	log.Infof("Retrieving certificate's expiration date")
-	dateString := C.CString("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") // 32 characters string
-	defer C.free(unsafe.Pointer(dateString))
-	p := C.getExpirationDate(dateString)
-	s := C.GoString(p)
-	if len(s) != 0 {
-		utilities.UserPrompt(s, "\"OK\"", "OK", "Arduino Agent: Error retrieving expiration date")
-		return time.Time{}, errors.New(s)
+
+	expirationDateLong := C.long(0)
+
+	err := C.getExpirationDate(&expirationDateLong)
+	errString := C.GoString(err)
+	if len(errString) > 0 {
+		utilities.UserPrompt(errString, "\"OK\"", "OK", "Arduino Agent: Error retrieving expiration date")
+		return time.Time{}, errors.New(errString)
 	}
-	dateValue, _ := strconv.ParseInt(C.GoString(dateString), 10, 64)
-	return time.Unix(dateValue, 0).AddDate(31, 0, 0), nil
+
+	// The expirationDate is the number of seconds from the date of 1 Jan 2001 00:00:00 GMT.
+	// Add 31 years to convert it to Unix Epoch.
+	expirationDate := int64(expirationDateLong)
+	return time.Unix(expirationDate, 0).AddDate(31, 0, 0), nil
 }
 
 // GetDefaultBrowserName returns the name of the default browser
