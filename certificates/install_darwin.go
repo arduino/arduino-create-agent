@@ -172,7 +172,7 @@ func InstallCertificate(cert *paths.Path) error {
 	p := C.installCert(ccert)
 	s := C.GoString(p)
 	if len(s) != 0 {
-		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error installing certificates\"")
+		utilities.UserPrompt(s, "\"OK\"", "OK", "Arduino Agent: Error installing certificates")
 		UninstallCertificates()
 		return errors.New(s)
 	}
@@ -186,7 +186,7 @@ func UninstallCertificates() error {
 	p := C.uninstallCert()
 	s := C.GoString(p)
 	if len(s) != 0 {
-		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error uninstalling certificates\"")
+		utilities.UserPrompt(s, "\"OK\"", "OK", "Arduino Agent: Error uninstalling certificates")
 		return errors.New(s)
 	}
 	return nil
@@ -200,7 +200,7 @@ func GetExpirationDate() (string, error) {
 	p := C.getExpirationDate(dateString)
 	s := C.GoString(p)
 	if len(s) != 0 {
-		utilities.UserPrompt("display dialog \"" + s + "\" buttons \"OK\" with title \"Arduino Agent: Error retrieving expiration date\"")
+		utilities.UserPrompt(s, "\"OK\"", "OK", "Arduino Agent: Error retrieving expiration date")
 		return "", errors.New(s)
 	}
 	date := C.GoString(dateString)
