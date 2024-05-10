@@ -8,6 +8,7 @@ const char *toErrorString(NSString *errString) {
     return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
 }
 
+// Returns a string describing the name of the default browser set for the user, nil in case of error.
 const char *getDefaultBrowserName() {
     NSURL *defaultBrowserURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:[NSURL URLWithString:@"http://"]];
     if (defaultBrowserURL) {
@@ -87,23 +88,16 @@ const char *uninstallCert() {
     return "";
 }
 
-const char *certInKeychain() {
-    // Each line is a key-value of the dictionary. Note: the the inverted order, value first then key.
-    NSDictionary* dict = [NSDictionary dictionaryWithObjectsAndKeys:
-        (id)kSecClassCertificate, kSecClass,
-        CFSTR("Arduino"), kSecAttrLabel,
-        kSecMatchLimitOne, kSecMatchLimit,
-        kCFBooleanTrue, kSecReturnAttributes,
-        nil];
+const bool certInKeychain() {
+    // Create a key-value dictionary used to query the Keychain and look for the "Arduino" root certificate.
+    NSDictionary *getquery = @{
+                (id)kSecClass:     (id)kSecClassCertificate,
+                (id)kSecAttrLabel: @"Arduino",
+                (id)kSecReturnRef: @YES,
+            };
 
-    OSStatus err = noErr;
-    // Use this function to check for errors
-    err = SecItemCopyMatching((CFDictionaryRef)dict, nil);
-    NSString *exists = @"false";
-    if (err == noErr) {
-        exists = @"true";
-    }
-    return [exists cStringUsingEncoding:[NSString defaultCStringEncoding]];
+    OSStatus err = SecItemCopyMatching((CFDictionaryRef)getquery, nil);
+    return (err == noErr); // No error means the certificate was found, otherwise err will be "errSecItemNotFound".
 }
 
 // Returns the expiration date "kSecOIDX509V1ValidityNotAfter" of the Arduino certificate.

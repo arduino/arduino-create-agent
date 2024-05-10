@@ -2,6 +2,6 @@ const char *getDefaultBrowserName();
 
 const char *installCert(const char *path);
 const char *uninstallCert();
-const char *certInKeychain();
+const bool certInKeychain();
 
 const char *getExpirationDate(long *expirationDate);

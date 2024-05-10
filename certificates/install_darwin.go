@@ -96,8 +96,7 @@ func GetDefaultBrowserName() string {
 // CertInKeychain checks if the certificate is stored inside the keychain
 func CertInKeychain() bool {
 	log.Infof("Checking if the Arduino certificate is in the keychain")
-	p := C.certInKeychain()
-	s := C.GoString(p)
 
-	return s == "true"
+	certInKeychain := C.certInKeychain()
+	return bool(certInKeychain)
 }
