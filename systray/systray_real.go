@@ -103,7 +103,7 @@ func (s *Systray) start() {
 					if err != nil {
 						log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
 					}
-					infoMsg = infoMsg + "- Certificate installed: Yes\n- Certificate trusted: Yes\n- Certificate expiration date: " + expDate.Format(time.DateTime)
+					infoMsg = infoMsg + "- Certificate installed:\t\tYes\n- Certificate trusted:\t\tYes\n- Certificate expiration:\t" + expDate.Format(time.DateTime)
 					buttons = "{\"Uninstall the certificate for Safari\", \"OK\"}"
 					toPress = "Uninstall the certificate for Safari"
 					pressedButton := utilities.UserPrompt(infoMsg, buttons, "OK", toPress, "Arduino Agent: Manage HTTPS certificate")
@@ -121,7 +121,7 @@ func (s *Systray) start() {
 						s.Restart()
 					}
 				} else {
-					infoMsg = infoMsg + "- Certificate installed: No\n- Certificate trusted: N/A\n- Certificate expiration date: N/A"
+					infoMsg = infoMsg + "- Certificate installed:\t\tNo\n- Certificate trusted:\t\tN/A\n- Certificate expiration:\tN/A"
 					pressedButton := utilities.UserPrompt(infoMsg, buttons, "OK", toPress, "Arduino Agent: Manage HTTPS certificate")
 					if pressedButton {
 						cert.GenerateAndInstallCertificates(certDir)
