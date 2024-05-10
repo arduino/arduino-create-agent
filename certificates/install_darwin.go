@@ -107,16 +107,11 @@ const char *getExpirationDate(long *expirationDate) {
                 (id)kSecReturnRef: @YES,
             };
 
-    OSStatus err = noErr;
     SecCertificateRef cert = NULL;
 
     // Search the keychain for certificates matching the query above.
-    err = SecItemCopyMatching((CFDictionaryRef)getquery, (CFTypeRef *)&cert);
-    if (err != noErr){
-        NSString *errString = [@"Error: " stringByAppendingFormat:@"%d", err];
-        NSLog(@"%@", errString);
-        return [errString cStringUsingEncoding:[NSString defaultCStringEncoding]];
-    }
+    OSStatus err = SecItemCopyMatching((CFDictionaryRef)getquery, (CFTypeRef *)&cert);
+    if (err != noErr) return toErrorString([@"Error getting the certificate: " stringByAppendingFormat:@"%d", err]);
 
     // Get data from the certificate, as a dictionary of properties. We just need the "invalidity not after" property.
     CFDictionaryRef certDict = SecCertificateCopyValues(cert,
