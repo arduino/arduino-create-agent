@@ -147,7 +147,7 @@ jobs:
         if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
           path: |
@@ -218,7 +218,7 @@ jobs:
         run: tar -cvf ArduinoCreateAgent.app_${{ matrix.arch }}.tar -C skel/ .
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           name: ArduinoCreateAgent.app_${{ matrix.arch }}
@@ -356,7 +356,7 @@ jobs:
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
           path: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
@@ -429,7 +429,7 @@ jobs:
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ArduinoCreateAgent-${{ matrix.platform-name }}-${{ matrix.arch }}
           path: ArduinoCreateAgent*
@@ -570,7 +570,7 @@ jobs:
         run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ArduinoCreateAgent-osx-${{ matrix.arch }}
           path: ArduinoCreateAgent*.tar
