@@ -24,7 +24,7 @@ package certificates
 #cgo LDFLAGS: -framework Foundation -framework Security -framework AppKit -ld_classic
 
 #import <Foundation/Foundation.h>
-#include "certificates.h"
+#include "certificates_darwin.h"
 */
 import "C"
 import (

@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#include "certificates.h"
+#include "certificates_darwin.h"
 
 // Used to return error strings (as NSString) as a C-string to the Go code.
 const char *toErrorString(NSString *errString) {
