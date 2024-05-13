@@ -17,6 +17,20 @@
 
 package certificates
 
+/*
+// Importing "certificates.h" here even if it is not used avoids building errors on Ubuntu and Windows.
+
+// Explicitly tell the GCC compiler that the language is Objective-C.
+#cgo CFLAGS: -x objective-c
+
+// Pass the list of macOS frameworks needed by this piece of Objective-C code.
+// The "-ld_classic" is needed to avoid a wrong warning about duplicate libraries when building with XCode 15.
+#cgo LDFLAGS: -framework Foundation -framework Security -framework AppKit -ld_classic
+
+#import <Foundation/Foundation.h>
+#include "certificates.h"
+*/
+
 import (
 	"errors"
 	"time"
