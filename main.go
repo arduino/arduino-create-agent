@@ -178,7 +178,7 @@ func loop() {
 	// If we are updating manually from 1.2.7 to 1.3.0 we have to uninstall the old agent manually first.
 	// This check will inform the user if he needs to run the uninstall first
 	if runtime.GOOS == "darwin" && oldInstallExists() {
-		utilities.UserPrompt("display dialog \"Old agent installation of the Arduino Create Agent found, please uninstall it before launching the new one\" buttons \"OK\" with title \"Error\"")
+		utilities.UserPrompt("Old agent installation of the Arduino Create Agent found, please uninstall it before launching the new one", "\"OK\"", "OK", "OK", "Error")
 		os.Exit(0)
 	}
 
@@ -223,25 +223,27 @@ func loop() {
 
 	// if the default browser is Safari, prompt the user to install HTTPS certificates
 	// and eventually install them
-	if runtime.GOOS == "darwin" && cert.GetDefaultBrowserName() == "Safari" {
+	if runtime.GOOS == "darwin" {
 		if exist, err := installCertsKeyExists(configPath.String()); err != nil {
 			log.Panicf("config.ini cannot be parsed: %s", err)
 		} else if !exist {
-			if config.CertsExist() {
+			if cert.CertInKeychain() || config.CertsExist() {
 				err = config.SetInstallCertsIni(configPath.String(), "true")
 				if err != nil {
 					log.Panicf("config.ini cannot be parsed: %s", err)
 				}
-			} else if cert.PromptInstallCertsSafari() {
-				err = config.SetInstallCertsIni(configPath.String(), "true")
-				if err != nil {
-					log.Panicf("config.ini cannot be parsed: %s", err)
-				}
-				cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
-			} else {
-				err = config.SetInstallCertsIni(configPath.String(), "false")
-				if err != nil {
-					log.Panicf("config.ini cannot be parsed: %s", err)
+			} else if cert.GetDefaultBrowserName() == "Safari" {
+				if promptInstallCertsSafari() {
+					err = config.SetInstallCertsIni(configPath.String(), "true")
+					if err != nil {
+						log.Panicf("config.ini cannot be parsed: %s", err)
+					}
+					cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
+				} else {
+					err = config.SetInstallCertsIni(configPath.String(), "false")
+					if err != nil {
+						log.Panicf("config.ini cannot be parsed: %s", err)
+					}
 				}
 			}
 		}
@@ -369,20 +371,37 @@ func loop() {
 		}
 	}
 
-	// check if the HTTPS certificates are expired and prompt the user to update them on macOS
-	if runtime.GOOS == "darwin" && cert.GetDefaultBrowserName() == "Safari" {
-		if *installCerts {
-			if config.CertsExist() {
-				cert.PromptExpiredCerts(config.GetCertificatesDir())
-			} else if cert.PromptInstallCertsSafari() {
-				// installing the certificates from scratch at this point should only happen if
-				// something went wrong during previous installation attempts
-				cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
-			} else {
-				err = config.SetInstallCertsIni(configPath.String(), "false")
-				if err != nil {
-					log.Panicf("config.ini cannot be parsed: %s", err)
+	// check if the HTTPS certificates are expired or expiring and prompt the user to update them on macOS
+	if runtime.GOOS == "darwin" && *installCerts {
+		if cert.CertInKeychain() || config.CertsExist() {
+			certDir := config.GetCertificatesDir()
+			if expired, err := cert.IsExpired(); err != nil {
+				log.Errorf("cannot check if certificates are expired something went wrong: %s", err)
+			} else if expired {
+				buttonPressed := utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nYour certificate is expired or close to expiration. Do you want to update it?", "{\"Do not update\", \"Update the certificate for Safari\"}", "Update the certificate for Safari", "Update the certificate for Safari", "Arduino Agent: Update certificate")
+				if buttonPressed {
+					err := cert.UninstallCertificates()
+					if err != nil {
+						log.Errorf("cannot uninstall certificates something went wrong: %s", err)
+					} else {
+						cert.DeleteCertificates(certDir)
+						cert.GenerateAndInstallCertificates(certDir)
+					}
+				} else {
+					err = config.SetInstallCertsIni(configPath.String(), "false")
+					if err != nil {
+						log.Panicf("config.ini cannot be parsed: %s", err)
+					}
 				}
+			}
+		} else if promptInstallCertsSafari() {
+			// installing the certificates from scratch at this point should only happen if
+			// something went wrong during previous installation attempts
+			cert.GenerateAndInstallCertificates(config.GetCertificatesDir())
+		} else {
+			err = config.SetInstallCertsIni(configPath.String(), "false")
+			if err != nil {
+				log.Panicf("config.ini cannot be parsed: %s", err)
 			}
 		}
 	}
@@ -533,4 +552,8 @@ func installCertsKeyExists(filename string) (bool, error) {
 		return false, err
 	}
 	return cfg.Section("").HasKey("installCerts"), nil
+}
+
+func promptInstallCertsSafari() bool {
+	return utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.", "{\"Do not install\", \"Install the certificate for Safari\"}", "Install the certificate for Safari", "Install the certificate for Safari", "Arduino Agent: Install certificate")
 }
