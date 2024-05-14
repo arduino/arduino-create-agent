@@ -117,6 +117,8 @@ func (s *Systray) start() {
 							if err != nil {
 								log.Errorf("cannot set installCerts value in config.ini: %s", err)
 							}
+							infoMsg = "The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\n\nYour HTTPS certificate status:\n- Certificate installed:\t\tNo\n- Certificate trusted:\t\tN/A\n- Certificate expiration:\tN/A"
+							utilities.UserPrompt(infoMsg, "{\"OK\"}", "OK", "OK", "Arduino Agent: Manage HTTPS certificate")
 						}
 						s.Restart()
 					}
