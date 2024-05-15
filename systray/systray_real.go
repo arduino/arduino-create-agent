@@ -117,6 +117,7 @@ func (s *Systray) start() {
 							if err != nil {
 								log.Errorf("cannot set installCerts value in config.ini: %s", err)
 							}
+							utilities.UserPrompt("The HTTPS certificate has been uninstalled.", "{\"OK\"}", "OK", "OK", "Arduino Agent: HTTPS certificate installation")
 						}
 						s.Restart()
 					}

@@ -32,6 +32,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/go-paths-helper"
 	log "github.com/sirupsen/logrus"
 )
@@ -286,4 +287,5 @@ func GenerateAndInstallCertificates(certDir *paths.Path) {
 		log.Errorf("cannot install certificates something went wrong: %s", err)
 		DeleteCertificates(certDir)
 	}
+	utilities.UserPrompt("The HTTPS certificate has been installed correctly.", "{\"OK\"}", "OK", "OK", "Arduino Agent: HTTPS certificate installation")
 }
