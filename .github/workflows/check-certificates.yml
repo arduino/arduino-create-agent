@@ -62,7 +62,8 @@ jobs:
           (
             openssl ${{ matrix.certificate.type }} \
               -in "${{ env.CERTIFICATE_PATH }}" \
-              -noout -passin env:CERTIFICATE_PASSWORD
+              -noout -passin env:CERTIFICATE_PASSWORD \
+              -legacy
           ) || (
             echo "::error::Verification of ${{ matrix.certificate.identifier }} failed!!!"
             exit 1
@@ -92,7 +93,8 @@ jobs:
                     -in "${{ env.CERTIFICATE_PATH }}" \
                     -clcerts \
                     -nodes \
-                    -passin env:CERTIFICATE_PASSWORD
+                    -passin env:CERTIFICATE_PASSWORD \
+                    -legacy
                 ) | (
                 openssl x509 \
                     -noout \
