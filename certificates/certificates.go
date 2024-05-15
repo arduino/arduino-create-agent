@@ -287,10 +287,5 @@ func GenerateAndInstallCertificates(certDir *paths.Path) {
 		log.Errorf("cannot install certificates something went wrong: %s", err)
 		DeleteCertificates(certDir)
 	}
-	expDate, err := GetExpirationDate()
-	if err != nil {
-		log.Errorf("cannot get certificates expiration date, something went wrong: %s", err)
-	}
-	infoMsg := "The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\n\nYour HTTPS certificate status:\n- Certificate installed:\t\tYes\n- Certificate trusted:\t\tYes\n- Certificate expiration:\t" + expDate.Format(time.DateTime)
-	utilities.UserPrompt(infoMsg, "{\"OK\"}", "OK", "OK", "Arduino Agent: Manage HTTPS certificate")
+	utilities.UserPrompt("The HTTPS certificate has been installed correctly.", "{\"OK\"}", "OK", "OK", "Arduino Agent: HTTPS certificate installation")
 }
