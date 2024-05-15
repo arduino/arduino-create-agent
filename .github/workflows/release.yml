@@ -476,7 +476,7 @@ jobs:
         with:
           if-no-files-found: error
           name: ArduinoCreateAgent-windows-${{ matrix.arch }}-signed
-          path: ArduinoCreateAgent-${GITHUB_REF##*/}-windows-${{ matrix.arch }}-installer.exe
+          path: ArduinoCreateAgent-*-windows-${{ matrix.arch }}-installer.exe
 
   # This job will generate a dmg mac installer, sign/notarize it.
   generate-sign-dmg:
