@@ -147,7 +147,7 @@ jobs:
         if: steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
           path: |
@@ -174,7 +174,7 @@ jobs:
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.PROJECT_NAME }}-macos-12-amd64 # if we want to support darwin-arm64 in the future for real this has to change.
           path: ${{ env.EXE_PATH }}
@@ -218,7 +218,7 @@ jobs:
         run: tar -cvf ArduinoCreateAgent.app_${{ matrix.arch }}.tar -C skel/ .
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           name: ArduinoCreateAgent.app_${{ matrix.arch }}
@@ -241,7 +241,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}
 
@@ -356,7 +356,7 @@ jobs:
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
           path: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
@@ -405,7 +405,7 @@ jobs:
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
           path: artifacts/${{ matrix.platform-name }}/ # path expected by installbuilder
@@ -429,7 +429,7 @@ jobs:
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ArduinoCreateAgent-${{ matrix.platform-name }}-${{ matrix.arch }}
           path: ArduinoCreateAgent*
@@ -456,7 +456,7 @@ jobs:
     
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ArduinoCreateAgent-windows-${{ matrix.arch }}
       
@@ -472,7 +472,7 @@ jobs:
           "${{ env.SIGNTOOL_PATH }}" sign -d "Arduino Create Agent" -f ${{ env.INSTALLER_CERT_WINDOWS_CER}} -csp "eToken Base Cryptographic Provider" -k "[{{${{ env.CERT_PASSWORD }}}}]=${{ env.CONTAINER_NAME }}" -fd sha256 -tr http://timestamp.digicert.com -td SHA256 -v "ArduinoCreateAgent-${GITHUB_REF##*/}-windows-${{ matrix.arch }}-installer.exe"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
           name: ArduinoCreateAgent-windows-${{ matrix.arch }}-signed
@@ -494,7 +494,7 @@ jobs:
           token: ${{ secrets.ARDUINO_CREATE_AGENT_CI_PAT }}
 
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
           path: ArduinoCreateAgent.app
@@ -570,7 +570,7 @@ jobs:
         run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ArduinoCreateAgent-osx-${{ matrix.arch }}
           path: ArduinoCreateAgent*.tar
@@ -588,7 +588,7 @@ jobs:
           fetch-depth: 0 # fetch all history for the create changelog step to work properly
 
       - name: Download artifact
-        uses: actions/download-artifact@v3 # download all the artifacts
+        uses: actions/download-artifact@v4 # download all the artifacts
 
       #  mandatory step because upload-release-action does not support multiple folders
       - name: prepare artifacts for the release
