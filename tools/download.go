@@ -17,7 +17,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -36,17 +35,6 @@ var (
 	Arch = runtime.GOARCH
 )
 
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
 // Download will parse the index at the indexURL for the tool to download.
 // It will extract it in a folder in .arduino-create, and it will update the
 // Installed map.
@@ -62,44 +50,17 @@ func pathExists(path string) bool {
 // If version is not "latest" and behaviour is "replace", it will download the
 // version again. If instead behaviour is "keep" it will not download the version
 // if it already exists.
+//
+// At the moment the value of behaviour is ignored.
 func (t *Tools) Download(pack, name, version, behaviour string) error {
 
-	body, err := t.index.Read()
-	if err != nil {
-		return err
-	}
-
-	var data pkgs.Index
-	json.Unmarshal(body, &data)
-
-	// Find the tool by name
-	correctTool, correctSystem := findTool(pack, name, version, data)
-
-	if correctTool.Name == "" || correctSystem.URL == "" {
-		t.logger("We couldn't find a tool with the name " + name + " and version " + version + " packaged by " + pack)
-		return nil
-	}
-
-	key := correctTool.Name + "-" + correctTool.Version
-
-	// Check if it already exists
-	if behaviour == "keep" {
-		location, ok := t.getMapValue(key)
-		if ok && pathExists(location) {
-			// overwrite the default tool with this one
-			t.setMapValue(correctTool.Name, location)
-			t.logger("The tool is already present on the system")
-			return t.writeMap()
-		}
-	}
-
 	tool := pkgs.New(t.index, t.directory.String())
-	_, err = tool.Install(context.Background(), &tools.ToolPayload{Name: correctTool.Name, Version: correctTool.Version, Packager: pack})
+	_, err := tool.Install(context.Background(), &tools.ToolPayload{Name: name, Version: version, Packager: pack})
 	if err != nil {
 		return err
 	}
 
-	path := filepath.Join(pack, correctTool.Name, correctTool.Version)
+	path := filepath.Join(pack, name, version)
 	safePath, err := utilities.SafeJoin(t.directory.String(), path)
 	if err != nil {
 		return err

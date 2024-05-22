@@ -33,6 +33,7 @@ import (
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/utilities"
+	"github.com/blang/semver"
 	"github.com/codeclysm/extract/v3"
 )
 
@@ -166,20 +167,9 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 	var index Index
 	json.Unmarshal(body, &index)
 
-	for _, packager := range index.Packages {
-		if packager.Name != payload.Packager {
-			continue
-		}
-
-		for _, tool := range packager.Tools {
-			if tool.Name == payload.Name &&
-				tool.Version == payload.Version {
-
-				sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
-
-				return t.install(ctx, path, sys.URL, sys.Checksum)
-			}
-		}
+	correctSystem, found := findTool(payload.Packager, payload.Name, payload.Version, index)
+	if found {
+		return t.install(ctx, path, correctSystem.URL, correctSystem.Checksum)
 	}
 
 	return nil, tools.MakeNotFound(
@@ -294,4 +284,37 @@ func writeInstalled(folder, path string) error {
 	}
 
 	return os.WriteFile(installedFile, data, 0644)
+}
+
+func findTool(pack, name, version string, data Index) (System, bool) {
+	var correctTool Tool
+	correctTool.Version = "0.0"
+	found := false
+
+	for _, p := range data.Packages {
+		if p.Name != pack {
+			continue
+		}
+		for _, t := range p.Tools {
+			if version != "latest" {
+				if t.Name == name && t.Version == version {
+					correctTool = t
+					found = true
+				}
+			} else {
+				// Find latest
+				v1, _ := semver.Make(t.Version)
+				v2, _ := semver.Make(correctTool.Version)
+				if t.Name == name && v1.Compare(v2) > 0 {
+					correctTool = t
+					found = true
+				}
+			}
+		}
+	}
+
+	// Find the url based on system
+	correctSystem := correctTool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
+
+	return correctSystem, found
 }
