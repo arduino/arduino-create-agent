@@ -40,7 +40,7 @@ The documentation has been moved to the [wiki](https://github.com/arduino/arduin
 
 - [Advanced usage](https://github.com/arduino/arduino-create-agent/wiki/Advanced-usage): explaining how to use multiple configurations and how to use the agent with a proxy.
 - [Agent Beta Program](https://github.com/arduino/arduino-create-agent/wiki/Agent-Beta-Program)
-- [Development](https://github.com/arduino/arduino-create-agent/wiki/Developement): containing useful info to help in development
+- [Development](https://github.com/arduino/arduino-create-agent/wiki/Development): containing useful info to help in development
 - [Disable Autostart](https://github.com/arduino/arduino-create-agent/wiki/Disable-Autostart)
 - [How to compile on Raspberry Pi](https://github.com/arduino/arduino-create-agent/wiki/How-to-compile-on-Raspberry-Pi)
 - [How to use crashreport functionality](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality)
