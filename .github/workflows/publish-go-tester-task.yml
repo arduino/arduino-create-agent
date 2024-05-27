@@ -30,7 +30,7 @@ on:
   repository_dispatch:
 
 env:
-  PROJECT_NAME: arduino-create-agent
+  PROJECT_NAME: arduino-cloud-agent
   GO_VERSION: "1.21"
 
 jobs:
