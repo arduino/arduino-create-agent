@@ -11,7 +11,7 @@ permissions:
 
 env:
   # As defined by the Taskfile's PROJECT_NAME variable
-  PROJECT_NAME: arduino-create-agent
+  PROJECT_NAME: arduino-cloud-agent
   TARGET: "/CreateAgent/Stable/"
   VERSION_TARGET: "arduino-create-static/agent-metadata/"
   AWS_REGION: "us-east-1" # or https://github.com/aws/aws-cli/issues/5623
@@ -205,8 +205,8 @@ jobs:
       - name: Make executable
         run: chmod -v +x ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }}
 
-      - name: Rename executable to Arduino_Create_Agent
-        run: mv -v ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }} ${{ env.EXE_PATH }}Arduino_Create_Agent
+      - name: Rename executable to Arduino_Cloud_Agent
+        run: mv -v ${{ env.EXE_PATH }}${{ env.PROJECT_NAME }} ${{ env.EXE_PATH }}Arduino_Cloud_Agent
 
       - name: get year
         run: echo "YEAR=$(date "+%Y")" >> $GITHUB_ENV
@@ -218,8 +218,8 @@ jobs:
 
               <key>CFBundleIconFile</key>           <string>AppIcon.icns</string>
 
-              <key>CFBundleName</key>               <string>Arduino Create Agent</string>
-              <key>CFBundleExecutable</key>         <string>Arduino_Create_Agent</string>
+              <key>CFBundleName</key>               <string>Arduino Cloud Agent</string>
+              <key>CFBundleExecutable</key>         <string>Arduino_Cloud_Agent</string>
               <key>CFBundleIdentifier</key>         <string>create.arduino.cc</string>
 
               <key>CFBundleVersion</key>            <string>${GITHUB_REF##*/}</string>
@@ -234,14 +234,14 @@ jobs:
           EOF
 
       - name: Tar bundle to keep permissions
-        run: tar -cvf ArduinoCreateAgent.app_${{ matrix.arch }}.tar -C skel/ .
+        run: tar -cvf ArduinoCloudAgent.app_${{ matrix.arch }}.tar -C skel/ .
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: ArduinoCreateAgent.app_${{ matrix.arch }}
-          path: ArduinoCreateAgent.app_${{ matrix.arch }}.tar
+          name: ArduinoCloudAgent.app_${{ matrix.arch }}
+          path: ArduinoCloudAgent.app_${{ matrix.arch }}.tar
 
   # The notarize-macos job will download the macos bundle from the previous job, sign, notarize and re-upload it, uploading it also on s3 download servers for the autoupdate.
   notarize-macos:
@@ -262,10 +262,10 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: ArduinoCreateAgent.app_${{ matrix.arch }}
+          name: ArduinoCloudAgent.app_${{ matrix.arch }}
 
       - name: un-Tar bundle
-        run: tar -xvf ArduinoCreateAgent.app_${{ matrix.arch }}.tar
+        run: tar -xvf ArduinoCloudAgent.app_${{ matrix.arch }}.tar
 
       - name: Import Code-Signing Certificates
         run: |
@@ -319,7 +319,7 @@ jobs:
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
       - name: Zip output app bundle
-        run: ditto -c -k ArduinoCreateAgent.app/ ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+        run: ditto -c -k ArduinoCreateAgent.app/ ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Remove gon used for code signing
         run: |
@@ -337,7 +337,7 @@ jobs:
           # See: https://github.com/Bearer/gon#configuration-file
 
           notarize {
-            path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
+            path = "ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip"
             bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
           }
 
@@ -356,7 +356,7 @@ jobs:
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload autoupdate bundle to Arduino downloads servers
-        run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
+        run: aws s3 cp ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Generate json file used for the new autoupdate
@@ -364,7 +364,7 @@ jobs:
           cat > darwin-${{ matrix.arch }}-bundle.json <<EOF
           {
               "Version": "${GITHUB_REF/refs\/tags\//}",
-              "Sha256": "$(shasum -a 256 ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip | awk '{print $1}' |  xxd -r -p | base64)"
+              "Sha256": "$(shasum -a 256 ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip | awk '{print $1}' |  xxd -r -p | base64)"
           }
           EOF
         if: ${{ needs.build.outputs.prerelease != 'true' }}
@@ -377,8 +377,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
-          path: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+          name: ArduinoCloudAgent.app_${{ matrix.arch }}_notarized
+          path: ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -443,15 +443,18 @@ jobs:
       - name: Launch Bitrock installbuilder
         run: ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.installbuilder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
 
+      - name: Rename installer to ArduinoCloudAgent
+        run: mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}} ArduinoCloudAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
+
       - name: Generate archive
-        run: tar -czvf ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
+        run: tar -czvf ArduinoCloudAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCloudAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ArduinoCreateAgent-${{ matrix.platform-name }}-${{ matrix.arch }}
-          path: ArduinoCreateAgent*
+          name: ArduinoCloudAgent-${{ matrix.platform-name }}-${{ matrix.arch }}
+          path: ArduinoCloudAgent*
           if-no-files-found: error
 
   # This job will sign the Windows installer
@@ -477,7 +480,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: ArduinoCreateAgent-windows-${{ matrix.arch }}
+          name: ArduinoCloudAgent-windows-${{ matrix.arch }}
 
       - name: Save Win signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_CER }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_CER}}
@@ -488,18 +491,18 @@ jobs:
           CONTAINER_NAME: ${{ secrets.INSTALLER_CERT_WINDOWS_CONTAINER }}
           # https://stackoverflow.com/questions/17927895/automate-extended-validation-ev-code-signing-with-safenet-etoken
         run: |
-          "${{ env.SIGNTOOL_PATH }}" sign -d "Arduino Create Agent" -f ${{ env.INSTALLER_CERT_WINDOWS_CER}} -csp "eToken Base Cryptographic Provider" -k "[{{${{ env.CERT_PASSWORD }}}}]=${{ env.CONTAINER_NAME }}" -fd sha256 -tr http://timestamp.digicert.com -td SHA256 -v "ArduinoCreateAgent-${GITHUB_REF##*/}-windows-${{ matrix.arch }}-installer.exe"
+          "${{ env.SIGNTOOL_PATH }}" sign -d "Arduino Cloud Agent" -f ${{ env.INSTALLER_CERT_WINDOWS_CER}} -csp "eToken Base Cryptographic Provider" -k "[{{${{ env.CERT_PASSWORD }}}}]=${{ env.CONTAINER_NAME }}" -fd sha256 -tr http://timestamp.digicert.com -td SHA256 -v "ArduinoCloudAgent-${GITHUB_REF##*/}-windows-${{ matrix.arch }}-installer.exe"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: error
-          name: ArduinoCreateAgent-windows-${{ matrix.arch }}-signed
-          path: ArduinoCreateAgent-*-windows-${{ matrix.arch }}-installer.exe
+          name: ArduinoCloudAgent-windows-${{ matrix.arch }}-signed
+          path: ArduinoCloudAgent-*-windows-${{ matrix.arch }}-installer.exe
 
         # This step is needed because the self hosted runner does not delete files automatically
       - name: Clean up EXE
-        run: rm ArduinoCreateAgent-*-windows-${{ matrix.arch }}-installer.exe
+        run: rm ArduinoCloudAgent-*-windows-${{ matrix.arch }}-installer.exe
 
   # This job will generate a dmg mac installer, sign/notarize it.
   generate-sign-dmg:
@@ -519,14 +522,14 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized
-          path: ArduinoCreateAgent.app
+          name: ArduinoCloudAgent.app_${{ matrix.arch }}_notarized
+          path: ArduinoCloudAgent.app
 
       - name: unzip artifact
-        working-directory: ArduinoCreateAgent.app
+        working-directory: ArduinoCloudAgent.app
         run: |
-          unzip ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
-          rm ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+          unzip ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
+          rm ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Install create-dmg
         run: brew install create-dmg
@@ -534,15 +537,15 @@ jobs:
       - name: Genarate DMG
         run: |
           create-dmg \
-            --volname "ArduinoCreateAgent" \
+            --volname "ArduinoCloudAgent" \
             --background "installer_icons/background.tiff" \
             --window-pos 200 120 \
             --window-size 500 320 \
             --icon-size 80 \
-            --icon "ArduinoCreateAgent.app" 125 150 \
+            --icon "ArduinoCloudAgent.app" 125 150 \
             --app-drop-link 375 150 \
-            "ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg" \
-            "ArduinoCreateAgent.app"
+            "ArduinoCloudAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg" \
+            "ArduinoCloudAgent.app"
 
       - name: Import Code-Signing Certificates
         run: |
@@ -572,7 +575,7 @@ jobs:
         # gon does not allow env variables in config file (https://github.com/mitchellh/gon/issues/20)
         run: |
           cat > gon.config_installer.hcl <<EOF
-          source = ["ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"]
+          source = ["ArduinoCloudAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg"]
           bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}-installer"
 
           sign {
@@ -581,7 +584,7 @@ jobs:
 
           # Ask Gon for zip output to force notarization process to take place.
           zip {
-            output_path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
+            output_path = "ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip"
           }
           EOF
 
@@ -590,13 +593,13 @@ jobs:
 
       #  tar dmg file to keep executable permission
       - name: Tar files to keep permissions
-        run: tar -cvf ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.tar ArduinoCreateAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg
+        run: tar -cvf ArduinoCloudAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.tar ArduinoCloudAgent-${GITHUB_REF##*/}-osx-${{ matrix.arch }}-installer.dmg
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ArduinoCreateAgent-osx-${{ matrix.arch }}
-          path: ArduinoCreateAgent*.tar
+          name: ArduinoCloudAgent-osx-${{ matrix.arch }}
+          path: ArduinoCloudAgent*.tar
           if-no-files-found: error
 
   create-release:
@@ -617,11 +620,11 @@ jobs:
       - name: prepare artifacts for the release
         run: |
           mkdir release
-          chmod -v +x ArduinoCreateAgent-linux-amd64/*.run
-          mv -v ArduinoCreateAgent-linux-amd64/* release/
-          cat ArduinoCreateAgent-osx-amd64/*.tar | tar -xvf - -i -C release/
-          rm -v release/._ArduinoCreateAgent*.dmg
-          mv -v ArduinoCreateAgent-windows*-signed/* release/
+          chmod -v +x ArduinoCloudAgent-linux-amd64/*.run
+          mv -v ArduinoCloudAgent-linux-amd64/* release/
+          cat ArduinoCloudAgent-osx-amd64/*.tar | tar -xvf - -i -C release/
+          rm -v release/._ArduinoCloudAgent*.dmg
+          mv -v ArduinoCloudAgent-windows*-signed/* release/
 
       - name: VirusTotal Scan
         id: virustotal_step
