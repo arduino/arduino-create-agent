@@ -42,8 +42,8 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 		{"linux", "arm", "arm-linux-gnueabihf"},
 	}
 	defer func() {
-		OS = runtime.GOOS     // restore `runtime.OS`
-		Arch = runtime.GOARCH // restore `runtime.ARCH`
+		pkgs.OS = runtime.GOOS     // restore `runtime.OS`
+		pkgs.Arch = runtime.GOARCH // restore `runtime.ARCH`
 	}()
 	testIndex := paths.New("testdata", "test_tool_index.json")
 	buf, err := testIndex.ReadFile()
@@ -54,10 +54,11 @@ func TestDownloadCorrectPlatform(t *testing.T) {
 	require.NoError(t, err)
 	for _, tc := range testCases {
 		t.Run(tc.hostOS+tc.hostArch, func(t *testing.T) {
-			OS = tc.hostOS     // override `runtime.OS` for testing purposes
-			Arch = tc.hostArch // override `runtime.ARCH` for testing purposes
+			pkgs.OS = tc.hostOS     // override `runtime.OS` for testing purposes
+			pkgs.Arch = tc.hostArch // override `runtime.ARCH` for testing purposes
 			// Find the tool by name
-			correctTool, correctSystem := findTool("arduino-test", "arduino-fwuploader", "2.2.2", data)
+			correctTool, correctSystem, found := pkgs.FindTool("arduino-test", "arduino-fwuploader", "2.2.2", data)
+			require.True(t, found)
 			require.NotNil(t, correctTool)
 			require.NotNil(t, correctSystem)
 			require.Equal(t, correctTool.Name, "arduino-fwuploader")
@@ -78,8 +79,8 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 		{"windows", "amd64", "i686-mingw32"},
 	}
 	defer func() {
-		OS = runtime.GOOS     // restore `runtime.OS`
-		Arch = runtime.GOARCH // restore `runtime.ARCH`
+		pkgs.OS = runtime.GOOS     // restore `runtime.OS`
+		pkgs.Arch = runtime.GOARCH // restore `runtime.ARCH`
 	}()
 	testIndex := paths.New("testdata", "test_tool_index.json")
 	buf, err := testIndex.ReadFile()
@@ -90,10 +91,11 @@ func TestDownloadFallbackPlatform(t *testing.T) {
 	require.NoError(t, err)
 	for _, tc := range testCases {
 		t.Run(tc.hostOS+tc.hostArch, func(t *testing.T) {
-			OS = tc.hostOS     // override `runtime.OS` for testing purposes
-			Arch = tc.hostArch // override `runtime.ARCH` for testing purposes
+			pkgs.OS = tc.hostOS     // override `runtime.OS` for testing purposes
+			pkgs.Arch = tc.hostArch // override `runtime.ARCH` for testing purposes
 			// Find the tool by name
-			correctTool, correctSystem := findTool("arduino-test", "arduino-fwuploader", "2.2.0", data)
+			correctTool, correctSystem, found := pkgs.FindTool("arduino-test", "arduino-fwuploader", "2.2.0", data)
+			require.True(t, found)
 			require.NotNil(t, correctTool)
 			require.NotNil(t, correctSystem)
 			require.Equal(t, correctTool.Name, "arduino-fwuploader")
@@ -145,7 +147,7 @@ func TestDownload(t *testing.T) {
 				if filePath.IsDir() {
 					require.DirExists(t, filePath.String())
 				} else {
-					if OS == "windows" {
+					if runtime.GOOS == "windows" {
 						require.FileExists(t, filePath.String()+".exe")
 					} else {
 						require.FileExists(t, filePath.String())

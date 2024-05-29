@@ -26,13 +26,6 @@ import (
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
-	"github.com/blang/semver"
-)
-
-// public vars to allow override in the tests
-var (
-	OS   = runtime.GOOS
-	Arch = runtime.GOARCH
 )
 
 // Download will parse the index at the indexURL for the tool to download.
@@ -85,42 +78,12 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	return nil
 }
 
-func findTool(pack, name, version string, data pkgs.Index) (pkgs.Tool, pkgs.System) {
-	var correctTool pkgs.Tool
-	correctTool.Version = "0.0"
-
-	for _, p := range data.Packages {
-		if p.Name != pack {
-			continue
-		}
-		for _, t := range p.Tools {
-			if version != "latest" {
-				if t.Name == name && t.Version == version {
-					correctTool = t
-				}
-			} else {
-				// Find latest
-				v1, _ := semver.Make(t.Version)
-				v2, _ := semver.Make(correctTool.Version)
-				if t.Name == name && v1.Compare(v2) > 0 {
-					correctTool = t
-				}
-			}
-		}
-	}
-
-	// Find the url based on system
-	correctSystem := correctTool.GetFlavourCompatibleWith(OS, Arch)
-
-	return correctTool, correctSystem
-}
-
 func (t *Tools) installDrivers(location string) error {
 	OkPressed := 6
 	extension := ".bat"
 	// add .\ to force locality
 	preamble := ".\\"
-	if OS != "windows" {
+	if runtime.GOOS != "windows" {
 		extension = ".sh"
 		// add ./ to force locality
 		preamble = "./"
@@ -132,7 +95,7 @@ func (t *Tools) installDrivers(location string) error {
 			os.Chdir(location)
 			t.logger(preamble + "post_install" + extension)
 			oscmd := exec.Command(preamble + "post_install" + extension)
-			if OS != "linux" {
+			if runtime.GOOS != "linux" {
 				// spawning a shell could be the only way to let the user type his password
 				TellCommandNotToSpawnShell(oscmd)
 			}

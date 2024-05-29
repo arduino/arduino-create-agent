@@ -37,6 +37,12 @@ import (
 	"github.com/codeclysm/extract/v3"
 )
 
+// public vars to allow override in the tests
+var (
+	OS   = runtime.GOOS
+	Arch = runtime.GOARCH
+)
+
 // Tools is a client that implements github.com/arduino/arduino-create-agent/gen/tools.Service interface.
 // It saves tools in a specified folder with this structure: packager/name/version
 // For example:
@@ -167,7 +173,8 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 	var index Index
 	json.Unmarshal(body, &index)
 
-	correctSystem, found := findTool(payload.Packager, payload.Name, payload.Version, index)
+	correctTool, correctSystem, found := FindTool(payload.Packager, payload.Name, payload.Version, index)
+	path = filepath.Join(payload.Packager, correctTool.Name, correctTool.Version)
 	if found {
 		return t.install(ctx, path, correctSystem.URL, correctSystem.Checksum)
 	}
@@ -289,7 +296,8 @@ func writeInstalled(folder, path string) error {
 	return os.WriteFile(installedFile, data, 0644)
 }
 
-func findTool(pack, name, version string, data Index) (System, bool) {
+// FindTool searches the index for the correct tool and system that match the specified tool name and version
+func FindTool(pack, name, version string, data Index) (Tool, System, bool) {
 	var correctTool Tool
 	correctTool.Version = "0.0"
 	found := false
@@ -317,7 +325,7 @@ func findTool(pack, name, version string, data Index) (System, bool) {
 	}
 
 	// Find the url based on system
-	correctSystem := correctTool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
+	correctSystem := correctTool.GetFlavourCompatibleWith(OS, Arch)
 
-	return correctSystem, found
+	return correctTool, correctSystem, found
 }
