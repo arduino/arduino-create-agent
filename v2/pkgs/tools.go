@@ -246,8 +246,11 @@ func (t *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.
 func rename(base string) extract.Renamer {
 	return func(path string) string {
 		parts := strings.Split(filepath.ToSlash(path), "/")
-		path = strings.Join(parts[1:], "/")
-		path = filepath.Join(base, path)
+		newPath := strings.Join(parts[1:], "/")
+		if newPath == "" {
+			newPath = filepath.Join(newPath, path)
+		}
+		path = filepath.Join(base, newPath)
 		return path
 	}
 }
