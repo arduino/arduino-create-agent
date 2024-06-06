@@ -389,7 +389,7 @@ jobs:
     env:
       # vars used by installbuilder
       INSTALLBUILDER_PATH: "/opt/installbuilder-23.11.0/bin/builder"
-      INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Create_Agent"
+      INSTALLER_VARS: "project.outputDirectory=$PWD project.version=${GITHUB_REF##*/} workspace=$PWD realname=Arduino_Cloud_Agent"
 
     strategy:
       fail-fast: false # if one os is failing continue nonetheless
@@ -434,17 +434,14 @@ jobs:
         run: chmod -v +x artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}*
         if: matrix.os == 'ubuntu-20.04'
 
-      - name: Rename executable to Arduino_Create_Agent
-        run: mv -v artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}${{ matrix.extension }} artifacts/${{ matrix.platform-name }}/Arduino_Create_Agent${{ matrix.extension }}
+      - name: Rename executable to Arduino_Cloud_Agent
+        run: mv -v artifacts/${{ matrix.platform-name }}/${{ env.PROJECT_NAME }}${{ matrix.extension }} artifacts/${{ matrix.platform-name }}/Arduino_Cloud_Agent${{ matrix.extension }}
 
       - name: Save InstallBuilder license to file
         run: echo "${{ secrets.INSTALLER_LICENSE }}" > /tmp/license.xml
 
       - name: Launch Bitrock installbuilder
         run: ${{ env.INSTALLBUILDER_PATH }} build installer.xml ${{ matrix.installbuilder-name }} --verbose --license /tmp/license.xml  --setvars ${{ env.INSTALLER_VARS }} architecture=${{ matrix.arch }}
-
-      - name: Rename installer to ArduinoCloudAgent
-        run: mv -v ArduinoCreateAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}} ArduinoCloudAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
 
       - name: Generate archive
         run: tar -czvf ArduinoCloudAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer.tar.gz ArduinoCloudAgent-${GITHUB_REF##*/}-${{ matrix.platform-name }}-${{ matrix.arch }}-installer${{matrix.installer-extension}}
