@@ -107,13 +107,33 @@ jobs:
         run: task go:build-win # GOARCH=amd64 by default on the runners
         if: matrix.os == 'windows-2019' && matrix.arch == 'amd64'
 
-      - name: Build the Agent for macos
+      - name: Build the Agent for macos amd64
         env:
           CGO_ENABLED: 1
           MACOSX_DEPLOYMENT_TARGET: 10.15 # minimum supported version for mac
           CGO_CFLAGS: -mmacosx-version-min=10.15
           CGO_LDFLAGS: -mmacosx-version-min=10.15
-        run: task go:build
+        run: |
+          task go:build
+          mv ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}_amd64
+        if: matrix.os == 'macos-12'
+
+      - name: Build the Agent for macos arm64
+        env:
+          CGO_ENABLED: 1
+          MACOSX_DEPLOYMENT_TARGET: 10.15 # minimum supported version for mac
+          CGO_CFLAGS: -mmacosx-version-min=10.15
+          CGO_LDFLAGS: -mmacosx-version-min=10.15
+          GOARCH: arm64
+        run: |
+          task go:build
+          mv ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}_arm64
+        if: matrix.os == 'macos-12'
+
+      - name: Create universal macos executable
+        run: |
+          lipo -create -output ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}_amd64 ${{ env.PROJECT_NAME }}_arm64
+          rm ${{ env.PROJECT_NAME }}_amd64 ${{ env.PROJECT_NAME }}_arm64
         if: matrix.os == 'macos-12'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
@@ -121,7 +141,6 @@ jobs:
         run: go-selfupdate ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch != '386' && steps.prerelease.outputs.IS_PRE != 'true'
 
-        # for now we do not distribute m1 build, this is a workaround for now
       - name: Copy autoupdate file for darwin-arm64 (m1 arch)
         working-directory: public/
         run: |
