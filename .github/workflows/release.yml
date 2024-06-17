@@ -183,7 +183,7 @@ jobs:
 
     runs-on: macos-12
     env:
-      EXE_PATH: "skel/ArduinoCreateAgent.app/Contents/MacOS/"
+      EXE_PATH: "skel/ArduinoCloudAgent.app/Contents/MacOS/"
 
     steps:
       - name: Checkout
@@ -213,7 +213,7 @@ jobs:
 
       - name: Generate Info.plist for MacOS
         run: |
-          cat > skel/ArduinoCreateAgent.app/Contents/Info.plist <<EOF
+          cat > skel/ArduinoCloudAgent.app/Contents/Info.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 
               <key>CFBundleIconFile</key>           <string>AppIcon.icns</string>
@@ -305,7 +305,7 @@ jobs:
         run: |
           cat > "${{ env.GON_CONFIG_PATH }}" <<EOF
           # See: https://github.com/mitchellh/gon#configuration-file
-          source = ["ArduinoCreateAgent.app"]
+          source = ["ArduinoCloudAgent.app"]
           bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
 
           sign {
@@ -319,7 +319,7 @@ jobs:
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
       - name: Zip output app bundle
-        run: ditto -c -k ArduinoCreateAgent.app/ ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
+        run: ditto -c -k ArduinoCloudAgent.app/ ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Remove gon used for code signing
         run: |
