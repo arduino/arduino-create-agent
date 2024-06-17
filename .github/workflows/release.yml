@@ -132,7 +132,7 @@ jobs:
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows-${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch == '386' && matrix.os == 'windows-2019' && steps.prerelease.outputs.IS_PRE != 'true'
-      
+
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -311,7 +311,7 @@ jobs:
         run: |
           wget -q https://github.com/Bearer/gon/releases/download/v0.0.27/gon_macos.zip
           unzip gon_macos.zip -d /usr/local/bin
-  
+
       - name: Write gon config to file
         run: |
           cat > "${{ env.GON_CONFIG_PATH }}" <<EOF
@@ -323,7 +323,7 @@ jobs:
           }
 
           EOF
-  
+
       - name: Notarize app bundle
         run: |
           gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
@@ -449,17 +449,17 @@ jobs:
       # We are hardcoding the path for signtool because is not present on the windows PATH env var by default.
       # Keep in mind that this path could change when upgrading to a new runner version
       SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x86/signtool.exe"
-    
+
     strategy:
       matrix:
         arch: [amd64, 386]
-    
+
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: ArduinoCreateAgent-windows-${{ matrix.arch }}
-      
+
       - name: Save Win signing certificate to file
         run: echo "${{ secrets.INSTALLER_CERT_WINDOWS_CER }}" | base64 --decode > ${{ env.INSTALLER_CERT_WINDOWS_CER}}
 
@@ -468,7 +468,7 @@ jobs:
           CERT_PASSWORD: ${{ secrets.INSTALLER_CERT_WINDOWS_PASSWORD }}
           CONTAINER_NAME: ${{ secrets.INSTALLER_CERT_WINDOWS_CONTAINER }}
           # https://stackoverflow.com/questions/17927895/automate-extended-validation-ev-code-signing-with-safenet-etoken
-        run: | 
+        run: |
           "${{ env.SIGNTOOL_PATH }}" sign -d "Arduino Create Agent" -f ${{ env.INSTALLER_CERT_WINDOWS_CER}} -csp "eToken Base Cryptographic Provider" -k "[{{${{ env.CERT_PASSWORD }}}}]=${{ env.CONTAINER_NAME }}" -fd sha256 -tr http://timestamp.digicert.com -td SHA256 -v "ArduinoCreateAgent-${GITHUB_REF##*/}-windows-${{ matrix.arch }}-installer.exe"
 
       - name: Upload artifacts
@@ -477,6 +477,10 @@ jobs:
           if-no-files-found: error
           name: ArduinoCreateAgent-windows-${{ matrix.arch }}-signed
           path: ArduinoCreateAgent-*-windows-${{ matrix.arch }}-installer.exe
+
+        # This step is needed because the self hosted runner does not delete files automatically
+      - name: Clean up EXE
+        run: rm ArduinoCreateAgent-*-windows-${{ matrix.arch }}-installer.exe
 
   # This job will generate a dmg mac installer, sign/notarize it.
   generate-sign-dmg:
