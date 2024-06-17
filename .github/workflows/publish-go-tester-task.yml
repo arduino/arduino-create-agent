@@ -130,7 +130,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          name: arduino-cloud-agent-${{ matrix.os }}${{ matrix.arch }}
           path: |
-            arduino-create-agent*
+            arduino-cloud-agent*
           if-no-files-found: error

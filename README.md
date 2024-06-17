@@ -1,4 +1,4 @@
-# arduino-create-agent
+# arduino-cloud-agent
 
 [![License: AGPL v3.0](https://img.shields.io/badge/License-AGPL%20v3.0-blue)](https://www.gnu.org/licenses/agpl-3.0.html)
 [![Test Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/test-go-task.yml)
@@ -8,7 +8,7 @@
 [![Check Go Dependencies status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml)
 [![Check Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml)
 
-The Arduino Create Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create applications](https://create.arduino.cc) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
+The Arduino Cloud Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create applications](https://create.arduino.cc) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ The Arduino Create Agent is a single binary that will sit on the traybar and wor
 |            Browser            |
 |                               |   Web socket   +----------------------+   flashes   +---------------+
 | +---------------------------+ |<-------------->|                      +------------>|               |
-| |                           | |                | Arduino Create Agent |             | Arduino Board |
+| |                           | |                | Arduino Cloud Agent |             | Arduino Board |
 | | Arduino Create Web Editor | +--------------->|                      |<------------+               |
 | |                           | |   REST API     +----------------------+   serial    +---------------+
 | +---------------------------+ |
@@ -50,7 +50,7 @@ The documentation has been moved to the [wiki](https://github.com/arduino/arduin
 
 ### Submitting an issue
 
-When submitting a new issue please search for duplicates before creating a new one. Help us by providing  useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
+When submitting a new issue please search for duplicates before creating a new one. Help us by providing useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
 
 #### Security
 
@@ -74,7 +74,7 @@ By signing off your commits, you agree to the following agreement, also known as
 
 ## Authors and acknowledgment
 
-arduino-create-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
+arduino-cloud-agent is a fork of @[johnlauer](https://github.com/johnlauer)'s [serial-port-json-server](https://github.com/johnlauer/serial-port-json-server) (which we really want to thank for his kindness and great work)
 
 The history has been rewritten to keep the repo small (thus removing all binaries committed in the past)
 

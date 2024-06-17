@@ -27,9 +27,9 @@ import socketio as io
 @pytest.fixture(scope="function")
 def agent(pytestconfig):
     if platform.system() == "Windows":
-        agent = str(Path(pytestconfig.rootdir) / "arduino-create-agent_cli.exe")
+        agent = str(Path(pytestconfig.rootdir) / "arduino-cloud-agent_cli.exe")
     else:
-        agent = str(Path(pytestconfig.rootdir) / "arduino-create-agent")
+        agent = str(Path(pytestconfig.rootdir) / "arduino-cloud-agent")
     env = {
         # "ARDUINO_DATA_DIR": data_dir,
         # "ARDUINO_DOWNLOADS_DIR": downloads_dir,

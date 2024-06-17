@@ -37,7 +37,7 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          PROJECT_NAME: arduino-create-agent_cli
+          PROJECT_NAME: arduino-cloud-agent_cli
           ADDITIONAL_FLAGS: -tags cli
 
   go:build-win:
@@ -46,7 +46,7 @@ tasks:
       - rsrc -arch {{.GOARCH}} -manifest manifest.xml # GOARCH shoud be either amd64 or 386
       - task: go:build
         vars:
-          PROJECT_NAME: arduino-create-agent.exe
+          PROJECT_NAME: arduino-cloud-agent.exe
           WIN_FLAGS: -H=windowsgui
       - rm *.syso # rm file to avoid compilation problems on other platforms
     vars:
@@ -58,7 +58,7 @@ tasks:
     cmds:
       - task: go:build
         vars:
-          PROJECT_NAME: arduino-create-agent_cli.exe
+          PROJECT_NAME: arduino-cloud-agent_cli.exe
           ADDITIONAL_FLAGS: -tags cli
 
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/test-go-task/Taskfile.yml
@@ -84,7 +84,7 @@ tasks:
     cmds:
       - poetry run pytest tests
 
-   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/poetry-task/Taskfile.yml
+    # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/poetry-task/Taskfile.yml
   poetry:install-deps:
     desc: Install dependencies managed by Poetry
     cmds:
@@ -138,10 +138,9 @@ tasks:
       - task: go:vet
       - task: go:lint
 
-      
 vars:
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/release-go-task/Taskfile.yml
-  PROJECT_NAME: arduino-create-agent
+  PROJECT_NAME: arduino-cloud-agent
   # build vars
   COMMIT:
     sh: echo "$(git log --no-show-signature -n 1 --format=%h)"
