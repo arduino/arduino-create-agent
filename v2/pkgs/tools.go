@@ -57,17 +57,19 @@ var (
 //
 // It requires an Index Resource to search for tools
 type Tools struct {
-	index  *index.Resource
-	folder string
+	index     *index.Resource
+	folder    string
+	behaviour string
 }
 
 // New will return a Tool object, allowing the caller to execute operations on it.
 // The New function will accept an index as parameter (used to download the indexes)
 // and a folder used to download the indexes
-func New(index *index.Resource, folder string) *Tools {
+func New(index *index.Resource, folder, behaviour string) *Tools {
 	return &Tools{
-		index:  index,
-		folder: folder,
+		index:     index,
+		folder:    folder,
+		behaviour: behaviour,
 	}
 }
 
@@ -175,6 +177,23 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 
 	correctTool, correctSystem, found := FindTool(payload.Packager, payload.Name, payload.Version, index)
 	path = filepath.Join(payload.Packager, correctTool.Name, correctTool.Version)
+
+	key := correctTool.Name + "-" + correctTool.Version
+	// Check if it already exists
+	if t.behaviour == "keep" && pathExists(t.folder) {
+		location, ok, err := checkInstalled(t.folder, key)
+		if err != nil {
+			return nil, err
+		}
+		if ok && pathExists(location) {
+			// overwrite the default tool with this one
+			err := writeInstalled(t.folder, path)
+			if err != nil {
+				return nil, err
+			}
+			return &tools.Operation{Status: "ok"}, nil
+		}
+	}
 	if found {
 		return t.install(ctx, path, correctSystem.URL, correctSystem.Checksum)
 	}
@@ -262,20 +281,41 @@ func rename(base string) extract.Renamer {
 	}
 }
 
-func writeInstalled(folder, path string) error {
+func readInstalled(installedFile string) (map[string]string, error) {
 	// read installed.json
 	installed := map[string]string{}
-
-	installedFile, err := utilities.SafeJoin(folder, "installed.json")
-	if err != nil {
-		return err
-	}
 	data, err := os.ReadFile(installedFile)
 	if err == nil {
 		err = json.Unmarshal(data, &installed)
 		if err != nil {
-			return err
+			return nil, err
 		}
+	}
+	return installed, nil
+}
+
+func checkInstalled(folder, key string) (string, bool, error) {
+	installedFile, err := utilities.SafeJoin(folder, "installed.json")
+	if err != nil {
+		return "", false, err
+	}
+	installed, err := readInstalled(installedFile)
+	if err != nil {
+		return "", false, err
+	}
+	location, ok := installed[key]
+	return location, ok, err
+}
+
+func writeInstalled(folder, path string) error {
+	// read installed.json
+	installedFile, err := utilities.SafeJoin(folder, "installed.json")
+	if err != nil {
+		return err
+	}
+	installed, err := readInstalled(installedFile)
+	if err != nil {
+		return err
 	}
 
 	parts := strings.Split(path, string(filepath.Separator))
@@ -288,12 +328,23 @@ func writeInstalled(folder, path string) error {
 	installed[tool] = toolFile
 	installed[toolWithVersion] = toolFile
 
-	data, err = json.Marshal(installed)
+	data, err := json.Marshal(installed)
 	if err != nil {
 		return err
 	}
 
 	return os.WriteFile(installedFile, data, 0644)
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 // FindTool searches the index for the correct tool and system that match the specified tool name and version

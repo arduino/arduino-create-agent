@@ -43,11 +43,9 @@ import (
 // If version is not "latest" and behaviour is "replace", it will download the
 // version again. If instead behaviour is "keep" it will not download the version
 // if it already exists.
-//
-// At the moment the value of behaviour is ignored.
 func (t *Tools) Download(pack, name, version, behaviour string) error {
 
-	tool := pkgs.New(t.index, t.directory.String())
+	tool := pkgs.New(t.index, t.directory.String(), behaviour)
 	_, err := tool.Install(context.Background(), &tools.ToolPayload{Name: name, Version: version, Packager: pack})
 	if err != nil {
 		return err

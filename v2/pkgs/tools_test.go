@@ -45,7 +45,7 @@ func TestTools(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp)
+	service := pkgs.New(Index, tmp, "replace")
 
 	ctx := context.Background()
 
@@ -126,7 +126,7 @@ func TestEvilFilename(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp)
+	service := pkgs.New(Index, tmp, "replace")
 
 	ctx := context.Background()
 
@@ -195,7 +195,7 @@ func TestInstalledHead(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp)
+	service := pkgs.New(Index, tmp, "replace")
 
 	ctx := context.Background()
 
@@ -216,7 +216,7 @@ func TestInstall(t *testing.T) {
 		LastRefresh: time.Now(),
 	}
 
-	tool := pkgs.New(testIndex, tmp)
+	tool := pkgs.New(testIndex, tmp, "replace")
 
 	ctx := context.Background()
 
