@@ -3,7 +3,7 @@ module github.com/arduino/arduino-create-agent
 go 1.21
 
 require (
-	fyne.io/systray v1.10.0
+	fyne.io/systray v1.11.0
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.2
 	github.com/arduino/go-paths-helper v1.12.0
 	github.com/arduino/go-serial-utils v0.1.2
@@ -45,7 +45,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb // indirect
@@ -68,7 +68,6 @@ require (
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
-	github.com/tevino/abool v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go v1.1.6 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
