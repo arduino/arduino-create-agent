@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	fyne.io/systray v1.10.0
-	github.com/ProtonMail/go-crypto v1.1.0-alpha.2
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.3-proton
 	github.com/arduino/go-paths-helper v1.12.0
 	github.com/arduino/go-serial-utils v0.1.2
 	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0
