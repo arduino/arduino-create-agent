@@ -78,18 +78,6 @@ func (t *Tools) getMapValue(key string) (string, bool) {
 	return value, ok
 }
 
-// writeMap() writes installed map to the json file "installed.json"
-func (t *Tools) writeMap() error {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-	b, err := json.Marshal(t.installed)
-	if err != nil {
-		return err
-	}
-	filePath := t.directory.Join("installed.json")
-	return filePath.WriteFile(b)
-}
-
 // readMap() reads the installed map from json file "installed.json"
 func (t *Tools) readMap() error {
 	t.mutex.Lock()

@@ -33,7 +33,14 @@ import (
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/utilities"
+	"github.com/blang/semver"
 	"github.com/codeclysm/extract/v3"
+)
+
+// public vars to allow override in the tests
+var (
+	OS   = runtime.GOOS
+	Arch = runtime.GOARCH
 )
 
 // Tools is a client that implements github.com/arduino/arduino-create-agent/gen/tools.Service interface.
@@ -50,17 +57,19 @@ import (
 //
 // It requires an Index Resource to search for tools
 type Tools struct {
-	index  *index.Resource
-	folder string
+	index     *index.Resource
+	folder    string
+	behaviour string
 }
 
 // New will return a Tool object, allowing the caller to execute operations on it.
 // The New function will accept an index as parameter (used to download the indexes)
 // and a folder used to download the indexes
-func New(index *index.Resource, folder string) *Tools {
+func New(index *index.Resource, folder, behaviour string) *Tools {
 	return &Tools{
-		index:  index,
-		folder: folder,
+		index:     index,
+		folder:    folder,
+		behaviour: behaviour,
 	}
 }
 
@@ -166,20 +175,27 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 	var index Index
 	json.Unmarshal(body, &index)
 
-	for _, packager := range index.Packages {
-		if packager.Name != payload.Packager {
-			continue
+	correctTool, correctSystem, found := FindTool(payload.Packager, payload.Name, payload.Version, index)
+	path = filepath.Join(payload.Packager, correctTool.Name, correctTool.Version)
+
+	key := correctTool.Name + "-" + correctTool.Version
+	// Check if it already exists
+	if t.behaviour == "keep" && pathExists(t.folder) {
+		location, ok, err := checkInstalled(t.folder, key)
+		if err != nil {
+			return nil, err
 		}
-
-		for _, tool := range packager.Tools {
-			if tool.Name == payload.Name &&
-				tool.Version == payload.Version {
-
-				sys := tool.GetFlavourCompatibleWith(runtime.GOOS, runtime.GOARCH)
-
-				return t.install(ctx, path, sys.URL, sys.Checksum)
+		if ok && pathExists(location) {
+			// overwrite the default tool with this one
+			err := writeInstalled(t.folder, path)
+			if err != nil {
+				return nil, err
 			}
+			return &tools.Operation{Status: "ok"}, nil
 		}
+	}
+	if found {
+		return t.install(ctx, path, correctSystem.URL, correctSystem.Checksum)
 	}
 
 	return nil, tools.MakeNotFound(
@@ -256,26 +272,50 @@ func (t *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.
 func rename(base string) extract.Renamer {
 	return func(path string) string {
 		parts := strings.Split(filepath.ToSlash(path), "/")
-		path = strings.Join(parts[1:], "/")
-		path = filepath.Join(base, path)
+		newPath := strings.Join(parts[1:], "/")
+		if newPath == "" {
+			newPath = filepath.Join(newPath, path)
+		}
+		path = filepath.Join(base, newPath)
 		return path
 	}
 }
 
-func writeInstalled(folder, path string) error {
+func readInstalled(installedFile string) (map[string]string, error) {
 	// read installed.json
 	installed := map[string]string{}
-
-	installedFile, err := utilities.SafeJoin(folder, "installed.json")
-	if err != nil {
-		return err
-	}
 	data, err := os.ReadFile(installedFile)
 	if err == nil {
 		err = json.Unmarshal(data, &installed)
 		if err != nil {
-			return err
+			return nil, err
 		}
+	}
+	return installed, nil
+}
+
+func checkInstalled(folder, key string) (string, bool, error) {
+	installedFile, err := utilities.SafeJoin(folder, "installed.json")
+	if err != nil {
+		return "", false, err
+	}
+	installed, err := readInstalled(installedFile)
+	if err != nil {
+		return "", false, err
+	}
+	location, ok := installed[key]
+	return location, ok, err
+}
+
+func writeInstalled(folder, path string) error {
+	// read installed.json
+	installedFile, err := utilities.SafeJoin(folder, "installed.json")
+	if err != nil {
+		return err
+	}
+	installed, err := readInstalled(installedFile)
+	if err != nil {
+		return err
 	}
 
 	parts := strings.Split(path, string(filepath.Separator))
@@ -288,10 +328,55 @@ func writeInstalled(folder, path string) error {
 	installed[tool] = toolFile
 	installed[toolWithVersion] = toolFile
 
-	data, err = json.Marshal(installed)
+	data, err := json.Marshal(installed)
 	if err != nil {
 		return err
 	}
 
 	return os.WriteFile(installedFile, data, 0644)
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+// FindTool searches the index for the correct tool and system that match the specified tool name and version
+func FindTool(pack, name, version string, data Index) (Tool, System, bool) {
+	var correctTool Tool
+	correctTool.Version = "0.0"
+	found := false
+
+	for _, p := range data.Packages {
+		if p.Name != pack {
+			continue
+		}
+		for _, t := range p.Tools {
+			if version != "latest" {
+				if t.Name == name && t.Version == version {
+					correctTool = t
+					found = true
+				}
+			} else {
+				// Find latest
+				v1, _ := semver.Make(t.Version)
+				v2, _ := semver.Make(correctTool.Version)
+				if t.Name == name && v1.Compare(v2) > 0 {
+					correctTool = t
+					found = true
+				}
+			}
+		}
+	}
+
+	// Find the url based on system
+	correctSystem := correctTool.GetFlavourCompatibleWith(OS, Arch)
+
+	return correctTool, correctSystem, found
 }
