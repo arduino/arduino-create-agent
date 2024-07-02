@@ -141,7 +141,6 @@ jobs:
         run: go-selfupdate ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
         if: matrix.arch != '386' && steps.prerelease.outputs.IS_PRE != 'true'
 
-      # for now we do not distribute m1 build, this is a workaround for now
       - name: Copy autoupdate file for darwin-arm64 (m1 arch)
         working-directory: public/
         run: |
