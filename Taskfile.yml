@@ -84,7 +84,7 @@ tasks:
     cmds:
       - poetry run pytest tests
 
-   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/poetry-task/Taskfile.yml
+    # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/poetry-task/Taskfile.yml
   poetry:install-deps:
     desc: Install dependencies managed by Poetry
     cmds:
@@ -138,7 +138,6 @@ tasks:
       - task: go:vet
       - task: go:lint
 
-      
 vars:
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/release-go-task/Taskfile.yml
   PROJECT_NAME: arduino-create-agent

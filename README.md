@@ -32,7 +32,7 @@ Get the [latest version](https://github.com/arduino/arduino-create-agent/release
 ## Apple silicon support
 
 The Arduino Agent is supported both on Intel and Apple silicon computers. This includes devices with the M1, M2 and M3 processors.  
-At the moment the Arduino Agent is only built for Intel architectures, but Apple silicon devices can run it thanks to the [Rosetta 2](https://support.apple.com/en-us/HT211861) translation layer by Apple.
+The Arduino Agent is built both for Intel architectures and Apple silicon devices, but distributed as a single universal executable for macOS.
 
 ## Documentation
 
@@ -50,7 +50,7 @@ The documentation has been moved to the [wiki](https://github.com/arduino/arduin
 
 ### Submitting an issue
 
-When submitting a new issue please search for duplicates before creating a new one. Help us by providing  useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
+When submitting a new issue please search for duplicates before creating a new one. Help us by providing useful context and information. Please attach the output of the commands running at the debug console or attach [crash reports](https://github.com/arduino/arduino-create-agent/wiki/How-to-use-crashreport-functionality) if useful.
 
 #### Security
 
