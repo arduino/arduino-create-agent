@@ -143,7 +143,7 @@ func checkForUpdates(currentVersion string, updateURL string, cmdName string) (s
 
 	// Install new app
 	logrus.WithField("from", tmpAppPath).WithField("to", currentAppPath).Info("Copying updated app")
-	if err := tmpAppPath.CopyDirTo(currentAppPath); err != nil {
+	if err := tmpAppPath.CopyDirTo(currentAppPath); err != nil || !paths.New(executablePath).Exist() {
 		// Try rollback changes
 		_ = currentAppPath.RemoveAll()
 		_ = oldAppPath.Rename(currentAppPath)
