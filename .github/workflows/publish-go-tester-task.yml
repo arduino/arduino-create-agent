@@ -30,6 +30,7 @@ on:
   repository_dispatch:
 
 env:
+  PROJECT_NAME: arduino-create-agent
   GO_VERSION: "1.21"
 
 jobs:
@@ -119,18 +120,38 @@ jobs:
         run: task go:build-win # GOARCH=amd64 by default on the runners
         if: runner.os == 'Windows' && matrix.arch == '-amd64'
 
-      - name: Build the Agent for macos
+      - name: Build the Agent for macos amd 64
         env:
           MACOSX_DEPLOYMENT_TARGET: 10.15 # minimum supported version for mac
           CGO_CFLAGS: -mmacosx-version-min=10.15
           CGO_LDFLAGS: -mmacosx-version-min=10.15
-        run: task go:build
+        run: |
+          task go:build
+          mv ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME}}_amd64
+        if: runner.os == 'macOS'
+
+      - name: Build the Agent for macos amd 64
+        env:
+          MACOSX_DEPLOYMENT_TARGET: 10.15 # minimum supported version for mac
+          CGO_CFLAGS: -mmacosx-version-min=10.15
+          CGO_LDFLAGS: -mmacosx-version-min=10.15
+          GOARCH: arm64
+          CGO_ENABLED: 1
+        run: |
+          task go:build
+          mv ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME}}_arm64
+        if: runner.os == 'macOS'
+
+      - name: Create universal macos executable
+        run: |
+          lipo -create -output ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME}}_amd64 ${{ env.PROJECT_NAME}}_arm64
+          rm ${{ env.PROJECT_NAME}}_amd64 ${{ env.PROJECT_NAME}}_arm64
         if: runner.os == 'macOS'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: arduino-create-agent-${{ matrix.os }}${{ matrix.arch }}
+          name: ${{ env.PROJECT_NAME}}-${{ matrix.os }}${{ matrix.arch }}
           path: |
-            arduino-create-agent*
+            ${{ env.PROJECT_NAME}}*
           if-no-files-found: error
