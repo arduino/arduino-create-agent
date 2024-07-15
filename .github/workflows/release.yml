@@ -531,7 +531,7 @@ jobs:
       - name: Install create-dmg
         run: brew install create-dmg
 
-      - name: Genarate DMG
+      - name: Generate DMG
         run: |
           create-dmg \
             --volname "ArduinoCloudAgent" \
