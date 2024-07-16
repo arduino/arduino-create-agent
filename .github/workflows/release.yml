@@ -318,8 +318,9 @@ jobs:
       - name: Sign app bundle
         run: gon -log-level=debug -log-json "${{ env.GON_CONFIG_PATH }}"
 
+        # the zip name must not change because it would interfere with the autoupdate process on macos
       - name: Zip output app bundle
-        run: ditto -c -k ArduinoCloudAgent.app/ ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
+        run: ditto -c -k ArduinoCloudAgent.app/ ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Remove gon used for code signing
         run: |
@@ -337,7 +338,7 @@ jobs:
           # See: https://github.com/Bearer/gon#configuration-file
 
           notarize {
-            path = "ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip"
+            path = "ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip"
             bundle_id = "cc.arduino.${{ env.PROJECT_NAME }}"
           }
 
@@ -356,7 +357,7 @@ jobs:
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Upload autoupdate bundle to Arduino downloads servers
-        run: aws s3 cp ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
+        run: aws s3 cp ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip s3://${{ secrets.DOWNLOADS_BUCKET }}${{ env.TARGET }}${GITHUB_REF/refs\/tags\//}/ # the version should be created in th the build job
         if: ${{ needs.build.outputs.prerelease != 'true' }}
 
       - name: Generate json file used for the new autoupdate
@@ -364,7 +365,7 @@ jobs:
           cat > darwin-${{ matrix.arch }}-bundle.json <<EOF
           {
               "Version": "${GITHUB_REF/refs\/tags\//}",
-              "Sha256": "$(shasum -a 256 ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip | awk '{print $1}' |  xxd -r -p | base64)"
+              "Sha256": "$(shasum -a 256 ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip | awk '{print $1}' |  xxd -r -p | base64)"
           }
           EOF
         if: ${{ needs.build.outputs.prerelease != 'true' }}
@@ -378,7 +379,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ArduinoCloudAgent.app_${{ matrix.arch }}_notarized
-          path: ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
+          path: ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
           if-no-files-found: error
 
   # This job is responsible for generating the installers (using installbuilder)
@@ -525,8 +526,8 @@ jobs:
       - name: unzip artifact
         working-directory: ArduinoCloudAgent.app
         run: |
-          unzip ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
-          rm ArduinoCloudAgent.app_${{ matrix.arch }}_notarized.zip
+          unzip ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
+          rm ArduinoCreateAgent.app_${{ matrix.arch }}_notarized.zip
 
       - name: Install create-dmg
         run: brew install create-dmg
