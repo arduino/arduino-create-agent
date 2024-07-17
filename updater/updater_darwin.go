@@ -143,7 +143,9 @@ func checkForUpdates(currentVersion string, updateURL string, cmdName string) (s
 
 	// Install new app
 	logrus.WithField("from", tmpAppPath).WithField("to", currentAppPath).Info("Copying updated app")
-	if err := tmpAppPath.CopyDirTo(currentAppPath); err != nil || !paths.New(executablePath).Exist() {
+	createPath := currentAppPath.Join("Contents", "MacOS", "Arduino_Create_Agent")
+	cloudPath := currentAppPath.Join("Contents", "MacOS", "Arduino_Cloud_Agent")
+	if err := tmpAppPath.CopyDirTo(currentAppPath); err != nil || (!createPath.Exist() && !cloudPath.Exist()) {
 		// Try rollback changes
 		_ = currentAppPath.RemoveAll()
 		_ = oldAppPath.Rename(currentAppPath)

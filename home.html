@@ -1,321 +1,346 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <title>Arduino Create Agent Debug Console</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,600,700&display=swap" rel="stylesheet">
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+  <head>
+    <title>Arduino Cloud Agent Debug Console</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,600,700&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"
+    ></script>
 
     <script type="text/javascript">
-        const LOCAL_STORAGE_KEY = "ArduinoAgentListVisibility";
-        let messages = []; // The messages to show in the main log.
+      const LOCAL_STORAGE_KEY = "ArduinoAgentListVisibility";
+      let messages = []; // The messages to show in the main log.
 
-        document.addEventListener("DOMContentLoaded", function () {
-            let listMsgVisibility = getListMsgVisibility();
-            updateListMsgVisibility(listMsgVisibility);
+      document.addEventListener("DOMContentLoaded", function () {
+        let listMsgVisibility = getListMsgVisibility();
+        updateListMsgVisibility(listMsgVisibility);
 
-            const socket = setupWebsocket();
+        const socket = setupWebsocket();
 
-            // Handle the form submission and send the message to the websocket.
-            document.getElementById("form").addEventListener("submit", function (event) {
-                event.preventDefault(); // Stop the from from actually submitting.
-                if (!socket) {
-                    return false;
-                }
-
-                let input = document.getElementById("input");
-                if (!input.value) {
-                    return false;
-                }
-                socket.emit('command', input.value);
-                input.value = '';
-            });
-        });
-
-
-        function getListMsgVisibility() {
-            // Check if the list visibility setting is saved in the localStorage.
-            let savedSetting = localStorage.getItem(LOCAL_STORAGE_KEY);
-            let listCommand = savedSetting != null ? parseInt(savedSetting) : 1; // Default: Show list commands inline.
-
-            document.getElementById('listShow').value = listCommand;
-            return listCommand;
-        }
-
-        function onListMsgVisibilityChange() {
-            let listCommand = document.getElementById('listShow').value;
-            localStorage.setItem(LOCAL_STORAGE_KEY, "" + listCommand); // Save the setting for future use.
-
-            // Update the rest of the UI so that it reflects the selected setting.
-            updateListMsgVisibility(listCommand);
-        }
-
-        function updateListMsgVisibility(visibility) {
-            const element = document.getElementById('log-list');
-            if (visibility == 2) {
-                element.innerHTML = '';           // Clear the "list" log.
-                element.style.display = 'block';  // Make sure the "list" log UI is visible.
-            } else {
-                element.style.display = 'none';   // Make sure the "list" log UI is hidden.
-            }
-        }
-
-        function setupWebsocket() {
-            let socket;
-            if (window['WebSocket']) {
-                if (window.location.protocol === 'https:') {
-                    socket = io('https://{{$}}')
-                } else {
-                    socket = io('http://{{$}}');
-                }
-                socket.on('disconnect', function (evt) {
-                    appendLog('Connection closed.')
-                });
-                socket.on('message', function (evt) {
-                    appendLog(evt);
-                });
-            } else {
-                appendLog('Your browser does not support WebSockets.')
-            }
-            return socket;
-        }
-
-        function appendLog(msg) {
-            const MESSAGES_MAX_COUNT = 2000;
-
-            let jsonMsg = {};
-            let portsListing = false;
-            try {
-                // Try to parse the received message as JSON, and then check if it contains a "Ports" property.
-                jsonMsg = JSON.parse(msg);
-                portsListing = jsonMsg.Ports !== undefined;
-            } catch {
-                // no valid json
+        // Handle the form submission and send the message to the websocket.
+        document
+          .getElementById("form")
+          .addEventListener("submit", function (event) {
+            event.preventDefault(); // Stop the from from actually submitting.
+            if (!socket) {
+              return false;
             }
 
-            // This is a "list" message if it starts with "list" or if it's valid JSON and has a "Ports" property.
-            let isListMessage = portsListing || msg.indexOf('list') == 0;
-
-            // Get the current setting for the "list" message visibility.
-            const listMsgVisibility = document.getElementById('listShow').value;
-
-            // If this is a "LIST" command and we want to hide them. Skip.
-            if (isListMessage && listMsgVisibility == 0) return;
-
-
-            let printMsg = msg;
-            if (jsonMsg.Ports) {
-                const validKeys = ['Name', 'SerialNumber', 'IsOpen', 'VendorID', 'ProductID'];
-                printMsg = "Serial Ports:\n" + JSON.stringify(jsonMsg.Ports, validKeys, 2);
-            } else if (Object.keys(jsonMsg).length !== 0) {
-                printMsg = JSON.stringify(jsonMsg, undefined, 2);
+            let input = document.getElementById("input");
+            if (!input.value) {
+              return false;
             }
+            socket.emit("command", input.value);
+            input.value = "";
+          });
+      });
 
-            // when parsing JSON we're escaping some html charaters like "&<>", we want to show their
-            // original value in the log
-            function decode(str) {
-                let txt = new DOMParser().parseFromString(str, "text/html");
-                return txt.documentElement.textContent;
-            }
-            printMsg = decode(printMsg);
+      function getListMsgVisibility() {
+        // Check if the list visibility setting is saved in the localStorage.
+        let savedSetting = localStorage.getItem(LOCAL_STORAGE_KEY);
+        let listCommand = savedSetting != null ? parseInt(savedSetting) : 1; // Default: Show list commands inline.
 
+        document.getElementById("listShow").value = listCommand;
+        return listCommand;
+      }
 
-            const log1 = document.getElementById('log');
-            const log2 = document.getElementById('log-list');
-            const autoscroll = document.getElementById('autoscroll');
+      function onListMsgVisibilityChange() {
+        let listCommand = document.getElementById("listShow").value;
+        localStorage.setItem(LOCAL_STORAGE_KEY, "" + listCommand); // Save the setting for future use.
 
-            // Check if this is a "LIST" message and needs to be shown in a separate log.
-            if (isListMessage && listMsgVisibility == 2) {
-                // Show the "list" message in the specific log element. Replace any previous content.
-                log2.textContent = "list\n\n" + printMsg;
+        // Update the rest of the UI so that it reflects the selected setting.
+        updateListMsgVisibility(listCommand);
+      }
 
-            } else {
-                // Show the message in the log element.
-                messages.push(printMsg);
-                if (messages.length > MESSAGES_MAX_COUNT) {
-                    messages.shift();
-                }
-                log1.textContent = messages.join('\n\n');
-                if (autoscroll.checked) {
-                    log1.scrollTop = log1.scrollHeight - log1.clientHeight;
-                }
-            }
+      function updateListMsgVisibility(visibility) {
+        const element = document.getElementById("log-list");
+        if (visibility == 2) {
+          element.innerHTML = ""; // Clear the "list" log.
+          element.style.display = "block"; // Make sure the "list" log UI is visible.
+        } else {
+          element.style.display = "none"; // Make sure the "list" log UI is hidden.
+        }
+      }
+
+      function setupWebsocket() {
+        let socket;
+        if (window["WebSocket"]) {
+          if (window.location.protocol === "https:") {
+            socket = io("https://{{$}}");
+          } else {
+            socket = io("http://{{$}}");
+          }
+          socket.on("disconnect", function (evt) {
+            appendLog("Connection closed.");
+          });
+          socket.on("message", function (evt) {
+            appendLog(evt);
+          });
+        } else {
+          appendLog("Your browser does not support WebSockets.");
+        }
+        return socket;
+      }
+
+      function appendLog(msg) {
+        const MESSAGES_MAX_COUNT = 2000;
+
+        let jsonMsg = {};
+        let portsListing = false;
+        try {
+          // Try to parse the received message as JSON, and then check if it contains a "Ports" property.
+          jsonMsg = JSON.parse(msg);
+          portsListing = jsonMsg.Ports !== undefined;
+        } catch {
+          // no valid json
         }
 
-        function clearLogs() {
-            const log1 = document.getElementById('log');
-            const log2 = document.getElementById('log-list');
+        // This is a "list" message if it starts with "list" or if it's valid JSON and has a "Ports" property.
+        let isListMessage = portsListing || msg.indexOf("list") == 0;
 
-            messages = [];
-            log1.innerHTML = '';
-            log2.innerHTML = '';
+        // Get the current setting for the "list" message visibility.
+        const listMsgVisibility = document.getElementById("listShow").value;
+
+        // If this is a "LIST" command and we want to hide them. Skip.
+        if (isListMessage && listMsgVisibility == 0) return;
+
+        let printMsg = msg;
+        if (jsonMsg.Ports) {
+          const validKeys = [
+            "Name",
+            "SerialNumber",
+            "IsOpen",
+            "VendorID",
+            "ProductID",
+          ];
+          printMsg =
+            "Serial Ports:\n" + JSON.stringify(jsonMsg.Ports, validKeys, 2);
+        } else if (Object.keys(jsonMsg).length !== 0) {
+          printMsg = JSON.stringify(jsonMsg, undefined, 2);
         }
 
-        function exportLogs() {
-            const link = document.createElement('a');
-            link.setAttribute('download', 'agent-log.txt');
-            const text = document.getElementById('log').textContent;
-            link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-            link.click();
+        // when parsing JSON we're escaping some html charaters like "&<>", we want to show their
+        // original value in the log
+        function decode(str) {
+          let txt = new DOMParser().parseFromString(str, "text/html");
+          return txt.documentElement.textContent;
         }
+        printMsg = decode(printMsg);
+
+        const log1 = document.getElementById("log");
+        const log2 = document.getElementById("log-list");
+        const autoscroll = document.getElementById("autoscroll");
+
+        // Check if this is a "LIST" message and needs to be shown in a separate log.
+        if (isListMessage && listMsgVisibility == 2) {
+          // Show the "list" message in the specific log element. Replace any previous content.
+          log2.textContent = "list\n\n" + printMsg;
+        } else {
+          // Show the message in the log element.
+          messages.push(printMsg);
+          if (messages.length > MESSAGES_MAX_COUNT) {
+            messages.shift();
+          }
+          log1.textContent = messages.join("\n\n");
+          if (autoscroll.checked) {
+            log1.scrollTop = log1.scrollHeight - log1.clientHeight;
+          }
+        }
+      }
+
+      function clearLogs() {
+        const log1 = document.getElementById("log");
+        const log2 = document.getElementById("log-list");
+
+        messages = [];
+        log1.innerHTML = "";
+        log2.innerHTML = "";
+      }
+
+      function exportLogs() {
+        const link = document.createElement("a");
+        link.setAttribute("download", "agent-log.txt");
+        const text = document.getElementById("log").textContent;
+        link.setAttribute(
+          "href",
+          "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+        );
+        link.click();
+      }
     </script>
     <style type="text/css">
-        html,
-        body {
-            overflow: hidden;
-            height: 100%;
-        }
+      html,
+      body {
+        overflow: hidden;
+        height: 100%;
+      }
 
-        body {
-            margin: 0px;
-            padding: 0px;
-            background: #F8F9F9;
-            font-size: 16px;
-            font-family: "Open Sans", "Lucida Grande", Lucida, Verdana, sans-serif;
-        }
+      body {
+        margin: 0px;
+        padding: 0px;
+        background: #f8f9f9;
+        font-size: 16px;
+        font-family: "Open Sans", "Lucida Grande", Lucida, Verdana, sans-serif;
+      }
 
-        #container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            width: 100%;
-        }
+      #container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100%;
+      }
 
-        .logs {
-            display: flex;
-            gap: 10px;
+      .logs {
+        display: flex;
+        gap: 10px;
 
-            flex: 1;
-            overflow-y: auto;
-            margin: 15px 15px 10px;
+        flex: 1;
+        overflow-y: auto;
+        margin: 15px 15px 10px;
 
-            font-family: "Roboto Mono", "Courier", "Lucida Grande", Verdana, sans-serif;
-        }
+        font-family: "Roboto Mono", "Courier", "Lucida Grande", Verdana,
+          sans-serif;
+      }
 
-        .logs pre {
-            background-color: #DAE3E3;
-            padding: 8px 10px;
-            margin: 0;
-            overflow-y: auto;
-        }
+      .logs pre {
+        background-color: #dae3e3;
+        padding: 8px 10px;
+        margin: 0;
+        overflow-y: auto;
+      }
 
-        #log {
-            flex-basis: 65%;
-            flex-grow: 1;
-        }
+      #log {
+        flex-basis: 65%;
+        flex-grow: 1;
+      }
 
-        #log-list {
-            flex-basis: 35%;
-        }
+      #log-list {
+        flex-basis: 35%;
+      }
 
-        #footer {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin: 0px 15px 0px;
-        }
+      #footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin: 0px 15px 0px;
+      }
 
-        #form {
-            display: flex;
-            flex-grow: 1;
-            margin-bottom: 15px;
-        }
+      #form {
+        display: flex;
+        flex-grow: 1;
+        margin-bottom: 15px;
+      }
 
-        #input {
-            flex-grow: 1;
-        }
+      #input {
+        flex-grow: 1;
+      }
 
-        #secondary-controls div {
-            display: inline-block;
-            padding: 10px 15px;
-        }
+      #secondary-controls div {
+        display: inline-block;
+        padding: 10px 15px;
+      }
 
-        #autoscroll,
-        #list {
-            vertical-align: middle;
-            width: 20px;
-            height: 20px;
-        }
+      #autoscroll,
+      #list {
+        vertical-align: middle;
+        width: 20px;
+        height: 20px;
+      }
 
+      #secondary-controls .button {
+        margin-bottom: 15px;
+        vertical-align: top;
+        height: 36px;
+      }
 
-        #secondary-controls .button {
-            margin-bottom: 15px;
-            vertical-align: top;
-            height: 36px;
-        }
+      .button {
+        background-color: #b5c8c9;
+        border: 1px solid #b5c8c9;
+        border-radius: 2px 2px 0 0;
+        box-shadow: 0 4px #95a5a6;
+        margin-bottom: 4px;
+        color: #000;
+        cursor: pointer;
+        font-size: 14px;
+        letter-spacing: 1.28px;
+        line-height: normal;
+        outline: none;
+        padding: 9px 18px;
+        text-align: center;
+        text-transform: uppercase;
+        transition: box-shadow 0.1s ease-out, transform 0.1s ease-out;
+      }
 
-        .button {
-            background-color: #b5c8c9;
-            border: 1px solid #b5c8c9;
-            border-radius: 2px 2px 0 0;
-            box-shadow: 0 4px #95a5a6;
-            margin-bottom: 4px;
-            color: #000;
-            cursor: pointer;
-            font-size: 14px;
-            letter-spacing: 1.28px;
-            line-height: normal;
-            outline: none;
-            padding: 9px 18px;
-            text-align: center;
-            text-transform: uppercase;
-            transition: box-shadow .1s ease-out, transform .1s ease-out;
-        }
+      .button:hover {
+        box-shadow: 0 2px #95a5a6;
+        outline: none;
+        transform: translateY(2px);
+      }
 
-        .button:hover {
-            box-shadow: 0 2px #95a5a6;
-            outline: none;
-            transform: translateY(2px);
-        }
+      .button:active {
+        box-shadow: none;
+        transform: translateY(4px);
+      }
 
-        .button:active {
-            box-shadow: none;
-            transform: translateY(4px);
-        }
-
-        .textfield {
-            background-color: #dae3e3;
-            width: auto;
-            height: auto;
-            padding: 10px 8px;
-            margin-left: 8px;
-            vertical-align: top;
-            border: none;
-            font-family: "Open Sans", "Lucida Grande", Lucida, Verdana, sans-serif;
-            font-size: 1em;
-            outline: none;
-        }
+      .textfield {
+        background-color: #dae3e3;
+        width: auto;
+        height: auto;
+        padding: 10px 8px;
+        margin-left: 8px;
+        vertical-align: top;
+        border: none;
+        font-family: "Open Sans", "Lucida Grande", Lucida, Verdana, sans-serif;
+        font-size: 1em;
+        outline: none;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="container">
-        <div class="logs">
-            <pre id="log"></pre>
-            <pre id="log-list"></pre>
+      <div class="logs">
+        <pre id="log"></pre>
+        <pre id="log-list"></pre>
+      </div>
+      <div id="footer">
+        <form id="form">
+          <input type="submit" class="button" value="Send" />
+          <input
+            type="text"
+            id="input"
+            class="textfield"
+            autocomplete="off"
+            autofocus
+          />
+        </form>
+        <div id="secondary-controls">
+          <div>
+            <input type="checkbox" checked id="autoscroll" />
+            <label for="autoscroll">Autoscroll</label>
+          </div>
+          <select
+            id="listShow"
+            class="button"
+            onchange="onListMsgVisibilityChange()"
+          >
+            <option value="0">Hide 'list' commands</option>
+            <option value="1" selected>Show 'list' commands inline</option>
+            <option value="2">Show 'list' commands separately</option>
+          </select>
+          <button class="button" onclick="clearLogs()">Clear Log</button>
+          <button class="button" onclick="exportLogs()">Export Log</button>
         </div>
-        <div id="footer">
-            <form id="form">
-                <input type="submit" class="button" value="Send" />
-                <input type="text" id="input" class="textfield" autocomplete="off" autofocus />
-            </form>
-            <div id="secondary-controls">
-                <div>
-                    <input type="checkbox" checked id="autoscroll" />
-                    <label for="autoscroll">Autoscroll</label>
-                </div>
-                <select id="listShow" class="button" onchange="onListMsgVisibilityChange()">
-                    <option value="0">Hide 'list' commands</option>
-                    <option value="1" selected>Show 'list' commands inline</option>
-                    <option value="2">Show 'list' commands separately</option>
-                </select>
-                <button class="button" onclick="clearLogs()">Clear Log</button>
-                <button class="button" onclick="exportLogs()">Export Log</button>
-            </div>
-        </div>
+      </div>
     </div>
-</body>
-
+  </body>
 </html>
