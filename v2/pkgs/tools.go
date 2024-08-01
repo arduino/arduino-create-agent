@@ -29,6 +29,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/index"
@@ -60,6 +61,7 @@ type Tools struct {
 	index     *index.Resource
 	folder    string
 	behaviour string
+	mutex     sync.RWMutex
 }
 
 // New will return a Tool object, allowing the caller to execute operations on it.
@@ -70,6 +72,7 @@ func New(index *index.Resource, folder, behaviour string) *Tools {
 		index:     index,
 		folder:    folder,
 		behaviour: behaviour,
+		mutex:     sync.RWMutex{},
 	}
 }
 
@@ -187,7 +190,7 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 		}
 		if ok && pathExists(location) {
 			// overwrite the default tool with this one
-			err := writeInstalled(t.folder, path)
+			err := t.writeInstalled(path)
 			if err != nil {
 				return nil, err
 			}
@@ -245,7 +248,7 @@ func (t *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	}
 
 	// Write installed.json for retrocompatibility with v1
-	err = writeInstalled(t.folder, path)
+	err = t.writeInstalled(path)
 	if err != nil {
 		return nil, err
 	}
@@ -311,9 +314,11 @@ func checkInstalled(folder, key string) (string, bool, error) {
 	return location, ok, err
 }
 
-func writeInstalled(folder, path string) error {
+func (t *Tools) writeInstalled(path string) error {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	// read installed.json
-	installedFile, err := utilities.SafeJoin(folder, "installed.json")
+	installedFile, err := utilities.SafeJoin(t.folder, "installed.json")
 	if err != nil {
 		return err
 	}
@@ -325,7 +330,7 @@ func writeInstalled(folder, path string) error {
 	parts := strings.Split(path, string(filepath.Separator))
 	tool := parts[len(parts)-2]
 	toolWithVersion := fmt.Sprint(tool, "-", parts[len(parts)-1])
-	toolFile, err := utilities.SafeJoin(folder, path)
+	toolFile, err := utilities.SafeJoin(t.folder, path)
 	if err != nil {
 		return err
 	}
