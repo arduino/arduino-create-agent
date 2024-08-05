@@ -10,6 +10,7 @@ reviewed:
     - golang.org/x/net/html
     - golang.org/x/net/html/atom
     - golang.org/x/crypto/curve25519
+    - golang.org/x/sys/unix
     - github.com/ProtonMail/go-crypto/bitcurves
     - github.com/ProtonMail/go-crypto/brainpool
     - github.com/ProtonMail/go-crypto/eax
