@@ -120,7 +120,6 @@ func TestDownload(t *testing.T) {
 		{"rp2040tools", "1.0.6", []string{"elf2uf2", "picotool", "pioasm", "rp2040load"}},
 		{"esptool_py", "4.5.1", []string{"esptool"}},
 		{"arduino-fwuploader", "2.2.2", []string{"arduino-fwuploader"}},
-		{"fwupdater", "0.1.12", []string{"firmwares", "FirmwareUploader"}}, // old legacy tool
 	}
 	// prepare the test environment
 	tempDir := t.TempDir()

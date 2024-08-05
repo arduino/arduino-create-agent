@@ -230,9 +230,7 @@ func TestInstall(t *testing.T) {
 		{Name: "dfu-util", Version: "0.10.0-arduino1", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
 		{Name: "rp2040tools", Version: "1.0.6", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
 		{Name: "esptool_py", Version: "4.5.1", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
-		// At the moment we don't install these ones because they are packaged in a different way: they do not have a top level dir, causing the rename funcion to behave incorrectly
-		// {Name: "fwupdater", Version: "0.1.12", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
-		// {Name: "arduino-fwuploader", Version: "2.2.2", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
+		{Name: "arduino-fwuploader", Version: "2.2.2", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
 	}
 
 	expectedFiles := map[string][]string{
@@ -244,8 +242,7 @@ func TestInstall(t *testing.T) {
 		"dfu-util-0.10.0-arduino1": {"dfu-prefix", "dfu-suffix", "dfu-util"},
 		"rp2040tools-1.0.6":        {"elf2uf2", "picotool", "pioasm", "rp2040load"},
 		"esptool_py-4.5.1":         {"esptool"},
-		// "fwupdater-0.1.12":         {"firmwares", "FirmwareUploader"}, // old legacy tool
-		// "arduino-fwuploader-2.2.2": {"arduino-fwuploader"},
+		"arduino-fwuploader-2.2.2": {"arduino-fwuploader"},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name+"-"+tc.Version, func(t *testing.T) {
