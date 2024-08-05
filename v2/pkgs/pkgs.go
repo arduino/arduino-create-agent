@@ -50,7 +50,7 @@ type System struct {
 	Checksum string `json:"checksum"`
 }
 
-// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L129-L142
+// Source: https://github.com/arduino/arduino-cli/blob/master/internal/arduino/cores/tools.go#L129-L142
 var (
 	regexpLinuxArm   = regexp.MustCompile("arm.*-linux-gnueabihf")
 	regexpLinuxArm64 = regexp.MustCompile("(aarch64|arm64)-linux-gnu")
@@ -66,7 +66,7 @@ var (
 	regexpFreeBSD64  = regexp.MustCompile("amd64-freebsd[0-9]*")
 )
 
-// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L144-L176
+// Source: https://github.com/arduino/arduino-cli/blob/master/internal/arduino/cores/tools.go#L144-L176
 func (s *System) isExactMatchWith(osName, osArch string) bool {
 	if s.Host == "all" {
 		return true
@@ -101,7 +101,7 @@ func (s *System) isExactMatchWith(osName, osArch string) bool {
 	return false
 }
 
-// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L178-L198
+// Source: https://github.com/arduino/arduino-cli/blob/master/internal/arduino/cores/tools.go#L178-L198
 func (s *System) isCompatibleWith(osName, osArch string) (bool, int) {
 	if s.isExactMatchWith(osName, osArch) {
 		return true, 1000
@@ -125,7 +125,7 @@ func (s *System) isCompatibleWith(osName, osArch string) (bool, int) {
 }
 
 // GetFlavourCompatibleWith returns the downloadable resource (System) compatible with the specified OS/Arch
-// Source: https://github.com/arduino/arduino-cli/blob/master/arduino/cores/tools.go#L206-L216
+// Source: https://github.com/arduino/arduino-cli/blob/master/internal/arduino/cores/tools.go#L206-L216
 func (t *Tool) GetFlavourCompatibleWith(osName, osArch string) System {
 	var correctSystem System
 	maxSimilarity := -1
