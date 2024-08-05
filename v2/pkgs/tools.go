@@ -331,6 +331,11 @@ func (t *Tools) writeInstalled(path string) error {
 	return os.WriteFile(installedFile, data, 0644)
 }
 
+// SetBehaviour sets the download behaviour to either keep or replace
+func (t *Tools) SetBehaviour(behaviour string) {
+	t.behaviour = behaviour
+}
+
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {

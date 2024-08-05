@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"github.com/arduino/arduino-create-agent/index"
+	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/arduino/go-paths-helper"
 	"github.com/xrash/smetrics"
 )
@@ -47,6 +48,7 @@ type Tools struct {
 	logger    func(msg string)
 	installed map[string]string
 	mutex     sync.RWMutex
+	tools     *pkgs.Tools
 }
 
 // New will return a Tool object, allowing the caller to execute operations on it.
@@ -60,6 +62,7 @@ func New(directory *paths.Path, index *index.Resource, logger func(msg string)) 
 		logger:    logger,
 		installed: map[string]string{},
 		mutex:     sync.RWMutex{},
+		tools:     pkgs.New(index, directory.String(), "replace"),
 	}
 	_ = t.readMap()
 	return t
