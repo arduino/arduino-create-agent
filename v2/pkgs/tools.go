@@ -188,7 +188,7 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 	key := correctTool.Name + "-" + correctTool.Version
 	// Check if it already exists
 	if t.behaviour == "keep" && pathExists(t.folder) {
-		location, ok := t.installed[key]
+		location, ok := t.getInstalledValue(key)
 		if ok && pathExists(location) {
 			// overwrite the default tool with this one
 			err := t.writeInstalled(path)
@@ -334,6 +334,13 @@ func (t *Tools) writeInstalled(path string) error {
 // SetBehaviour sets the download behaviour to either keep or replace
 func (t *Tools) SetBehaviour(behaviour string) {
 	t.behaviour = behaviour
+}
+
+func (t *Tools) getInstalledValue(key string) (string, bool) {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	location, ok := t.installed[key]
+	return location, ok
 }
 
 func pathExists(path string) bool {
