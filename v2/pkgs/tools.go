@@ -269,15 +269,19 @@ func (t *Tools) Remove(ctx context.Context, payload *tools.ToolPayload) (*tools.
 	return &tools.Operation{Status: "ok"}, nil
 }
 
+// rename function is used to rename the path of the extracted files
 func rename(base string) extract.Renamer {
+	// "Rename" the given path adding the "base" and removing the root folder in "path" (if present).
 	return func(path string) string {
 		parts := strings.Split(filepath.ToSlash(path), "/")
-		newPath := strings.Join(parts[1:], "/")
-		if newPath == "" {
-			newPath = filepath.Join(newPath, path)
+		if len(parts) <= 1 {
+			// The path does not contain a root folder. This might happen for tool packages (zip files)
+			// that have an invalid structure. Do not try to remove the root folder in these cases.
+			return filepath.Join(base, path)
 		}
-		path = filepath.Join(base, newPath)
-		return path
+		// Removes the first part of the path (the root folder).
+		path = strings.Join(parts[1:], "/")
+		return filepath.Join(base, path)
 	}
 }
 
