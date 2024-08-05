@@ -160,3 +160,23 @@ func TestDownload(t *testing.T) {
 		})
 	}
 }
+
+func TestCorruptedInstalled(t *testing.T) {
+	// prepare the test environment
+	tempDir := t.TempDir()
+	tempDirPath := paths.New(tempDir)
+	testIndex := index.Resource{
+		IndexFile:   *paths.New("testdata", "test_tool_index.json"),
+		LastRefresh: time.Now(),
+	}
+	corruptedJSON := tempDirPath.Join("installed.json")
+	fileJSON, err := corruptedJSON.Create()
+	require.NoError(t, err)
+	defer fileJSON.Close()
+	_, err = fileJSON.Write([]byte("Hello"))
+	require.NoError(t, err)
+	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) })
+	// Download the tool
+	err = testTools.Download("arduino-test", "avrdude", "6.3.0-arduino17", "keep")
+	require.NoError(t, err)
+}

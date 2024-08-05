@@ -29,6 +29,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/index"
@@ -60,17 +61,23 @@ type Tools struct {
 	index     *index.Resource
 	folder    string
 	behaviour string
+	installed map[string]string
+	mutex     sync.RWMutex
 }
 
 // New will return a Tool object, allowing the caller to execute operations on it.
 // The New function will accept an index as parameter (used to download the indexes)
 // and a folder used to download the indexes
 func New(index *index.Resource, folder, behaviour string) *Tools {
-	return &Tools{
+	t := &Tools{
 		index:     index,
 		folder:    folder,
 		behaviour: behaviour,
+		installed: map[string]string{},
+		mutex:     sync.RWMutex{},
 	}
+	t.readInstalled()
+	return t
 }
 
 // Installedhead is here only because it was required by the front-end.
@@ -181,13 +188,10 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 	key := correctTool.Name + "-" + correctTool.Version
 	// Check if it already exists
 	if t.behaviour == "keep" && pathExists(t.folder) {
-		location, ok, err := checkInstalled(t.folder, key)
-		if err != nil {
-			return nil, err
-		}
+		location, ok := t.installed[key]
 		if ok && pathExists(location) {
 			// overwrite the default tool with this one
-			err := writeInstalled(t.folder, path)
+			err := t.writeInstalled(path)
 			if err != nil {
 				return nil, err
 			}
@@ -245,7 +249,7 @@ func (t *Tools) install(ctx context.Context, path, url, checksum string) (*tools
 	}
 
 	// Write installed.json for retrocompatibility with v1
-	err = writeInstalled(t.folder, path)
+	err = t.writeInstalled(path)
 	if err != nil {
 		return nil, err
 	}
@@ -285,59 +289,51 @@ func rename(base string) extract.Renamer {
 	}
 }
 
-func readInstalled(installedFile string) (map[string]string, error) {
+func (t *Tools) readInstalled() error {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	// read installed.json
-	installed := map[string]string{}
+	installedFile, err := utilities.SafeJoin(t.folder, "installed.json")
+	if err != nil {
+		return err
+	}
 	data, err := os.ReadFile(installedFile)
-	if err == nil {
-		err = json.Unmarshal(data, &installed)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return installed, nil
-}
-
-func checkInstalled(folder, key string) (string, bool, error) {
-	installedFile, err := utilities.SafeJoin(folder, "installed.json")
-	if err != nil {
-		return "", false, err
-	}
-	installed, err := readInstalled(installedFile)
-	if err != nil {
-		return "", false, err
-	}
-	location, ok := installed[key]
-	return location, ok, err
-}
-
-func writeInstalled(folder, path string) error {
-	// read installed.json
-	installedFile, err := utilities.SafeJoin(folder, "installed.json")
 	if err != nil {
 		return err
 	}
-	installed, err := readInstalled(installedFile)
-	if err != nil {
-		return err
-	}
+	return json.Unmarshal(data, &t.installed)
+}
+
+func (t *Tools) writeInstalled(path string) error {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 
 	parts := strings.Split(path, string(filepath.Separator))
 	tool := parts[len(parts)-2]
 	toolWithVersion := fmt.Sprint(tool, "-", parts[len(parts)-1])
-	toolFile, err := utilities.SafeJoin(folder, path)
+	toolFile, err := utilities.SafeJoin(t.folder, path)
 	if err != nil {
 		return err
 	}
-	installed[tool] = toolFile
-	installed[toolWithVersion] = toolFile
+	t.installed[tool] = toolFile
+	t.installed[toolWithVersion] = toolFile
 
-	data, err := json.Marshal(installed)
+	data, err := json.Marshal(t.installed)
+	if err != nil {
+		return err
+	}
+
+	installedFile, err := utilities.SafeJoin(t.folder, "installed.json")
 	if err != nil {
 		return err
 	}
 
 	return os.WriteFile(installedFile, data, 0644)
+}
+
+// SetBehaviour sets the download behaviour to either keep or replace
+func (t *Tools) SetBehaviour(behaviour string) {
+	t.behaviour = behaviour
 }
 
 func pathExists(path string) bool {

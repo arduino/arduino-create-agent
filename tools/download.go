@@ -25,7 +25,6 @@ import (
 
 	"github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/utilities"
-	"github.com/arduino/arduino-create-agent/v2/pkgs"
 )
 
 // Download will parse the index at the indexURL for the tool to download.
@@ -45,8 +44,8 @@ import (
 // if it already exists.
 func (t *Tools) Download(pack, name, version, behaviour string) error {
 
-	tool := pkgs.New(t.index, t.directory.String(), behaviour)
-	_, err := tool.Install(context.Background(), &tools.ToolPayload{Name: name, Version: version, Packager: pack})
+	t.tools.SetBehaviour(behaviour)
+	_, err := t.tools.Install(context.Background(), &tools.ToolPayload{Name: name, Version: version, Packager: pack})
 	if err != nil {
 		return err
 	}
