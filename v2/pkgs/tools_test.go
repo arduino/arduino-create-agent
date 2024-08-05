@@ -245,7 +245,7 @@ func TestInstall(t *testing.T) {
 		"rp2040tools-1.0.6":        {"elf2uf2", "picotool", "pioasm", "rp2040load"},
 		"esptool_py-4.5.1":         {"esptool"},
 		"arduino-fwuploader-2.2.2": {"arduino-fwuploader"},
-		// "esptool-2.5.0-3-20ed2b9":  {"esptool"}, // we don't check if there is esptool in the archive becase it's the same archive even on windows (no extension)
+		// "esptool-2.5.0-3-20ed2b9":  {"esptool"}, // we don't check if there is esptool in the archive because it's the same archive even on windows (no extension)
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name+"-"+tc.Version, func(t *testing.T) {
