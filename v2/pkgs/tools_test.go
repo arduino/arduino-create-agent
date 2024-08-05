@@ -231,7 +231,7 @@ func TestInstall(t *testing.T) {
 		{Name: "rp2040tools", Version: "1.0.6", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
 		{Name: "esptool_py", Version: "4.5.1", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
 		{Name: "arduino-fwuploader", Version: "2.2.2", Packager: "arduino-test", URL: nil, Checksum: nil, Signature: nil},
-		// test download of a tool not present in index. See https://github.com/arduino/arduino-create-agent/issues/980
+		// test download of a tool not present in index. the same archive is downloaded on linux/win/mac See https://github.com/arduino/arduino-create-agent/issues/980
 		{Name: "esptool", Version: "2.5.0-3-20ed2b9", Packager: "esp8266", URL: strpoint("https://github.com/earlephilhower/esp-quick-toolchain/releases/download/2.5.0-3/x86_64-linux-gnu.esptool-f80ae31.tar.gz"), Checksum: strpoint("SHA-256:bded1dca953377838b6086a9bcd40a1dc5286ba5f69f2372c22a1d1819baad24"), Signature: strpoint("852b58871419ce5e5633ecfaa72c0f0fa890ceb51164b362b8133bc0e3e003a21cec48935b8cdc078f4031219cbf17fb7edd9d7c9ca8ed85492911c9ca6353c9aa4691eb91fda99563a6bd49aeca0d9981fb05ec76e45c6024f8a6822862ad1e34ddc652fbbf4fa909887a255d4f087398ec386577efcec523c21203be3d10fc9e9b0f990a7536875a77dc2bc5cbffea7734b62238e31719111b718bacccebffc9be689545540e81d23b81caa66214376f58a0d6a45cf7efc5d3af62ab932b371628162fffe403906f41d5534921e5be081c5ac2ecc9db5caec03a105cc44b00ce19a95ad079843501eb8182e0717ce327867380c0e39d2b48698547fc1d0d66")},
 	}
 
@@ -245,7 +245,7 @@ func TestInstall(t *testing.T) {
 		"rp2040tools-1.0.6":        {"elf2uf2", "picotool", "pioasm", "rp2040load"},
 		"esptool_py-4.5.1":         {"esptool"},
 		"arduino-fwuploader-2.2.2": {"arduino-fwuploader"},
-		"esptool-2.5.0-3-20ed2b9":  {"esptool"},
+		// "esptool-2.5.0-3-20ed2b9":  {"esptool"}, // we don't check if there is esptool in the archive becase it's the same archive even on windows (no extension)
 	}
 	for _, tc := range testCases {
 		t.Run(tc.Name+"-"+tc.Version, func(t *testing.T) {
