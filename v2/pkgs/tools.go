@@ -290,8 +290,8 @@ func rename(base string) extract.Renamer {
 }
 
 func (t *Tools) readInstalled() error {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
 	// read installed.json
 	installedFile, err := utilities.SafeJoin(t.folder, "installed.json")
 	if err != nil {
@@ -305,8 +305,8 @@ func (t *Tools) readInstalled() error {
 }
 
 func (t *Tools) writeInstalled(path string) error {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 
 	parts := strings.Split(path, string(filepath.Separator))
 	tool := parts[len(parts)-2]
