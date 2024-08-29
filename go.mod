@@ -1,6 +1,8 @@
 module github.com/arduino/arduino-create-agent
 
-go 1.21
+go 1.22
+
+toolchain go1.22.3
 
 require (
 	fyne.io/systray v1.10.0
@@ -9,7 +11,7 @@ require (
 	github.com/arduino/go-serial-utils v0.1.2
 	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/codeclysm/extract/v3 v3.1.1
+	github.com/codeclysm/extract/v4 v4.0.0
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-ini/ini v1.62.0
@@ -71,7 +73,7 @@ require (
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go v1.1.6 // indirect
-	github.com/ulikunitz/xz v0.5.11 // indirect
+	github.com/ulikunitz/xz v0.5.12 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
