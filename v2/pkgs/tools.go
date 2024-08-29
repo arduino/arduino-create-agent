@@ -35,7 +35,7 @@ import (
 	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/blang/semver"
-	"github.com/codeclysm/extract/v3"
+	"github.com/codeclysm/extract/v4"
 )
 
 // public vars to allow override in the tests

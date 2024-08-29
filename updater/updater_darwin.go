@@ -26,7 +26,7 @@ import (
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	"github.com/codeclysm/extract/v3"
+	"github.com/codeclysm/extract/v4"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )

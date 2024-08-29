@@ -31,7 +31,7 @@ on:
 
 env:
   PROJECT_NAME: arduino-cloud-agent
-  GO_VERSION: "1.21"
+  GO_VERSION: "1.23"
 
 jobs:
   run-determination:
