@@ -1,8 +1,6 @@
 module github.com/arduino/arduino-create-agent
 
-go 1.22
-
-toolchain go1.22.3
+go 1.23.0
 
 require (
 	fyne.io/systray v1.10.0
