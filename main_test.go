@@ -18,6 +18,7 @@ package main
 import (
 	"bytes"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -56,6 +57,11 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 	r.POST("/", uploadHandler)
 	ts := httptest.NewServer(r)
 
+	fmt.Println(base64.StdEncoding.EncodeToString([]byte("test")))
+
+	//Padding: dGVzdA==
+	//Raw: dGVzdA
+
 	uploadEvilFileName := Upload{
 		Port:       "/dev/ttyACM0",
 		Board:      "arduino:avr:uno",
@@ -85,6 +91,30 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, string(body), "unsafe path join")
 	}
+}
+
+func TestUploadHandlerAgainstBase64WithoutPaddingMustFail(t *testing.T) {
+	r := gin.New()
+	r.POST("/", uploadHandler)
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// When calling the `BindJSON` func, when a json field will be Unmarshaled
+	// in a []byte type, we expect to receive a base64 padded string in input.
+	// In case we receive a base64 unpadded string BindJSON fails.
+	// The expectation here is that the upload handler won't continue with the
+	// upload operation.
+	base64ContentWithoutPadding := base64.RawStdEncoding.EncodeToString([]byte("test"))
+	payload := fmt.Sprintf(`{"hex": "%s"}`, base64ContentWithoutPadding)
+
+	resp, err := http.Post(ts.URL, "encoding/json", bytes.NewBufferString(payload))
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Contains(t, string(body), "err with the payload. illegal base64 data at input")
 }
 
 func TestInstallToolV2(t *testing.T) {

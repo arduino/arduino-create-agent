@@ -80,9 +80,11 @@ type Upload struct {
 var uploadStatusStr = "ProgrammerStatus"
 
 func uploadHandler(c *gin.Context) {
-
 	data := new(Upload)
-	c.BindJSON(data)
+	if err := c.BindJSON(data); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("err with the payload. %v", err.Error()))
+		return
+	}
 
 	log.Printf("%+v %+v %+v %+v %+v %+v", data.Port, data.Board, data.Rewrite, data.Commandline, data.Extra, data.Filename)
 
