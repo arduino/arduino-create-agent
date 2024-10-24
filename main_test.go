@@ -57,11 +57,6 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 	r.POST("/", uploadHandler)
 	ts := httptest.NewServer(r)
 
-	fmt.Println(base64.StdEncoding.EncodeToString([]byte("test")))
-
-	//Padding: dGVzdA==
-	//Raw: dGVzdA
-
 	uploadEvilFileName := Upload{
 		Port:       "/dev/ttyACM0",
 		Board:      "arduino:avr:uno",
