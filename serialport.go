@@ -276,10 +276,8 @@ func spHandlerOpen(portname string, baud int) {
 		portName:     portname,
 	}
 
-	bw := NewBufferFlowTimed(portname, h.broadcastSys)
-	bw.Init()
-
-	p.bufferFlow = bw
+	p.bufferFlow = NewBufferFlowTimed(portname, h.broadcastSys)
+	p.bufferFlow.Init()
 
 	sh.Register(p)
 	defer sh.Unregister(p)
