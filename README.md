@@ -8,7 +8,7 @@
 [![Check Go Dependencies status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml)
 [![Check Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml)
 
-The Arduino Cloud Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Cloud Web Editor](https://app.arduino.cc/) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
+The Arduino Cloud Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Cloud](https://app.arduino.cc/) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ The Arduino Cloud Agent is a single binary that will sit on the traybar and work
 |                               |   Web socket   +----------------------+   flashes   +---------------+
 | +---------------------------+ |<-------------->|                      +------------>|               |
 | |                           | |                | Arduino Cloud Agent  |             | Arduino Board |
-| | Arduino Cloud Web Editor  | +--------------->|                      |<------------+               |
+| | Arduino Cloud             | +--------------->|                      |<------------+               |
 | |                           | |   REST API     +----------------------+   serial    +---------------+
 | +---------------------------+ |
 +-------------------------------+
