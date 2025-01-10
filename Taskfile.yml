@@ -1,6 +1,17 @@
 version: "3"
 
 tasks:
+
+  install:
+    desc: Install dependencies for local development
+    cmds:
+      - go install github.com/githubnemo/CompileDaemon@v1.4.0
+
+  run:
+    desc: Run the project locally with auto-reload and data race detector
+    cmds:
+      - CompileDaemon -build="go build -race" -command="./arduino-create-agent" -graceful-kill=true
+
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/check-dependencies-task/Taskfile.yml
   general:cache-dep-licenses:
     desc: Cache dependency license metadata
