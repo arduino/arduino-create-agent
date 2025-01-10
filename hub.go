@@ -154,6 +154,7 @@ func checkCmd(m []byte) {
 			buftype := strings.Replace(args[3], "\n", "", -1)
 			bufferAlgorithm = buftype
 		}
+		fmt.Println("bufferAlgorithm: ", bufferAlgorithm)
 		go spHandlerOpen(args[1], baud, bufferAlgorithm)
 
 	} else if strings.HasPrefix(sl, "close") {
