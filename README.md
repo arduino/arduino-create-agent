@@ -8,7 +8,7 @@
 [![Check Go Dependencies status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-dependencies-task.yml)
 [![Check Go status](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml/badge.svg)](https://github.com/arduino/arduino-create-agent/actions/workflows/check-go-task.yml)
 
-The Arduino Cloud Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Create applications](https://create.arduino.cc) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
+The Arduino Cloud Agent is a single binary that will sit on the traybar and work in the background. It allows you to use the [Arduino Cloud](https://app.arduino.cc/) to seamlessly upload code to any USB connected Arduino board (or Yún in LAN) directly from the browser.
 
 ## Architecture
 
@@ -18,8 +18,8 @@ The Arduino Cloud Agent is a single binary that will sit on the traybar and work
 |            Browser            |
 |                               |   Web socket   +----------------------+   flashes   +---------------+
 | +---------------------------+ |<-------------->|                      +------------>|               |
-| |                           | |                | Arduino Cloud Agent |             | Arduino Board |
-| | Arduino Create Web Editor | +--------------->|                      |<------------+               |
+| |                           | |                | Arduino Cloud Agent  |             | Arduino Board |
+| | Arduino Cloud             | +--------------->|                      |<------------+               |
 | |                           | |   REST API     +----------------------+   serial    +---------------+
 | +---------------------------+ |
 +-------------------------------+
@@ -27,11 +27,11 @@ The Arduino Cloud Agent is a single binary that will sit on the traybar and work
 
 ## Installation
 
-Get the [latest version](https://github.com/arduino/arduino-create-agent/releases) of the Agent for all supported platforms or complete the [Getting Started](https://create.arduino.cc/getting-started/plugin/welcome).
+Get the [latest version](https://github.com/arduino/arduino-create-agent/releases) of the Agent for all supported platforms or complete the [Getting Started](https://cloud.arduino.cc/download-agent/).
 
 ## Apple silicon support
 
-The Arduino Agent is supported both on Intel and Apple silicon computers. This includes devices with the M1, M2 and M3 processors.  
+The Arduino Agent is supported both on Intel and Apple silicon computers. This includes devices with the M1, M2 and M3 processors.
 The Arduino Agent is built both for Intel architectures and Apple silicon devices, but distributed as a single universal executable for macOS.
 
 ## Documentation
