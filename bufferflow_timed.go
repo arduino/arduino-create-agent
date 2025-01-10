@@ -33,8 +33,8 @@ type BufferflowTimed struct {
 	bufferedOutput string
 }
 
-// NewBufferflowTimed will create a new timed bufferflow
-func NewBufferflowTimed(port string, output chan<- []byte) *BufferflowTimed {
+// NewBufferFlowTimed will create a new timed bufferflow
+func NewBufferFlowTimed(port string, output chan<- []byte) *BufferflowTimed {
 	return &BufferflowTimed{
 		port:           port,
 		output:         output,

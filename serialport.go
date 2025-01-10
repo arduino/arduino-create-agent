@@ -21,7 +21,6 @@ import (
 	"io"
 	"strconv"
 	"time"
-	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
 	serial "go.bug.st/serial"
@@ -56,10 +55,7 @@ type serport struct {
 	// channel containing raw base64 encoded binary data (outbound messages)
 	sendRaw chan string
 
-	// Do we have an extra channel/thread to watch our buffer?
-	BufferType string
-	//bufferwatcher *BufferflowDummypause
-	bufferwatcher Bufferflow
+	bufferFlow *BufferflowTimed
 }
 
 // SpPortMessage is the serial port message
@@ -74,10 +70,9 @@ type SpPortMessageRaw struct {
 	D []byte // the data, i.e. G0 X0 Y0
 }
 
-func (p *serport) reader(buftype string) {
+func (p *serport) reader() {
 
 	timeCheckOpen := time.Now()
-	var bufferedCh bytes.Buffer
 
 	serialBuffer := make([]byte, 1024)
 	for {
@@ -95,39 +90,8 @@ func (p *serport) reader(buftype string) {
 		// read can return legitimate bytes as well as an error
 		// so process the n bytes red, if n > 0
 		if n > 0 && err == nil {
-
 			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(bufferPart[:n]))
-
-			data := ""
-			switch buftype {
-			case "timedraw", "timed":
-				data = string(bufferPart[:n])
-				// give the data to our bufferflow so it can do it's work
-				// to read/translate the data to see if it wants to block
-				// writes to the serialport. each bufferflow type will decide
-				// this on its own based on its logic
-				p.bufferwatcher.OnIncomingData(data)
-			case "default": // the bufferbuftype is actually called default 🤷‍♂️
-				// save the left out bytes for the next iteration due to UTF-8 encoding
-				bufferPart = append(bufferedCh.Bytes(), bufferPart[:n]...)
-				n += len(bufferedCh.Bytes())
-				bufferedCh.Reset()
-				for i, w := 0, 0; i < n; i += w {
-					runeValue, width := utf8.DecodeRune(bufferPart[i:n]) // try to decode the first i bytes in the buffer (UTF8 runes do not have a fixed length)
-					if runeValue == utf8.RuneError {
-						bufferedCh.Write(bufferPart[i:n])
-						break
-					}
-					if i == n {
-						bufferedCh.Reset()
-					}
-					data += string(runeValue)
-					w = width
-				}
-				p.bufferwatcher.OnIncomingData(data)
-			default:
-				log.Panicf("unknown buffer type %s", buftype)
-			}
+			p.bufferFlow.OnIncomingData(string(bufferPart[:n]))
 		}
 
 		// double check that we got characters in the buffer
@@ -272,7 +236,7 @@ func (p *serport) writerRaw() {
 	h.broadcastSys <- []byte(msgstr)
 }
 
-func spHandlerOpen(portname string, baud int, buftype string) {
+func spHandlerOpen(portname string, baud int) {
 
 	log.Print("Inside spHandler")
 
@@ -311,23 +275,12 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 		portConf:     conf,
 		portIo:       sp,
 		portName:     portname,
-		BufferType:   buftype}
-
-	var bw Bufferflow
-
-	switch buftype {
-	case "timed":
-		bw = NewBufferflowTimed(portname, h.broadcastSys)
-	case "timedraw":
-		bw = NewBufferflowTimedRaw(portname, h.broadcastSys)
-	case "default":
-		bw = NewBufferflowDefault(portname, h.broadcastSys)
-	default:
-		log.Panicf("unknown buffer type: %s", buftype)
 	}
 
+	bw := NewBufferFlowTimed(portname, h.broadcastSys)
 	bw.Init()
-	p.bufferwatcher = bw
+
+	p.bufferFlow = bw
 
 	sh.Register(p)
 	defer sh.Unregister(p)
@@ -342,14 +295,14 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	// this is thread to send to serial port but with base64 decoding
 	go p.writerRaw()
 
-	p.reader(buftype)
+	p.reader()
 
 	serialPorts.List()
 }
 
 func (p *serport) Close() {
 	p.isClosing = true
-	p.bufferwatcher.Close()
+	p.bufferFlow.Close()
 	p.portIo.Close()
 	serialPorts.MarkPortAsClosed(p.portName)
 	serialPorts.List()

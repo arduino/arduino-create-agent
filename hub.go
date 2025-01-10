@@ -146,16 +146,8 @@ func checkCmd(m []byte) {
 			go spErr("Problem converting baud rate " + args[2])
 			return
 		}
-		// pass in buffer type now as string. if user does not
-		// ask for a buffer type pass in empty string
-		bufferAlgorithm := "default" // use the default buffer if none is specified
-		if len(args) > 3 {
-			// cool. we got a buffer type request
-			buftype := strings.Replace(args[3], "\n", "", -1)
-			bufferAlgorithm = buftype
-		}
-		fmt.Println("bufferAlgorithm: ", bufferAlgorithm)
-		go spHandlerOpen(args[1], baud, bufferAlgorithm)
+
+		go spHandlerOpen(args[1], baud)
 
 	} else if strings.HasPrefix(sl, "close") {
 

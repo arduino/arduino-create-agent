@@ -67,7 +67,7 @@ var sh = serialhub{
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Registering a port: ", p.portConf.Name)
-	h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "\"}")
 	sh.ports[port] = true
 	sh.mu.Unlock()
 }
