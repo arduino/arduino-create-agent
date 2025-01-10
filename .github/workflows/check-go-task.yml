@@ -82,7 +82,7 @@ jobs:
           version: 3.x
 
       - name: Install Dependencies
-        run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.0 libappindicator3-dev
+        run: sudo apt update && sudo apt install -y --no-install-recommends build-essential libgtk-3-dev libwebkit2gtk-4.1-0 libappindicator3-dev
 
       - name: Check for errors
         env:
