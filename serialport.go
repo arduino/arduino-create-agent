@@ -77,7 +77,6 @@ func (p *serport) reader() {
 	serialBuffer := make([]byte, 1024)
 	for {
 		n, err := p.portIo.Read(serialBuffer)
-		bufferPart := serialBuffer[:n]
 
 		//if we detect that port is closing, break out of this for{} loop.
 		if p.isClosing {
@@ -90,8 +89,8 @@ func (p *serport) reader() {
 		// read can return legitimate bytes as well as an error
 		// so process the n bytes red, if n > 0
 		if n > 0 && err == nil {
-			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(bufferPart[:n]))
-			p.bufferFlow.OnIncomingData(string(bufferPart[:n]))
+			log.Print("Read " + strconv.Itoa(n) + " bytes ch: " + string(serialBuffer[:n]))
+			p.bufferFlow.OnIncomingData(string(serialBuffer[:n]))
 		}
 
 		// double check that we got characters in the buffer
