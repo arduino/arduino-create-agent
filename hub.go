@@ -147,6 +147,7 @@ func checkCmd(m []byte) {
 			return
 		}
 
+		// Ignore extra "buffer type" param for backward compatibility
 		if len(args) > 3 {
 			log.Warn(fmt.Sprintf("Unexpected arguments for the open command. Ignored arguments: '%s'.", args[3:]))
 		}
