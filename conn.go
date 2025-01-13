@@ -220,7 +220,6 @@ func wsHandler() *WsServer {
 		c := &connection{send: make(chan []byte, 256*10), ws: so}
 		h.register <- c
 		so.On("command", func(message string) {
-			fmt.Println("command:", message)
 			h.broadcast <- []byte(message)
 		})
 
