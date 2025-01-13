@@ -22,8 +22,10 @@ import (
 	_ "embed"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"html/template"
 	"io"
+	"net/http"
 	"os"
 	"regexp"
 	"runtime"
@@ -45,6 +47,7 @@ import (
 	cors "github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-ini/ini"
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	//"github.com/sanbornm/go-selfupdate/selfupdate" #included in update.go to change heavily
 )
@@ -463,6 +466,15 @@ func loop() {
 	r.POST("/pause", pauseHandler)
 	r.POST("/update", updateHandler)
 
+	// TODO: temporary using a different port for the websocket server
+	go func() {
+		http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+			ServeWS(w, r)
+		})
+		fmt.Println("Starting server and websocket on " + *address + ":9001")
+		log.Fatal(http.ListenAndServe(*address+":9001", nil))
+	}()
+
 	// Mount goa handlers
 	goa := v2.Server(config.GetDataDir().String(), Index)
 	r.Any("/v2/*path", gin.WrapH(goa))
@@ -556,4 +568,23 @@ func installCertsKeyExists(filename string) (bool, error) {
 
 func promptInstallCertsSafari() bool {
 	return utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.", "{\"Do not install\", \"Install the certificate for Safari\"}", "Install the certificate for Safari", "Install the certificate for Safari", "Arduino Agent: Install certificate")
+}
+
+var upgrader = websocket.Upgrader{}
+
+func ServeWS(w http.ResponseWriter, r *http.Request) {
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		// TODO: check origin with the list of allowed origins
+		return true
+	}
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("upgrade:", err)
+		return
+	}
+
+	defer ws.Close()
+	fmt.Println("[WS] Client connected")
+	ws.WriteMessage(websocket.TextMessage, []byte("Hello, client!"))
 }

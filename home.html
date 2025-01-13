@@ -43,6 +43,26 @@
           });
       });
 
+      window.onload = function () {
+        var conn;
+        if (window["WebSocket"]) {
+            console.log("Connecting to websocket", "ws://" + document.location.host + "/ws");
+            conn = new WebSocket("ws://127.0.0.1:9001/ws");
+            conn.onclose = function (evt) {
+                console.log("Closing: " + evt);
+            };
+            conn.onmessage = function (evt) {
+               console.log("Received: " + evt.data);
+               const wsLog = document.getElementById("ws-log");
+               wsLog.textContent = evt.data;
+            };
+        } else {
+            var item = document.createElement("div");
+            item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+            appendLog(item);
+        }
+      };
+
       function getListMsgVisibility() {
         // Check if the list visibility setting is saved in the localStorage.
         let savedSetting = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -309,6 +329,7 @@
   <body>
     <div id="container">
       <div class="logs">
+        <pre id="ws-log"></pre>
         <pre id="log"></pre>
         <pre id="log-list"></pre>
       </div>
