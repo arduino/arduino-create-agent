@@ -32,6 +32,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	cert "github.com/arduino/arduino-create-agent/certificates"
@@ -467,9 +468,10 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// TODO: temporary using a different port for the websocket server
+	hub := newHub()
 	go func() {
 		http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-			ServeWS(w, r)
+			ServeWS(hub, w, r)
 		})
 		fmt.Println("Starting server and websocket on " + *address + ":9001")
 		log.Fatal(http.ListenAndServe(*address+":9001", nil))
@@ -570,21 +572,91 @@ func promptInstallCertsSafari() bool {
 	return utilities.UserPrompt("The Arduino Agent needs a local HTTPS certificate to work correctly with Safari.\nIf you use Safari, you need to install it.", "{\"Do not install\", \"Install the certificate for Safari\"}", "Install the certificate for Safari", "Install the certificate for Safari", "Arduino Agent: Install certificate")
 }
 
-var upgrader = websocket.Upgrader{}
-
-func ServeWS(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool {
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
 		// TODO: check origin with the list of allowed origins
 		return true
-	}
+	},
+}
 
-	ws, err := upgrader.Upgrade(w, r, nil)
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer.
+	maxMessageSize = 512
+)
+
+func ServeWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("upgrade:", err)
+		log.Error("upgrade:", err)
 		return
 	}
+	defer hub.unregister(conn)
 
-	defer ws.Close()
-	fmt.Println("[WS] Client connected")
-	ws.WriteMessage(websocket.TextMessage, []byte("Hello, client!"))
+	hub.register(conn)
+
+	read(hub, conn)
+}
+
+func read(hub *Hub, conn *websocket.Conn) {
+
+	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
+		log.Info("Received message from client: " + string(message))
+		hub.broadcast(message)
+	}
+}
+
+type Hub struct {
+	// Registered clients.
+	clients map[*websocket.Conn]bool
+	mu      sync.Mutex
+}
+
+func newHub() *Hub {
+	return &Hub{
+		clients: make(map[*websocket.Conn]bool),
+	}
+}
+
+func (h *Hub) register(conn *websocket.Conn) {
+	defer h.mu.Unlock()
+	h.mu.Lock()
+	h.clients[conn] = true
+	conn.WriteMessage(websocket.TextMessage, []byte("Hello, client!"))
+}
+
+func (h *Hub) unregister(conn *websocket.Conn) {
+	defer h.mu.Unlock()
+	h.mu.Lock()
+	delete(h.clients, conn)
+	conn.Close()
+}
+
+func (h *Hub) broadcast(message []byte) {
+	for conn := range h.clients {
+		log.Info("Broadcasting message to client" + conn.RemoteAddr().String())
+		err := conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			// TODO: handle error
+			log.Println("write:", err)
+		}
+	}
 }
