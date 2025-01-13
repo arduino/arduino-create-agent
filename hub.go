@@ -147,6 +147,10 @@ func checkCmd(m []byte) {
 			return
 		}
 
+		if len(args) > 3 {
+			log.Warn(fmt.Sprintf("Unexpected arguments for the open command. Ignored arguments: '%s'.", args[3:]))
+		}
+
 		go spHandlerOpen(args[1], baud)
 
 	} else if strings.HasPrefix(sl, "close") {
