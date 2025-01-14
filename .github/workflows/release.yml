@@ -286,6 +286,11 @@ jobs:
             -k "${{ env.KEYCHAIN_PASSWORD }}" \
             "${{ env.KEYCHAIN }}"
 
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
       - name: Install gon for code signing
         uses: actions/checkout@v4
         with:
