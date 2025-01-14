@@ -48,7 +48,7 @@ func NewBufferFlowTimed(port string, output chan<- []byte) *BufferflowTimed {
 
 // Init will initialize the bufferflow
 func (b *BufferflowTimed) Init() {
-	log.Println("Initting timed buffer flow (output once every 16ms)")
+	log.Println("Start consuming from serial (output once every 16ms)")
 	go b.consumeInput()
 }
 
