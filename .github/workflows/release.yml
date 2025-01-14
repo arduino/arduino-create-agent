@@ -32,7 +32,7 @@ jobs:
       prerelease: ${{ steps.prerelease.outputs.IS_PRE }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-14]
+        os: [ubuntu-20.04, windows-2019, macos-13]
         arch: [amd64]
         include:
           - os: windows-2019
@@ -116,7 +116,7 @@ jobs:
         run: |
           task go:build
           mv ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}_amd64
-        if: matrix.os == 'macos-14'
+        if: matrix.os == 'macos-13'
 
       - name: Build the Agent for macos arm64
         env:
@@ -128,13 +128,13 @@ jobs:
         run: |
           task go:build
           mv ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}_arm64
-        if: matrix.os == 'macos-14'
+        if: matrix.os == 'macos-13'
 
       - name: Create universal macos executable
         run: |
           lipo -create -output ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME }}_amd64 ${{ env.PROJECT_NAME }}_arm64
           rm ${{ env.PROJECT_NAME }}_amd64 ${{ env.PROJECT_NAME }}_arm64
-        if: matrix.os == 'macos-14'
+        if: matrix.os == 'macos-13'
 
         # this will create `public/` dir with compressed full bin (<version>/<os>-<arch>.gz) and a json file
       - name: Create autoupdate files
@@ -146,7 +146,7 @@ jobs:
         run: |
           cp darwin-amd64.json darwin-arm64.json
           cp ${TAG_VERSION}/darwin-amd64.gz ${TAG_VERSION}/darwin-arm64.gz
-        if: matrix.os == 'macos-14' && steps.prerelease.outputs.IS_PRE != 'true'
+        if: matrix.os == 'macos-13' && steps.prerelease.outputs.IS_PRE != 'true'
 
       - name: Create autoupdate files for win32
         run: go-selfupdate -platform windows-${{ matrix.arch }} ${{ env.PROJECT_NAME }}${{ matrix.ext }} ${TAG_VERSION}
@@ -181,7 +181,7 @@ jobs:
       matrix:
         arch: [amd64, arm64]
 
-    runs-on: macos-14
+    runs-on: macos-13
     env:
       EXE_PATH: "skel/ArduinoCloudAgent.app/Contents/MacOS/"
 
@@ -195,7 +195,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.PROJECT_NAME }}-macos-14-amd64 # if we want to support darwin-arm64 in the future for real this has to change.
+          name: ${{ env.PROJECT_NAME }}-macos-13-amd64 # if we want to support darwin-arm64 in the future for real this has to change.
           path: ${{ env.EXE_PATH }}
 
       - name: Remove placeholder file
@@ -252,7 +252,7 @@ jobs:
       matrix:
         arch: [amd64, arm64]
 
-    runs-on: macos-14
+    runs-on: macos-13
     env:
       GON_PATH: ${{ github.workspace }}/gon
     needs: [build, create-macos-bundle]
@@ -509,7 +509,7 @@ jobs:
       matrix:
         arch: [amd64]
 
-    runs-on: macos-14
+    runs-on: macos-13
     steps:
       - name: Checkout repo with icons/background
         uses: actions/checkout@v4
