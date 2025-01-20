@@ -20,7 +20,7 @@ import (
 	"encoding/base64"
 	"io"
 	"strconv"
-	"sync"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -44,9 +44,7 @@ type serport struct {
 
 	// Keep track of whether we're being actively closed
 	// just so we don't show scary error messages
-	isClosing bool
-
-	mu sync.Mutex
+	isClosing atomic.Bool
 
 	isClosingDueToError bool
 
@@ -87,15 +85,13 @@ func (p *serport) reader(buftype string) {
 		n, err := p.portIo.Read(serialBuffer)
 		bufferPart := serialBuffer[:n]
 
-		p.mu.Lock()
 		//if we detect that port is closing, break out of this for{} loop.
-		if p.isClosing {
+		if p.isClosing.Load() {
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
 			h.broadcastSys <- []byte(strmsg)
 			break
 		}
-		p.mu.Unlock()
 
 		// read can return legitimate bytes as well as an error
 		// so process the n bytes red, if n > 0
@@ -353,9 +349,7 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 }
 
 func (p *serport) Close() {
-	p.mu.Lock()
-	p.isClosing = true
-	p.mu.Unlock()
+	p.isClosing.Store(true)
 
 	p.bufferwatcher.Close()
 	p.portIo.Close()
