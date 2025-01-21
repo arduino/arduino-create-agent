@@ -108,7 +108,7 @@ func GetDefaultHomeDir() *paths.Path {
 	return paths.New(homeDir)
 }
 
-//go:embed config.ini
+//go:embed config-default.ini
 var configContent []byte
 
 // GenerateConfig function will take a directory path as an input

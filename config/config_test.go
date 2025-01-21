@@ -1,9 +1,9 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/sirupsen/logrus"
@@ -38,24 +38,52 @@ func TestGetConfigPath(t *testing.T) {
 		GetConfigPath()
 	})
 
-	t.Run("read config.ini from $HOME", func(t *testing.T) {
+	t.Run("read config.ini from $HOME/.config/ArduinoCreateAgent folder", func(t *testing.T) {
 		os.Setenv("HOME", "./testdata/home")
 		defer os.Unsetenv("HOME")
 		configPath := GetConfigPath()
 		assert.Equal(t, "testdata/home/.config/ArduinoCreateAgent/config.ini", configPath.String())
 	})
 
-	t.Run("fallback old : read config.ini where the binary is launched", func(t *testing.T) {
-		src, _ := os.Executable()
-		paths.New(src).Parent().Join("config.ini").Create() // create a config.ini in the same directory as the binary
-		// The fallback path is the directory where the binary is launched
-		fmt.Println(src)
-		os.Setenv("HOME", "./testdata/noconfig") // force to not have a config in the home directory
+	t.Run("legacy config are copied to new location", func(t *testing.T) {
+
+		createLegacyConfig := func() string {
+			// Create a "legacy" config.ini in the same directory as the binary executable
+			src, err := os.Executable()
+			if err != nil {
+				t.Fatal(err)
+			}
+			legacyConfigPath, err := paths.New(src).Parent().Join("config.ini").Create()
+			if err != nil {
+				t.Fatal(err)
+			}
+			// adding a timestamp to the content to make it unique
+			c := "hostname = legacy-config-file-" + time.Now().String()
+			n, err := legacyConfigPath.WriteString(c)
+			if err != nil || n <= 0 {
+				t.Fatalf("Failed to write legacy config file: %v", err)
+			}
+			return c
+		}
+
+		wantContent := createLegacyConfig()
+
+		// Expectation: it copies the "legacy" config.ini into the location pointed by $HOME
+		os.Setenv("HOME", "./testdata/fromlegacy")
 		defer os.Unsetenv("HOME")
 
-		// expect it creates a config.ini in the same directory as the binary
+		// remove any existing config.ini in the into the location pointed by $HOME
+		err := os.Remove("./testdata/fromlegacy/.config/ArduinoCreateAgent/config.ini")
+		if err != nil && !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+
 		configPath := GetConfigPath()
-		assert.Equal(t, "testdata/home/.config/ArduinoCreateAgent/config.ini", configPath.String())
+		assert.Equal(t, "testdata/fromlegacy/.config/ArduinoCreateAgent/config.ini", configPath.String())
+
+		given, err := paths.New(configPath.String()).ReadFile()
+		assert.Nil(t, err)
+		assert.Equal(t, wantContent, string(given))
 	})
 
 }
