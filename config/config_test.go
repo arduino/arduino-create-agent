@@ -86,4 +86,23 @@ func TestGetConfigPath(t *testing.T) {
 		assert.Equal(t, wantContent, string(given))
 	})
 
+	t.Run("write the default config.ini file", func(t *testing.T) {
+		os.Setenv("HOME", "./testdata/fromdefault")
+		os.Unsetenv("ARDUINO_CREATE_AGENT_CONFIG")
+
+		// ensure the config.ini does not exist in the target directory
+		os.Remove("./testdata/fromdefault/.config/ArduinoCreateAgent/config.ini")
+
+		configPath := GetConfigPath()
+
+		assert.Equal(t, "testdata/fromdefault/.config/ArduinoCreateAgent/config.ini", configPath.String())
+
+		givenContent, err := paths.New(configPath.String()).ReadFile()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, configContent, givenContent)
+	})
+
 }
