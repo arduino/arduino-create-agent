@@ -142,3 +142,41 @@ func SetInstallCertsIni(filename string, value string) error {
 	}
 	return nil
 }
+
+func GetConfigPath() *paths.Path {
+	// Let's handle the config
+	configDir := GetDefaultConfigDir()
+	var configPath *paths.Path
+
+	// see if the env var is defined, if it is take the config from there, this will override the default path
+	if envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG"); envConfig != "" {
+		configPath = paths.New(envConfig)
+		if configPath.NotExist() {
+			log.Panicf("config from env var %s does not exists", envConfig)
+		}
+		log.Infof("using config from env variable: %s", configPath)
+	} else if defaultConfigPath := configDir.Join("config.ini"); defaultConfigPath.Exist() {
+		// by default take the config from the ~/.arduino-create/config.ini file
+		configPath = defaultConfigPath
+		log.Infof("using config from default: %s", configPath)
+	} else {
+		// Fall back to the old config.ini location
+		src, _ := os.Executable()
+		oldConfigPath := paths.New(src).Parent().Join("config.ini")
+		if oldConfigPath.Exist() {
+			err := oldConfigPath.CopyTo(defaultConfigPath)
+			if err != nil {
+				log.Errorf("cannot copy old %s, to %s, generating new config", oldConfigPath, configPath)
+			} else {
+				configPath = defaultConfigPath
+				log.Infof("copied old %s, to %s", oldConfigPath, configPath)
+			}
+		}
+	}
+	if configPath == nil {
+		configPath = GenerateConfig(configDir)
+	}
+
+	return configPath
+
+}
