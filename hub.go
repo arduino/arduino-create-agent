@@ -223,9 +223,10 @@ func checkCmd(m []byte) {
 		go logAction(sl)
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
-		Systray.Restart()
+		// TODO enable them
+		// Systray.Restart()
 	} else if strings.HasPrefix(sl, "exit") {
-		Systray.Quit()
+		// Systray.Quit()
 	} else if strings.HasPrefix(sl, "memstats") {
 		memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
