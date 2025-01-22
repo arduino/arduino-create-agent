@@ -142,8 +142,11 @@ func main() {
 	// Check if certificates made with Agent <=1.2.7 needs to be moved over the new location
 	cert.MigrateCertificatesGeneratedWithOldAgentVersions(config.GetCertificatesDir())
 
+	configPath := config.GetConfigPath()
+	fmt.Println("configPath: ", configPath)
+
 	// Launch main loop in a goroutine
-	go loop()
+	go loop(configPath)
 
 	// SetupSystray is the main thread
 	configDir := config.GetDefaultConfigDir()
@@ -156,6 +159,7 @@ func main() {
 		AdditionalConfig: *additionalConfig,
 		ConfigDir:        configDir,
 	}
+	Systray.SetCurrentConfigFile(configPath)
 
 	if src, err := os.Executable(); err != nil {
 		panic(err)
@@ -166,9 +170,13 @@ func main() {
 	}
 }
 
-func loop() {
+func loop(configPath *paths.Path) {
 	if *hibernate {
 		return
+	}
+
+	if configPath == nil {
+		log.Panic("configPath is nil")
 	}
 
 	log.SetLevel(log.InfoLevel)
@@ -188,10 +196,6 @@ func loop() {
 		mapB, _ := json.Marshal(mapD)
 		h.broadcastSys <- mapB
 	}
-
-	configPath := config.GetConfigPath()
-
-	fmt.Println("configPath: ", configPath)
 
 	// if the default browser is Safari, prompt the user to install HTTPS certificates
 	// and eventually install them
@@ -230,7 +234,6 @@ func loop() {
 	if err != nil {
 		log.Panicf("cannot parse arguments: %s", err)
 	}
-	Systray.SetCurrentConfigFile(configPath)
 
 	// Parse additional ini config if defined
 	if len(*additionalConfig) > 0 {
