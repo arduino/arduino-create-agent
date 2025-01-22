@@ -79,116 +79,119 @@ type Upload struct {
 
 var uploadStatusStr = "ProgrammerStatus"
 
-func uploadHandler(c *gin.Context) {
-	data := new(Upload)
-	if err := c.BindJSON(data); err != nil {
-		c.String(http.StatusBadRequest, fmt.Sprintf("err with the payload. %v", err.Error()))
-		return
-	}
-
-	log.Printf("%+v %+v %+v %+v %+v %+v", data.Port, data.Board, data.Rewrite, data.Commandline, data.Extra, data.Filename)
-
-	if data.Port == "" {
-		c.String(http.StatusBadRequest, "port is required")
-		return
-	}
-
-	if data.Board == "" {
-		c.String(http.StatusBadRequest, "board is required")
-		log.Error("board is required")
-		return
-	}
-
-	if !data.Extra.Network {
-		if data.Signature == "" {
-			c.String(http.StatusBadRequest, "signature is required")
+func UploadHandler(h *hub) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		data := new(Upload)
+		if err := c.BindJSON(data); err != nil {
+			c.String(http.StatusBadRequest, fmt.Sprintf("err with the payload. %v", err.Error()))
 			return
 		}
 
-		if data.Commandline == "" {
-			c.String(http.StatusBadRequest, "commandline is required for local board")
+		log.Printf("%+v %+v %+v %+v %+v %+v", data.Port, data.Board, data.Rewrite, data.Commandline, data.Extra, data.Filename)
+
+		if data.Port == "" {
+			c.String(http.StatusBadRequest, "port is required")
 			return
 		}
 
-		err := utilities.VerifyInput(data.Commandline, data.Signature)
-
-		if err != nil {
-			c.String(http.StatusBadRequest, "signature is invalid")
+		if data.Board == "" {
+			c.String(http.StatusBadRequest, "board is required")
+			log.Error("board is required")
 			return
 		}
-	}
 
-	buffer := bytes.NewBuffer(data.Hex)
+		if !data.Extra.Network {
+			if data.Signature == "" {
+				c.String(http.StatusBadRequest, "signature is required")
+				return
+			}
 
-	filePath, err := utilities.SaveFileonTempDir(data.Filename, buffer)
-	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		return
-	}
+			if data.Commandline == "" {
+				c.String(http.StatusBadRequest, "commandline is required for local board")
+				return
+			}
 
-	tmpdir, err := os.MkdirTemp("", "extrafiles")
-	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		return
-	}
+			err := utilities.VerifyInput(data.Commandline, data.Signature)
 
-	for _, extraFile := range data.ExtraFiles {
-		path, err := utilities.SafeJoin(tmpdir, extraFile.Filename)
-		if err != nil {
-			c.String(http.StatusBadRequest, err.Error())
-			return
+			if err != nil {
+				c.String(http.StatusBadRequest, "signature is invalid")
+				return
+			}
 		}
-		log.Printf("Saving %s on %s", extraFile.Filename, path)
 
-		err = os.MkdirAll(filepath.Dir(path), 0744)
+		buffer := bytes.NewBuffer(data.Hex)
+
+		filePath, err := utilities.SaveFileonTempDir(data.Filename, buffer)
 		if err != nil {
 			c.String(http.StatusBadRequest, err.Error())
 			return
 		}
 
-		err = os.WriteFile(path, extraFile.Hex, 0644)
+		tmpdir, err := os.MkdirTemp("", "extrafiles")
 		if err != nil {
 			c.String(http.StatusBadRequest, err.Error())
 			return
 		}
+
+		for _, extraFile := range data.ExtraFiles {
+			path, err := utilities.SafeJoin(tmpdir, extraFile.Filename)
+			if err != nil {
+				c.String(http.StatusBadRequest, err.Error())
+				return
+			}
+			log.Printf("Saving %s on %s", extraFile.Filename, path)
+
+			err = os.MkdirAll(filepath.Dir(path), 0744)
+			if err != nil {
+				c.String(http.StatusBadRequest, err.Error())
+				return
+			}
+
+			err = os.WriteFile(path, extraFile.Hex, 0644)
+			if err != nil {
+				c.String(http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+
+		if data.Rewrite != "" {
+			data.Board = data.Rewrite
+		}
+
+		go func() {
+			// Resolve commandline
+			commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, Tools)
+			if err != nil {
+				send(h, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
+				return
+			}
+
+			l := PLogger{Verbose: true}
+
+			// Upload
+			if data.Extra.Network {
+				err = errors.New("network upload is not supported anymore, pease use OTA instead")
+			} else {
+				send(h, map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
+				err = upload.Serial(data.Port, commandline, data.Extra, l)
+			}
+
+			// Handle result
+			if err != nil {
+				send(h, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
+				return
+			}
+			send(h, map[string]string{uploadStatusStr: "Done", "Flash": "Ok"})
+		}()
+
+		c.String(http.StatusAccepted, "")
 	}
-
-	if data.Rewrite != "" {
-		data.Board = data.Rewrite
-	}
-
-	go func() {
-		// Resolve commandline
-		commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, Tools)
-		if err != nil {
-			send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
-			return
-		}
-
-		l := PLogger{Verbose: true}
-
-		// Upload
-		if data.Extra.Network {
-			err = errors.New("network upload is not supported anymore, pease use OTA instead")
-		} else {
-			send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
-			err = upload.Serial(data.Port, commandline, data.Extra, l)
-		}
-
-		// Handle result
-		if err != nil {
-			send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
-			return
-		}
-		send(map[string]string{uploadStatusStr: "Done", "Flash": "Ok"})
-	}()
-
-	c.String(http.StatusAccepted, "")
 }
 
 // PLogger sends the info from the upload to the websocket
 type PLogger struct {
 	Verbose bool
+	h       *hub
 }
 
 // Debug only sends messages if verbose is true (always true for now)
@@ -202,15 +205,15 @@ func (l PLogger) Debug(args ...interface{}) {
 func (l PLogger) Info(args ...interface{}) {
 	output := fmt.Sprint(args...)
 	log.Println(output)
-	send(map[string]string{uploadStatusStr: "Busy", "Msg": output})
+	send(l.h, map[string]string{uploadStatusStr: "Busy", "Msg": output})
 }
 
-func send(args map[string]string) {
+func send(h *hub, args map[string]string) {
 	mapB, _ := json.Marshal(args)
 	h.broadcastSys <- mapB
 }
 
-func wsHandler() *WsServer {
+func wsHandler(h *hub) *WsServer {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)

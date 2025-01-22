@@ -32,8 +32,13 @@ import (
 type serialhub struct {
 	// Opened serial ports.
 	ports map[*serport]bool
+	mu    sync.Mutex
+}
 
-	mu sync.Mutex
+func NewSerialHub() *serialhub {
+	return &serialhub{
+		ports: make(map[*serport]bool),
+	}
 }
 
 // SerialPortList is the serial port list
@@ -59,15 +64,11 @@ type SpPortItem struct {
 // serialPorts contains the ports attached to the machine
 var serialPorts SerialPortList
 
-var sh = serialhub{
-	ports: make(map[*serport]bool),
-}
-
 // Register serial ports from the connections.
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Registering a port: ", p.portConf.Name)
-	h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	sh.hub.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
 	sh.ports[port] = true
 	sh.mu.Unlock()
 }
@@ -76,7 +77,7 @@ func (sh *serialhub) Register(port *serport) {
 func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Unregistering a port: ", p.portConf.Name)
-	h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
+	sh.hub.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
 	delete(sh.ports, port)
 	close(port.sendBuffered)
 	close(port.sendNoBuf)
@@ -105,10 +106,10 @@ func (sp *SerialPortList) List() {
 
 	if err != nil {
 		//log.Println(err)
-		h.broadcastSys <- []byte("Error creating json on port list " +
+		sh.hub.broadcastSys <- []byte("Error creating json on port list " +
 			err.Error())
 	} else {
-		h.broadcastSys <- ls
+		sh.hub.broadcastSys <- ls
 	}
 }
 
@@ -257,13 +258,13 @@ func (sp *SerialPortList) getPortByName(portname string) *SpPortItem {
 
 func spErr(err string) {
 	//log.Println("Sending err back: ", err)
-	//h.broadcastSys <- []byte(err)
-	h.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
+	//sh.hub.broadcastSys <- []byte(err)
+	sh.hub.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
 }
 
 func spClose(portname string) {
 	if myport, ok := sh.FindPortByName(portname); ok {
-		h.broadcastSys <- []byte("Closing serial port " + portname)
+		sh.hub.broadcastSys <- []byte("Closing serial port " + portname)
 		myport.Close()
 	} else {
 		spErr("We could not find the serial port " + portname + " that you were trying to close.")

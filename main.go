@@ -107,14 +107,15 @@ var (
 	Index *index.Resource
 )
 
-type logWriter struct{}
+// TODO: enable it
+// type logWriter struct{}
 
-func (u *logWriter) Write(p []byte) (n int, err error) {
-	h.broadcastSys <- p
-	return len(p), nil
-}
+// func (u *logWriter) Write(p []byte) (n int, err error) {
+// 	h.broadcastSys <- p
+// 	return len(p), nil
+// }
 
-var loggerWs logWriter
+// var loggerWs logWriter
 
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
@@ -190,6 +191,8 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 		utilities.UserPrompt("Old agent installation of the Arduino Create Agent found, please uninstall it before launching the new one", "\"OK\"", "OK", "OK", "Error")
 		os.Exit(0)
 	}
+
+	h := NewHub()
 
 	logger := func(msg string) {
 		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -390,7 +393,7 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 
 	r := gin.New()
 
-	socketHandler := wsHandler().ServeHTTP
+	socketHandler := wsHandler(h).ServeHTTP
 
 	extraOrigins := []string{
 		"https://create.arduino.cc",
@@ -429,7 +432,7 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.POST("/upload", uploadHandler)
+	r.POST("/upload", UpdateHandler(stray))
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
 	r.Handle("WS", "/socket.io/", socketHandler)

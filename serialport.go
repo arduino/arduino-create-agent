@@ -273,7 +273,7 @@ func (p *serport) writerRaw() {
 	h.broadcastSys <- []byte(msgstr)
 }
 
-func spHandlerOpen(portname string, baud int, buftype string) {
+func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
 
 	log.Print("Inside spHandler")
 
@@ -330,8 +330,8 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	bw.Init()
 	p.bufferwatcher = bw
 
-	sh.Register(p)
-	defer sh.Unregister(p)
+	h.serialHub.Register(p)
+	defer h.serialHub.Unregister(p)
 
 	serialPorts.MarkPortAsOpened(portname)
 	serialPorts.List()

@@ -45,14 +45,20 @@ type hub struct {
 
 	// Unregister requests from connections.
 	unregister chan *connection
+
+	// Serial hub to communicate with serial ports
+	serialHub *serialhub
 }
 
-var h = hub{
-	broadcast:    make(chan []byte, 1000),
-	broadcastSys: make(chan []byte, 1000),
-	register:     make(chan *connection),
-	unregister:   make(chan *connection),
-	connections:  make(map[*connection]bool),
+func NewHub() *hub {
+	return &hub{
+		broadcast:    make(chan []byte, 1000),
+		broadcastSys: make(chan []byte, 1000),
+		register:     make(chan *connection),
+		unregister:   make(chan *connection),
+		connections:  make(map[*connection]bool),
+		serialHub:    NewSerialHub(),
+	}
 }
 
 const commands = `{
@@ -108,7 +114,7 @@ func (h *hub) run() {
 			h.unregisterConnection(c)
 		case m := <-h.broadcast:
 			if len(m) > 0 {
-				checkCmd(m)
+				h.checkCmd(m)
 				h.sendToRegisteredConnections(m)
 			}
 		case m := <-h.broadcastSys:
@@ -117,7 +123,7 @@ func (h *hub) run() {
 	}
 }
 
-func checkCmd(m []byte) {
+func (h *hub) checkCmd(m []byte) {
 	//log.Print("Inside checkCmd")
 	s := string(m[:])
 
@@ -154,7 +160,7 @@ func checkCmd(m []byte) {
 			buftype := strings.Replace(args[3], "\n", "", -1)
 			bufferAlgorithm = buftype
 		}
-		go spHandlerOpen(args[1], baud, bufferAlgorithm)
+		go h.spHandlerOpen(args[1], baud, bufferAlgorithm)
 
 	} else if strings.HasPrefix(sl, "close") {
 
@@ -228,13 +234,13 @@ func checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "exit") {
 		// Systray.Quit()
 	} else if strings.HasPrefix(sl, "memstats") {
-		memoryStats()
+		h.memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
-		garbageCollection()
+		h.garbageCollection()
 	} else if strings.HasPrefix(sl, "hostname") {
-		getHostname()
+		h.getHostname()
 	} else if strings.HasPrefix(sl, "version") {
-		getVersion()
+		h.getVersion()
 	} else {
 		go spErr("Could not understand command.")
 	}
@@ -254,7 +260,7 @@ func logAction(sl string) {
 	}
 }
 
-func memoryStats() {
+func (h *hub) memoryStats() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	json, _ := json.Marshal(memStats)
@@ -262,22 +268,22 @@ func memoryStats() {
 	h.broadcastSys <- json
 }
 
-func getHostname() {
+func (h *hub) getHostname() {
 	h.broadcastSys <- []byte("{\"Hostname\" : \"" + *hostname + "\"}")
 }
 
-func getVersion() {
+func (h *hub) getVersion() {
 	h.broadcastSys <- []byte("{\"Version\" : \"" + version + "\"}")
 }
 
-func garbageCollection() {
+func (h *hub) garbageCollection() {
 	log.Printf("Starting garbageCollection()\n")
 	h.broadcastSys <- []byte("{\"gc\":\"starting\"}")
-	memoryStats()
+	h.memoryStats()
 	debug.SetGCPercent(100)
 	debug.FreeOSMemory()
 	debug.SetGCPercent(-1)
 	log.Printf("Done with garbageCollection()\n")
 	h.broadcastSys <- []byte("{\"gc\":\"done\"}")
-	memoryStats()
+	h.memoryStats()
 }
