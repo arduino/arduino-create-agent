@@ -115,8 +115,6 @@ var (
 // 	return len(p), nil
 // }
 
-// var loggerWs logWriter
-
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
 }
@@ -192,7 +190,13 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 		os.Exit(0)
 	}
 
-	h := NewHub()
+	// serialPorts contains the ports attached to the machine
+	serialPorts := NewSerialPortList()
+	serialHub := NewSerialHub()
+
+	// var loggerWs logWriter
+
+	h := NewHub(serialHub, serialPorts)
 
 	logger := func(msg string) {
 		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -438,7 +442,7 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 	r.Handle("WS", "/socket.io/", socketHandler)
 	r.Handle("WSS", "/socket.io/", socketHandler)
 	r.GET("/info", infoHandler)
-	r.POST("/pause", PauseHandler(stray))
+	r.POST("/pause", PauseHandler(h, stray))
 	r.POST("/update", UpdateHandler(stray))
 
 	// Mount goa handlers

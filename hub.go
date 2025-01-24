@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
-	"io"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -46,19 +45,41 @@ type hub struct {
 	// Unregister requests from connections.
 	unregister chan *connection
 
+	//TODO globals clients
 	// Serial hub to communicate with serial ports
 	serialHub *serialhub
+
+	serialPortList *SerialPortList
 }
 
-func NewHub() *hub {
-	return &hub{
-		broadcast:    make(chan []byte, 1000),
-		broadcastSys: make(chan []byte, 1000),
-		register:     make(chan *connection),
-		unregister:   make(chan *connection),
-		connections:  make(map[*connection]bool),
-		serialHub:    NewSerialHub(),
+func NewHub(serialhub *serialhub, serialList *SerialPortList) *hub {
+	hub := &hub{
+		broadcast:      make(chan []byte, 1000),
+		broadcastSys:   make(chan []byte, 1000),
+		register:       make(chan *connection),
+		unregister:     make(chan *connection),
+		connections:    make(map[*connection]bool),
+		serialHub:      serialhub,
+		serialPortList: serialList,
 	}
+
+	hub.serialHub.OnRegister = func(port *serport) {
+		hub.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	}
+
+	hub.serialHub.OnUnregister = func(port *serport) {
+		hub.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
+	}
+
+	hub.serialPortList.OnList = func(data []byte) {
+		hub.broadcastSys <- data
+	}
+
+	hub.serialPortList.OnErr = func(err string) {
+		hub.broadcastSys <- []byte("{\"Error\":\"" + err + "\"}")
+	}
+
+	return hub
 }
 
 const commands = `{
@@ -138,18 +159,18 @@ func (h *hub) checkCmd(m []byte) {
 
 		args := strings.Split(s, " ")
 		if len(args) < 3 {
-			go spErr("You did not specify a port and baud rate in your open cmd")
+			go h.spErr("You did not specify a port and baud rate in your open cmd")
 			return
 		}
 		if len(args[1]) < 1 {
-			go spErr("You did not specify a serial port")
+			go h.spErr("You did not specify a serial port")
 			return
 		}
 
 		baudStr := strings.Replace(args[2], "\n", "", -1)
 		baud, err := strconv.Atoi(baudStr)
 		if err != nil {
-			go spErr("Problem converting baud rate " + args[2])
+			go h.spErr("Problem converting baud rate " + args[2])
 			return
 		}
 		// pass in buffer type now as string. if user does not
@@ -166,9 +187,9 @@ func (h *hub) checkCmd(m []byte) {
 
 		args := strings.Split(s, " ")
 		if len(args) > 1 {
-			go spClose(args[1])
+			go h.spClose(args[1])
 		} else {
-			go spErr("You did not specify a port to close")
+			go h.spErr("You did not specify a port to close")
 		}
 
 	} else if strings.HasPrefix(sl, "killupload") {
@@ -181,9 +202,9 @@ func (h *hub) checkCmd(m []byte) {
 
 	} else if strings.HasPrefix(sl, "send") {
 		// will catch send and sendnobuf and sendraw
-		go spWrite(s)
+		go h.spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
-		go serialPorts.List()
+		go h.serialPortList.List()
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		go func() {
 			args := strings.Split(s, " ")
@@ -242,15 +263,16 @@ func (h *hub) checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "version") {
 		h.getVersion()
 	} else {
-		go spErr("Could not understand command.")
+		go h.spErr("Could not understand command.")
 	}
 }
 
 func logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
-		multiWriter := io.MultiWriter(&loggerWs, os.Stderr)
-		log.SetOutput(multiWriter)
+		//TODO: pass the loggerSw in the constructor and enable again the log e
+		// multiWriter := io.MultiWriter(&loggerWs, os.Stderr)
+		// log.SetOutput(multiWriter)
 	} else if strings.HasPrefix(sl, "log off") {
 		*logDump = "off"
 		log.SetOutput(os.Stderr)

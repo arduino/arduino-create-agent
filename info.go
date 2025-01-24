@@ -41,12 +41,12 @@ func infoHandler(c *gin.Context) {
 	})
 }
 
-func PauseHandler(s *systray.Systray) func(c *gin.Context) {
+func PauseHandler(h *hub, s *systray.Systray) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		go func() {
 			ports, _ := serial.GetPortsList()
 			for _, element := range ports {
-				spClose(element)
+				h.spClose(element)
 			}
 			*hibernate = true
 			s.Pause()

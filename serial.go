@@ -19,8 +19,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -33,6 +33,9 @@ type serialhub struct {
 	// Opened serial ports.
 	ports map[*serport]bool
 	mu    sync.Mutex
+
+	OnRegister   func(port *serport)
+	OnUnregister func(port *serport)
 }
 
 func NewSerialHub() *serialhub {
@@ -45,6 +48,13 @@ func NewSerialHub() *serialhub {
 type SerialPortList struct {
 	Ports     []*SpPortItem
 	portsLock sync.Mutex
+
+	OnList func([]byte) `json:"-"`
+	OnErr  func(string) `json:"-"`
+}
+
+func NewSerialPortList() *SerialPortList {
+	return &SerialPortList{}
 }
 
 // SpPortItem is the serial port item
@@ -61,14 +71,11 @@ type SpPortItem struct {
 	ProductID       string
 }
 
-// serialPorts contains the ports attached to the machine
-var serialPorts SerialPortList
-
 // Register serial ports from the connections.
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Registering a port: ", p.portConf.Name)
-	sh.hub.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	sh.OnRegister(port)
 	sh.ports[port] = true
 	sh.mu.Unlock()
 }
@@ -77,7 +84,7 @@ func (sh *serialhub) Register(port *serport) {
 func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Unregistering a port: ", p.portConf.Name)
-	sh.hub.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
+	sh.OnUnregister(port)
 	delete(sh.ports, port)
 	close(port.sendBuffered)
 	close(port.sendNoBuf)
@@ -105,11 +112,9 @@ func (sp *SerialPortList) List() {
 	sp.portsLock.Unlock()
 
 	if err != nil {
-		//log.Println(err)
-		sh.hub.broadcastSys <- []byte("Error creating json on port list " +
-			err.Error())
+		sp.OnErr("Error creating json on port list " + err.Error())
 	} else {
-		sh.hub.broadcastSys <- ls
+		sp.OnList(ls)
 	}
 }
 
@@ -196,6 +201,7 @@ func (sp *SerialPortList) add(addedPort *discovery.Port) {
 
 	// If the port is already in the list, just update the metadata...
 	for _, oldPort := range sp.Ports {
+		fmt.Println("oldPort.Name: ", oldPort.Name)
 		if oldPort.Name == addedPort.Address {
 			oldPort.SerialNumber = props.Get("serialNumber")
 			oldPort.VendorID = vid
@@ -256,22 +262,22 @@ func (sp *SerialPortList) getPortByName(portname string) *SpPortItem {
 	return nil
 }
 
-func spErr(err string) {
+func (h *hub) spErr(err string) {
 	//log.Println("Sending err back: ", err)
 	//sh.hub.broadcastSys <- []byte(err)
-	sh.hub.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
+	h.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
 }
 
-func spClose(portname string) {
-	if myport, ok := sh.FindPortByName(portname); ok {
-		sh.hub.broadcastSys <- []byte("Closing serial port " + portname)
+func (h *hub) spClose(portname string) {
+	if myport, ok := h.serialHub.FindPortByName(portname); ok {
+		h.broadcastSys <- []byte("Closing serial port " + portname)
 		myport.Close()
 	} else {
-		spErr("We could not find the serial port " + portname + " that you were trying to close.")
+		h.spErr("We could not find the serial port " + portname + " that you were trying to close.")
 	}
 }
 
-func spWrite(arg string) {
+func (h *hub) spWrite(arg string) {
 	// we will get a string of comXX asdf asdf asdf
 	//log.Println("Inside spWrite arg: " + arg)
 	arg = strings.TrimPrefix(arg, " ")
@@ -280,7 +286,7 @@ func spWrite(arg string) {
 	if len(args) != 3 {
 		errstr := "Could not parse send command: " + arg
 		//log.Println(errstr)
-		spErr(errstr)
+		h.spErr(errstr)
 		return
 	}
 	bufferingMode := args[0]
@@ -291,10 +297,10 @@ func spWrite(arg string) {
 	//log.Println("The data is:" + data + "---")
 
 	// See if we have this port open
-	port, ok := sh.FindPortByName(portname)
+	port, ok := h.serialHub.FindPortByName(portname)
 	if !ok {
 		// we couldn't find the port, so send err
-		spErr("We could not find the serial port " + portname + " that you were trying to write to.")
+		h.spErr("We could not find the serial port " + portname + " that you were trying to write to.")
 		return
 	}
 
@@ -303,7 +309,7 @@ func spWrite(arg string) {
 	case "send", "sendnobuf", "sendraw":
 		// valid buffering mode, go ahead
 	default:
-		spErr("Unsupported send command:" + args[0] + ". Please specify a valid one")
+		h.spErr("Unsupported send command:" + args[0] + ". Please specify a valid one")
 		return
 	}
 
