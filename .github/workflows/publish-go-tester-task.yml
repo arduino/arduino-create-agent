@@ -65,7 +65,7 @@ jobs:
     #use the strategy instead because we still use the native build
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-12]
+        os: [ubuntu-20.04, windows-2019, macos-13]
         arch: [-amd64]
         include:
           - os: windows-2019
@@ -130,7 +130,7 @@ jobs:
           mv ${{ env.PROJECT_NAME }} ${{ env.PROJECT_NAME}}_amd64
         if: runner.os == 'macOS'
 
-      - name: Build the Agent for macos amd 64
+      - name: Build the Agent for macos arm 64
         env:
           MACOSX_DEPLOYMENT_TARGET: 10.15 # minimum supported version for mac
           CGO_CFLAGS: -mmacosx-version-min=10.15
