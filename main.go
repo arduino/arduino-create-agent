@@ -22,7 +22,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"html/template"
 	"io"
 	"os"
@@ -143,7 +142,6 @@ func main() {
 	cert.MigrateCertificatesGeneratedWithOldAgentVersions(config.GetCertificatesDir())
 
 	configPath := config.GetConfigPath()
-	fmt.Println("configPath: ", configPath)
 
 	// Launch main loop in a goroutine
 	go loop(configPath)
