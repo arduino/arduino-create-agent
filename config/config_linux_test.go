@@ -35,7 +35,7 @@ func TestGetConfigPathFromHOME(t *testing.T) {
 	configPath := GetConfigPath()
 
 	assert.Equal(t, "testdata/fromhome/.config/ArduinoCreateAgent/config.ini", configPath.String())
-	checkIniName(t, configPath, "this-is-a-config-file-from-home-di")
+	checkIniName(t, configPath, "this-is-a-config-file-from-home-dir")
 }
 
 // TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG tests the case when the config.ini is read from ARDUINO_CREATE_AGENT_CONFIG env variable
