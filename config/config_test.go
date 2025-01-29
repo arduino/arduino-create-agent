@@ -66,11 +66,8 @@ func TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied(t *testing.T) {
 	os.Setenv("HOME", "./testdata/home-without-config")
 
 	os.Unsetenv("ARDUINO_CREATE_AGENT_CONFIG")
-	// we want to test the case when the config does not exist in the home directory
-	err := os.Remove("./testdata/home-without-config/.config/ArduinoCreateAgent/config.ini")
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Clean the home folder by deleting the config.ini
+	os.Remove("./testdata/home-without-config/.config/ArduinoCreateAgent/config.ini")
 
 	configPath := GetConfigPath()
 
