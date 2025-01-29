@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/arduino/go-paths-helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,68 +26,35 @@ func TestGetConfigPathFromHOME(t *testing.T) {
 }
 
 func TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG(t *testing.T) {
-	// read config from ARDUINO_CREATE_AGENT_CONFIG/config.ini"
-	os.Setenv("HOME", "./fromhome")
-	os.Setenv("ARDUINO_CREATE_AGENT_CONFIG", "./testdata/fromenv/config.ini")
+	//  $HOME must be always set, otherwise panic
+	os.Setenv("HOME", "./testdata/dummyhome")
+
+	os.Setenv("ARDUINO_CREATE_AGENT_CONFIG", "./testdata/from-arduino-create-agent-config-env/config.ini")
 	defer os.Unsetenv("ARDUINO_CREATE_AGENT_CONFIG")
 
 	configPath := GetConfigPath()
-	assert.Equal(t, "./testdata/fromenv/config.ini", configPath.String())
+	assert.Equal(t, "./testdata/from-arduino-create-agent-config-env/config.ini", configPath.String())
 }
 
-// func TestGetConfigPathFromLegacyConfig(t *testing.T) {
-// 	// If no config is found, copy the legacy config to the new location
-// 	src, err := os.Executable()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	legacyConfigPath, err := paths.New(src).Parent().Join("config.ini").Create()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	// adding a timestamp to the content to make it unique
-// 	legacyContent := "hostname = legacy-config-file-" + time.Now().String()
-// 	n, err := legacyConfigPath.WriteString(legacyContent)
-// 	if err != nil || n <= 0 {
-// 		t.Fatalf("Failed to write legacy config file: %v", err)
-// 	}
+// If the ARDUINO_CREATE_AGENT_CONFIG is NOT set and the config.ini does not exist in HOME directory
+// then it copies the default config (the config.ini) into the HOME directory
+func TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied(t *testing.T) {
+	//  $HOME must be always set, otherwise panic
+	os.Setenv("HOME", "./testdata/home-without-config")
 
-// 	// remove any existing config.ini in the into the location pointed by $HOME
-// 	err = os.Remove("./testdata/fromlegacy/.config/ArduinoCreateAgent/config.ini")
-// 	if err != nil && !os.IsNotExist(err) {
-// 		t.Fatal(err)
-// 	}
+	os.Unsetenv("ARDUINO_CREATE_AGENT_CONFIG")
+	// we want to test the case when the config does not exist in the home directory
+	os.Remove("./testdata/home-without-config/.config/ArduinoCreateAgent/config.ini")
 
-// 	// Expectation: it copies the "legacy" config.ini into the location pointed by $HOME
-// 	os.Setenv("HOME", "./testdata/fromlegacy")
-// 	defer os.Unsetenv("HOME")
+	configPath := GetConfigPath()
 
-// 	configPath := GetConfigPath()
-// 	assert.Equal(t, "testdata/fromlegacy/.config/ArduinoCreateAgent/config.ini", configPath.String())
+	assert.Equal(t, "testdata/home-without-config/.config/ArduinoCreateAgent/config.ini", configPath.String())
 
-// 	given, err := paths.New(configPath.String()).ReadFile()
-// 	assert.Nil(t, err)
-// 	assert.Equal(t, legacyContent, string(given))
-// }
+	givenContent, err := paths.New(configPath.String()).ReadFile()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// func TestGetConfigPathCreateDefaultConfig(t *testing.T) {
-// 	os.Setenv("HOME", "./testdata/noconfig")
-// 	os.Unsetenv("ARDUINO_CREATE_AGENT_CONFIG")
+	assert.Equal(t, string(configContent), string(givenContent))
 
-// 	// ensure the config.ini does not exist in HOME directory
-// 	os.Remove("./testdata/noconfig/.config/ArduinoCreateAgent/config.ini")
-// 	// ensure the config.ini does not exist in target directory
-// 	os.Remove("./testdata/fromdefault/.config/ArduinoCreateAgent/config.ini")
-
-// 	configPath := GetConfigPath()
-
-// 	assert.Equal(t, "testdata/fromdefault/.config/ArduinoCreateAgent/config.ini", configPath.String())
-
-// 	givenContent, err := paths.New(configPath.String()).ReadFile()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	assert.Equal(t, string(configContent), string(givenContent))
-
-// }
+}
