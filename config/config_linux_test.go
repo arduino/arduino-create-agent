@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/arduino/go-paths-helper"
+	"github.com/go-ini/ini"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +19,9 @@ func TestGetConfigPathFromXDG_CONFIG_HOME(t *testing.T) {
 	os.Setenv("XDG_CONFIG_HOME", "./testdata/fromxdghome")
 	defer os.Unsetenv("XDG_CONFIG_HOME")
 	configPath := GetConfigPath()
+
 	assert.Equal(t, "testdata/fromxdghome/ArduinoCreateAgent/config.ini", configPath.String())
+	checkIniName(t, configPath, "this-is-a-config-file-from-xdghome-dir")
 }
 
 // TestGetConfigPathFromHOME tests the case when the config.ini is read from $HOME/.config/ArduinoCreateAgent/config.ini
@@ -29,8 +32,9 @@ func TestGetConfigPathFromHOME(t *testing.T) {
 	os.Setenv("HOME", "./testdata/fromhome")
 	defer os.Unsetenv("HOME")
 	configPath := GetConfigPath()
-	assert.Equal(t, "testdata/fromhome/.config/ArduinoCreateAgent/config.ini", configPath.String())
 
+	assert.Equal(t, "testdata/fromhome/.config/ArduinoCreateAgent/config.ini", configPath.String())
+	checkIniName(t, configPath, "this-is-a-config-file-from-home-di")
 }
 
 // TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG tests the case when the config.ini is read from ARDUINO_CREATE_AGENT_CONFIG env variable
@@ -46,7 +50,7 @@ func TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG(t *testing.T) {
 
 	configPath := GetConfigPath()
 	assert.Equal(t, "./testdata/from-arduino-create-agent-config-env/config.ini", configPath.String())
-
+	checkIniName(t, configPath, "this-is-a-config-file-from-home-dir-from-ARDUINO_CREATE_AGENT_CONFIG-env")
 }
 
 // TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied tests the case when the default config.ini is copied into $HOME/.config/ArduinoCreateAgent/config.ini
@@ -70,6 +74,7 @@ func TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied(t *testing.T) {
 	configPath := GetConfigPath()
 
 	assert.Equal(t, "testdata/home-without-config/.config/ArduinoCreateAgent/config.ini", configPath.String())
+	checkIniName(t, configPath, "") // the name of the default config is missing (an empty string)
 
 	givenContent, err := paths.New(configPath.String()).ReadFile()
 	if err != nil {
@@ -78,4 +83,16 @@ func TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied(t *testing.T) {
 
 	assert.Equal(t, string(configContent), string(givenContent))
 
+}
+
+func checkIniName(t *testing.T, confipath *paths.Path, expected string) {
+	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true, AllowPythonMultilineValues: true}, confipath.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defaultSection, err := cfg.GetSection("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, expected, defaultSection.Key("name").String())
 }
