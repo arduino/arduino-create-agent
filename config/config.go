@@ -18,6 +18,7 @@ package config
 import (
 	// we need this for the config ini in this package
 	_ "embed"
+	"fmt"
 	"os"
 
 	"github.com/arduino/go-paths-helper"
@@ -153,7 +154,7 @@ func GetConfigPath() *paths.Path {
 	if envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG"); envConfig != "" {
 		configPath = paths.New(envConfig)
 		if configPath.NotExist() {
-			log.Panicf("config from env var %s does not exists", envConfig)
+			panic(fmt.Sprintf("config from env var %s does not exists", envConfig))
 		}
 		log.Infof("using config from env variable: %s", configPath)
 	} else if defaultConfigPath := configDir.Join("config.ini"); defaultConfigPath.Exist() {

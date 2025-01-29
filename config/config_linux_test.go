@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 	"testing"
@@ -82,7 +83,30 @@ func TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied(t *testing.T) {
 	}
 
 	assert.Equal(t, string(configContent), string(givenContent))
+}
 
+// TestGetConfigPathPanicIfPathDoesNotExist tests that it panics if the ARDUINO_CREATE_AGENT_CONFIG env variable point to an non-existing path
+func TestGetConfigPathPanicIfPathDoesNotExist(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping test on non-linux OS")
+	}
+	os.Setenv("HOME", "./testdata/dummyhome")
+	defer os.Unsetenv("HOME")
+
+	os.Setenv("ARDUINO_CREATE_AGENT_CONFIG", "./testdata/a-not-existing-path/config.ini")
+
+	defer func() {
+		if r := recover(); r != nil {
+			assert.Equal(t, fmt.Sprintf("config from env var %s does not exists", "./testdata/a-not-existing-path/config.ini"), r)
+		} else {
+			t.Fatal("Expected panic but did not occur")
+		}
+	}()
+
+	configPath := GetConfigPath()
+
+	assert.Equal(t, "testdata/fromxdghome/ArduinoCreateAgent/config.ini", configPath.String())
+	checkIniName(t, configPath, "this-is-a-config-file-from-xdghome-dir")
 }
 
 func checkIniName(t *testing.T, confipath *paths.Path, expected string) {
