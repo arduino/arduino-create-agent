@@ -143,6 +143,7 @@ func SetInstallCertsIni(filename string, value string) error {
 	return nil
 }
 
+// GetConfigPath returns the path to the config file
 func GetConfigPath() *paths.Path {
 	// Let's handle the config
 	configDir := GetDefaultConfigDir()

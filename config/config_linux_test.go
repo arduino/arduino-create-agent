@@ -2,13 +2,18 @@ package config
 
 import (
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/stretchr/testify/assert"
 )
 
+// TestGetConfigPathFromXDG_CONFIG_HOME tests the case when the config.ini is read from XDG_CONFIG_HOME/ArduinoCreateAgent/config.ini
 func TestGetConfigPathFromXDG_CONFIG_HOME(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping test on non-linux OS")
+	}
 	// read config from $XDG_CONFIG_HOME/ArduinoCreateAgent/config.ini
 	os.Setenv("XDG_CONFIG_HOME", "./testdata/fromxdghome")
 	defer os.Unsetenv("XDG_CONFIG_HOME")
@@ -16,8 +21,11 @@ func TestGetConfigPathFromXDG_CONFIG_HOME(t *testing.T) {
 	assert.Equal(t, "testdata/fromxdghome/ArduinoCreateAgent/config.ini", configPath.String())
 }
 
+// TestGetConfigPathFromHOME tests the case when the config.ini is read from $HOME/.config/ArduinoCreateAgent/config.ini
 func TestGetConfigPathFromHOME(t *testing.T) {
-	// Test case 2: read config from $HOME/.config/ArduinoCreateAgent/config.ini "
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping test on non-linux OS")
+	}
 	os.Setenv("HOME", "./testdata/fromhome")
 	defer os.Unsetenv("HOME")
 	configPath := GetConfigPath()
@@ -25,7 +33,11 @@ func TestGetConfigPathFromHOME(t *testing.T) {
 
 }
 
+// TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG tests the case when the config.ini is read from ARDUINO_CREATE_AGENT_CONFIG env variable
 func TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping test on non-linux OS")
+	}
 	//  $HOME must be always set, otherwise panic
 	os.Setenv("HOME", "./testdata/dummyhome")
 
@@ -34,11 +46,17 @@ func TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG(t *testing.T) {
 
 	configPath := GetConfigPath()
 	assert.Equal(t, "./testdata/from-arduino-create-agent-config-env/config.ini", configPath.String())
+
 }
 
+// TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied tests the case when the default config.ini is copied into $HOME/.config/ArduinoCreateAgent/config.ini
+// from the default config.ini
 // If the ARDUINO_CREATE_AGENT_CONFIG is NOT set and the config.ini does not exist in HOME directory
 // then it copies the default config (the config.ini) into the HOME directory
 func TestIfHomeDoesNotContainConfigTheDefaultConfigAreCopied(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Skipping test on non-linux OS")
+	}
 	//  $HOME must be always set, otherwise panic
 	os.Setenv("HOME", "./testdata/home-without-config")
 
