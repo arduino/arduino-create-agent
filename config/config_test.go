@@ -12,7 +12,7 @@ import (
 )
 
 // TestGetConfigPathFromXDG_CONFIG_HOME tests the case when the config.ini is read from XDG_CONFIG_HOME/ArduinoCreateAgent/config.ini
-func TestGetConfigPathFromXDG_CONFIG_HOME(t *testing.T) {
+func TestGetConfigPathFrom_XDG_CONFIG_HOME(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("Skipping test on non-linux OS")
 	}
@@ -26,7 +26,7 @@ func TestGetConfigPathFromXDG_CONFIG_HOME(t *testing.T) {
 }
 
 // TestGetConfigPathFromHOME tests the case when the config.ini is read from $HOME/.config/ArduinoCreateAgent/config.ini
-func TestGetConfigPathFromHOME(t *testing.T) {
+func TestGetConfigPathFrom_HOME(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("Skipping test on non-linux OS")
 	}
@@ -39,7 +39,7 @@ func TestGetConfigPathFromHOME(t *testing.T) {
 }
 
 // TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG tests the case when the config.ini is read from ARDUINO_CREATE_AGENT_CONFIG env variable
-func TestGetConfigPathFromARDUINO_CREATE_AGENT_CONFIG(t *testing.T) {
+func TestGetConfigPathFrom_ARDUINO_CREATE_AGENT_CONFIG(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("Skipping test on non-linux OS")
 	}
