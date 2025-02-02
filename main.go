@@ -102,19 +102,17 @@ var homeTemplateHTML string
 
 // global clients
 var (
-	Tools   *tools.Tools
-	Systray systray.Systray
-	Index   *index.Resource
+	Tools *tools.Tools
+	Index *index.Resource
 )
 
-type logWriter struct{}
+// TODO: enable it
+// type logWriter struct{}
 
-func (u *logWriter) Write(p []byte) (n int, err error) {
-	h.broadcastSys <- p
-	return len(p), nil
-}
-
-var loggerWs logWriter
+// func (u *logWriter) Write(p []byte) (n int, err error) {
+// 	h.broadcastSys <- p
+// 	return len(p), nil
+// }
 
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
@@ -143,12 +141,10 @@ func main() {
 
 	configPath := config.GetConfigPath()
 
-	// Launch main loop in a goroutine
-	go loop(configPath)
-
 	// SetupSystray is the main thread
 	configDir := config.GetDefaultConfigDir()
-	Systray = systray.Systray{
+
+	stray := &systray.Systray{
 		Hibernate: *hibernate,
 		Version:   version + "-" + commit,
 		DebugURL: func() string {
@@ -157,18 +153,21 @@ func main() {
 		AdditionalConfig: *additionalConfig,
 		ConfigDir:        configDir,
 	}
-	Systray.SetCurrentConfigFile(configPath)
+	stray.SetCurrentConfigFile(configPath)
+
+	// Launch main loop in a goroutine
+	go loop(stray, configPath)
 
 	if src, err := os.Executable(); err != nil {
 		panic(err)
 	} else if restartPath := updater.Start(src); restartPath != "" {
-		Systray.RestartWith(restartPath)
+		stray.RestartWith(restartPath)
 	} else {
-		Systray.Start()
+		stray.Start()
 	}
 }
 
-func loop(configPath *paths.Path) {
+func loop(stray *systray.Systray, configPath *paths.Path) {
 	if *hibernate {
 		return
 	}
@@ -188,6 +187,14 @@ func loop(configPath *paths.Path) {
 		utilities.UserPrompt("Old agent installation of the Arduino Create Agent found, please uninstall it before launching the new one", "\"OK\"", "OK", "OK", "Error")
 		os.Exit(0)
 	}
+
+	// serialPorts contains the ports attached to the machine
+	serialPorts := NewSerialPortList()
+	serialHub := NewSerialHub()
+
+	// var loggerWs logWriter
+
+	h := NewHub(serialHub, serialPorts)
 
 	logger := func(msg string) {
 		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
@@ -388,7 +395,7 @@ func loop(configPath *paths.Path) {
 
 	r := gin.New()
 
-	socketHandler := wsHandler().ServeHTTP
+	socketHandler := wsHandler(h).ServeHTTP
 
 	extraOrigins := []string{
 		"https://create.arduino.cc",
@@ -427,14 +434,14 @@ func loop(configPath *paths.Path) {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.POST("/upload", uploadHandler)
+	r.POST("/upload", UpdateHandler(stray))
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
 	r.Handle("WS", "/socket.io/", socketHandler)
 	r.Handle("WSS", "/socket.io/", socketHandler)
 	r.GET("/info", infoHandler)
-	r.POST("/pause", pauseHandler)
-	r.POST("/update", updateHandler)
+	r.POST("/pause", PauseHandler(h, stray))
+	r.POST("/update", UpdateHandler(stray))
 
 	// Mount goa handlers
 	goa := v2.Server(config.GetDataDir().String(), Index)
