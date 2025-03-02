@@ -72,6 +72,12 @@ jobs:
         with:
           submodules: recursive
 
+      # This is required to allow licensee/setup-licensed to install Licensed via Ruby gem.
+      - name: Install Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby # Install latest version
+
       - name: Install licensed
         uses: licensee/setup-licensed@v1.3.2
         with:
@@ -122,6 +128,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      # This is required to allow licensee/setup-licensed to install Licensed via Ruby gem.
+      - name: Install Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby # Install latest version
 
       - name: Install licensed
         uses: licensee/setup-licensed@v1.3.2
