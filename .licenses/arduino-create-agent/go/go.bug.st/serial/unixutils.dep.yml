@@ -2,7 +2,7 @@
 name: go.bug.st/serial/unixutils
 version: v1.6.1
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/go.bug.st/serial/unixutils
 license: bsd-3-clause
 licenses:

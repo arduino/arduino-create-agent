@@ -2,7 +2,7 @@
 name: github.com/blang/semver
 version: v3.5.1+incompatible
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/blang/semver
 license: mit
 licenses:
