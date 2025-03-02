@@ -2,7 +2,7 @@
 name: gopkg.in/inconshreveable/go-update.v0/download
 version: v0.0.0-20150814200126-d8b0b1d421aa
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/gopkg.in/inconshreveable/go-update.v0/download
 license: apache-2.0
 licenses:

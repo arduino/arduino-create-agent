@@ -2,7 +2,7 @@
 name: github.com/xrash/smetrics
 version: v0.0.0-20170218160415-a3153f7040e9
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/xrash/smetrics
 license: mit
 licenses:

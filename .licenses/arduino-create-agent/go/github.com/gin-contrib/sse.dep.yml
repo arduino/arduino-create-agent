@@ -2,7 +2,7 @@
 name: github.com/gin-contrib/sse
 version: v0.1.0
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/gin-contrib/sse
 license: mit
 licenses:
