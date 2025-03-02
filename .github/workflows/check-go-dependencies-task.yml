@@ -124,7 +124,7 @@ jobs:
           submodules: recursive
 
       - name: Install licensed
-        uses: jonabc/setup-licensed@v1
+        uses: github/setup-licensed@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: 3.x
