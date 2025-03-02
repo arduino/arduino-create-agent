@@ -11,8 +11,8 @@ github.com/arduino/go-properties-orderedmap v1.8.0 h1:wEfa6hHdpezrVOh787OmClsf/K
 github.com/arduino/go-properties-orderedmap v1.8.0/go.mod h1:DKjD2VXY/NZmlingh4lSFMEYCVubfeArCsGPGDwb2yk=
 github.com/arduino/go-serial-utils v0.1.2 h1:MRFwME4w/uaVkJ1R+wzz4KSbI9cF9IDVrYorazvjpTk=
 github.com/arduino/go-serial-utils v0.1.2/go.mod h1:kzIsNPgz8DFAd1sAFKve4ubxrdGcwQ4XzvRLlztsgnE=
-github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0 h1:v7og6LpskewFabmaShKVzWXl5MXbmsxaRP3yo4dJta8=
-github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0/go.mod h1:1dgblsmK2iBx3L5iNTyRIokeaxbTLUrYiUbHBK6yC3Y=
+github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.1 h1:Fw8zKj1b/FkcQrWgN7aBw3ubSxpKIUtdANLXvd1Qdzw=
+github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.1/go.mod h1:1dgblsmK2iBx3L5iNTyRIokeaxbTLUrYiUbHBK6yC3Y=
 github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=

@@ -7,7 +7,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.5-proton
 	github.com/arduino/go-paths-helper v1.12.1
 	github.com/arduino/go-serial-utils v0.1.2
-	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0
+	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v4 v4.0.0
 	github.com/gin-contrib/cors v1.7.2
