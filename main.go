@@ -285,9 +285,12 @@ func loop() {
 	if len(*signatureKey) == 0 {
 		log.Panicf("signature public key cannot be empty")
 	}
-	signaturePubKey, err := utilities.ParseRsaPublicKey(*signatureKey)
+	fmt.Println("Signature key:", *signatureKey)
+
+	// when a public key is read fro the .ini file, the '\n' are escape with an additional '\', we need to replace them with '\n'
+	signaturePubKey, err := utilities.ParseRsaPublicKey(strings.ReplaceAll(*signatureKey, "\\n", "\n"))
 	if err != nil {
-		log.Panicf("cannot parse signature key: %s", err)
+		log.Panicf("cannot parse signature key '%s'. %s", *signatureKey, err)
 	}
 
 	// Instantiate Index and Tools
@@ -538,6 +541,8 @@ func parseIni(filename string) (args []string, err error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Sections:", cfg.Sections())
 
 	for _, section := range cfg.Sections() {
 		for key, val := range section.KeysHash() {
