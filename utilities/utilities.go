@@ -30,8 +30,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/arduino/arduino-create-agent/globals"
 )
 
 // SaveFileonTempDir creates a temp directory and saves the file data as the
@@ -131,23 +129,38 @@ func SafeJoin(parent, subdir string) (string, error) {
 	return res, nil
 }
 
-// VerifyInput will verify an input against a signature
+// VerifyInput will verify an input against a signature using the public key.
 // A valid signature is indicated by returning a nil error.
-func VerifyInput(input string, signature string) error {
+func VerifyInput(input string, signature string, pubKey *rsa.PublicKey) error {
 	sign, _ := hex.DecodeString(signature)
-	block, _ := pem.Decode([]byte(globals.SignatureKey))
-	if block == nil {
-		return errors.New("invalid key")
-	}
-	key, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return err
-	}
-	rsaKey := key.(*rsa.PublicKey)
 	h := sha256.New()
 	h.Write([]byte(input))
 	d := h.Sum(nil)
-	return rsa.VerifyPKCS1v15(rsaKey, crypto.SHA256, d, sign)
+	return rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, d, sign)
+}
+
+// ParseRsaPublicKey parses a public key in PEM format and returns the rsa.PublicKey object.
+// Returns an error if the key is invalid.
+func ParseRsaPublicKey(key string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(key))
+	if block == nil {
+		return nil, errors.New("invalid key")
+	}
+
+	parsedKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return parsedKey.(*rsa.PublicKey), nil
+}
+
+func MustParseRsaPublicKey(key string) *rsa.PublicKey {
+	parsedKey, err := ParseRsaPublicKey(key)
+	if err != nil {
+		panic(err)
+	}
+	return parsedKey
 }
 
 // UserPrompt executes an osascript and returns the pressed button

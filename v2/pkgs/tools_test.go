@@ -25,7 +25,9 @@ import (
 
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/globals"
 	"github.com/arduino/arduino-create-agent/index"
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/arduino/go-paths-helper"
 	"github.com/stretchr/testify/require"
@@ -45,7 +47,7 @@ func TestTools(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp, "replace")
+	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
 
 	ctx := context.Background()
 
@@ -126,7 +128,7 @@ func TestEvilFilename(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp, "replace")
+	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
 
 	ctx := context.Background()
 
@@ -195,7 +197,7 @@ func TestInstalledHead(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp, "replace")
+	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
 
 	ctx := context.Background()
 
@@ -216,7 +218,7 @@ func TestInstall(t *testing.T) {
 		LastRefresh: time.Now(),
 	}
 
-	tool := pkgs.New(testIndex, tmp, "replace")
+	tool := pkgs.New(testIndex, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
 
 	ctx := context.Background()
 

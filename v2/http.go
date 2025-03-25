@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
 
@@ -31,7 +32,7 @@ import (
 )
 
 // Server is the actual server
-func Server(directory string, index *index.Resource) http.Handler {
+func Server(directory string, index *index.Resource, pubKey *rsa.PublicKey) http.Handler {
 	mux := goahttp.NewMuxer()
 
 	// Instantiate logger
@@ -40,7 +41,7 @@ func Server(directory string, index *index.Resource) http.Handler {
 	logAdapter := LogAdapter{Logger: logger}
 
 	// Mount tools
-	toolsSvc := pkgs.New(index, directory, "replace")
+	toolsSvc := pkgs.New(index, directory, "replace", pubKey)
 	toolsEndpoints := toolssvc.NewEndpoints(toolsSvc)
 	toolsServer := toolssvr.New(toolsEndpoints, mux, CustomRequestDecoder, goahttp.ResponseEncoder, errorHandler(logger), nil)
 	toolssvr.Mount(mux, toolsServer)

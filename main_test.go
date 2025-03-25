@@ -30,8 +30,10 @@ import (
 
 	"github.com/arduino/arduino-create-agent/config"
 	"github.com/arduino/arduino-create-agent/gen/tools"
+	"github.com/arduino/arduino-create-agent/globals"
 	"github.com/arduino/arduino-create-agent/index"
 	"github.com/arduino/arduino-create-agent/upload"
+	"github.com/arduino/arduino-create-agent/utilities"
 	v2 "github.com/arduino/arduino-create-agent/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -54,7 +56,7 @@ func TestValidSignatureKey(t *testing.T) {
 
 func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 	r := gin.New()
-	r.POST("/", uploadHandler)
+	r.POST("/", uploadHandler(utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey)))
 	ts := httptest.NewServer(r)
 
 	uploadEvilFileName := Upload{
@@ -90,7 +92,7 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 
 func TestUploadHandlerAgainstBase64WithoutPaddingMustFail(t *testing.T) {
 	r := gin.New()
-	r.POST("/", uploadHandler)
+	r.POST("/", uploadHandler(utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey)))
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -119,7 +121,7 @@ func TestInstallToolV2(t *testing.T) {
 	Index := index.Init(indexURL, config.GetDataDir())
 
 	r := gin.New()
-	goa := v2.Server(config.GetDataDir().String(), Index)
+	goa := v2.Server(config.GetDataDir().String(), Index, utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
 	r.Any("/v2/*path", gin.WrapH(goa))
 	ts := httptest.NewServer(r)
 
@@ -213,7 +215,7 @@ func TestInstalledHead(t *testing.T) {
 	Index := index.Init(indexURL, config.GetDataDir())
 
 	r := gin.New()
-	goa := v2.Server(config.GetDataDir().String(), Index)
+	goa := v2.Server(config.GetDataDir().String(), Index, utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
 	r.Any("/v2/*path", gin.WrapH(goa))
 	ts := httptest.NewServer(r)
 

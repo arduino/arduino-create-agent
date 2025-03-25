@@ -18,6 +18,7 @@ package pkgs
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -63,18 +64,21 @@ type Tools struct {
 	behaviour string
 	installed map[string]string
 	mutex     sync.RWMutex
+
+	verifySignaturePubKey *rsa.PublicKey // public key used to verify the signature when a tools is installed
 }
 
 // New will return a Tool object, allowing the caller to execute operations on it.
 // The New function will accept an index as parameter (used to download the indexes)
 // and a folder used to download the indexes
-func New(index *index.Resource, folder, behaviour string) *Tools {
+func New(index *index.Resource, folder, behaviour string, verifySignaturePubKey *rsa.PublicKey) *Tools {
 	t := &Tools{
-		index:     index,
-		folder:    folder,
-		behaviour: behaviour,
-		installed: map[string]string{},
-		mutex:     sync.RWMutex{},
+		index:                 index,
+		folder:                folder,
+		behaviour:             behaviour,
+		installed:             map[string]string{},
+		mutex:                 sync.RWMutex{},
+		verifySignaturePubKey: verifySignaturePubKey,
 	}
 	t.readInstalled()
 	return t
@@ -166,7 +170,7 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 
 	//if URL is defined and is signed we verify the signature and override the name, payload, version parameters
 	if payload.URL != nil && payload.Signature != nil && payload.Checksum != nil {
-		err := utilities.VerifyInput(*payload.URL, *payload.Signature)
+		err := utilities.VerifyInput(*payload.URL, *payload.Signature, t.verifySignaturePubKey) // TODO pass the public key
 		if err != nil {
 			return nil, err
 		}
