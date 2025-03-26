@@ -278,11 +278,8 @@ func loop() {
 		}
 	}
 
-	if signatureKey == nil {
-		log.Panicf("signature public key cannot be nil")
-	}
-	if len(*signatureKey) == 0 {
-		log.Panicf("signature public key cannot be empty")
+	if signatureKey == nil || len(*signatureKey) == 0 {
+		log.Panicf("signature public key should be set")
 	}
 	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
 	if err != nil {
