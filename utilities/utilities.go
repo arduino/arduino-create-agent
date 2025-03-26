@@ -141,8 +141,8 @@ func VerifyInput(input string, signature string, pubKey *rsa.PublicKey) error {
 
 // ParseRsaPublicKey parses a public key in PEM format and returns the rsa.PublicKey object.
 // Returns an error if the key is invalid.
-func ParseRsaPublicKey(key string) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode([]byte(key))
+func ParseRsaPublicKey(key []byte) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode(key)
 	if block == nil {
 		return nil, errors.New("invalid key")
 	}
@@ -157,7 +157,7 @@ func ParseRsaPublicKey(key string) (*rsa.PublicKey, error) {
 
 // MustParseRsaPublicKey parses a public key in PEM format and returns the rsa.PublicKey object.
 // Panics if the key is invalid.
-func MustParseRsaPublicKey(key string) *rsa.PublicKey {
+func MustParseRsaPublicKey(key []byte) *rsa.PublicKey {
 	parsedKey, err := ParseRsaPublicKey(key)
 	if err != nil {
 		panic(err)

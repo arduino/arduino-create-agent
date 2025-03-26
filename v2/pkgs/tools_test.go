@@ -47,7 +47,7 @@ func TestTools(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
+	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 
 	ctx := context.Background()
 
@@ -128,7 +128,7 @@ func TestEvilFilename(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
+	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 
 	ctx := context.Background()
 
@@ -197,7 +197,7 @@ func TestInstalledHead(t *testing.T) {
 	// Instantiate Index
 	Index := index.Init(indexURL, config.GetDataDir())
 
-	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
+	service := pkgs.New(Index, tmp, "replace", utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 
 	ctx := context.Background()
 
@@ -218,7 +218,7 @@ func TestInstall(t *testing.T) {
 		LastRefresh: time.Now(),
 	}
 
-	tool := pkgs.New(testIndex, tmp, "replace", utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
+	tool := pkgs.New(testIndex, tmp, "replace", utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 
 	ctx := context.Background()
 

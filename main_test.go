@@ -56,7 +56,7 @@ func TestValidSignatureKey(t *testing.T) {
 
 func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 	r := gin.New()
-	r.POST("/", uploadHandler(utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey)))
+	r.POST("/", uploadHandler(utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))))
 	ts := httptest.NewServer(r)
 
 	uploadEvilFileName := Upload{
@@ -92,7 +92,7 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 
 func TestUploadHandlerAgainstBase64WithoutPaddingMustFail(t *testing.T) {
 	r := gin.New()
-	r.POST("/", uploadHandler(utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey)))
+	r.POST("/", uploadHandler(utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))))
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
@@ -121,7 +121,7 @@ func TestInstallToolV2(t *testing.T) {
 	Index := index.Init(indexURL, config.GetDataDir())
 
 	r := gin.New()
-	goa := v2.Server(config.GetDataDir().String(), Index, utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
+	goa := v2.Server(config.GetDataDir().String(), Index, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 	r.Any("/v2/*path", gin.WrapH(goa))
 	ts := httptest.NewServer(r)
 
@@ -215,7 +215,7 @@ func TestInstalledHead(t *testing.T) {
 	Index := index.Init(indexURL, config.GetDataDir())
 
 	r := gin.New()
-	goa := v2.Server(config.GetDataDir().String(), Index, utilities.MustParseRsaPublicKey(globals.ArduinoSignaturePubKey))
+	goa := v2.Server(config.GetDataDir().String(), Index, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 	r.Any("/v2/*path", gin.WrapH(goa))
 	ts := httptest.NewServer(r)
 
