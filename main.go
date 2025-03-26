@@ -285,9 +285,7 @@ func loop() {
 	if len(*signatureKey) == 0 {
 		log.Panicf("signature public key cannot be empty")
 	}
-	fmt.Println("Signature key:", *signatureKey)
-
-	// when a public key is read fro the .ini file, the '\n' are escape with an additional '\', we need to replace them with '\n'
+	// when a public key is read from the .ini file, the '\n' are escape with an additional '\', we need to replace them with '\n'
 	signaturePubKey, err := utilities.ParseRsaPublicKey(strings.ReplaceAll(*signatureKey, "\\n", "\n"))
 	if err != nil {
 		log.Panicf("cannot parse signature key '%s'. %s", *signatureKey, err)
