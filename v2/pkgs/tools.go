@@ -64,7 +64,6 @@ type Tools struct {
 	behaviour string
 	installed map[string]string
 	mutex     sync.RWMutex
-
 	verifySignaturePubKey *rsa.PublicKey // public key used to verify the signature of a command sent to the boards
 }
 
