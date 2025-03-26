@@ -152,7 +152,11 @@ func ParseRsaPublicKey(key []byte) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 
-	return parsedKey.(*rsa.PublicKey), nil
+ publicKey, ok := value.(*rsa.PublicKey)
+    if !ok {
+        return nil,fmt.Errorf("not an rsa key")
+    }
+return publicKey, nil
 }
 
 // MustParseRsaPublicKey parses a public key in PEM format and returns the rsa.PublicKey object.
