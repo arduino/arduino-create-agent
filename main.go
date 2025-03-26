@@ -22,7 +22,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"html/template"
 	"io"
 	"os"
@@ -539,8 +538,6 @@ func parseIni(filename string) (args []string, err error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Sections:", cfg.Sections())
 
 	for _, section := range cfg.Sections() {
 		for key, val := range section.KeysHash() {
