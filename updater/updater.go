@@ -23,9 +23,13 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
+
+	"golang.org/x/sys/windows"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -83,9 +87,11 @@ func fetch(url string) (io.ReadCloser, error) {
 
 // addTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
 func addTempSuffixToPath(path string) string {
-	if filepath.Ext(path) == "exe" {
+	if filepath.Ext(path) == ".exe" {
+		// Windows
 		path = strings.Replace(path, ".exe", "-temp.exe", -1)
 	} else {
+		// Unix
 		path = path + "-temp"
 	}
 
@@ -109,4 +115,52 @@ func copyExe(from, to string) error {
 		return err
 	}
 	return nil
+}
+
+// requestElevation requests this program to rerun as administrator, for when we don't have permission over the update files
+func requestElevation() {
+	log.Println("Permission denied. Requesting elevated privileges...")
+	var err error
+	if runtime.GOOS == "windows" {
+		err = elevateWindows()
+	} else {
+		err = elevateUnix()
+	}
+
+	if err != nil {
+		log.Println("Failed to request elevation:", err)
+		return
+	}
+}
+
+func elevateWindows() error {
+	verb := "runas"
+	exe, _ := os.Executable()
+	cwd, _ := os.Getwd()
+	args := strings.Join(os.Args[1:], " ")
+
+	verbPtr, err := syscall.UTF16PtrFromString(verb)
+	if err != nil {
+		return err
+	}
+	exePtr, err := syscall.UTF16PtrFromString(exe)
+	if err != nil {
+		return err
+	}
+	cwdPtr, err := syscall.UTF16PtrFromString(cwd)
+	if err != nil {
+		return err
+	}
+	argPtr, _ := syscall.UTF16PtrFromString(args)
+	var showCmd int32 = 1
+	return windows.ShellExecute(0, verbPtr, exePtr, argPtr, cwdPtr, showCmd)
+}
+
+func elevateUnix() error {
+	args := append([]string{os.Args[0]}, os.Args[1:]...)
+	cmd := exec.Command("sudo", args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
