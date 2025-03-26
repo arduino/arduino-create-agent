@@ -65,7 +65,7 @@ type Tools struct {
 	installed map[string]string
 	mutex     sync.RWMutex
 
-	verifySignaturePubKey *rsa.PublicKey // public key used to verify the signature when a tools is installed
+	verifySignaturePubKey *rsa.PublicKey // public key used to verify the signature of a command sent to the boards
 }
 
 // New will return a Tool object, allowing the caller to execute operations on it.
@@ -170,7 +170,7 @@ func (t *Tools) Install(ctx context.Context, payload *tools.ToolPayload) (*tools
 
 	//if URL is defined and is signed we verify the signature and override the name, payload, version parameters
 	if payload.URL != nil && payload.Signature != nil && payload.Checksum != nil {
-		err := utilities.VerifyInput(*payload.URL, *payload.Signature, t.verifySignaturePubKey) // TODO pass the public key
+		err := utilities.VerifyInput(*payload.URL, *payload.Signature, t.verifySignaturePubKey)
 		if err != nil {
 			return nil, err
 		}

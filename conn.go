@@ -115,6 +115,7 @@ func uploadHandler(pubKey *rsa.PublicKey) func(*gin.Context) {
 			err := utilities.VerifyInput(data.Commandline, data.Signature, pubKey)
 
 			if err != nil {
+				log.WithField("err", err).Error("Error verifying the command")
 				c.String(http.StatusBadRequest, "signature is invalid")
 				return
 			}
