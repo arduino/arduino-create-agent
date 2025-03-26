@@ -59,11 +59,11 @@ var (
 //
 // It requires an Index Resource to search for tools
 type Tools struct {
-	index     *index.Resource
-	folder    string
-	behaviour string
-	installed map[string]string
-	mutex     sync.RWMutex
+	index                 *index.Resource
+	folder                string
+	behaviour             string
+	installed             map[string]string
+	mutex                 sync.RWMutex
 	verifySignaturePubKey *rsa.PublicKey // public key used to verify the signature of a command sent to the boards
 }
 
