@@ -81,7 +81,7 @@ var (
 	logDump           = iniConf.String("log", "off", "off = (default)")
 	origins           = iniConf.String("origins", "", "Allowed origin list for CORS")
 	portsFilterRegexp = iniConf.String("regex", "usb|acm|com", "Regular expression to filter serial port list")
-	signatureKey      = iniConf.String("signatureKey", globals.SignatureKey, "Pem-encoded public key to verify signed commandlines")
+	signatureKey      = iniConf.String("signatureKey", globals.ArduinoSignaturePubKey, "Pem-encoded public key to verify signed commandlines")
 	updateURL         = iniConf.String("updateUrl", "", "")
 	verbose           = iniConf.Bool("v", true, "show debug logging")
 	crashreport       = iniConf.Bool("crashreport", false, "enable crashreport logging")
@@ -278,9 +278,17 @@ func loop() {
 		}
 	}
 
+	if signatureKey == nil || len(*signatureKey) == 0 {
+		log.Panicf("signature public key should be set")
+	}
+	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
+	if err != nil {
+		log.Panicf("cannot parse signature key '%s'. %s", *signatureKey, err)
+	}
+
 	// Instantiate Index and Tools
 	Index = index.Init(*indexURL, config.GetDataDir())
-	Tools = tools.New(config.GetDataDir(), Index, logger)
+	Tools = tools.New(config.GetDataDir(), Index, logger, signaturePubKey)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
@@ -454,7 +462,7 @@ func loop() {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.POST("/upload", uploadHandler)
+	r.POST("/upload", uploadHandler(signaturePubKey))
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
 	r.Handle("WS", "/socket.io/", socketHandler)
@@ -464,7 +472,7 @@ func loop() {
 	r.POST("/update", updateHandler)
 
 	// Mount goa handlers
-	goa := v2.Server(config.GetDataDir().String(), Index)
+	goa := v2.Server(config.GetDataDir().String(), Index, signaturePubKey)
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
