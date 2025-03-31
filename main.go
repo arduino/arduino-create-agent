@@ -196,12 +196,12 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 
 	// var loggerWs logWriter
 
-	h := NewHub(serialHub, serialPorts)
+	hub := NewHub(serialHub, serialPorts)
 
 	logger := func(msg string) {
 		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
 		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
+		hub.broadcastSys <- mapB
 	}
 
 	// if the default browser is Safari, prompt the user to install HTTPS certificates
@@ -399,13 +399,13 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 	// launch the discoveries for the running system
 	go serialPorts.Run()
 	// launch the hub routine which is the singleton for the websocket server
-	go h.run()
+	go hub.run()
 	// launch our dummy data routine
 	//go d.run()
 
 	r := gin.New()
 
-	socketHandler := wsHandler(h).ServeHTTP
+	socketHandler := wsHandler(hub).ServeHTTP
 
 	extraOrigins := []string{
 		"https://create.arduino.cc",
@@ -444,13 +444,13 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.POST("/upload", uploadHandler(h, signaturePubKey))
+	r.POST("/upload", uploadHandler(hub, signaturePubKey))
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
 	r.Handle("WS", "/socket.io/", socketHandler)
 	r.Handle("WSS", "/socket.io/", socketHandler)
 	r.GET("/info", infoHandler)
-	r.POST("/pause", PauseHandler(h, stray))
+	r.POST("/pause", PauseHandler(hub, stray))
 	r.POST("/update", UpdateHandler(stray))
 
 	// Mount goa handlers
