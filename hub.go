@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/upload"
 	log "github.com/sirupsen/logrus"
 )
@@ -50,9 +51,11 @@ type hub struct {
 	serialHub *serialhub
 
 	serialPortList *serialPortList
+
+	tools *tools.Tools
 }
 
-func newHub(serialhub *serialhub, serialList *serialPortList) *hub {
+func newHub(serialhub *serialhub, serialList *serialPortList, tools *tools.Tools) *hub {
 	hub := &hub{
 		broadcast:      make(chan []byte, 1000),
 		broadcastSys:   make(chan []byte, 1000),
@@ -61,6 +64,7 @@ func newHub(serialhub *serialhub, serialList *serialPortList) *hub {
 		connections:    make(map[*connection]bool),
 		serialHub:      serialhub,
 		serialPortList: serialList,
+		tools:          tools,
 	}
 
 	hub.serialHub.OnRegister = func(port *serport) {
@@ -235,7 +239,12 @@ func (h *hub) checkCmd(m []byte) {
 				behaviour = args[4]
 			}
 
-			err := Tools.Download(pack, tool, toolVersion, behaviour)
+			reportPendingProgress := func(msg string) {
+				mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+				mapB, _ := json.Marshal(mapD)
+				h.broadcastSys <- mapB
+			}
+			err := h.tools.Download(pack, tool, toolVersion, behaviour, reportPendingProgress)
 			if err != nil {
 				mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
 				mapB, _ := json.Marshal(mapD)

@@ -25,6 +25,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/tools"
 	discovery "github.com/arduino/pluggable-discovery-protocol-handler/v2"
 	"github.com/sirupsen/logrus"
 )
@@ -45,6 +46,8 @@ func newSerialHub() *serialhub {
 }
 
 type serialPortList struct {
+	tools *tools.Tools
+
 	Ports     []*SpPortItem
 	portsLock sync.Mutex
 
@@ -52,8 +55,8 @@ type serialPortList struct {
 	OnErr  func(string) `json:"-"`
 }
 
-func newSerialPortList() *serialPortList {
-	return &serialPortList{}
+func newSerialPortList(tools *tools.Tools) *serialPortList {
+	return &serialPortList{tools: tools}
 }
 
 // SpPortItem is the serial port item
@@ -130,11 +133,12 @@ func (sp *serialPortList) Run() {
 
 func (sp *serialPortList) runSerialDiscovery() {
 	// First ensure that all the discoveries are available
-	if err := Tools.Download("builtin", "serial-discovery", "latest", "keep"); err != nil {
+	noOpProgress := func(msg string) {}
+	if err := sp.tools.Download("builtin", "serial-discovery", "latest", "keep", noOpProgress); err != nil {
 		logrus.Errorf("Error downloading serial-discovery: %s", err)
 		panic(err)
 	}
-	sd, err := Tools.GetLocation("serial-discovery")
+	sd, err := sp.tools.GetLocation("serial-discovery")
 	if err != nil {
 		logrus.Errorf("Error downloading serial-discovery: %s", err)
 		panic(err)

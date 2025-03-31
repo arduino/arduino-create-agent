@@ -42,7 +42,7 @@ import (
 // If version is not "latest" and behaviour is "replace", it will download the
 // version again. If instead behaviour is "keep" it will not download the version
 // if it already exists.
-func (t *Tools) Download(pack, name, version, behaviour string) error {
+func (t *Tools) Download(pack, name, version, behaviour string, report func(msg string)) error {
 
 	t.tools.SetBehaviour(behaviour)
 	_, err := t.tools.Install(context.Background(), &tools.ToolPayload{Name: name, Version: version, Packager: pack})
@@ -58,16 +58,16 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 
 	// if the tool contains a post_install script, run it: it means it is a tool that needs to install drivers
 	// AFAIK this is only the case for the windows-driver tool
-	err = t.installDrivers(safePath)
+	err = t.installDrivers(safePath, report)
 	if err != nil {
 		return err
 	}
 
 	// Ensure that the files are executable
-	t.logger("Ensure that the files are executable")
+	report("Ensure that the files are executable")
 
 	// Update the tool map
-	t.logger("Updating map with location " + safePath)
+	report("Updating map with location " + safePath)
 
 	t.setMapValue(name, safePath)
 	t.setMapValue(name+"-"+version, safePath)
@@ -75,7 +75,7 @@ func (t *Tools) Download(pack, name, version, behaviour string) error {
 	return nil
 }
 
-func (t *Tools) installDrivers(location string) error {
+func (t *Tools) installDrivers(location string, report func(msg string)) error {
 	OkPressed := 6
 	extension := ".bat"
 	// add .\ to force locality
@@ -86,11 +86,11 @@ func (t *Tools) installDrivers(location string) error {
 		preamble = "./"
 	}
 	if _, err := os.Stat(filepath.Join(location, "post_install"+extension)); err == nil {
-		t.logger("Installing drivers")
+		report("Installing drivers")
 		ok := MessageBox("Installing drivers", "We are about to install some drivers needed to use Arduino/Genuino boards\nDo you want to continue?")
 		if ok == OkPressed {
 			os.Chdir(location)
-			t.logger(preamble + "post_install" + extension)
+			report(preamble + "post_install" + extension)
 			oscmd := exec.Command(preamble + "post_install" + extension)
 			if runtime.GOOS != "linux" {
 				// spawning a shell could be the only way to let the user type his password

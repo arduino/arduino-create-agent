@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
@@ -80,7 +81,7 @@ type Upload struct {
 
 var uploadStatusStr = "ProgrammerStatus"
 
-func uploadHandler(h *hub, pubKey *rsa.PublicKey) func(*gin.Context) {
+func uploadHandler(h *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gin.Context) {
 	return func(c *gin.Context) {
 		data := new(Upload)
 		if err := c.BindJSON(data); err != nil {
@@ -162,7 +163,7 @@ func uploadHandler(h *hub, pubKey *rsa.PublicKey) func(*gin.Context) {
 
 		go func() {
 			// Resolve commandline
-			commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, Tools)
+			commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, tools)
 			if err != nil {
 				send(h, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 				return

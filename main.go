@@ -20,7 +20,6 @@ package main
 
 import (
 	_ "embed"
-	"encoding/json"
 	"flag"
 	"html/template"
 	"io"
@@ -100,13 +99,6 @@ var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHTML))
 //go:embed home.html
 var homeTemplateHTML string
 
-// global clients
-var (
-	Tools   *tools.Tools
-	Systray systray.Systray
-	Index   *index.Resource
-)
-
 // FIXME; the loggerWS is useind in the multiwrite in the hub
 // type logWriter struct{}
 
@@ -160,9 +152,9 @@ func main() {
 	if src, err := os.Executable(); err != nil {
 		panic(err)
 	} else if restartPath := updater.Start(src); restartPath != "" {
-		Systray.RestartWith(restartPath)
+		stray.RestartWith(restartPath)
 	} else {
-		Systray.Start()
+		stray.Start()
 	}
 }
 
@@ -183,15 +175,21 @@ func loop(stray *systray.Systray) {
 		os.Exit(0)
 	}
 
-	serialPorts := newSerialPortList()
-	serialHub := newSerialHub()
-	hub := newHub(serialHub, serialPorts)
-
-	logger := func(msg string) {
-		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
-		mapB, _ := json.Marshal(mapD)
-		hub.broadcastSys <- mapB
+	// Instantiate Index and Tools
+	index := index.Init(*indexURL, config.GetDataDir())
+	if signatureKey == nil || len(*signatureKey) == 0 {
+		log.Panicf("signature public key should be set")
 	}
+	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
+	if err != nil {
+		log.Panicf("cannot parse signature key '%s'. %s", *signatureKey, err)
+	}
+	tools := tools.New(config.GetDataDir(), index, signaturePubKey)
+
+	serialPorts := newSerialPortList(tools)
+	serialHub := newSerialHub()
+
+	hub := newHub(serialHub, serialPorts, tools)
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()
@@ -263,7 +261,7 @@ func loop(stray *systray.Systray) {
 	if err != nil {
 		log.Panicf("cannot parse arguments: %s", err)
 	}
-	Systray.SetCurrentConfigFile(configPath)
+	stray.SetCurrentConfigFile(configPath)
 
 	// Parse additional ini config if defined
 	if len(*additionalConfig) > 0 {
@@ -282,18 +280,6 @@ func loop(stray *systray.Systray) {
 			log.Infof("using additional config from %s", additionalConfigPath.String())
 		}
 	}
-
-	if signatureKey == nil || len(*signatureKey) == 0 {
-		log.Panicf("signature public key should be set")
-	}
-	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
-	if err != nil {
-		log.Panicf("cannot parse signature key '%s'. %s", *signatureKey, err)
-	}
-
-	// Instantiate Index and Tools
-	Index = index.Init(*indexURL, config.GetDataDir())
-	Tools = tools.New(config.GetDataDir(), Index, logger, signaturePubKey)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
@@ -467,7 +453,7 @@ func loop(stray *systray.Systray) {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.POST("/upload", uploadHandler(hub, signaturePubKey))
+	r.POST("/upload", uploadHandler(hub, signaturePubKey, tools))
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
 	r.Handle("WS", "/socket.io/", socketHandler)
@@ -477,7 +463,7 @@ func loop(stray *systray.Systray) {
 	r.POST("/update", updateHandler(stray))
 
 	// Mount goa handlers
-	goa := v2.Server(config.GetDataDir().String(), Index, signaturePubKey)
+	goa := v2.Server(config.GetDataDir().String(), index, signaturePubKey)
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {
