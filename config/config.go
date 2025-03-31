@@ -108,7 +108,7 @@ func GetDefaultHomeDir() *paths.Path {
 	return paths.New(homeDir)
 }
 
-//go:embed config-default.ini
+//go:embed config.ini
 var configContent []byte
 
 // GenerateConfig function will take a directory path as an input
@@ -141,47 +141,4 @@ func SetInstallCertsIni(filename string, value string) error {
 		return err
 	}
 	return nil
-}
-
-// GetConfigPath returns the full path to the Arduino Create Agent configuration file.
-// It will check if the config file exists in the default location
-// and if not, it will generate a new one.
-// It will also check if the ARDUINO_CREATE_AGENT_CONFIG environment variable is set,
-// and if so, it will use that path instead of the default one.
-func GetConfigPath() *paths.Path {
-	// Let's handle the config
-	configDir := GetDefaultConfigDir()
-	var configPath *paths.Path
-
-	// see if the env var is defined, if it is take the config from there, this will override the default path
-	if envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG"); envConfig != "" {
-		configPath = paths.New(envConfig)
-		if configPath.NotExist() {
-			log.Panicf("config from env var %s does not exists", envConfig)
-		}
-		log.Infof("using config from env variable: %s", configPath)
-	} else if defaultConfigPath := configDir.Join("config.ini"); defaultConfigPath.Exist() {
-		// by default take the config from the ~/.arduino-create/config.ini file
-		configPath = defaultConfigPath
-		log.Infof("using config from default: %s", configPath)
-	} else {
-		// Fall back to the old config.ini location
-		src, _ := os.Executable()
-		oldConfigPath := paths.New(src).Parent().Join("config.ini")
-		if oldConfigPath.Exist() {
-			err := oldConfigPath.CopyTo(defaultConfigPath)
-			if err != nil {
-				log.Errorf("cannot copy old %s, to %s, generating new config", oldConfigPath, configPath)
-			} else {
-				configPath = defaultConfigPath
-				log.Infof("copied old %s, to %s", oldConfigPath, configPath)
-			}
-		}
-	}
-	if configPath == nil {
-		configPath = GenerateConfig(configDir)
-	}
-
-	return configPath
-
 }
