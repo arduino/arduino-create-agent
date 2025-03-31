@@ -29,7 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Serialhub struct {
+type serialhub struct {
 	// Opened serial ports.
 	ports map[*serport]bool
 	mu    sync.Mutex
@@ -38,16 +38,13 @@ type Serialhub struct {
 	OnUnregister func(port *serport)
 }
 
-// NewSerialHub creates a new serial hub
-// It is used to manage serial ports and their connections.
-func NewSerialHub() *Serialhub {
-	return &Serialhub{
+func newSerialHub() *serialhub {
+	return &serialhub{
 		ports: make(map[*serport]bool),
 	}
 }
 
-// SerialPortList is the serial port list
-type SerialPortList struct {
+type serialPortList struct {
 	Ports     []*SpPortItem
 	portsLock sync.Mutex
 
@@ -55,9 +52,8 @@ type SerialPortList struct {
 	OnErr  func(string) `json:"-"`
 }
 
-// NewSerialPortList creates a new serial port list
-func NewSerialPortList() *SerialPortList {
-	return &SerialPortList{}
+func newSerialPortList() *serialPortList {
+	return &serialPortList{}
 }
 
 // SpPortItem is the serial port item
@@ -75,7 +71,7 @@ type SpPortItem struct {
 }
 
 // Register serial ports from the connections.
-func (sh *Serialhub) Register(port *serport) {
+func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Registering a port: ", p.portConf.Name)
 	sh.OnRegister(port)
@@ -84,7 +80,7 @@ func (sh *Serialhub) Register(port *serport) {
 }
 
 // Unregister requests from connections.
-func (sh *Serialhub) Unregister(port *serport) {
+func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Unregistering a port: ", p.portConf.Name)
 	sh.OnUnregister(port)
@@ -94,7 +90,7 @@ func (sh *Serialhub) Unregister(port *serport) {
 	sh.mu.Unlock()
 }
 
-func (sh *Serialhub) FindPortByName(portname string) (*serport, bool) {
+func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
 
@@ -109,7 +105,7 @@ func (sh *Serialhub) FindPortByName(portname string) (*serport, bool) {
 }
 
 // List broadcasts a Json representation of the ports found
-func (sp *SerialPortList) List() {
+func (sp *serialPortList) List() {
 	sp.portsLock.Lock()
 	ls, err := json.MarshalIndent(sp, "", "\t")
 	sp.portsLock.Unlock()
@@ -122,7 +118,7 @@ func (sp *SerialPortList) List() {
 }
 
 // Run is the main loop for port discovery and management
-func (sp *SerialPortList) Run() {
+func (sp *serialPortList) Run() {
 	for retries := 0; retries < 10; retries++ {
 		sp.runSerialDiscovery()
 
@@ -132,7 +128,7 @@ func (sp *SerialPortList) Run() {
 	logrus.Errorf("Failed restarting serial discovery. Giving up...")
 }
 
-func (sp *SerialPortList) runSerialDiscovery() {
+func (sp *serialPortList) runSerialDiscovery() {
 	// First ensure that all the discoveries are available
 	if err := Tools.Download("builtin", "serial-discovery", "latest", "keep"); err != nil {
 		logrus.Errorf("Error downloading serial-discovery: %s", err)
@@ -176,13 +172,13 @@ func (sp *SerialPortList) runSerialDiscovery() {
 	logrus.Errorf("Serial discovery stopped.")
 }
 
-func (sp *SerialPortList) reset() {
+func (sp *serialPortList) reset() {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
 	sp.Ports = []*SpPortItem{}
 }
 
-func (sp *SerialPortList) add(addedPort *discovery.Port) {
+func (sp *serialPortList) add(addedPort *discovery.Port) {
 	if addedPort.Protocol != "serial" {
 		return
 	}
@@ -226,7 +222,7 @@ func (sp *SerialPortList) add(addedPort *discovery.Port) {
 	})
 }
 
-func (sp *SerialPortList) remove(removedPort *discovery.Port) {
+func (sp *serialPortList) remove(removedPort *discovery.Port) {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
 
@@ -237,7 +233,7 @@ func (sp *SerialPortList) remove(removedPort *discovery.Port) {
 }
 
 // MarkPortAsOpened marks a port as opened by the user
-func (sp *SerialPortList) MarkPortAsOpened(portname string) {
+func (sp *serialPortList) MarkPortAsOpened(portname string) {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
 	port := sp.getPortByName(portname)
@@ -247,7 +243,7 @@ func (sp *SerialPortList) MarkPortAsOpened(portname string) {
 }
 
 // MarkPortAsClosed marks a port as no more opened by the user
-func (sp *SerialPortList) MarkPortAsClosed(portname string) {
+func (sp *serialPortList) MarkPortAsClosed(portname string) {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
 	port := sp.getPortByName(portname)
@@ -256,7 +252,7 @@ func (sp *SerialPortList) MarkPortAsClosed(portname string) {
 	}
 }
 
-func (sp *SerialPortList) getPortByName(portname string) *SpPortItem {
+func (sp *serialPortList) getPortByName(portname string) *SpPortItem {
 	for _, port := range sp.Ports {
 		if port.Name == portname {
 			return port
@@ -265,13 +261,13 @@ func (sp *SerialPortList) getPortByName(portname string) *SpPortItem {
 	return nil
 }
 
-func (h *Hub) spErr(err string) {
+func (h *hub) spErr(err string) {
 	//log.Println("Sending err back: ", err)
 	//sh.hub.broadcastSys <- []byte(err)
 	h.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
 }
 
-func (h *Hub) spClose(portname string) {
+func (h *hub) spClose(portname string) {
 	if myport, ok := h.serialHub.FindPortByName(portname); ok {
 		h.broadcastSys <- []byte("Closing serial port " + portname)
 		myport.Close()
@@ -280,7 +276,7 @@ func (h *Hub) spClose(portname string) {
 	}
 }
 
-func (h *Hub) spWrite(arg string) {
+func (h *hub) spWrite(arg string) {
 	// we will get a string of comXX asdf asdf asdf
 	//log.Println("Inside spWrite arg: " + arg)
 	arg = strings.TrimPrefix(arg, " ")

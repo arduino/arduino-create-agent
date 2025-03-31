@@ -191,12 +191,12 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 	}
 
 	// serialPorts contains the ports attached to the machine
-	serialPorts := NewSerialPortList()
-	serialHub := NewSerialHub()
+	serialPorts := newSerialPortList()
+	serialHub := newSerialHub()
 
 	// var loggerWs logWriter
 
-	hub := NewHub(serialHub, serialPorts)
+	hub := newHub(serialHub, serialPorts)
 
 	logger := func(msg string) {
 		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}

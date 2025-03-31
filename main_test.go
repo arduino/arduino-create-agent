@@ -56,7 +56,7 @@ func TestValidSignatureKey(t *testing.T) {
 
 func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 	r := gin.New()
-	r.POST("/", uploadHandler(NewHub(NewSerialHub(), NewSerialPortList()), utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))))
+	r.POST("/", uploadHandler(newHub(newSerialHub(), newSerialPortList()), utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))))
 	ts := httptest.NewServer(r)
 
 	uploadEvilFileName := Upload{
@@ -93,7 +93,7 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 func TestUploadHandlerAgainstBase64WithoutPaddingMustFail(t *testing.T) {
 	r := gin.New()
 
-	r.POST("/", uploadHandler(NewHub(NewSerialHub(), NewSerialPortList()), utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))))
+	r.POST("/", uploadHandler(newHub(newSerialHub(), newSerialPortList()), utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))))
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
