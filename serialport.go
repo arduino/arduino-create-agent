@@ -287,7 +287,7 @@ func (p *serport) writerRaw() {
 	p.OnMessage([]byte(msgstr))
 }
 
-func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
+func (h *Hub) spHandlerOpen(portname string, baud int, buftype string) {
 
 	log.Print("Inside spHandler")
 

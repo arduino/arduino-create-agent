@@ -80,7 +80,7 @@ type Upload struct {
 
 var uploadStatusStr = "ProgrammerStatus"
 
-func uploadHandler(h *hub, pubKey *rsa.PublicKey) func(*gin.Context) {
+func uploadHandler(h *Hub, pubKey *rsa.PublicKey) func(*gin.Context) {
 	return func(c *gin.Context) {
 		data := new(Upload)
 		if err := c.BindJSON(data); err != nil {
@@ -193,7 +193,7 @@ func uploadHandler(h *hub, pubKey *rsa.PublicKey) func(*gin.Context) {
 // PLogger sends the info from the upload to the websocket
 type PLogger struct {
 	Verbose bool
-	h       *hub
+	h       *Hub
 }
 
 // Debug only sends messages if verbose is true (always true for now)
@@ -210,12 +210,12 @@ func (l PLogger) Info(args ...interface{}) {
 	send(l.h, map[string]string{uploadStatusStr: "Busy", "Msg": output})
 }
 
-func send(h *hub, args map[string]string) {
+func send(h *Hub, args map[string]string) {
 	mapB, _ := json.Marshal(args)
 	h.broadcastSys <- mapB
 }
 
-func wsHandler(h *hub) *WsServer {
+func wsHandler(h *Hub) *WsServer {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)

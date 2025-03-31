@@ -29,7 +29,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type hub struct {
+type Hub struct {
 	// Registered connections.
 	connections map[*connection]bool
 
@@ -47,15 +47,15 @@ type hub struct {
 
 	//TODO globals clients
 	// Serial hub to communicate with serial ports
-	serialHub *serialhub
+	serialHub *Serialhub
 
 	serialPortList *SerialPortList
 }
 
 // NewHub creates a hub that acts as a central hub for handling
 // WebSocket connections, broadcasting messages, and processing commands.
-func NewHub(serialhub *serialhub, serialList *SerialPortList) *hub {
-	hub := &hub{
+func NewHub(serialhub *Serialhub, serialList *SerialPortList) *Hub {
+	hub := &Hub{
 		broadcast:      make(chan []byte, 1000),
 		broadcastSys:   make(chan []byte, 1000),
 		register:       make(chan *connection),
@@ -102,7 +102,7 @@ const commands = `{
   ]
 }`
 
-func (h *hub) unregisterConnection(c *connection) {
+func (h *Hub) unregisterConnection(c *connection) {
 	if _, contains := h.connections[c]; !contains {
 		return
 	}
@@ -110,7 +110,7 @@ func (h *hub) unregisterConnection(c *connection) {
 	close(c.send)
 }
 
-func (h *hub) sendToRegisteredConnections(data []byte) {
+func (h *Hub) sendToRegisteredConnections(data []byte) {
 	for c := range h.connections {
 		select {
 		case c.send <- data:
@@ -123,7 +123,7 @@ func (h *hub) sendToRegisteredConnections(data []byte) {
 	}
 }
 
-func (h *hub) run() {
+func (h *Hub) run() {
 	for {
 		select {
 		case c := <-h.register:
@@ -146,7 +146,7 @@ func (h *hub) run() {
 	}
 }
 
-func (h *hub) checkCmd(m []byte) {
+func (h *Hub) checkCmd(m []byte) {
 	//log.Print("Inside checkCmd")
 	s := string(m[:])
 
@@ -284,7 +284,7 @@ func logAction(sl string) {
 	}
 }
 
-func (h *hub) memoryStats() {
+func (h *Hub) memoryStats() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	json, _ := json.Marshal(memStats)
@@ -292,15 +292,15 @@ func (h *hub) memoryStats() {
 	h.broadcastSys <- json
 }
 
-func (h *hub) getHostname() {
+func (h *Hub) getHostname() {
 	h.broadcastSys <- []byte("{\"Hostname\" : \"" + *hostname + "\"}")
 }
 
-func (h *hub) getVersion() {
+func (h *Hub) getVersion() {
 	h.broadcastSys <- []byte("{\"Version\" : \"" + version + "\"}")
 }
 
-func (h *hub) garbageCollection() {
+func (h *Hub) garbageCollection() {
 	log.Printf("Starting garbageCollection()\n")
 	h.broadcastSys <- []byte("{\"gc\":\"starting\"}")
 	h.memoryStats()

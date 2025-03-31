@@ -29,7 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type serialhub struct {
+type Serialhub struct {
 	// Opened serial ports.
 	ports map[*serport]bool
 	mu    sync.Mutex
@@ -40,8 +40,8 @@ type serialhub struct {
 
 // NewSerialHub creates a new serial hub
 // It is used to manage serial ports and their connections.
-func NewSerialHub() *serialhub {
-	return &serialhub{
+func NewSerialHub() *Serialhub {
+	return &Serialhub{
 		ports: make(map[*serport]bool),
 	}
 }
@@ -75,7 +75,7 @@ type SpPortItem struct {
 }
 
 // Register serial ports from the connections.
-func (sh *serialhub) Register(port *serport) {
+func (sh *Serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Registering a port: ", p.portConf.Name)
 	sh.OnRegister(port)
@@ -84,7 +84,7 @@ func (sh *serialhub) Register(port *serport) {
 }
 
 // Unregister requests from connections.
-func (sh *serialhub) Unregister(port *serport) {
+func (sh *Serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Unregistering a port: ", p.portConf.Name)
 	sh.OnUnregister(port)
@@ -94,7 +94,7 @@ func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Unlock()
 }
 
-func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
+func (sh *Serialhub) FindPortByName(portname string) (*serport, bool) {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
 
@@ -265,13 +265,13 @@ func (sp *SerialPortList) getPortByName(portname string) *SpPortItem {
 	return nil
 }
 
-func (h *hub) spErr(err string) {
+func (h *Hub) spErr(err string) {
 	//log.Println("Sending err back: ", err)
 	//sh.hub.broadcastSys <- []byte(err)
 	h.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
 }
 
-func (h *hub) spClose(portname string) {
+func (h *Hub) spClose(portname string) {
 	if myport, ok := h.serialHub.FindPortByName(portname); ok {
 		h.broadcastSys <- []byte("Closing serial port " + portname)
 		myport.Close()
@@ -280,7 +280,7 @@ func (h *hub) spClose(portname string) {
 	}
 }
 
-func (h *hub) spWrite(arg string) {
+func (h *Hub) spWrite(arg string) {
 	// we will get a string of comXX asdf asdf asdf
 	//log.Println("Inside spWrite arg: " + arg)
 	arg = strings.TrimPrefix(arg, " ")
