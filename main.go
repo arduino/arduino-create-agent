@@ -450,8 +450,8 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 	r.Handle("WS", "/socket.io/", socketHandler)
 	r.Handle("WSS", "/socket.io/", socketHandler)
 	r.GET("/info", infoHandler)
-	r.POST("/pause", PauseHandler(hub, stray))
-	r.POST("/update", UpdateHandler(stray))
+	r.POST("/pause", pauseHandler(hub, stray))
+	r.POST("/update", updateHandler(stray))
 
 	// Mount goa handlers
 	goa := v2.Server(config.GetDataDir().String(), Index, signaturePubKey)

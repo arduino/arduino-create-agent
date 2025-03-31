@@ -143,6 +143,11 @@ func SetInstallCertsIni(filename string, value string) error {
 	return nil
 }
 
+// GetConfigPath returns the full path to the Arduino Create Agent configuration file.
+// It will check if the config file exists in the default location
+// and if not, it will generate a new one.
+// It will also check if the ARDUINO_CREATE_AGENT_CONFIG environment variable is set,
+// and if so, it will use that path instead of the default one.
 func GetConfigPath() *paths.Path {
 	// Let's handle the config
 	configDir := GetDefaultConfigDir()

@@ -38,6 +38,8 @@ type serialhub struct {
 	OnUnregister func(port *serport)
 }
 
+// NewSerialHub creates a new serial hub
+// It is used to manage serial ports and their connections.
 func NewSerialHub() *serialhub {
 	return &serialhub{
 		ports: make(map[*serport]bool),
@@ -53,6 +55,7 @@ type SerialPortList struct {
 	OnErr  func(string) `json:"-"`
 }
 
+// NewSerialPortList creates a new serial port list
 func NewSerialPortList() *SerialPortList {
 	return &SerialPortList{}
 }

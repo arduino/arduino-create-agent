@@ -35,7 +35,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UpdateHandler(s *systray.Systray) func(c *gin.Context) {
+func updateHandler(s *systray.Systray) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		restartPath, err := updater.CheckForUpdates(version, *updateURL, *appName)
 		if err != nil {

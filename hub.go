@@ -52,6 +52,8 @@ type hub struct {
 	serialPortList *SerialPortList
 }
 
+// NewHub creates a hub that acts as a central hub for handling
+// WebSocket connections, broadcasting messages, and processing commands.
 func NewHub(serialhub *serialhub, serialList *SerialPortList) *hub {
 	hub := &hub{
 		broadcast:      make(chan []byte, 1000),

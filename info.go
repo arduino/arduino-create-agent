@@ -41,7 +41,7 @@ func infoHandler(c *gin.Context) {
 	})
 }
 
-func PauseHandler(h *hub, s *systray.Systray) func(c *gin.Context) {
+func pauseHandler(h *hub, s *systray.Systray) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		go func() {
 			ports, _ := serial.GetPortsList()
