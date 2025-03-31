@@ -22,7 +22,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"html/template"
 	"io"
 	"os"
@@ -103,17 +102,20 @@ var homeTemplateHTML string
 
 // global clients
 var (
-	Tools *tools.Tools
-	Index *index.Resource
+	Tools   *tools.Tools
+	Systray systray.Systray
+	Index   *index.Resource
 )
 
-// TODO: enable it
+// FIXME; the loggerWS is useind in the multiwrite in the hub
 // type logWriter struct{}
 
 // func (u *logWriter) Write(p []byte) (n int, err error) {
 // 	h.broadcastSys <- p
 // 	return len(p), nil
 // }
+
+// var loggerWs logWriter
 
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
@@ -140,13 +142,9 @@ func main() {
 	// Check if certificates made with Agent <=1.2.7 needs to be moved over the new location
 	cert.MigrateCertificatesGeneratedWithOldAgentVersions(config.GetCertificatesDir())
 
-	configPath := config.GetConfigPath()
-	fmt.Println("configPath: ", configPath)
-
 	// SetupSystray is the main thread
 	configDir := config.GetDefaultConfigDir()
-
-	stray := &systray.Systray{
+	stray := systray.Systray{
 		Hibernate: *hibernate,
 		Version:   version + "-" + commit,
 		DebugURL: func() string {
@@ -155,27 +153,22 @@ func main() {
 		AdditionalConfig: *additionalConfig,
 		ConfigDir:        configDir,
 	}
-	stray.SetCurrentConfigFile(configPath)
 
 	// Launch main loop in a goroutine
-	go loop(stray, configPath)
+	go loop(&stray)
 
 	if src, err := os.Executable(); err != nil {
 		panic(err)
 	} else if restartPath := updater.Start(src); restartPath != "" {
-		stray.RestartWith(restartPath)
+		Systray.RestartWith(restartPath)
 	} else {
-		stray.Start()
+		Systray.Start()
 	}
 }
 
-func loop(stray *systray.Systray, configPath *paths.Path) {
+func loop(stray *systray.Systray) {
 	if *hibernate {
 		return
-	}
-
-	if configPath == nil {
-		log.Panic("configPath is nil")
 	}
 
 	log.SetLevel(log.InfoLevel)
@@ -190,18 +183,47 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 		os.Exit(0)
 	}
 
-	// serialPorts contains the ports attached to the machine
 	serialPorts := newSerialPortList()
 	serialHub := newSerialHub()
-
-	// var loggerWs logWriter
-
 	hub := newHub(serialHub, serialPorts)
 
 	logger := func(msg string) {
 		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
 		mapB, _ := json.Marshal(mapD)
 		hub.broadcastSys <- mapB
+	}
+
+	// Let's handle the config
+	configDir := config.GetDefaultConfigDir()
+	var configPath *paths.Path
+
+	// see if the env var is defined, if it is take the config from there, this will override the default path
+	if envConfig := os.Getenv("ARDUINO_CREATE_AGENT_CONFIG"); envConfig != "" {
+		configPath = paths.New(envConfig)
+		if configPath.NotExist() {
+			log.Panicf("config from env var %s does not exists", envConfig)
+		}
+		log.Infof("using config from env variable: %s", configPath)
+	} else if defaultConfigPath := configDir.Join("config.ini"); defaultConfigPath.Exist() {
+		// by default take the config from the ~/.arduino-create/config.ini file
+		configPath = defaultConfigPath
+		log.Infof("using config from default: %s", configPath)
+	} else {
+		// Fall back to the old config.ini location
+		src, _ := os.Executable()
+		oldConfigPath := paths.New(src).Parent().Join("config.ini")
+		if oldConfigPath.Exist() {
+			err := oldConfigPath.CopyTo(defaultConfigPath)
+			if err != nil {
+				log.Errorf("cannot copy old %s, to %s, generating new config", oldConfigPath, configPath)
+			} else {
+				configPath = defaultConfigPath
+				log.Infof("copied old %s, to %s", oldConfigPath, configPath)
+			}
+		}
+	}
+	if configPath == nil {
+		configPath = config.GenerateConfig(configDir)
 	}
 
 	// if the default browser is Safari, prompt the user to install HTTPS certificates
@@ -241,6 +263,7 @@ func loop(stray *systray.Systray, configPath *paths.Path) {
 	if err != nil {
 		log.Panicf("cannot parse arguments: %s", err)
 	}
+	Systray.SetCurrentConfigFile(configPath)
 
 	// Parse additional ini config if defined
 	if len(*additionalConfig) > 0 {

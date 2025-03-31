@@ -270,7 +270,7 @@ func (h *hub) checkCmd(m []byte) {
 func logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
-		//TODO: pass the loggerSw in the constructor and enable again the log e
+		// FIXME: pass the loggerSw in the constructor and enable again the log e
 		// multiWriter := io.MultiWriter(&loggerWs, os.Stderr)
 		// log.SetOutput(multiWriter)
 	} else if strings.HasPrefix(sl, "log off") {
