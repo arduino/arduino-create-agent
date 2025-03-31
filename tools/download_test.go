@@ -21,7 +21,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/arduino/arduino-create-agent/globals"
 	"github.com/arduino/arduino-create-agent/index"
+	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/arduino/arduino-create-agent/v2/pkgs"
 	"github.com/arduino/go-paths-helper"
 	"github.com/stretchr/testify/require"
@@ -128,7 +130,7 @@ func TestDownload(t *testing.T) {
 		IndexFile:   *paths.New("testdata", "test_tool_index.json"),
 		LastRefresh: time.Now(),
 	}
-	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) })
+	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) }, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 
 	for _, tc := range testCases {
 		t.Run(tc.name+"-"+tc.version, func(t *testing.T) {
@@ -175,7 +177,7 @@ func TestCorruptedInstalled(t *testing.T) {
 	defer fileJSON.Close()
 	_, err = fileJSON.Write([]byte("Hello"))
 	require.NoError(t, err)
-	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) })
+	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) }, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 	// Download the tool
 	err = testTools.Download("arduino-test", "avrdude", "6.3.0-arduino17", "keep")
 	require.NoError(t, err)

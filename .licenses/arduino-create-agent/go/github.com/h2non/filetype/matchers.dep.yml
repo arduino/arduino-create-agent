@@ -2,7 +2,7 @@
 name: github.com/h2non/filetype/matchers
 version: v1.1.3
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/h2non/filetype/matchers
 license: mit
 licenses:

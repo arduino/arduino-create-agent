@@ -16,6 +16,7 @@
 package tools
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"path/filepath"
 	"strings"
@@ -55,14 +56,14 @@ type Tools struct {
 // The New functions accept the directory to use to host the tools,
 // an index (used to download the tools),
 // and a logger to log the operations
-func New(directory *paths.Path, index *index.Resource, logger func(msg string)) *Tools {
+func New(directory *paths.Path, index *index.Resource, logger func(msg string), signPubKey *rsa.PublicKey) *Tools {
 	t := &Tools{
 		directory: directory,
 		index:     index,
 		logger:    logger,
 		installed: map[string]string{},
 		mutex:     sync.RWMutex{},
-		tools:     pkgs.New(index, directory.String(), "replace"),
+		tools:     pkgs.New(index, directory.String(), "replace", signPubKey),
 	}
 	_ = t.readMap()
 	return t

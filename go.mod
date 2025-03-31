@@ -7,7 +7,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.5-proton
 	github.com/arduino/go-paths-helper v1.12.1
 	github.com/arduino/go-serial-utils v0.1.2
-	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.0
+	github.com/arduino/pluggable-discovery-protocol-handler/v2 v2.2.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/codeclysm/extract/v4 v4.0.0
 	github.com/gin-contrib/cors v1.7.2
@@ -21,7 +21,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/stretchr/testify v1.9.0
 	github.com/xrash/smetrics v0.0.0-20170218160415-a3153f7040e9
-	go.bug.st/serial v1.6.1
+	go.bug.st/serial v1.6.4
 	goa.design/goa/v3 v3.16.1
 	golang.org/x/sys v0.23.0
 	gopkg.in/inconshreveable/go-update.v0 v0.0.0-20150814200126-d8b0b1d421aa

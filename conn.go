@@ -19,6 +19,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -79,7 +80,7 @@ type Upload struct {
 
 var uploadStatusStr = "ProgrammerStatus"
 
-func UploadHandler(h *hub) func(c *gin.Context) {
+func uploadHandler(h *hub, pubKey *rsa.PublicKey) func(*gin.Context) {
 	return func(c *gin.Context) {
 		data := new(Upload)
 		if err := c.BindJSON(data); err != nil {
@@ -111,9 +112,10 @@ func UploadHandler(h *hub) func(c *gin.Context) {
 				return
 			}
 
-			err := utilities.VerifyInput(data.Commandline, data.Signature)
+			err := utilities.VerifyInput(data.Commandline, data.Signature, pubKey)
 
 			if err != nil {
+				log.WithField("err", err).Error("Error verifying the command")
 				c.String(http.StatusBadRequest, "signature is invalid")
 				return
 			}

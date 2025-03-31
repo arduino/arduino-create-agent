@@ -2,7 +2,7 @@
 name: github.com/creack/goselect
 version: v0.1.2
 type: go
-summary: 
+summary:
 homepage: https://pkg.go.dev/github.com/creack/goselect
 license: mit
 licenses:
@@ -33,3 +33,4 @@ licenses:
 - sources: README.md
   text: Released under the [MIT license](LICENSE).
 notices: []
+...

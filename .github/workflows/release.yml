@@ -259,6 +259,11 @@ jobs:
     environment: production
 
     steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
