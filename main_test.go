@@ -32,6 +32,7 @@ import (
 	genTools "github.com/arduino/arduino-create-agent/gen/tools"
 	"github.com/arduino/arduino-create-agent/globals"
 	"github.com/arduino/arduino-create-agent/index"
+	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
@@ -62,7 +63,7 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
 	require.NoError(t, err)
 	tools := tools.New(config.GetDataDir(), index, signaturePubKey)
-	hub := newHub(newSerialHub(), newSerialPortList(tools), tools)
+	hub := newHub(newSerialHub(), newSerialPortList(tools), tools, &systray.Systray{})
 	pubkey := utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))
 
 	r.POST("/", uploadHandler(hub, pubkey, tools))
@@ -106,7 +107,7 @@ func TestUploadHandlerAgainstBase64WithoutPaddingMustFail(t *testing.T) {
 	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
 	require.NoError(t, err)
 	tools := tools.New(config.GetDataDir(), index, signaturePubKey)
-	hub := newHub(newSerialHub(), newSerialPortList(tools), tools)
+	hub := newHub(newSerialHub(), newSerialPortList(tools), tools, &systray.Systray{})
 	pubkey := utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))
 
 	r.POST("/", uploadHandler(hub, pubkey, tools))
