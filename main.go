@@ -99,16 +99,6 @@ var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHTML))
 //go:embed home.html
 var homeTemplateHTML string
 
-// FIXME; the loggerWS is useind in the multiwrite in the hub
-// type logWriter struct{}
-
-// func (u *logWriter) Write(p []byte) (n int, err error) {
-// 	h.broadcastSys <- p
-// 	return len(p), nil
-// }
-
-// var loggerWs logWriter
-
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
 }
