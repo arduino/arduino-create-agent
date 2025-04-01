@@ -47,7 +47,6 @@ type hub struct {
 	// Unregister requests from connections.
 	unregister chan *connection
 
-	//TODO globals clients
 	// Serial hub to communicate with serial ports
 	serialHub *serialhub
 
