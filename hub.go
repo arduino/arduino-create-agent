@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -256,7 +257,7 @@ func (h *hub) checkCmd(m []byte) {
 			}
 		}()
 	} else if strings.HasPrefix(sl, "log") {
-		go logAction(sl)
+		go h.logAction(sl)
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
 		// TODO enable them
@@ -276,12 +277,26 @@ func (h *hub) checkCmd(m []byte) {
 	}
 }
 
-func logAction(sl string) {
+type logWriter struct {
+	onWrite func([]byte)
+}
+
+func (u *logWriter) Write(p []byte) (n int, err error) {
+	u.onWrite(p)
+	return len(p), nil
+}
+
+func (h *hub) logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
-		// FIXME: pass the loggerSw in the constructor and enable again the log e
-		// multiWriter := io.MultiWriter(&loggerWs, os.Stderr)
-		// log.SetOutput(multiWriter)
+
+		logWriter := logWriter{}
+		logWriter.onWrite = func(p []byte) {
+			h.broadcastSys <- p
+		}
+
+		multiWriter := io.MultiWriter(&logWriter, os.Stderr)
+		log.SetOutput(multiWriter)
 	} else if strings.HasPrefix(sl, "log off") {
 		*logDump = "off"
 		log.SetOutput(os.Stderr)
