@@ -179,7 +179,7 @@ func loop(stray *systray.Systray) {
 	serialPorts := newSerialPortList(tools)
 	serialHub := newSerialHub()
 
-	hub := newHub(serialHub, serialPorts, tools)
+	hub := newHub(serialHub, serialPorts, tools, stray)
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()

@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/upload"
 	log "github.com/sirupsen/logrus"
@@ -53,9 +54,11 @@ type hub struct {
 	serialPortList *serialPortList
 
 	tools *tools.Tools
+
+	systray *systray.Systray
 }
 
-func newHub(serialhub *serialhub, serialList *serialPortList, tools *tools.Tools) *hub {
+func newHub(serialhub *serialhub, serialList *serialPortList, tools *tools.Tools, systray *systray.Systray) *hub {
 	hub := &hub{
 		broadcast:      make(chan []byte, 1000),
 		broadcastSys:   make(chan []byte, 1000),
@@ -65,6 +68,7 @@ func newHub(serialhub *serialhub, serialList *serialPortList, tools *tools.Tools
 		serialHub:      serialhub,
 		serialPortList: serialList,
 		tools:          tools,
+		systray:        systray,
 	}
 
 	hub.serialHub.OnRegister = func(port *serport) {
@@ -259,10 +263,9 @@ func (h *hub) checkCmd(m []byte) {
 		go h.logAction(sl)
 	} else if strings.HasPrefix(sl, "restart") {
 		log.Println("Received restart from the daemon. Why? Boh")
-		// TODO enable them
-		// Systray.Restart()
+		h.systray.Restart()
 	} else if strings.HasPrefix(sl, "exit") {
-		// Systray.Quit()
+		h.systray.Quit()
 	} else if strings.HasPrefix(sl, "memstats") {
 		h.memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
