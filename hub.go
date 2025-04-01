@@ -262,6 +262,7 @@ func (h *hub) checkCmd(m []byte) {
 	} else if strings.HasPrefix(sl, "log") {
 		go h.logAction(sl)
 	} else if strings.HasPrefix(sl, "restart") {
+		// potentially, the sysStray dependencies can be removed  https://github.com/arduino/arduino-create-agent/issues/1013
 		log.Println("Received restart from the daemon. Why? Boh")
 		h.systray.Restart()
 	} else if strings.HasPrefix(sl, "exit") {
