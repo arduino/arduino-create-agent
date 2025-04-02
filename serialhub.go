@@ -27,13 +27,15 @@ type serialhub struct {
 	ports map[*serport]bool
 	mu    sync.Mutex
 
-	OnRegister   func(port *serport)
-	OnUnregister func(port *serport)
+	onRegister   func(port *serport)
+	onUnregister func(port *serport)
 }
 
-func newSerialHub() *serialhub {
+func newSerialHub(onRegister func(port *serport), onUnregister func(port *serport)) *serialhub {
 	return &serialhub{
-		ports: make(map[*serport]bool),
+		ports:        make(map[*serport]bool),
+		onRegister:   onRegister,
+		onUnregister: onUnregister,
 	}
 }
 
@@ -41,7 +43,7 @@ func newSerialHub() *serialhub {
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Registering a port: ", p.portConf.Name)
-	sh.OnRegister(port)
+	sh.onRegister(port)
 	sh.ports[port] = true
 	sh.mu.Unlock()
 }
@@ -50,7 +52,7 @@ func (sh *serialhub) Register(port *serport) {
 func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Unregistering a port: ", p.portConf.Name)
-	sh.OnUnregister(port)
+	sh.onUnregister(port)
 	delete(sh.ports, port)
 	close(port.sendBuffered)
 	close(port.sendNoBuf)

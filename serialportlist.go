@@ -34,8 +34,12 @@ type SpPortItem struct {
 	ProductID       string
 }
 
-func newSerialPortList(tools *tools.Tools) *serialPortList {
-	return &serialPortList{tools: tools}
+func newSerialPortList(tools *tools.Tools, onList func(data []byte), onErr func(err string)) *serialPortList {
+	return &serialPortList{
+		tools:  tools,
+		OnList: onList,
+		OnErr:  onErr,
+	}
 }
 
 // List broadcasts a Json representation of the ports found
@@ -111,6 +115,7 @@ func (sp *serialPortList) runSerialDiscovery() {
 		logrus.Errorf("Error starting event watcher on serial-discovery: %s", err)
 		panic(err)
 	}
+	d.List()
 
 	logrus.Infof("Serial discovery started, watching for events")
 	for ev := range events {

@@ -61,35 +61,35 @@ type hub struct {
 }
 
 func newHub(tools *tools.Tools, systray *systray.Systray) *hub {
-	hub := &hub{
+	broadcastSys := make(chan []byte, 1000)
+
+	onRegister := func(port *serport) {
+		broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	}
+	onUnregister := func(port *serport) {
+		broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
+	}
+	serialHub := newSerialHub(onRegister, onUnregister)
+
+	onList := func(data []byte) {
+		broadcastSys <- data
+	}
+	onErr := func(err string) {
+		broadcastSys <- []byte("{\"Error\":\"" + err + "\"}")
+	}
+	serialPortList := newSerialPortList(tools, onList, onErr)
+
+	return &hub{
 		broadcast:      make(chan []byte, 1000),
-		broadcastSys:   make(chan []byte, 1000),
+		broadcastSys:   broadcastSys,
 		register:       make(chan *connection),
 		unregister:     make(chan *connection),
 		connections:    make(map[*connection]bool),
-		serialHub:      newSerialHub(),
-		serialPortList: newSerialPortList(tools),
+		serialHub:      serialHub,
+		serialPortList: serialPortList,
 		tools:          tools,
 		systray:        systray,
 	}
-
-	hub.serialHub.OnRegister = func(port *serport) {
-		hub.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
-	}
-
-	hub.serialHub.OnUnregister = func(port *serport) {
-		hub.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
-	}
-
-	hub.serialPortList.OnList = func(data []byte) {
-		hub.broadcastSys <- data
-	}
-
-	hub.serialPortList.OnErr = func(err string) {
-		hub.broadcastSys <- []byte("{\"Error\":\"" + err + "\"}")
-	}
-
-	return hub
 }
 
 const commands = `{
@@ -216,6 +216,8 @@ func (hub *hub) checkCmd(m []byte) {
 		// will catch send and sendnobuf and sendraw
 		go hub.spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
+		// ports :=  hub.serialPortList.List()
+		// send to websockets the ports
 		go hub.serialPortList.List()
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		go func() {
