@@ -25,7 +25,6 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-	serial "go.bug.st/serial"
 )
 
 // SerialConfig is the serial port configuration
