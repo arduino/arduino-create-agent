@@ -241,9 +241,10 @@ func (p *serport) writerNoBuf() {
 
 	p.portIo.Close()
 
-	// NOTE:  by removing the 'serialPorts.List()' line, the list of serial ports are NOT sent to the websocket clients.
-	// after a write is completed. It should not be an issue also because the other two 'writerBuffered' and 'writerRaw' methods
-	// do not call it.
+	// NOTE:  by removing the 'serialPorts.List()' line,
+	// the list of serial ports are NOT sent to the websocket clients  after a write is completed.
+	// This should not be an issue since the list are periodically called.
+	// Note also that the 'writerBuffered' and 'writerRaw' methods do not call it.
 	// serialPorts.List()
 
 }

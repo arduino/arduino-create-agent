@@ -176,9 +176,7 @@ func loop(stray *systray.Systray) {
 	}
 	tools := tools.New(config.GetDataDir(), index, signaturePubKey)
 
-	serialPorts := newSerialPortList(tools)
-
-	hub := newHub(serialPorts, tools, stray)
+	hub := newHub(tools, stray)
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()
@@ -394,8 +392,6 @@ func loop(stray *systray.Systray) {
 		}
 	}
 
-	// launch the discoveries for the running system
-	go serialPorts.Run()
 	// launch the hub routine which is the singleton for the websocket server
 	go hub.run()
 	// launch our dummy data routine

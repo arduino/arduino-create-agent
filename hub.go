@@ -60,7 +60,7 @@ type hub struct {
 	systray *systray.Systray
 }
 
-func newHub(serialList *serialPortList, tools *tools.Tools, systray *systray.Systray) *hub {
+func newHub(tools *tools.Tools, systray *systray.Systray) *hub {
 	hub := &hub{
 		broadcast:      make(chan []byte, 1000),
 		broadcastSys:   make(chan []byte, 1000),
@@ -68,7 +68,7 @@ func newHub(serialList *serialPortList, tools *tools.Tools, systray *systray.Sys
 		unregister:     make(chan *connection),
 		connections:    make(map[*connection]bool),
 		serialHub:      newSerialHub(),
-		serialPortList: serialList,
+		serialPortList: newSerialPortList(tools),
 		tools:          tools,
 		systray:        systray,
 	}
@@ -132,6 +132,8 @@ func (hub *hub) sendToRegisteredConnections(data []byte) {
 }
 
 func (hub *hub) run() {
+	go hub.serialPortList.Run()
+
 	for {
 		select {
 		case c := <-hub.register:
