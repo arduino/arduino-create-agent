@@ -282,6 +282,63 @@ func (hub *hub) checkCmd(m []byte) {
 	}
 }
 
+type logWriter struct {
+	onWrite func([]byte)
+}
+
+func (hub *hub) logAction(sl string) {
+	if strings.HasPrefix(sl, "log on") {
+		*logDump = "on"
+
+		logWriter := logWriter{}
+		logWriter.onWrite = func(p []byte) {
+			hub.broadcastSys <- p
+		}
+
+		multiWriter := io.MultiWriter(&logWriter, os.Stderr)
+		log.SetOutput(multiWriter)
+	} else if strings.HasPrefix(sl, "log off") {
+		*logDump = "off"
+		log.SetOutput(os.Stderr)
+		// } else if strings.HasPrefix(sl, "log show") {
+		// TODO: send all the saved log to websocket
+		//hub.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
+	}
+}
+
+func (u *logWriter) Write(p []byte) (n int, err error) {
+	u.onWrite(p)
+	return len(p), nil
+}
+
+func (hub *hub) memoryStats() {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	json, _ := json.Marshal(memStats)
+	log.Printf("memStats:%v\n", string(json))
+	hub.broadcastSys <- json
+}
+
+func (hub *hub) getHostname() {
+	hub.broadcastSys <- []byte("{\"Hostname\" : \"" + *hostname + "\"}")
+}
+
+func (hub *hub) getVersion() {
+	hub.broadcastSys <- []byte("{\"Version\" : \"" + version + "\"}")
+}
+
+func (hub *hub) garbageCollection() {
+	log.Printf("Starting garbageCollection()\n")
+	hub.broadcastSys <- []byte("{\"gc\":\"starting\"}")
+	hub.memoryStats()
+	debug.SetGCPercent(100)
+	debug.FreeOSMemory()
+	debug.SetGCPercent(-1)
+	log.Printf("Done with garbageCollection()\n")
+	hub.broadcastSys <- []byte("{\"gc\":\"done\"}")
+	hub.memoryStats()
+}
+
 func (hub *hub) spHandlerOpen(portname string, baud int, buftype string) {
 
 	log.Print("Inside spHandler")
@@ -413,63 +470,6 @@ func (hub *hub) spWrite(arg string) {
 
 	// send it to the write channel
 	port.Write(data, bufferingMode)
-}
-
-type logWriter struct {
-	onWrite func([]byte)
-}
-
-func (hub *hub) logAction(sl string) {
-	if strings.HasPrefix(sl, "log on") {
-		*logDump = "on"
-
-		logWriter := logWriter{}
-		logWriter.onWrite = func(p []byte) {
-			hub.broadcastSys <- p
-		}
-
-		multiWriter := io.MultiWriter(&logWriter, os.Stderr)
-		log.SetOutput(multiWriter)
-	} else if strings.HasPrefix(sl, "log off") {
-		*logDump = "off"
-		log.SetOutput(os.Stderr)
-		// } else if strings.HasPrefix(sl, "log show") {
-		// TODO: send all the saved log to websocket
-		//hub.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
-	}
-}
-
-func (u *logWriter) Write(p []byte) (n int, err error) {
-	u.onWrite(p)
-	return len(p), nil
-}
-
-func (hub *hub) memoryStats() {
-	var memStats runtime.MemStats
-	runtime.ReadMemStats(&memStats)
-	json, _ := json.Marshal(memStats)
-	log.Printf("memStats:%v\n", string(json))
-	hub.broadcastSys <- json
-}
-
-func (hub *hub) getHostname() {
-	hub.broadcastSys <- []byte("{\"Hostname\" : \"" + *hostname + "\"}")
-}
-
-func (hub *hub) getVersion() {
-	hub.broadcastSys <- []byte("{\"Version\" : \"" + version + "\"}")
-}
-
-func (hub *hub) garbageCollection() {
-	log.Printf("Starting garbageCollection()\n")
-	hub.broadcastSys <- []byte("{\"gc\":\"starting\"}")
-	hub.memoryStats()
-	debug.SetGCPercent(100)
-	debug.FreeOSMemory()
-	debug.SetGCPercent(-1)
-	log.Printf("Done with garbageCollection()\n")
-	hub.broadcastSys <- []byte("{\"gc\":\"done\"}")
-	hub.memoryStats()
 }
 
 func (hub *hub) spErr(err string) {
