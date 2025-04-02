@@ -240,7 +240,10 @@ func (p *serport) writerNoBuf() {
 	p.OnMessage([]byte(msgstr))
 
 	p.portIo.Close()
-	// serialPorts.List(
+
+	// The effect of this call is to send in to all the we client the list of serial ports
+	// TODO: investigate if this is superfluous and it can be removed.
+	// serialPorts.List()
 
 }
 

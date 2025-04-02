@@ -12,11 +12,10 @@ import (
 )
 
 type serialPortList struct {
-	tools *tools.Tools
-
 	Ports     []*SpPortItem
 	portsLock sync.Mutex
 
+	tools  *tools.Tools `json:"-"`
 	OnList func([]byte) `json:"-"`
 	OnErr  func(string) `json:"-"`
 }
