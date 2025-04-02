@@ -18,15 +18,8 @@
 package main
 
 import (
-	"encoding/json"
-	"slices"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/arduino/arduino-create-agent/tools"
-	discovery "github.com/arduino/pluggable-discovery-protocol-handler/v2"
-	"github.com/sirupsen/logrus"
 )
 
 type serialhub struct {
