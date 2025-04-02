@@ -169,7 +169,7 @@ func uploadHandler(hub *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gi
 				return
 			}
 
-			l := PLogger{Verbose: true}
+			l := PLogger{Verbose: true, hub: hub}
 
 			// Upload
 			if data.Extra.Network {
