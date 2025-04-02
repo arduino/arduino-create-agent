@@ -81,7 +81,7 @@ type Upload struct {
 
 var uploadStatusStr = "ProgrammerStatus"
 
-func uploadHandler(h *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gin.Context) {
+func uploadHandler(hub *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gin.Context) {
 	return func(c *gin.Context) {
 		data := new(Upload)
 		if err := c.BindJSON(data); err != nil {
@@ -165,7 +165,7 @@ func uploadHandler(h *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gin.
 			// Resolve commandline
 			commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, tools)
 			if err != nil {
-				send(h, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
+				send(hub, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 				return
 			}
 
@@ -175,16 +175,16 @@ func uploadHandler(h *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gin.
 			if data.Extra.Network {
 				err = errors.New("network upload is not supported anymore, pease use OTA instead")
 			} else {
-				send(h, map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
+				send(hub, map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
 				err = upload.Serial(data.Port, commandline, data.Extra, l)
 			}
 
 			// Handle result
 			if err != nil {
-				send(h, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
+				send(hub, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 				return
 			}
-			send(h, map[string]string{uploadStatusStr: "Done", "Flash": "Ok"})
+			send(hub, map[string]string{uploadStatusStr: "Done", "Flash": "Ok"})
 		}()
 
 		c.String(http.StatusAccepted, "")
@@ -194,7 +194,7 @@ func uploadHandler(h *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gin.
 // PLogger sends the info from the upload to the websocket
 type PLogger struct {
 	Verbose bool
-	h       *hub
+	hub     *hub
 }
 
 // Debug only sends messages if verbose is true (always true for now)
@@ -208,15 +208,15 @@ func (l PLogger) Debug(args ...interface{}) {
 func (l PLogger) Info(args ...interface{}) {
 	output := fmt.Sprint(args...)
 	log.Println(output)
-	send(l.h, map[string]string{uploadStatusStr: "Busy", "Msg": output})
+	send(l.hub, map[string]string{uploadStatusStr: "Busy", "Msg": output})
 }
 
-func send(h *hub, args map[string]string) {
+func send(hub *hub, args map[string]string) {
 	mapB, _ := json.Marshal(args)
-	h.broadcastSys <- mapB
+	hub.broadcastSys <- mapB
 }
 
-func wsHandler(h *hub) *WsServer {
+func wsHandler(hub *hub) *WsServer {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)
@@ -224,13 +224,13 @@ func wsHandler(h *hub) *WsServer {
 
 	server.On("connection", func(so socketio.Socket) {
 		c := &connection{send: make(chan []byte, 256*10), ws: so}
-		h.register <- c
+		hub.register <- c
 		so.On("command", func(message string) {
-			h.broadcast <- []byte(message)
+			hub.broadcast <- []byte(message)
 		})
 
 		so.On("disconnection", func() {
-			h.unregister <- c
+			hub.unregister <- c
 		})
 		go c.writer()
 	})
