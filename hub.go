@@ -58,14 +58,14 @@ type hub struct {
 	systray *systray.Systray
 }
 
-func newHub(serialhub *serialhub, serialList *serialPortList, tools *tools.Tools, systray *systray.Systray) *hub {
+func newHub(serialList *serialPortList, tools *tools.Tools, systray *systray.Systray) *hub {
 	hub := &hub{
 		broadcast:      make(chan []byte, 1000),
 		broadcastSys:   make(chan []byte, 1000),
 		register:       make(chan *connection),
 		unregister:     make(chan *connection),
 		connections:    make(map[*connection]bool),
-		serialHub:      serialhub,
+		serialHub:      newSerialHub(),
 		serialPortList: serialList,
 		tools:          tools,
 		systray:        systray,
