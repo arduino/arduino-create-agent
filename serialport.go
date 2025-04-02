@@ -62,7 +62,6 @@ type serport struct {
 	//bufferwatcher *BufferflowDummypause
 	bufferwatcher Bufferflow
 
-	// TODO: to remove global
 	OnMessage func([]byte)
 	OnClose   func(*serport)
 }
@@ -93,7 +92,6 @@ func (p *serport) reader(buftype string) {
 		if p.isClosing.Load() {
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
-			// h.broadcastSys <- ([]byte(strmsg)
 			p.OnMessage([]byte(strmsg))
 			break
 		}
@@ -148,18 +146,13 @@ func (p *serport) reader(buftype string) {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				// hit end of file
 				log.Println("Hit end of file on serial port")
-				// h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
 				p.OnMessage([]byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}"))
 
 			}
 
 			if err != nil {
 				log.Println(err)
-				// h.broadcastSys <- []byte("Error reading on " + p.portConf.Name + " " +
-				// 	err.Error() + " Closing port.")
 				p.OnMessage([]byte("Error reading on " + p.portConf.Name + " " + err.Error() + " Closing port."))
-
-				// h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
 				p.OnMessage([]byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}"))
 				p.isClosingDueToError = true
 				break
@@ -218,7 +211,6 @@ func (p *serport) writerBuffered() {
 	}
 	msgstr := "writerBuffered just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
-	// h.broadcastSys <- []byte(msgstr)
 	p.OnMessage([]byte(msgstr))
 }
 
@@ -240,18 +232,17 @@ func (p *serport) writerNoBuf() {
 		if err != nil {
 			errstr := "Error writing to " + p.portConf.Name + " " + err.Error() + " Closing port."
 			log.Print(errstr)
-			// h.broadcastSys <- []byte(errstr)
 			p.OnMessage([]byte(errstr))
 			break
 		}
 	}
 	msgstr := "Shutting down writer on " + p.portConf.Name
 	log.Println(msgstr)
-	// h.broadcastSys <- []byte(msgstr)
 	p.OnMessage([]byte(msgstr))
+
 	p.portIo.Close()
-	// TODO: is this needed ?
-	// serialPorts.List()
+	// serialPorts.List(
+
 }
 
 // this method runs as its own thread because it's instantiated
@@ -283,7 +274,6 @@ func (p *serport) writerRaw() {
 	}
 	msgstr := "writerRaw just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
-	// h.broadcastSys <- []byte(msgstr)
 	p.OnMessage([]byte(msgstr))
 }
 
