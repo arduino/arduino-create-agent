@@ -63,7 +63,7 @@ func TestUploadHandlerAgainstEvilFileNames(t *testing.T) {
 	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
 	require.NoError(t, err)
 	tools := tools.New(config.GetDataDir(), index, signaturePubKey)
-	hub := newHub(newSerialPortList(tools), tools, &systray.Systray{})
+	hub := newHub(tools, &systray.Systray{})
 	pubkey := utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))
 
 	r.POST("/", uploadHandler(hub, pubkey, tools))
@@ -107,7 +107,7 @@ func TestUploadHandlerAgainstBase64WithoutPaddingMustFail(t *testing.T) {
 	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
 	require.NoError(t, err)
 	tools := tools.New(config.GetDataDir(), index, signaturePubKey)
-	hub := newHub(newSerialPortList(tools), tools, &systray.Systray{})
+	hub := newHub(tools, &systray.Systray{})
 	pubkey := utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey))
 
 	r.POST("/", uploadHandler(hub, pubkey, tools))
