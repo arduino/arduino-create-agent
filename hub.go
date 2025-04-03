@@ -216,8 +216,6 @@ func (hub *hub) checkCmd(m []byte) {
 		// will catch send and sendnobuf and sendraw
 		go hub.spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
-		// ports :=  hub.serialPortList.List()
-		// send to websockets the ports
 		go hub.serialPortList.List()
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		go func() {
