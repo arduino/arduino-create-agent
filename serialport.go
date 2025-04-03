@@ -25,7 +25,6 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-	serial "go.bug.st/serial"
 )
 
 // SerialConfig is the serial port configuration
@@ -61,6 +60,9 @@ type serport struct {
 	BufferType string
 	//bufferwatcher *BufferflowDummypause
 	bufferwatcher Bufferflow
+
+	OnMessage func([]byte)
+	OnClose   func(*serport)
 }
 
 // SpPortMessage is the serial port message
@@ -89,7 +91,7 @@ func (p *serport) reader(buftype string) {
 		if p.isClosing.Load() {
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
-			h.broadcastSys <- []byte(strmsg)
+			p.OnMessage([]byte(strmsg))
 			break
 		}
 
@@ -143,15 +145,14 @@ func (p *serport) reader(buftype string) {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				// hit end of file
 				log.Println("Hit end of file on serial port")
-				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
+				p.OnMessage([]byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}"))
 
 			}
 
 			if err != nil {
 				log.Println(err)
-				h.broadcastSys <- []byte("Error reading on " + p.portConf.Name + " " +
-					err.Error() + " Closing port.")
-				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
+				p.OnMessage([]byte("Error reading on " + p.portConf.Name + " " + err.Error() + " Closing port."))
+				p.OnMessage([]byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}"))
 				p.isClosingDueToError = true
 				break
 			}
@@ -209,7 +210,7 @@ func (p *serport) writerBuffered() {
 	}
 	msgstr := "writerBuffered just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
-	h.broadcastSys <- []byte(msgstr)
+	p.OnMessage([]byte(msgstr))
 }
 
 // this method runs as its own thread because it's instantiated
@@ -230,15 +231,22 @@ func (p *serport) writerNoBuf() {
 		if err != nil {
 			errstr := "Error writing to " + p.portConf.Name + " " + err.Error() + " Closing port."
 			log.Print(errstr)
-			h.broadcastSys <- []byte(errstr)
+			p.OnMessage([]byte(errstr))
 			break
 		}
 	}
 	msgstr := "Shutting down writer on " + p.portConf.Name
 	log.Println(msgstr)
-	h.broadcastSys <- []byte(msgstr)
+	p.OnMessage([]byte(msgstr))
+
 	p.portIo.Close()
-	serialPorts.List()
+
+	// NOTE:  by removing the 'serialPorts.List()' line,
+	// the list of serial ports are NOT sent to the websocket clients  after a write is completed.
+	// This should not be an issue since the list are periodically called.
+	// Note also that the 'writerBuffered' and 'writerRaw' methods do not call it.
+	// serialPorts.List()
+
 }
 
 // this method runs as its own thread because it's instantiated
@@ -270,82 +278,7 @@ func (p *serport) writerRaw() {
 	}
 	msgstr := "writerRaw just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
-	h.broadcastSys <- []byte(msgstr)
-}
-
-func spHandlerOpen(portname string, baud int, buftype string) {
-
-	log.Print("Inside spHandler")
-
-	var out bytes.Buffer
-
-	out.WriteString("Opening serial port ")
-	out.WriteString(portname)
-	out.WriteString(" at ")
-	out.WriteString(strconv.Itoa(baud))
-	out.WriteString(" baud")
-	log.Print(out.String())
-
-	conf := &SerialConfig{Name: portname, Baud: baud, RtsOn: true}
-
-	mode := &serial.Mode{
-		BaudRate: baud,
-	}
-
-	sp, err := serial.Open(portname, mode)
-	log.Print("Just tried to open port")
-	if err != nil {
-		//log.Fatal(err)
-		log.Print("Error opening port " + err.Error())
-		//h.broadcastSys <- []byte("Error opening port. " + err.Error())
-		h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
-
-		return
-	}
-	log.Print("Opened port successfully")
-	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
-	// we can go up to 256,000 lines of gcode in the buffer
-	p := &serport{
-		sendBuffered: make(chan string, 256000),
-		sendNoBuf:    make(chan []byte),
-		sendRaw:      make(chan string),
-		portConf:     conf,
-		portIo:       sp,
-		portName:     portname,
-		BufferType:   buftype}
-
-	var bw Bufferflow
-
-	switch buftype {
-	case "timed":
-		bw = NewBufferflowTimed(portname, h.broadcastSys)
-	case "timedraw":
-		bw = NewBufferflowTimedRaw(portname, h.broadcastSys)
-	case "default":
-		bw = NewBufferflowDefault(portname, h.broadcastSys)
-	default:
-		log.Panicf("unknown buffer type: %s", buftype)
-	}
-
-	bw.Init()
-	p.bufferwatcher = bw
-
-	sh.Register(p)
-	defer sh.Unregister(p)
-
-	serialPorts.MarkPortAsOpened(portname)
-	serialPorts.List()
-
-	// this is internally buffered thread to not send to serial port if blocked
-	go p.writerBuffered()
-	// this is thread to send to serial port regardless of block
-	go p.writerNoBuf()
-	// this is thread to send to serial port but with base64 decoding
-	go p.writerRaw()
-
-	p.reader(buftype)
-
-	serialPorts.List()
+	p.OnMessage([]byte(msgstr))
 }
 
 func (p *serport) Close() {
@@ -353,6 +286,5 @@ func (p *serport) Close() {
 
 	p.bufferwatcher.Close()
 	p.portIo.Close()
-	serialPorts.MarkPortAsClosed(p.portName)
-	serialPorts.List()
+	p.OnClose(p)
 }
