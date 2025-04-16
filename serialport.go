@@ -25,6 +25,7 @@ import (
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
+	"go.bug.st/serial"
 )
 
 // SerialConfig is the serial port configuration
@@ -279,6 +280,91 @@ func (p *serport) writerRaw() {
 	msgstr := "writerRaw just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
 	p.OnMessage([]byte(msgstr))
+}
+
+// FIXME: move this into the `hub.go` file
+func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
+
+	log.Print("Inside spHandler")
+
+	var out bytes.Buffer
+
+	out.WriteString("Opening serial port ")
+	out.WriteString(portname)
+	out.WriteString(" at ")
+	out.WriteString(strconv.Itoa(baud))
+	out.WriteString(" baud")
+	log.Print(out.String())
+
+	conf := &SerialConfig{Name: portname, Baud: baud, RtsOn: true}
+
+	mode := &serial.Mode{
+		BaudRate: baud,
+	}
+
+	sp, err := serial.Open(portname, mode)
+	log.Print("Just tried to open port")
+	if err != nil {
+		//log.Fatal(err)
+		log.Print("Error opening port " + err.Error())
+		//h.broadcastSys <- []byte("Error opening port. " + err.Error())
+		h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
+
+		return
+	}
+	log.Print("Opened port successfully")
+	//p := &serport{send: make(chan []byte, 256), portConf: conf, portIo: sp}
+	// we can go up to 256,000 lines of gcode in the buffer
+	p := &serport{
+		sendBuffered: make(chan string, 256000),
+		sendNoBuf:    make(chan []byte),
+		sendRaw:      make(chan string),
+		portConf:     conf,
+		portIo:       sp,
+		portName:     portname,
+		BufferType:   buftype,
+	}
+
+	p.OnMessage = func(msg []byte) {
+		h.broadcastSys <- msg
+	}
+	p.OnClose = func(port *serport) {
+		h.serialPortList.MarkPortAsClosed(p.portName)
+		h.serialPortList.List()
+	}
+
+	var bw Bufferflow
+
+	switch buftype {
+	case "timed":
+		bw = NewBufferflowTimed(portname, h.broadcastSys)
+	case "timedraw":
+		bw = NewBufferflowTimedRaw(portname, h.broadcastSys)
+	case "default":
+		bw = NewBufferflowDefault(portname, h.broadcastSys)
+	default:
+		log.Panicf("unknown buffer type: %s", buftype)
+	}
+
+	bw.Init()
+	p.bufferwatcher = bw
+
+	h.serialHub.Register(p)
+	defer h.serialHub.Unregister(p)
+
+	h.serialPortList.MarkPortAsOpened(portname)
+	h.serialPortList.List()
+
+	// this is internally buffered thread to not send to serial port if blocked
+	go p.writerBuffered()
+	// this is thread to send to serial port regardless of block
+	go p.writerNoBuf()
+	// this is thread to send to serial port but with base64 decoding
+	go p.writerRaw()
+
+	p.reader(buftype)
+
+	h.serialPortList.List()
 }
 
 func (p *serport) Close() {
