@@ -211,12 +211,12 @@ func (l PLogger) Info(args ...interface{}) {
 	send(l.hub, map[string]string{uploadStatusStr: "Busy", "Msg": output})
 }
 
-func send(hub *hub, args map[string]string) {
+func send(h *hub, args map[string]string) {
 	mapB, _ := json.Marshal(args)
-	hub.broadcastSys <- mapB
+	h.broadcastSys <- mapB
 }
 
-func wsHandler(hub *hub) *WsServer {
+func wsHandler(h *hub) *WsServer {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)
@@ -224,13 +224,13 @@ func wsHandler(hub *hub) *WsServer {
 
 	server.On("connection", func(so socketio.Socket) {
 		c := &connection{send: make(chan []byte, 256*10), ws: so}
-		hub.register <- c
+		h.register <- c
 		so.On("command", func(message string) {
-			hub.broadcast <- []byte(message)
+			h.broadcast <- []byte(message)
 		})
 
 		so.On("disconnection", func() {
-			hub.unregister <- c
+			h.unregister <- c
 		})
 		go c.writer()
 	})
