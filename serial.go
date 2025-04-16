@@ -82,7 +82,6 @@ var sh = serialhub{
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	sh.onRegister(port)
-	// sh.h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
 	sh.ports[port] = true
 	sh.mu.Unlock()
 }
@@ -90,8 +89,6 @@ func (sh *serialhub) Register(port *serport) {
 // Unregister requests from connections.
 func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
-	//log.Print("Unregistering a port: ", p.portConf.Name)
-	// h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
 	sh.onUnregister(port)
 	delete(sh.ports, port)
 	close(port.sendBuffered)
