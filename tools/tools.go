@@ -33,20 +33,18 @@ import (
 //
 // - *directory* contains the location where the tools are downloaded.
 // - *indexURL* contains the url where the tools description is contained.
-// - *logger* is a StdLogger used for reporting debug and info messages
 // - *installed* contains a map[string]string of the tools installed and their exact location
 //
 // Usage:
 // You have to call the New() function passing it the required parameters:
 //
 // 	index = index.Init("https://downloads.arduino.cc/packages/package_index.json", dataDir)
-// 	tools := tools.New(dataDir, index, logger)
+// 	tools := tools.New(dataDir, index)
 
 // Tools will represent the installed tools
 type Tools struct {
 	directory *paths.Path
 	index     *index.Resource
-	logger    func(msg string)
 	installed map[string]string
 	mutex     sync.RWMutex
 	tools     *pkgs.Tools
@@ -55,12 +53,10 @@ type Tools struct {
 // New will return a Tool object, allowing the caller to execute operations on it.
 // The New functions accept the directory to use to host the tools,
 // an index (used to download the tools),
-// and a logger to log the operations
-func New(directory *paths.Path, index *index.Resource, logger func(msg string), signPubKey *rsa.PublicKey) *Tools {
+func New(directory *paths.Path, index *index.Resource, signPubKey *rsa.PublicKey) *Tools {
 	t := &Tools{
 		directory: directory,
 		index:     index,
-		logger:    logger,
 		installed: map[string]string{},
 		mutex:     sync.RWMutex{},
 		tools:     pkgs.New(index, directory.String(), "replace", signPubKey),
