@@ -307,11 +307,6 @@ func (h *hub) logAction(sl string) {
 	}
 }
 
-func (u *logWriter) Write(p []byte) (n int, err error) {
-	u.onWrite(p)
-	return len(p), nil
-}
-
 func (h *hub) memoryStats() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
@@ -338,57 +333,4 @@ func (h *hub) garbageCollection() {
 	log.Printf("Done with garbageCollection()\n")
 	h.broadcastSys <- []byte("{\"gc\":\"done\"}")
 	h.memoryStats()
-}
-
-func (h *hub) spErr(err string) {
-	h.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
-}
-
-func (h *hub) spClose(portname string) {
-	if myport, ok := h.serialHub.FindPortByName(portname); ok {
-		h.broadcastSys <- []byte("Closing serial port " + portname)
-		myport.Close()
-	} else {
-		h.spErr("We could not find the serial port " + portname + " that you were trying to close.")
-	}
-}
-
-func (h *hub) spWrite(arg string) {
-	// we will get a string of comXX asdf asdf asdf
-	//log.Println("Inside spWrite arg: " + arg)
-	arg = strings.TrimPrefix(arg, " ")
-	//log.Println("arg after trim: " + arg)
-	args := strings.SplitN(arg, " ", 3)
-	if len(args) != 3 {
-		errstr := "Could not parse send command: " + arg
-		//log.Println(errstr)
-		h.spErr(errstr)
-		return
-	}
-	bufferingMode := args[0]
-	portname := strings.Trim(args[1], " ")
-	data := args[2]
-
-	//log.Println("The port to write to is:" + portname + "---")
-	//log.Println("The data is:" + data + "---")
-
-	// See if we have this port open
-	port, ok := h.serialHub.FindPortByName(portname)
-	if !ok {
-		// we couldn't find the port, so send err
-		h.spErr("We could not find the serial port " + portname + " that you were trying to write to.")
-		return
-	}
-
-	// see if bufferingMode is valid
-	switch bufferingMode {
-	case "send", "sendnobuf", "sendraw":
-		// valid buffering mode, go ahead
-	default:
-		h.spErr("Unsupported send command:" + args[0] + ". Please specify a valid one")
-		return
-	}
-
-	// send it to the write channel
-	port.Write(data, bufferingMode)
 }
