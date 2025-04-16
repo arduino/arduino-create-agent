@@ -71,13 +71,6 @@ type SpPortItem struct {
 	ProductID       string
 }
 
-// serialPorts contains the ports attached to the machine
-var serialPorts SerialPortList
-
-var sh = serialhub{
-	ports: make(map[*serport]bool),
-}
-
 // Register serial ports from the connections.
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
