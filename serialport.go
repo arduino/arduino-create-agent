@@ -92,7 +92,7 @@ func (p *serport) reader(buftype string) {
 		if p.isClosing.Load() {
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
-			p.ChanWriter.Write.Write([]byte(strmsg))
+			p.ChanWriter.Write([]byte(strmsg))
 			break
 		}
 
