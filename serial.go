@@ -1,8 +1,26 @@
+// Copyright 2022 Arduino SA
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+// Supports Windows, Linux, Mac, BeagleBone Black, and Raspberry Pi
+
 package main
 
 import (
 	"encoding/json"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,7 +29,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type serialPortList struct {
+type serialhub struct {
+	// Opened serial ports.
+	ports map[*serport]bool
+
+	mu sync.Mutex
+
+	onRegister   func(port *serport)
+	onUnregister func(port *serport)
+}
+
+func newSerialHub(onRegister func(port *serport), onUnregister func(port *serport)) *serialhub {
+	return &serialhub{
+		ports:        make(map[*serport]bool),
+		onRegister:   onRegister,
+		onUnregister: onUnregister,
+	}
+}
+
+// SerialPortList is the serial port list
+type SerialPortList struct {
 	Ports     []*SpPortItem
 	portsLock sync.Mutex
 
@@ -34,8 +71,50 @@ type SpPortItem struct {
 	ProductID       string
 }
 
-func newSerialPortList(tools *tools.Tools, onList func(data []byte), onErr func(err string)) *serialPortList {
-	return &serialPortList{
+// serialPorts contains the ports attached to the machine
+var serialPorts SerialPortList
+
+var sh = serialhub{
+	ports: make(map[*serport]bool),
+}
+
+// Register serial ports from the connections.
+func (sh *serialhub) Register(port *serport) {
+	sh.mu.Lock()
+	sh.onRegister(port)
+	// sh.h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	sh.ports[port] = true
+	sh.mu.Unlock()
+}
+
+// Unregister requests from connections.
+func (sh *serialhub) Unregister(port *serport) {
+	sh.mu.Lock()
+	//log.Print("Unregistering a port: ", p.portConf.Name)
+	// h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
+	sh.onUnregister(port)
+	delete(sh.ports, port)
+	close(port.sendBuffered)
+	close(port.sendNoBuf)
+	sh.mu.Unlock()
+}
+
+func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+
+	for port := range sh.ports {
+		if strings.EqualFold(port.portConf.Name, portname) {
+			// we found our port
+			//spHandlerClose(port)
+			return port, true
+		}
+	}
+	return nil, false
+}
+
+func newSerialPortList(tools *tools.Tools, onList func(data []byte), onErr func(err string)) *SerialPortList {
+	return &SerialPortList{
 		tools:  tools,
 		OnList: onList,
 		OnErr:  onErr,
@@ -43,7 +122,7 @@ func newSerialPortList(tools *tools.Tools, onList func(data []byte), onErr func(
 }
 
 // List broadcasts a Json representation of the ports found
-func (sp *serialPortList) List() {
+func (sp *SerialPortList) List() {
 	sp.portsLock.Lock()
 	ls, err := json.MarshalIndent(sp, "", "\t")
 	sp.portsLock.Unlock()
@@ -55,28 +134,8 @@ func (sp *serialPortList) List() {
 	}
 }
 
-// MarkPortAsOpened marks a port as opened by the user
-func (sp *serialPortList) MarkPortAsOpened(portname string) {
-	sp.portsLock.Lock()
-	defer sp.portsLock.Unlock()
-	port := sp.getPortByName(portname)
-	if port != nil {
-		port.IsOpen = true
-	}
-}
-
-// MarkPortAsClosed marks a port as no more opened by the user
-func (sp *serialPortList) MarkPortAsClosed(portname string) {
-	sp.portsLock.Lock()
-	defer sp.portsLock.Unlock()
-	port := sp.getPortByName(portname)
-	if port != nil {
-		port.IsOpen = false
-	}
-}
-
 // Run is the main loop for port discovery and management
-func (sp *serialPortList) Run() {
+func (sp *SerialPortList) Run() {
 	for retries := 0; retries < 10; retries++ {
 		sp.runSerialDiscovery()
 
@@ -86,7 +145,7 @@ func (sp *serialPortList) Run() {
 	logrus.Errorf("Failed restarting serial discovery. Giving up...")
 }
 
-func (sp *serialPortList) runSerialDiscovery() {
+func (sp *SerialPortList) runSerialDiscovery() {
 	// First ensure that all the discoveries are available
 	noOpProgress := func(msg string) {}
 	if err := sp.tools.Download("builtin", "serial-discovery", "latest", "keep", noOpProgress); err != nil {
@@ -115,7 +174,6 @@ func (sp *serialPortList) runSerialDiscovery() {
 		logrus.Errorf("Error starting event watcher on serial-discovery: %s", err)
 		panic(err)
 	}
-	d.List()
 
 	logrus.Infof("Serial discovery started, watching for events")
 	for ev := range events {
@@ -132,13 +190,13 @@ func (sp *serialPortList) runSerialDiscovery() {
 	logrus.Errorf("Serial discovery stopped.")
 }
 
-func (sp *serialPortList) reset() {
+func (sp *SerialPortList) reset() {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
 	sp.Ports = []*SpPortItem{}
 }
 
-func (sp *serialPortList) add(addedPort *discovery.Port) {
+func (sp *SerialPortList) add(addedPort *discovery.Port) {
 	if addedPort.Protocol != "serial" {
 		return
 	}
@@ -181,7 +239,7 @@ func (sp *serialPortList) add(addedPort *discovery.Port) {
 	})
 }
 
-func (sp *serialPortList) remove(removedPort *discovery.Port) {
+func (sp *SerialPortList) remove(removedPort *discovery.Port) {
 	sp.portsLock.Lock()
 	defer sp.portsLock.Unlock()
 
@@ -191,7 +249,27 @@ func (sp *serialPortList) remove(removedPort *discovery.Port) {
 	})
 }
 
-func (sp *serialPortList) getPortByName(portname string) *SpPortItem {
+// MarkPortAsOpened marks a port as opened by the user
+func (sp *SerialPortList) MarkPortAsOpened(portname string) {
+	sp.portsLock.Lock()
+	defer sp.portsLock.Unlock()
+	port := sp.getPortByName(portname)
+	if port != nil {
+		port.IsOpen = true
+	}
+}
+
+// MarkPortAsClosed marks a port as no more opened by the user
+func (sp *SerialPortList) MarkPortAsClosed(portname string) {
+	sp.portsLock.Lock()
+	defer sp.portsLock.Unlock()
+	port := sp.getPortByName(portname)
+	if port != nil {
+		port.IsOpen = false
+	}
+}
+
+func (sp *SerialPortList) getPortByName(portname string) *SpPortItem {
 	for _, port := range sp.Ports {
 		if port.Name == portname {
 			return port

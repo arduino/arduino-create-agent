@@ -53,7 +53,7 @@ type hub struct {
 	// Serial hub to communicate with serial ports
 	serialHub *serialhub
 
-	serialPortList *serialPortList
+	serialPortList *SerialPortList
 
 	tools *tools.Tools
 
@@ -69,7 +69,7 @@ func newHub(tools *tools.Tools, systray *systray.Systray) *hub {
 	onUnregister := func(port *serport) {
 		broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
 	}
-	serialHub := newSerialHub(onRegister, onUnregister)
+	serialHubub := newSerialHub(onRegister, onUnregister)
 
 	onList := func(data []byte) {
 		broadcastSys <- data
@@ -85,7 +85,7 @@ func newHub(tools *tools.Tools, systray *systray.Systray) *hub {
 		register:       make(chan *connection),
 		unregister:     make(chan *connection),
 		connections:    make(map[*connection]bool),
-		serialHub:      serialHub,
+		serialHub:      serialHubub,
 		serialPortList: serialPortList,
 		tools:          tools,
 		systray:        systray,
@@ -110,53 +110,53 @@ const commands = `{
   ]
 }`
 
-func (hub *hub) unregisterConnection(c *connection) {
-	if _, contains := hub.connections[c]; !contains {
+func (h *hub) unregisterConnection(c *connection) {
+	if _, contains := h.connections[c]; !contains {
 		return
 	}
-	delete(hub.connections, c)
+	delete(h.connections, c)
 	close(c.send)
 }
 
-func (hub *hub) sendToRegisteredConnections(data []byte) {
-	for c := range hub.connections {
+func (h *hub) sendToRegisteredConnections(data []byte) {
+	for c := range h.connections {
 		select {
 		case c.send <- data:
 			//log.Print("did broadcast to ")
 			//log.Print(c.ws.RemoteAddr())
 			//c.send <- []byte("hello world")
 		default:
-			hub.unregisterConnection(c)
+			h.unregisterConnection(c)
 		}
 	}
 }
 
-func (hub *hub) run() {
-	go hub.serialPortList.Run()
+func (h *hub) run() {
+	go h.serialPortList.Run()
 
 	for {
 		select {
-		case c := <-hub.register:
-			hub.connections[c] = true
+		case c := <-h.register:
+			h.connections[c] = true
 			// send supported commands
 			c.send <- []byte(fmt.Sprintf(`{"Version" : "%s"} `, version))
 			c.send <- []byte(html.EscapeString(commands))
 			c.send <- []byte(fmt.Sprintf(`{"Hostname" : "%s"} `, *hostname))
 			c.send <- []byte(fmt.Sprintf(`{"OS" : "%s"} `, runtime.GOOS))
-		case c := <-hub.unregister:
-			hub.unregisterConnection(c)
-		case m := <-hub.broadcast:
+		case c := <-h.unregister:
+			h.unregisterConnection(c)
+		case m := <-h.broadcast:
 			if len(m) > 0 {
-				hub.checkCmd(m)
-				hub.sendToRegisteredConnections(m)
+				h.checkCmd(m)
+				h.sendToRegisteredConnections(m)
 			}
-		case m := <-hub.broadcastSys:
-			hub.sendToRegisteredConnections(m)
+		case m := <-h.broadcastSys:
+			h.sendToRegisteredConnections(m)
 		}
 	}
 }
 
-func (hub *hub) checkCmd(m []byte) {
+func (h *hub) checkCmd(m []byte) {
 	//log.Print("Inside checkCmd")
 	s := string(m[:])
 
@@ -171,18 +171,18 @@ func (hub *hub) checkCmd(m []byte) {
 
 		args := strings.Split(s, " ")
 		if len(args) < 3 {
-			go hub.spErr("You did not specify a port and baud rate in your open cmd")
+			go h.spErr("You did not specify a port and baud rate in your open cmd")
 			return
 		}
 		if len(args[1]) < 1 {
-			go hub.spErr("You did not specify a serial port")
+			go h.spErr("You did not specify a serial port")
 			return
 		}
 
 		baudStr := strings.Replace(args[2], "\n", "", -1)
 		baud, err := strconv.Atoi(baudStr)
 		if err != nil {
-			go hub.spErr("Problem converting baud rate " + args[2])
+			go h.spErr("Problem converting baud rate " + args[2])
 			return
 		}
 		// pass in buffer type now as string. if user does not
@@ -193,30 +193,30 @@ func (hub *hub) checkCmd(m []byte) {
 			buftype := strings.Replace(args[3], "\n", "", -1)
 			bufferAlgorithm = buftype
 		}
-		go hub.spHandlerOpen(args[1], baud, bufferAlgorithm)
+		go h.spHandlerOpen(args[1], baud, bufferAlgorithm)
 
 	} else if strings.HasPrefix(sl, "close") {
 
 		args := strings.Split(s, " ")
 		if len(args) > 1 {
-			go hub.spClose(args[1])
+			go h.spClose(args[1])
 		} else {
-			go hub.spErr("You did not specify a port to close")
+			go h.spErr("You did not specify a port to close")
 		}
 
 	} else if strings.HasPrefix(sl, "killupload") {
 		// kill the running process (assumes singleton for now)
 		go func() {
 			upload.Kill()
-			hub.broadcastSys <- []byte("{\"uploadStatus\": \"Killed\"}")
+			h.broadcastSys <- []byte("{\"uploadStatus\": \"Killed\"}")
 			log.Println("{\"uploadStatus\": \"Killed\"}")
 		}()
 
 	} else if strings.HasPrefix(sl, "send") {
 		// will catch send and sendnobuf and sendraw
-		go hub.spWrite(s)
+		go h.spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
-		go hub.serialPortList.List()
+		go h.serialPortList.List()
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		go func() {
 			args := strings.Split(s, " ")
@@ -227,7 +227,7 @@ func (hub *hub) checkCmd(m []byte) {
 			if len(args) <= 1 {
 				mapD := map[string]string{"DownloadStatus": "Error", "Msg": "Not enough arguments"}
 				mapB, _ := json.Marshal(mapD)
-				hub.broadcastSys <- mapB
+				h.broadcastSys <- mapB
 				return
 			}
 			if len(args) > 1 {
@@ -250,37 +250,37 @@ func (hub *hub) checkCmd(m []byte) {
 			reportPendingProgress := func(msg string) {
 				mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
 				mapB, _ := json.Marshal(mapD)
-				hub.broadcastSys <- mapB
+				h.broadcastSys <- mapB
 			}
-			err := hub.tools.Download(pack, tool, toolVersion, behaviour, reportPendingProgress)
+			err := h.tools.Download(pack, tool, toolVersion, behaviour, reportPendingProgress)
 			if err != nil {
 				mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
 				mapB, _ := json.Marshal(mapD)
-				hub.broadcastSys <- mapB
+				h.broadcastSys <- mapB
 			} else {
 				mapD := map[string]string{"DownloadStatus": "Success", "Msg": "Map Updated"}
 				mapB, _ := json.Marshal(mapD)
-				hub.broadcastSys <- mapB
+				h.broadcastSys <- mapB
 			}
 		}()
 	} else if strings.HasPrefix(sl, "log") {
-		go hub.logAction(sl)
+		go h.logAction(sl)
 	} else if strings.HasPrefix(sl, "restart") {
-		// potentially, the sysStray dependencies can be removed  https://github.com/arduino/arduino-create-agent/issues/1013
+		// potentially, the sysStray dependencies can be removed  https://gith.com/arduino/arduino-create-agent/issues/1013
 		log.Println("Received restart from the daemon. Why? Boh")
-		hub.systray.Restart()
+		h.systray.Restart()
 	} else if strings.HasPrefix(sl, "exit") {
-		hub.systray.Quit()
+		h.systray.Quit()
 	} else if strings.HasPrefix(sl, "memstats") {
-		hub.memoryStats()
+		h.memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
-		hub.garbageCollection()
+		h.garbageCollection()
 	} else if strings.HasPrefix(sl, "hostname") {
-		hub.getHostname()
+		h.getHostname()
 	} else if strings.HasPrefix(sl, "version") {
-		hub.getVersion()
+		h.getVersion()
 	} else {
-		go hub.spErr("Could not understand command.")
+		go h.spErr("Could not understand command.")
 	}
 }
 
@@ -288,13 +288,13 @@ type logWriter struct {
 	onWrite func([]byte)
 }
 
-func (hub *hub) logAction(sl string) {
+func (h *hub) logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
 
 		logWriter := logWriter{}
 		logWriter.onWrite = func(p []byte) {
-			hub.broadcastSys <- p
+			h.broadcastSys <- p
 		}
 
 		multiWriter := io.MultiWriter(&logWriter, os.Stderr)
@@ -304,7 +304,7 @@ func (hub *hub) logAction(sl string) {
 		log.SetOutput(os.Stderr)
 		// } else if strings.HasPrefix(sl, "log show") {
 		// TODO: send all the saved log to websocket
-		//hub.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
+		//h.broadcastSys <- []byte("{\"BufFlowDebug\" : \"" + *logDump + "\"}")
 	}
 }
 
@@ -313,35 +313,35 @@ func (u *logWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (hub *hub) memoryStats() {
+func (h *hub) memoryStats() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	json, _ := json.Marshal(memStats)
 	log.Printf("memStats:%v\n", string(json))
-	hub.broadcastSys <- json
+	h.broadcastSys <- json
 }
 
-func (hub *hub) getHostname() {
-	hub.broadcastSys <- []byte("{\"Hostname\" : \"" + *hostname + "\"}")
+func (h *hub) getHostname() {
+	h.broadcastSys <- []byte("{\"Hostname\" : \"" + *hostname + "\"}")
 }
 
-func (hub *hub) getVersion() {
-	hub.broadcastSys <- []byte("{\"Version\" : \"" + version + "\"}")
+func (h *hub) getVersion() {
+	h.broadcastSys <- []byte("{\"Version\" : \"" + version + "\"}")
 }
 
-func (hub *hub) garbageCollection() {
+func (h *hub) garbageCollection() {
 	log.Printf("Starting garbageCollection()\n")
-	hub.broadcastSys <- []byte("{\"gc\":\"starting\"}")
-	hub.memoryStats()
+	h.broadcastSys <- []byte("{\"gc\":\"starting\"}")
+	h.memoryStats()
 	debug.SetGCPercent(100)
 	debug.FreeOSMemory()
 	debug.SetGCPercent(-1)
 	log.Printf("Done with garbageCollection()\n")
-	hub.broadcastSys <- []byte("{\"gc\":\"done\"}")
-	hub.memoryStats()
+	h.broadcastSys <- []byte("{\"gc\":\"done\"}")
+	h.memoryStats()
 }
 
-func (hub *hub) spHandlerOpen(portname string, baud int, buftype string) {
+func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
 
 	log.Print("Inside spHandler")
 
@@ -365,8 +365,8 @@ func (hub *hub) spHandlerOpen(portname string, baud int, buftype string) {
 	if err != nil {
 		//log.Fatal(err)
 		log.Print("Error opening port " + err.Error())
-		//hub.broadcastSys <- []byte("Error opening port. " + err.Error())
-		hub.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
+		//h.broadcastSys <- []byte("Error opening port. " + err.Error())
+		h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
 
 		return
 	}
@@ -384,22 +384,22 @@ func (hub *hub) spHandlerOpen(portname string, baud int, buftype string) {
 	}
 
 	p.OnMessage = func(msg []byte) {
-		hub.broadcastSys <- msg
+		h.broadcastSys <- msg
 	}
 	p.OnClose = func(port *serport) {
-		hub.serialPortList.MarkPortAsClosed(p.portName)
-		hub.serialPortList.List()
+		h.serialPortList.MarkPortAsClosed(p.portName)
+		h.serialPortList.List()
 	}
 
 	var bw Bufferflow
 
 	switch buftype {
 	case "timed":
-		bw = NewBufferflowTimed(portname, hub.broadcastSys)
+		bw = NewBufferflowTimed(portname, h.broadcastSys)
 	case "timedraw":
-		bw = NewBufferflowTimedRaw(portname, hub.broadcastSys)
+		bw = NewBufferflowTimedRaw(portname, h.broadcastSys)
 	case "default":
-		bw = NewBufferflowDefault(portname, hub.broadcastSys)
+		bw = NewBufferflowDefault(portname, h.broadcastSys)
 	default:
 		log.Panicf("unknown buffer type: %s", buftype)
 	}
@@ -407,11 +407,11 @@ func (hub *hub) spHandlerOpen(portname string, baud int, buftype string) {
 	bw.Init()
 	p.bufferwatcher = bw
 
-	hub.serialHub.Register(p)
-	defer hub.serialHub.Unregister(p)
+	h.serialHub.Register(p)
+	defer h.serialHub.Unregister(p)
 
-	hub.serialPortList.MarkPortAsOpened(portname)
-	hub.serialPortList.List()
+	h.serialPortList.MarkPortAsOpened(portname)
+	h.serialPortList.List()
 
 	// this is internally buffered thread to not send to serial port if blocked
 	go p.writerBuffered()
@@ -422,19 +422,23 @@ func (hub *hub) spHandlerOpen(portname string, baud int, buftype string) {
 
 	p.reader(buftype)
 
-	hub.serialPortList.List()
+	h.serialPortList.List()
 }
 
-func (hub *hub) spClose(portname string) {
-	if myport, ok := hub.serialHub.FindPortByName(portname); ok {
-		hub.broadcastSys <- []byte("Closing serial port " + portname)
+func (h *hub) spErr(err string) {
+	h.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
+}
+
+func (h *hub) spClose(portname string) {
+	if myport, ok := h.serialHub.FindPortByName(portname); ok {
+		h.broadcastSys <- []byte("Closing serial port " + portname)
 		myport.Close()
 	} else {
-		hub.spErr("We could not find the serial port " + portname + " that you were trying to close.")
+		h.spErr("We could not find the serial port " + portname + " that you were trying to close.")
 	}
 }
 
-func (hub *hub) spWrite(arg string) {
+func (h *hub) spWrite(arg string) {
 	// we will get a string of comXX asdf asdf asdf
 	//log.Println("Inside spWrite arg: " + arg)
 	arg = strings.TrimPrefix(arg, " ")
@@ -443,7 +447,7 @@ func (hub *hub) spWrite(arg string) {
 	if len(args) != 3 {
 		errstr := "Could not parse send command: " + arg
 		//log.Println(errstr)
-		hub.spErr(errstr)
+		h.spErr(errstr)
 		return
 	}
 	bufferingMode := args[0]
@@ -454,10 +458,10 @@ func (hub *hub) spWrite(arg string) {
 	//log.Println("The data is:" + data + "---")
 
 	// See if we have this port open
-	port, ok := hub.serialHub.FindPortByName(portname)
+	port, ok := h.serialHub.FindPortByName(portname)
 	if !ok {
 		// we couldn't find the port, so send err
-		hub.spErr("We could not find the serial port " + portname + " that you were trying to write to.")
+		h.spErr("We could not find the serial port " + portname + " that you were trying to write to.")
 		return
 	}
 
@@ -466,15 +470,10 @@ func (hub *hub) spWrite(arg string) {
 	case "send", "sendnobuf", "sendraw":
 		// valid buffering mode, go ahead
 	default:
-		hub.spErr("Unsupported send command:" + args[0] + ". Please specify a valid one")
+		h.spErr("Unsupported send command:" + args[0] + ". Please specify a valid one")
 		return
 	}
 
 	// send it to the write channel
 	port.Write(data, bufferingMode)
-}
-
-func (hub *hub) spErr(err string) {
-	//log.Println("Sending err back: ", err)
-	hub.broadcastSys <- []byte("{\"Error\" : \"" + err + "\"}")
 }
