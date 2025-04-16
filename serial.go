@@ -96,7 +96,6 @@ func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
 	for port := range sh.ports {
 		if strings.EqualFold(port.portConf.Name, portname) {
 			// we found our port
-			//spHandlerClose(port)
 			return port, true
 		}
 	}
