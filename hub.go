@@ -282,20 +282,21 @@ func (h *hub) checkCmd(m []byte) {
 	}
 }
 
-type logWriter struct {
-	onWrite func([]byte)
+// ChanWriter is a simple io.Writer that sends data to a channel.
+type ChanWriter struct {
+	Ch chan<- []byte
+}
+
+func (u *ChanWriter) Write(p []byte) (n int, err error) {
+	u.Ch <- p
+	return len(p), nil
 }
 
 func (h *hub) logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
 
-		logWriter := logWriter{}
-		logWriter.onWrite = func(p []byte) {
-			h.broadcastSys <- p
-		}
-
-		multiWriter := io.MultiWriter(&logWriter, os.Stderr)
+		multiWriter := io.MultiWriter(&ChanWriter{Ch: h.broadcastSys}, os.Stderr)
 		log.SetOutput(multiWriter)
 	} else if strings.HasPrefix(sl, "log off") {
 		*logDump = "off"
