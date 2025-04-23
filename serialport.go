@@ -300,11 +300,13 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sp, err := serial.Open(portname, mode)
 	log.Print("Just tried to open port")
 	if err != nil {
-		//log.Fatal(err)
-		log.Print("Error opening port " + err.Error())
-		//h.broadcastSys <- []byte("Error opening port. " + err.Error())
-		h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
-
+		if existingPort, ok := sh.FindPortByName(portname); ok {
+			log.Print("Port already opened")
+			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Port already opened.\",\"Port\":\"" + existingPort.portConf.Name + "\",\"Baud\":" + strconv.Itoa(existingPort.portConf.Baud) + ",\"BufferType\":\"" + existingPort.BufferType + "\"}")
+		} else {
+			log.Print("Error opening port " + err.Error())
+			h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
+		}
 		return
 	}
 	log.Print("Opened port successfully")
