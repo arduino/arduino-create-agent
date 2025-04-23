@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"io"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unicode/utf8"
@@ -273,7 +274,11 @@ func (p *serport) writerRaw() {
 	h.broadcastSys <- []byte(msgstr)
 }
 
+var spHandlerLock sync.Mutex
+
 func spHandlerOpen(portname string, baud int, buftype string) {
+	spHandlerLock.Lock()
+	defer spHandlerLock.Unlock()
 
 	log.Print("Inside spHandler")
 
@@ -331,7 +336,6 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	p.bufferwatcher = bw
 
 	sh.Register(p)
-	defer sh.Unregister(p)
 
 	serialPorts.MarkPortAsOpened(portname)
 	serialPorts.List()
@@ -342,10 +346,12 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	go p.writerNoBuf()
 	// this is thread to send to serial port but with base64 decoding
 	go p.writerRaw()
-
-	p.reader(buftype)
-
-	serialPorts.List()
+	// this is the thread that reads from the serial port
+	go func() {
+		p.reader(buftype)
+		serialPorts.List()
+		sh.Unregister(p)
+	}()
 }
 
 func (p *serport) Close() {
