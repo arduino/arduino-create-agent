@@ -302,7 +302,8 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sp, err := serial.Open(portname, mode)
 	log.Print("Just tried to open port")
 	if err != nil {
-		if existingPort, ok := sh.FindPortByName(portname); ok {
+		existingPort, ok := sh.FindPortByName(portname)
+		if ok && existingPort.portConf.Baud == baud && existingPort.BufferType == buftype {
 			log.Print("Port already opened")
 			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Port already opened.\",\"Port\":\"" + existingPort.portConf.Name + "\",\"Baud\":" + strconv.Itoa(existingPort.portConf.Baud) + ",\"BufferType\":\"" + existingPort.BufferType + "\"}")
 		} else {
