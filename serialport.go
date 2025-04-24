@@ -284,6 +284,8 @@ func (p *serport) writerRaw() {
 
 // FIXME: move this into the `hub.go` file
 func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
+	h.spHandlerOpenLock.Lock()
+	defer h.spHandlerOpenLock.Unlock()
 
 	log.Print("Inside spHandler")
 
@@ -305,11 +307,14 @@ func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
 	sp, err := serial.Open(portname, mode)
 	log.Print("Just tried to open port")
 	if err != nil {
-		//log.Fatal(err)
-		log.Print("Error opening port " + err.Error())
-		//h.broadcastSys <- []byte("Error opening port. " + err.Error())
-		h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
-
+		existingPort, ok := h.serialHub.FindPortByName(portname)
+		if ok && existingPort.portConf.Baud == baud && existingPort.BufferType == buftype {
+			log.Print("Port already opened")
+			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Port already opened.\",\"Port\":\"" + existingPort.portConf.Name + "\",\"Baud\":" + strconv.Itoa(existingPort.portConf.Baud) + ",\"BufferType\":\"" + existingPort.BufferType + "\"}")
+		} else {
+			log.Print("Error opening port " + err.Error())
+			h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
+		}
 		return
 	}
 	log.Print("Opened port successfully")
@@ -348,7 +353,6 @@ func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
 	p.bufferwatcher = bw
 
 	h.serialHub.Register(p)
-	defer h.serialHub.Unregister(p)
 
 	h.serialPortList.MarkPortAsOpened(portname)
 	h.serialPortList.List()
@@ -359,10 +363,12 @@ func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
 	go p.writerNoBuf()
 	// this is thread to send to serial port but with base64 decoding
 	go p.writerRaw()
-
-	p.reader(buftype)
-
-	h.serialPortList.List()
+	// this is the thread that reads from the serial port
+	go func() {
+		p.reader(buftype)
+		h.serialPortList.List()
+		h.serialHub.Unregister(p)
+	}()
 }
 
 func (p *serport) Close() {

@@ -25,6 +25,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/arduino/arduino-create-agent/tools"
@@ -56,6 +57,10 @@ type hub struct {
 	tools *tools.Tools
 
 	systray *systray.Systray
+
+	// This lock is used to prevent multiple threads from trying to open the same port at the same time.
+	// It presents issues with the serial port driver on some OS's: https://github.com/arduino/arduino-create-agent/issues/1031
+	spHandlerOpenLock sync.Mutex
 }
 
 func newHub(tools *tools.Tools, systray *systray.Systray) *hub {

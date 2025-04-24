@@ -31,7 +31,7 @@ import (
 
 type serialhub struct {
 	// Opened serial ports.
-	ports map[*serport]bool
+	ports map[string]*serport
 
 	mu sync.Mutex
 
@@ -41,7 +41,7 @@ type serialhub struct {
 
 func newSerialHub(onRegister func(port *serport), onUnregister func(port *serport)) *serialhub {
 	return &serialhub{
-		ports:        make(map[*serport]bool),
+		ports:        make(map[string]*serport),
 		onRegister:   onRegister,
 		onUnregister: onUnregister,
 	}
@@ -75,7 +75,7 @@ type SpPortItem struct {
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	sh.onRegister(port)
-	sh.ports[port] = true
+	sh.ports[port.portName] = port
 	sh.mu.Unlock()
 }
 
@@ -83,7 +83,7 @@ func (sh *serialhub) Register(port *serport) {
 func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
 	sh.onUnregister(port)
-	delete(sh.ports, port)
+	delete(sh.ports, port.portName)
 	close(port.sendBuffered)
 	close(port.sendNoBuf)
 	sh.mu.Unlock()
@@ -93,8 +93,8 @@ func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
 
-	for port := range sh.ports {
-		if strings.EqualFold(port.portConf.Name, portname) {
+	for name, port := range sh.ports {
+		if strings.EqualFold(name, portname) {
 			// we found our port
 			return port, true
 		}
