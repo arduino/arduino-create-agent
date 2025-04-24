@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"io"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unicode/utf8"
@@ -273,7 +274,13 @@ func (p *serport) writerRaw() {
 	h.broadcastSys <- []byte(msgstr)
 }
 
+// This lock is used to prevent multiple threads from trying to open the same port at the same time.
+// It presents issues with the serial port driver on some OS's: https://github.com/arduino/arduino-create-agent/issues/1031
+var spHandlerOpenLock sync.Mutex
+
 func spHandlerOpen(portname string, baud int, buftype string) {
+	spHandlerOpenLock.Lock()
+	defer spHandlerOpenLock.Unlock()
 
 	log.Print("Inside spHandler")
 
@@ -295,11 +302,14 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sp, err := serial.Open(portname, mode)
 	log.Print("Just tried to open port")
 	if err != nil {
-		//log.Fatal(err)
-		log.Print("Error opening port " + err.Error())
-		//h.broadcastSys <- []byte("Error opening port. " + err.Error())
-		h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
-
+		existingPort, ok := sh.FindPortByName(portname)
+		if ok && existingPort.portConf.Baud == baud && existingPort.BufferType == buftype {
+			log.Print("Port already opened")
+			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Port already opened.\",\"Port\":\"" + existingPort.portConf.Name + "\",\"Baud\":" + strconv.Itoa(existingPort.portConf.Baud) + ",\"BufferType\":\"" + existingPort.BufferType + "\"}")
+		} else {
+			log.Print("Error opening port " + err.Error())
+			h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
+		}
 		return
 	}
 	log.Print("Opened port successfully")
@@ -331,7 +341,6 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	p.bufferwatcher = bw
 
 	sh.Register(p)
-	defer sh.Unregister(p)
 
 	serialPorts.MarkPortAsOpened(portname)
 	serialPorts.List()
@@ -342,10 +351,12 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	go p.writerNoBuf()
 	// this is thread to send to serial port but with base64 decoding
 	go p.writerRaw()
-
-	p.reader(buftype)
-
-	serialPorts.List()
+	// this is the thread that reads from the serial port
+	go func() {
+		p.reader(buftype)
+		serialPorts.List()
+		sh.Unregister(p)
+	}()
 }
 
 func (p *serport) Close() {

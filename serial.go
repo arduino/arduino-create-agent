@@ -31,7 +31,7 @@ import (
 
 type serialhub struct {
 	// Opened serial ports.
-	ports map[*serport]bool
+	ports map[string]*serport
 
 	mu sync.Mutex
 }
@@ -60,7 +60,7 @@ type SpPortItem struct {
 var serialPorts SerialPortList
 
 var sh = serialhub{
-	ports: make(map[*serport]bool),
+	ports: make(map[string]*serport),
 }
 
 // Register serial ports from the connections.
@@ -68,7 +68,7 @@ func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Registering a port: ", p.portConf.Name)
 	h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
-	sh.ports[port] = true
+	sh.ports[port.portName] = port
 	sh.mu.Unlock()
 }
 
@@ -77,7 +77,7 @@ func (sh *serialhub) Unregister(port *serport) {
 	sh.mu.Lock()
 	//log.Print("Unregistering a port: ", p.portConf.Name)
 	h.broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
-	delete(sh.ports, port)
+	delete(sh.ports, port.portName)
 	close(port.sendBuffered)
 	close(port.sendNoBuf)
 	sh.mu.Unlock()
@@ -86,15 +86,8 @@ func (sh *serialhub) Unregister(port *serport) {
 func (sh *serialhub) FindPortByName(portname string) (*serport, bool) {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
-
-	for port := range sh.ports {
-		if strings.EqualFold(port.portConf.Name, portname) {
-			// we found our port
-			//spHandlerClose(port)
-			return port, true
-		}
-	}
-	return nil, false
+	port, ok := sh.ports[portname]
+	return port, ok
 }
 
 // List broadcasts a Json representation of the ports found
