@@ -35,11 +35,11 @@ type serialhub struct {
 
 	mu sync.Mutex
 
-	onRegister   func(port *serport)
+	onRegister   func(port *serport, msg string)
 	onUnregister func(port *serport)
 }
 
-func newSerialHub(onRegister func(port *serport), onUnregister func(port *serport)) *serialhub {
+func newSerialHub(onRegister func(port *serport, msg string), onUnregister func(port *serport)) *serialhub {
 	return &serialhub{
 		ports:        make(map[string]*serport),
 		onRegister:   onRegister,
@@ -74,7 +74,7 @@ type SpPortItem struct {
 // Register serial ports from the connections.
 func (sh *serialhub) Register(port *serport) {
 	sh.mu.Lock()
-	sh.onRegister(port)
+	sh.onRegister(port, "Got register/open on port.")
 	sh.ports[port.portName] = port
 	sh.mu.Unlock()
 }

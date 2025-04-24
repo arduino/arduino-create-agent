@@ -66,8 +66,8 @@ type hub struct {
 func newHub(tools *tools.Tools, systray *systray.Systray) *hub {
 	broadcastSys := make(chan []byte, 1000)
 
-	onRegister := func(port *serport) {
-		broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Got register/open on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	onRegister := func(port *serport, msg string) {
+		broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"" + msg + "\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
 	}
 	onUnregister := func(port *serport) {
 		broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")

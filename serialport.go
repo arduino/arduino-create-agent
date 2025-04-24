@@ -310,7 +310,7 @@ func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
 		existingPort, ok := h.serialHub.FindPortByName(portname)
 		if ok && existingPort.portConf.Baud == baud && existingPort.BufferType == buftype {
 			log.Print("Port already opened")
-			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Port already opened.\",\"Port\":\"" + existingPort.portConf.Name + "\",\"Baud\":" + strconv.Itoa(existingPort.portConf.Baud) + ",\"BufferType\":\"" + existingPort.BufferType + "\"}")
+			h.serialHub.onRegister(existingPort, "Port already opened")
 		} else {
 			log.Print("Error opening port " + err.Error())
 			h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
