@@ -25,7 +25,10 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 
+	"github.com/arduino/arduino-create-agent/systray"
+	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/upload"
 	log "github.com/sirupsen/logrus"
 )
@@ -45,14 +48,51 @@ type hub struct {
 
 	// Unregister requests from connections.
 	unregister chan *connection
+
+	// Serial hub to communicate with serial ports
+	serialHub *serialhub
+
+	serialPortList *SerialPortList
+
+	tools *tools.Tools
+
+	systray *systray.Systray
+
+	// This lock is used to prevent multiple threads from trying to open the same port at the same time.
+	// It presents issues with the serial port driver on some OS's: https://github.com/arduino/arduino-create-agent/issues/1031
+	spHandlerOpenLock sync.Mutex
 }
 
-var h = hub{
-	broadcast:    make(chan []byte, 1000),
-	broadcastSys: make(chan []byte, 1000),
-	register:     make(chan *connection),
-	unregister:   make(chan *connection),
-	connections:  make(map[*connection]bool),
+func newHub(tools *tools.Tools, systray *systray.Systray) *hub {
+	broadcastSys := make(chan []byte, 1000)
+
+	onRegister := func(port *serport, msg string) {
+		broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"" + msg + "\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + ",\"BufferType\":\"" + port.BufferType + "\"}")
+	}
+	onUnregister := func(port *serport) {
+		broadcastSys <- []byte("{\"Cmd\":\"Close\",\"Desc\":\"Got unregister/close on port.\",\"Port\":\"" + port.portConf.Name + "\",\"Baud\":" + strconv.Itoa(port.portConf.Baud) + "}")
+	}
+	serialHubub := newSerialHub(onRegister, onUnregister)
+
+	onList := func(data []byte) {
+		broadcastSys <- data
+	}
+	onErr := func(err string) {
+		broadcastSys <- []byte("{\"Error\":\"" + err + "\"}")
+	}
+	serialPortList := newSerialPortList(tools, onList, onErr)
+
+	return &hub{
+		broadcast:      make(chan []byte, 1000),
+		broadcastSys:   broadcastSys,
+		register:       make(chan *connection),
+		unregister:     make(chan *connection),
+		connections:    make(map[*connection]bool),
+		serialHub:      serialHubub,
+		serialPortList: serialPortList,
+		tools:          tools,
+		systray:        systray,
+	}
 }
 
 const commands = `{
@@ -95,6 +135,8 @@ func (h *hub) sendToRegisteredConnections(data []byte) {
 }
 
 func (h *hub) run() {
+	go h.serialPortList.Run()
+
 	for {
 		select {
 		case c := <-h.register:
@@ -108,7 +150,7 @@ func (h *hub) run() {
 			h.unregisterConnection(c)
 		case m := <-h.broadcast:
 			if len(m) > 0 {
-				checkCmd(m)
+				h.checkCmd(m)
 				h.sendToRegisteredConnections(m)
 			}
 		case m := <-h.broadcastSys:
@@ -117,7 +159,7 @@ func (h *hub) run() {
 	}
 }
 
-func checkCmd(m []byte) {
+func (h *hub) checkCmd(m []byte) {
 	//log.Print("Inside checkCmd")
 	s := string(m[:])
 
@@ -132,18 +174,18 @@ func checkCmd(m []byte) {
 
 		args := strings.Split(s, " ")
 		if len(args) < 3 {
-			go spErr("You did not specify a port and baud rate in your open cmd")
+			go h.spErr("You did not specify a port and baud rate in your open cmd")
 			return
 		}
 		if len(args[1]) < 1 {
-			go spErr("You did not specify a serial port")
+			go h.spErr("You did not specify a serial port")
 			return
 		}
 
 		baudStr := strings.Replace(args[2], "\n", "", -1)
 		baud, err := strconv.Atoi(baudStr)
 		if err != nil {
-			go spErr("Problem converting baud rate " + args[2])
+			go h.spErr("Problem converting baud rate " + args[2])
 			return
 		}
 		// pass in buffer type now as string. if user does not
@@ -154,15 +196,15 @@ func checkCmd(m []byte) {
 			buftype := strings.Replace(args[3], "\n", "", -1)
 			bufferAlgorithm = buftype
 		}
-		go spHandlerOpen(args[1], baud, bufferAlgorithm)
+		go h.spHandlerOpen(args[1], baud, bufferAlgorithm)
 
 	} else if strings.HasPrefix(sl, "close") {
 
 		args := strings.Split(s, " ")
 		if len(args) > 1 {
-			go spClose(args[1])
+			go h.spClose(args[1])
 		} else {
-			go spErr("You did not specify a port to close")
+			go h.spErr("You did not specify a port to close")
 		}
 
 	} else if strings.HasPrefix(sl, "killupload") {
@@ -175,9 +217,9 @@ func checkCmd(m []byte) {
 
 	} else if strings.HasPrefix(sl, "send") {
 		// will catch send and sendnobuf and sendraw
-		go spWrite(s)
+		go h.spWrite(s)
 	} else if strings.HasPrefix(sl, "list") {
-		go serialPorts.List()
+		go h.serialPortList.List()
 	} else if strings.HasPrefix(sl, "downloadtool") {
 		go func() {
 			args := strings.Split(s, " ")
@@ -208,7 +250,12 @@ func checkCmd(m []byte) {
 				behaviour = args[4]
 			}
 
-			err := Tools.Download(pack, tool, toolVersion, behaviour)
+			reportPendingProgress := func(msg string) {
+				mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
+				mapB, _ := json.Marshal(mapD)
+				h.broadcastSys <- mapB
+			}
+			err := h.tools.Download(pack, tool, toolVersion, behaviour, reportPendingProgress)
 			if err != nil {
 				mapD := map[string]string{"DownloadStatus": "Error", "Msg": err.Error()}
 				mapB, _ := json.Marshal(mapD)
@@ -220,29 +267,41 @@ func checkCmd(m []byte) {
 			}
 		}()
 	} else if strings.HasPrefix(sl, "log") {
-		go logAction(sl)
+		go h.logAction(sl)
 	} else if strings.HasPrefix(sl, "restart") {
+		// potentially, the sysStray dependencies can be removed  https://github.com/arduino/arduino-create-agent/issues/1013
 		log.Println("Received restart from the daemon. Why? Boh")
-		Systray.Restart()
+		h.systray.Restart()
 	} else if strings.HasPrefix(sl, "exit") {
-		Systray.Quit()
+		h.systray.Quit()
 	} else if strings.HasPrefix(sl, "memstats") {
-		memoryStats()
+		h.memoryStats()
 	} else if strings.HasPrefix(sl, "gc") {
-		garbageCollection()
+		h.garbageCollection()
 	} else if strings.HasPrefix(sl, "hostname") {
-		getHostname()
+		h.getHostname()
 	} else if strings.HasPrefix(sl, "version") {
-		getVersion()
+		h.getVersion()
 	} else {
-		go spErr("Could not understand command.")
+		go h.spErr("Could not understand command.")
 	}
 }
 
-func logAction(sl string) {
+// ChanWriter is a simple io.Writer that sends data to a channel.
+type ChanWriter struct {
+	Ch chan<- []byte
+}
+
+func (u *ChanWriter) Write(p []byte) (n int, err error) {
+	u.Ch <- p
+	return len(p), nil
+}
+
+func (h *hub) logAction(sl string) {
 	if strings.HasPrefix(sl, "log on") {
 		*logDump = "on"
-		multiWriter := io.MultiWriter(&loggerWs, os.Stderr)
+
+		multiWriter := io.MultiWriter(&ChanWriter{Ch: h.broadcastSys}, os.Stderr)
 		log.SetOutput(multiWriter)
 	} else if strings.HasPrefix(sl, "log off") {
 		*logDump = "off"
@@ -253,7 +312,7 @@ func logAction(sl string) {
 	}
 }
 
-func memoryStats() {
+func (h *hub) memoryStats() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	json, _ := json.Marshal(memStats)
@@ -261,22 +320,22 @@ func memoryStats() {
 	h.broadcastSys <- json
 }
 
-func getHostname() {
+func (h *hub) getHostname() {
 	h.broadcastSys <- []byte("{\"Hostname\" : \"" + *hostname + "\"}")
 }
 
-func getVersion() {
+func (h *hub) getVersion() {
 	h.broadcastSys <- []byte("{\"Version\" : \"" + version + "\"}")
 }
 
-func garbageCollection() {
+func (h *hub) garbageCollection() {
 	log.Printf("Starting garbageCollection()\n")
 	h.broadcastSys <- []byte("{\"gc\":\"starting\"}")
-	memoryStats()
+	h.memoryStats()
 	debug.SetGCPercent(100)
 	debug.FreeOSMemory()
 	debug.SetGCPercent(-1)
 	log.Printf("Done with garbageCollection()\n")
 	h.broadcastSys <- []byte("{\"gc\":\"done\"}")
-	memoryStats()
+	h.memoryStats()
 }
