@@ -25,6 +25,8 @@
 
         const socket = setupWebsocket();
 
+        const ws = newWebsocket();
+
         // Handle the form submission and send the message to the websocket.
         document
           .getElementById("form")
@@ -39,9 +41,34 @@
               return false;
             }
             socket.emit("command", input.value);
+            // emit to ws
+            ws.send(input.value);
             input.value = "";
+
+
           });
       });
+
+     function newWebsocket() {
+        var conn;
+        if (window["WebSocket"]) {
+            console.log("Connecting to websocket", "ws://" + document.location.host + "/ws");
+            conn = new WebSocket("ws://127.0.0.1:9001/ws");
+            conn.onclose = function (evt) {
+                console.log("Closing: " + evt.data);
+            };
+            conn.onmessage = function (evt) {
+               console.log("Received: " + evt.data);
+               const wsLog = document.getElementById("ws-log");
+               wsLog.textContent = evt.data;
+            };
+        } else {
+            var item = document.createElement("ws-log");
+            item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+            appendLog(item);
+        }
+        return conn;
+      };
 
       function getListMsgVisibility() {
         // Check if the list visibility setting is saved in the localStorage.
@@ -309,6 +336,7 @@
   <body>
     <div id="container">
       <div class="logs">
+        <pre id="ws-log"></pre>
         <pre id="log"></pre>
         <pre id="log-list"></pre>
       </div>
