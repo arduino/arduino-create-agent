@@ -274,11 +274,13 @@ func (p *serport) writerRaw() {
 	h.broadcastSys <- []byte(msgstr)
 }
 
-var spHandlerLock sync.Mutex
+// This lock is used to prevent multiple threads from trying to open the same port at the same time.
+// It presents issues with the serial port driver on some OS's: https://github.com/arduino/arduino-create-agent/issues/1031
+var spHandlerOpenLock sync.Mutex
 
 func spHandlerOpen(portname string, baud int, buftype string) {
-	spHandlerLock.Lock()
-	defer spHandlerLock.Unlock()
+	spHandlerOpenLock.Lock()
+	defer spHandlerOpenLock.Unlock()
 
 	log.Print("Inside spHandler")
 
