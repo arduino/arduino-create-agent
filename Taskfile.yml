@@ -162,8 +162,6 @@ tasks:
       - sleep 5 # wait the server is up before starting the update
       - curl -X POST http://127.0.0.1:8991/update
 
-
-
 vars:
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/release-go-task/Taskfile.yml
   PROJECT_NAME: arduino-cloud-agent
