@@ -149,6 +149,20 @@ tasks:
       - task: go:vet
       - task: go:lint
 
+  autoupdate:demo:
+    desc: Demo the local auto-update workflow for the Agent (for linux and mac user)
+    prompt: Before continuing, please make sure you’ve opened the "Open Configuration" option from the Agent menu and set the updateUrl=http://127.0.0.1:3000/
+    cmds:
+      - task: go:build
+      - go install github.com/sanbornm/go-selfupdate/...@latest
+      # NOTE: the path 'CreateAgent/Stable' is important to keep as is
+      # because agent searches the update files into "CreateAgent/Stable/{platform}.json" and "https://downloads.arduino.cc/CreateAgent/Stable/{version}/{platform}.gz"
+      - go-selfupdate -o public/CreateAgent/Stable ./arduino-cloud-agent {{.VERSION}}
+      - docker rm -f agent-static-server
+      - docker run --rm -d -v "$PWD/public:/usr/share/nginx/html:ro" -p 3000:80 --name agent-static-server nginx:alpine
+      - sleep 5 # wait the server is up before starting the update
+      - curl -X POST http://127.0.0.1:8991/update
+
 vars:
   # Source: https://github.com/arduino/tooling-project-assets/blob/main/workflow-templates/assets/release-go-task/Taskfile.yml
   PROJECT_NAME: arduino-cloud-agent
