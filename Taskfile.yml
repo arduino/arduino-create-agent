@@ -155,7 +155,8 @@ tasks:
     cmds:
       - task: go:build
       - go install github.com/sanbornm/go-selfupdate/...@latest
-      # agent will search the new bin into "CreateAgent/Stable/{platform}.json" and "https://downloads.arduino.cc/CreateAgent/Stable/{version}/{platform}.gz"
+      # NOTE: the path 'CreateAgent/Stable' is important to keep as is
+      # because agent searches the update files into "CreateAgent/Stable/{platform}.json" and "https://downloads.arduino.cc/CreateAgent/Stable/{version}/{platform}.gz"
       - go-selfupdate -o public/CreateAgent/Stable ./arduino-cloud-agent {{.VERSION}}
       - docker rm -f agent-static-server
       - docker run --rm -d -v "$PWD/public:/usr/share/nginx/html:ro" -p 3000:80 --name agent-static-server nginx:alpine
