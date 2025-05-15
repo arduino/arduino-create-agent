@@ -150,7 +150,7 @@ tasks:
       - task: go:lint
 
   autoupdate:demo:
-    desc: Demo the local auto-update workflow for the Agent
+    desc: Demo the local auto-update workflow for the Agent (for linux and mac user)
     prompt: Before continuing, please make sure you’ve opened the "Open Configuration" option from the Agent menu and set the updateUrl=http://127.0.0.1:3000/
     cmds:
       - task: go:build
@@ -159,12 +159,7 @@ tasks:
       - go-selfupdate -o public/CreateAgent/Stable ./arduino-cloud-agent {{.VERSION}}
       - docker rm -f agent-static-server
       - docker run --rm -d -v "$PWD/public:/usr/share/nginx/html:ro" -p 3000:80 --name agent-static-server nginx:alpine
-      - |
-         echo "Waiting for http://127.0.0.1:3000 to become available..."
-         until nc -z 127.0.0.1 3000; do
-            sleep 1
-         done
-         echo "Server is up!"
+      - sleep 5 # wait the server is up before starting the update
       - curl -X POST http://127.0.0.1:8991/update
 
 
