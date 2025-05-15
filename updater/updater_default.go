@@ -66,6 +66,9 @@ func start(src string) string {
 	if strings.Contains(src, "-temp") {
 		newPath := removeTempSuffixFromPath(src)
 		if err := copyExe(src, newPath); err != nil {
+			if os.IsPermission(err) {
+				requestElevation()
+			}
 			log.Println("Copy error: ", err)
 			panic(err)
 		}
@@ -74,6 +77,9 @@ func start(src string) string {
 
 	// Otherwise copy to a path with -temp suffix
 	if err := copyExe(src, addTempSuffixToPath(src)); err != nil {
+		if os.IsPermission(err) {
+			requestElevation()
+		}
 		panic(err)
 	}
 	return ""
