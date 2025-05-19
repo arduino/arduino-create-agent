@@ -19,6 +19,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/arduino/arduino-create-agent/systray"
 	"github.com/gin-gonic/gin"
 	"go.bug.st/serial"
 )
@@ -40,14 +41,16 @@ func infoHandler(c *gin.Context) {
 	})
 }
 
-func pauseHandler(c *gin.Context) {
-	go func() {
-		ports, _ := serial.GetPortsList()
-		for _, element := range ports {
-			spClose(element)
-		}
-		*hibernate = true
-		Systray.Pause()
-	}()
-	c.JSON(200, nil)
+func pauseHandler(hub *hub, s *systray.Systray) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		go func() {
+			ports, _ := serial.GetPortsList()
+			for _, element := range ports {
+				hub.spClose(element)
+			}
+			*hibernate = true
+			s.Pause()
+		}()
+		c.JSON(200, nil)
+	}
 }
