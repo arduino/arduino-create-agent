@@ -83,9 +83,11 @@ func fetch(url string) (io.ReadCloser, error) {
 
 // addTempSuffixToPath adds the "-temp" suffix to the path to an executable file (a ".exe" extension is replaced with "-temp.exe")
 func addTempSuffixToPath(path string) string {
-	if filepath.Ext(path) == "exe" {
+	if filepath.Ext(path) == ".exe" {
+		// Windows
 		path = strings.Replace(path, ".exe", "-temp.exe", -1)
 	} else {
+		// Unix
 		path = path + "-temp"
 	}
 
@@ -109,4 +111,16 @@ func copyExe(from, to string) error {
 		return err
 	}
 	return nil
+}
+
+// requestElevation requests this program to rerun as administrator, for when we don't have permission over the update files
+func requestElevation() {
+	log.Println("Permission denied. Requesting elevated privileges...")
+
+	var err error = elevate()
+
+	if err != nil {
+		log.Println("Failed to request elevation:", err)
+		return
+	}
 }
