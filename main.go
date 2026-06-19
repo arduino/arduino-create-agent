@@ -20,7 +20,6 @@ package main
 
 import (
 	_ "embed"
-	"encoding/json"
 	"flag"
 	"html/template"
 	"io"
@@ -100,22 +99,6 @@ var homeTemplate = template.Must(template.New("home").Parse(homeTemplateHTML))
 //go:embed home.html
 var homeTemplateHTML string
 
-// global clients
-var (
-	Tools   *tools.Tools
-	Systray systray.Systray
-	Index   *index.Resource
-)
-
-type logWriter struct{}
-
-func (u *logWriter) Write(p []byte) (n int, err error) {
-	h.broadcastSys <- p
-	return len(p), nil
-}
-
-var loggerWs logWriter
-
 func homeHandler(c *gin.Context) {
 	homeTemplate.Execute(c.Writer, c.Request.Host)
 }
@@ -141,12 +124,9 @@ func main() {
 	// Check if certificates made with Agent <=1.2.7 needs to be moved over the new location
 	cert.MigrateCertificatesGeneratedWithOldAgentVersions(config.GetCertificatesDir())
 
-	// Launch main loop in a goroutine
-	go loop()
-
 	// SetupSystray is the main thread
 	configDir := config.GetDefaultConfigDir()
-	Systray = systray.Systray{
+	stray := systray.Systray{
 		Hibernate: *hibernate,
 		Version:   version + "-" + commit,
 		DebugURL: func() string {
@@ -156,16 +136,19 @@ func main() {
 		ConfigDir:        configDir,
 	}
 
+	// Launch main loop in a goroutine
+	go loop(&stray)
+
 	if src, err := os.Executable(); err != nil {
 		panic(err)
 	} else if restartPath := updater.Start(src); restartPath != "" {
-		Systray.RestartWith(restartPath)
+		stray.RestartWith(restartPath)
 	} else {
-		Systray.Start()
+		stray.Start()
 	}
 }
 
-func loop() {
+func loop(stray *systray.Systray) {
 	if *hibernate {
 		return
 	}
@@ -182,11 +165,18 @@ func loop() {
 		os.Exit(0)
 	}
 
-	logger := func(msg string) {
-		mapD := map[string]string{"DownloadStatus": "Pending", "Msg": msg}
-		mapB, _ := json.Marshal(mapD)
-		h.broadcastSys <- mapB
+	// Instantiate Index and Tools
+	index := index.Init(*indexURL, config.GetDataDir())
+	if signatureKey == nil || len(*signatureKey) == 0 {
+		log.Panicf("signature public key should be set")
 	}
+	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
+	if err != nil {
+		log.Panicf("cannot parse signature key '%s'. %s", *signatureKey, err)
+	}
+	tools := tools.New(config.GetDataDir(), index, signaturePubKey)
+
+	hub := newHub(tools, stray)
 
 	// Let's handle the config
 	configDir := config.GetDefaultConfigDir()
@@ -258,7 +248,7 @@ func loop() {
 	if err != nil {
 		log.Panicf("cannot parse arguments: %s", err)
 	}
-	Systray.SetCurrentConfigFile(configPath)
+	stray.SetCurrentConfigFile(configPath)
 
 	// Parse additional ini config if defined
 	if len(*additionalConfig) > 0 {
@@ -277,18 +267,6 @@ func loop() {
 			log.Infof("using additional config from %s", additionalConfigPath.String())
 		}
 	}
-
-	if signatureKey == nil || len(*signatureKey) == 0 {
-		log.Panicf("signature public key should be set")
-	}
-	signaturePubKey, err := utilities.ParseRsaPublicKey([]byte(*signatureKey))
-	if err != nil {
-		log.Panicf("cannot parse signature key '%s'. %s", *signatureKey, err)
-	}
-
-	// Instantiate Index and Tools
-	Index = index.Init(*indexURL, config.GetDataDir())
-	Tools = tools.New(config.GetDataDir(), Index, logger, signaturePubKey)
 
 	// see if we are supposed to wait 5 seconds
 	if *isLaunchSelf {
@@ -414,16 +392,14 @@ func loop() {
 		}
 	}
 
-	// launch the discoveries for the running system
-	go serialPorts.Run()
 	// launch the hub routine which is the singleton for the websocket server
-	go h.run()
+	go hub.run()
 	// launch our dummy data routine
 	//go d.run()
 
 	r := gin.New()
 
-	socketHandler := wsHandler().ServeHTTP
+	socketHandler := wsHandler(hub).ServeHTTP
 
 	extraOrigins := []string{
 		"https://create.arduino.cc",
@@ -462,17 +438,17 @@ func loop() {
 	r.LoadHTMLFiles("templates/nofirefox.html")
 
 	r.GET("/", homeHandler)
-	r.POST("/upload", uploadHandler(signaturePubKey))
+	r.POST("/upload", uploadHandler(hub, signaturePubKey, tools))
 	r.GET("/socket.io/", socketHandler)
 	r.POST("/socket.io/", socketHandler)
 	r.Handle("WS", "/socket.io/", socketHandler)
 	r.Handle("WSS", "/socket.io/", socketHandler)
 	r.GET("/info", infoHandler)
-	r.POST("/pause", pauseHandler)
-	r.POST("/update", updateHandler)
+	r.POST("/pause", pauseHandler(hub, stray))
+	r.POST("/update", updateHandler(stray))
 
 	// Mount goa handlers
-	goa := v2.Server(config.GetDataDir().String(), Index, signaturePubKey)
+	goa := v2.Server(config.GetDataDir().String(), index, signaturePubKey)
 	r.Any("/v2/*path", gin.WrapH(goa))
 
 	go func() {

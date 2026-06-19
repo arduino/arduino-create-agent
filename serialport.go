@@ -20,13 +20,12 @@ import (
 	"encoding/base64"
 	"io"
 	"strconv"
-	"sync"
 	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
-	serial "go.bug.st/serial"
+	"go.bug.st/serial"
 )
 
 // SerialConfig is the serial port configuration
@@ -62,6 +61,9 @@ type serport struct {
 	BufferType string
 	//bufferwatcher *BufferflowDummypause
 	bufferwatcher Bufferflow
+
+	ChanWriter ChanWriter
+	OnClose    func(*serport)
 }
 
 // SpPortMessage is the serial port message
@@ -90,7 +92,7 @@ func (p *serport) reader(buftype string) {
 		if p.isClosing.Load() {
 			strmsg := "Shutting down reader on " + p.portConf.Name
 			log.Println(strmsg)
-			h.broadcastSys <- []byte(strmsg)
+			p.ChanWriter.Write([]byte(strmsg))
 			break
 		}
 
@@ -144,15 +146,14 @@ func (p *serport) reader(buftype string) {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				// hit end of file
 				log.Println("Hit end of file on serial port")
-				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
+				p.ChanWriter.Write([]byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got EOF (End of File) on port which usually means another app other than Serial Port JSON Server is locking your port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}"))
 
 			}
 
 			if err != nil {
 				log.Println(err)
-				h.broadcastSys <- []byte("Error reading on " + p.portConf.Name + " " +
-					err.Error() + " Closing port.")
-				h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}")
+				p.ChanWriter.Write([]byte("Error reading on " + p.portConf.Name + " " + err.Error() + " Closing port."))
+				p.ChanWriter.Write([]byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Got error reading on port. " + err.Error() + "\",\"Port\":\"" + p.portConf.Name + "\",\"Baud\":" + strconv.Itoa(p.portConf.Baud) + "}"))
 				p.isClosingDueToError = true
 				break
 			}
@@ -210,7 +211,7 @@ func (p *serport) writerBuffered() {
 	}
 	msgstr := "writerBuffered just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
-	h.broadcastSys <- []byte(msgstr)
+	p.ChanWriter.Write([]byte(msgstr))
 }
 
 // this method runs as its own thread because it's instantiated
@@ -231,15 +232,22 @@ func (p *serport) writerNoBuf() {
 		if err != nil {
 			errstr := "Error writing to " + p.portConf.Name + " " + err.Error() + " Closing port."
 			log.Print(errstr)
-			h.broadcastSys <- []byte(errstr)
+			p.ChanWriter.Write([]byte(errstr))
 			break
 		}
 	}
 	msgstr := "Shutting down writer on " + p.portConf.Name
 	log.Println(msgstr)
-	h.broadcastSys <- []byte(msgstr)
+	p.ChanWriter.Write([]byte(msgstr))
+
 	p.portIo.Close()
-	serialPorts.List()
+
+	// NOTE:  by removing the 'serialPorts.List()' line,
+	// the list of serial ports are NOT sent to the websocket clients  after a write is completed.
+	// This should not be an issue since the list are periodically called.
+	// Note also that the 'writerBuffered' and 'writerRaw' methods do not call it.
+	// serialPorts.List()
+
 }
 
 // this method runs as its own thread because it's instantiated
@@ -271,16 +279,13 @@ func (p *serport) writerRaw() {
 	}
 	msgstr := "writerRaw just got closed. make sure you make a new one. port:" + p.portConf.Name
 	log.Println(msgstr)
-	h.broadcastSys <- []byte(msgstr)
+	p.ChanWriter.Write([]byte(msgstr))
 }
 
-// This lock is used to prevent multiple threads from trying to open the same port at the same time.
-// It presents issues with the serial port driver on some OS's: https://github.com/arduino/arduino-create-agent/issues/1031
-var spHandlerOpenLock sync.Mutex
-
-func spHandlerOpen(portname string, baud int, buftype string) {
-	spHandlerOpenLock.Lock()
-	defer spHandlerOpenLock.Unlock()
+// FIXME: move this into the `hub.go` file
+func (h *hub) spHandlerOpen(portname string, baud int, buftype string) {
+	h.spHandlerOpenLock.Lock()
+	defer h.spHandlerOpenLock.Unlock()
 
 	log.Print("Inside spHandler")
 
@@ -302,10 +307,10 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	sp, err := serial.Open(portname, mode)
 	log.Print("Just tried to open port")
 	if err != nil {
-		existingPort, ok := sh.FindPortByName(portname)
+		existingPort, ok := h.serialHub.FindPortByName(portname)
 		if ok && existingPort.portConf.Baud == baud && existingPort.BufferType == buftype {
 			log.Print("Port already opened")
-			h.broadcastSys <- []byte("{\"Cmd\":\"Open\",\"Desc\":\"Port already opened.\",\"Port\":\"" + existingPort.portConf.Name + "\",\"Baud\":" + strconv.Itoa(existingPort.portConf.Baud) + ",\"BufferType\":\"" + existingPort.BufferType + "\"}")
+			h.serialHub.onRegister(existingPort, "Port already opened")
 		} else {
 			log.Print("Error opening port " + err.Error())
 			h.broadcastSys <- []byte("{\"Cmd\":\"OpenFail\",\"Desc\":\"Error opening port. " + err.Error() + "\",\"Port\":\"" + conf.Name + "\",\"Baud\":" + strconv.Itoa(conf.Baud) + "}")
@@ -322,7 +327,14 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 		portConf:     conf,
 		portIo:       sp,
 		portName:     portname,
-		BufferType:   buftype}
+		BufferType:   buftype,
+		ChanWriter:   ChanWriter{h.broadcastSys},
+	}
+
+	p.OnClose = func(port *serport) {
+		h.serialPortList.MarkPortAsClosed(p.portName)
+		h.serialPortList.List()
+	}
 
 	var bw Bufferflow
 
@@ -340,10 +352,10 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	bw.Init()
 	p.bufferwatcher = bw
 
-	sh.Register(p)
+	h.serialHub.Register(p)
 
-	serialPorts.MarkPortAsOpened(portname)
-	serialPorts.List()
+	h.serialPortList.MarkPortAsOpened(portname)
+	h.serialPortList.List()
 
 	// this is internally buffered thread to not send to serial port if blocked
 	go p.writerBuffered()
@@ -354,8 +366,8 @@ func spHandlerOpen(portname string, baud int, buftype string) {
 	// this is the thread that reads from the serial port
 	go func() {
 		p.reader(buftype)
-		serialPorts.List()
-		sh.Unregister(p)
+		h.serialPortList.List()
+		h.serialHub.Unregister(p)
 	}()
 }
 
@@ -364,6 +376,5 @@ func (p *serport) Close() {
 
 	p.bufferwatcher.Close()
 	p.portIo.Close()
-	serialPorts.MarkPortAsClosed(p.portName)
-	serialPorts.List()
+	p.OnClose(p)
 }

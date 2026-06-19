@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/arduino/arduino-create-agent/tools"
 	"github.com/arduino/arduino-create-agent/upload"
 	"github.com/arduino/arduino-create-agent/utilities"
 	"github.com/gin-gonic/gin"
@@ -80,7 +81,7 @@ type Upload struct {
 
 var uploadStatusStr = "ProgrammerStatus"
 
-func uploadHandler(pubKey *rsa.PublicKey) func(*gin.Context) {
+func uploadHandler(hub *hub, pubKey *rsa.PublicKey, tools *tools.Tools) func(*gin.Context) {
 	return func(c *gin.Context) {
 		data := new(Upload)
 		if err := c.BindJSON(data); err != nil {
@@ -162,28 +163,28 @@ func uploadHandler(pubKey *rsa.PublicKey) func(*gin.Context) {
 
 		go func() {
 			// Resolve commandline
-			commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, Tools)
+			commandline, err := upload.PartiallyResolve(data.Board, filePath, tmpdir, data.Commandline, data.Extra, tools)
 			if err != nil {
-				send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
+				send(hub, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 				return
 			}
 
-			l := PLogger{Verbose: true}
+			l := PLogger{Verbose: true, hub: hub}
 
 			// Upload
 			if data.Extra.Network {
 				err = errors.New("network upload is not supported anymore, pease use OTA instead")
 			} else {
-				send(map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
+				send(hub, map[string]string{uploadStatusStr: "Starting", "Cmd": "Serial"})
 				err = upload.Serial(data.Port, commandline, data.Extra, l)
 			}
 
 			// Handle result
 			if err != nil {
-				send(map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
+				send(hub, map[string]string{uploadStatusStr: "Error", "Msg": err.Error()})
 				return
 			}
-			send(map[string]string{uploadStatusStr: "Done", "Flash": "Ok"})
+			send(hub, map[string]string{uploadStatusStr: "Done", "Flash": "Ok"})
 		}()
 
 		c.String(http.StatusAccepted, "")
@@ -193,6 +194,7 @@ func uploadHandler(pubKey *rsa.PublicKey) func(*gin.Context) {
 // PLogger sends the info from the upload to the websocket
 type PLogger struct {
 	Verbose bool
+	hub     *hub
 }
 
 // Debug only sends messages if verbose is true (always true for now)
@@ -206,15 +208,15 @@ func (l PLogger) Debug(args ...interface{}) {
 func (l PLogger) Info(args ...interface{}) {
 	output := fmt.Sprint(args...)
 	log.Println(output)
-	send(map[string]string{uploadStatusStr: "Busy", "Msg": output})
+	send(l.hub, map[string]string{uploadStatusStr: "Busy", "Msg": output})
 }
 
-func send(args map[string]string) {
+func send(h *hub, args map[string]string) {
 	mapB, _ := json.Marshal(args)
 	h.broadcastSys <- mapB
 }
 
-func wsHandler() *WsServer {
+func wsHandler(h *hub) *WsServer {
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)
