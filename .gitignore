@@ -1,6 +1,7 @@
 
 bufferflow_tinyg_old.md
 
+/arduino-create-agent*
 /arduino-cloud-agent*
 !/arduino-cloud-agent*/
 rsrc.syso
@@ -19,3 +20,7 @@ logs/
 
 # Python
 __pycache__
+
+# Debugging
+__debug_bin*.exe*
+vendor/
