@@ -1,0 +1,5 @@
+# The function that read the HOME fodler automatically creates the home folder if missing.
+
+# This are the folders that are created for testing purpose and there is no need to be tracked
+dummyhome
+home-without-config
