@@ -130,12 +130,12 @@ func TestDownload(t *testing.T) {
 		IndexFile:   *paths.New("testdata", "test_tool_index.json"),
 		LastRefresh: time.Now(),
 	}
-	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) }, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
+	testTools := New(tempDirPath, &testIndex, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 
 	for _, tc := range testCases {
 		t.Run(tc.name+"-"+tc.version, func(t *testing.T) {
 			// Download the tool
-			err := testTools.Download("arduino-test", tc.name, tc.version, "replace")
+			err := testTools.Download("arduino-test", tc.name, tc.version, "replace", func(msg string) { t.Log(msg) })
 			require.NoError(t, err)
 
 			// Check that the tool has been downloaded
@@ -177,8 +177,8 @@ func TestCorruptedInstalled(t *testing.T) {
 	defer fileJSON.Close()
 	_, err = fileJSON.Write([]byte("Hello"))
 	require.NoError(t, err)
-	testTools := New(tempDirPath, &testIndex, func(msg string) { t.Log(msg) }, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
+	testTools := New(tempDirPath, &testIndex, utilities.MustParseRsaPublicKey([]byte(globals.ArduinoSignaturePubKey)))
 	// Download the tool
-	err = testTools.Download("arduino-test", "avrdude", "6.3.0-arduino17", "keep")
+	err = testTools.Download("arduino-test", "avrdude", "6.3.0-arduino17", "keep", func(msg string) { t.Log(msg) })
 	require.NoError(t, err)
 }
